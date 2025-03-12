@@ -78,7 +78,7 @@ export class TenantFormComponent implements OnInit {
     this.tenantForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(50)]],
       lastName: ['', [Validators.required, Validators.maxLength(50)]],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.email]],
       phone: ['', [Validators.required, Validators.pattern('^[0-9+ ]+$')]],
       documentType: ['', Validators.required],
       documentNumber: ['', Validators.required],

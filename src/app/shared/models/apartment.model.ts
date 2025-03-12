@@ -1,28 +1,34 @@
+// shared/models/index.ts o shared/models/models.ts
+
 export interface Apartment {
-    id: number;
-    name: string;
-    number: string;
-    size: number; // in square meters
-    monthlyRent: number;
-    features: string[];
-    address: string;
-    floor?: number;
-    bedrooms: number;
-    bathrooms: number;
-    hasBalcony: boolean;
-    hasParking: boolean;
-    furnishingStatus: 'furnished' | 'semi-furnished' | 'unfurnished';
-    description?: string;
-    utilityMeters: {
-        electricity: string;
-        water: string;
-        gas: string;
-    };
-    maintenanceHistory: MaintenanceRecord[];
-    isAvailable: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+  id?: string;
+  name: string;
+  description?: string;
+  floor: number;
+  squareMeters: number;
+  rooms: number;
+  bathrooms: number;
+  hasBalcony: boolean;
+  hasParking: boolean;
+  isFurnished: boolean;
+  monthlyRent: number;
+  status: 'available' | 'occupied' | 'maintenance';
+  isAvailable?: boolean;
+  notes?: string;
+  // Aggiungi questa proprietà se vuoi tenere traccia dei numeri dei contatori
+  utilityMetersInfo?: {
+    electricityMeterNumber: string;
+    waterMeterNumber: string; 
+    gasMeterNumber: string;
+  };
+  maintenanceHistory: MaintenanceRecord[];
+  amenities?: string[];
+  images?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
+
+// Le altre interfacce come sopra
 
 export interface MaintenanceRecord {
     id: number;

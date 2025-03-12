@@ -58,7 +58,7 @@ export class DashboardComponent implements OnInit {
     
     forkJoin({
       tenants: this.tenantService.getAllTenants(),
-      apartments: this.apartmentService.getAllApartments(),
+      apartments: this.apartmentService.getApartments(),
       activeLeases: this.leaseService.getActiveLeases(),
       expiringLeases: this.leaseService.getExpiringSoonLeases(),
       unpaidInvoices: this.invoiceService.getUnpaidInvoices(),

@@ -118,7 +118,7 @@ export class TenantService {
     const results = this.mockTenants.filter(tenant => 
       tenant.firstName.toLowerCase().includes(lowercaseQuery) || 
       tenant.lastName.toLowerCase().includes(lowercaseQuery) ||
-      tenant.email.toLowerCase().includes(lowercaseQuery)
+      tenant.email?.toLowerCase().includes(lowercaseQuery)
     );
     return of(results).pipe(delay(300));
   }

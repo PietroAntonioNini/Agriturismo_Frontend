@@ -1,5 +1,18 @@
 .container {
   padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  .right-buttons {
+    display: flex;
+    gap: 10px;
+  }
 }
 
 .tenant-form-card {

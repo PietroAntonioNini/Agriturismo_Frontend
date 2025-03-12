@@ -2,7 +2,7 @@ export interface Tenant {
     id: number;
     firstName: string;
     lastName: string;
-    email: string;
+    email?: string;
     phone: string;
     documentType: string;
     documentNumber: string;

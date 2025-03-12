@@ -2,7 +2,7 @@
   padding: 20px;
 }
 
-.tenant-card {
+.apartment-card {
   margin-bottom: 20px;
 }
 
@@ -62,7 +62,7 @@
   justify-content: center;
 }
 
-.tenant-table {
+.apartment-table {
   width: 100%;
 }
 
@@ -87,4 +87,29 @@
 /* Stile per i bottoni di azione */
 .mat-icon-button {
   line-height: 1;
-} 
+}
+
+/* Stili per lo status dell'appartamento */
+.status-available {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 12px;
+}
+
+.status-occupied {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #2196f3;
+  color: white;
+  font-size: 12px;
+}
+
+.status-maintenance {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #ff9800;
+  color: white;
+  font-size: 12px;
+}

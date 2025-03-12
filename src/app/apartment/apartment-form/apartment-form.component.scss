@@ -1,0 +1,89 @@
+.container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  .right-buttons {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.apartment-form-card {
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  
+  &.checkbox-row {
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.number-field {
+  max-width: 120px;
+}
+
+.form-divider {
+  margin: 24px 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+mat-form-field {
+  flex: 1;
+}
+
+h3 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding-bottom: 8px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+mat-chip-grid {
+  width: 100%;
+}
