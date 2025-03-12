@@ -47,7 +47,7 @@
         <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Email</mat-label>
-            <input matInput formControlName="email" placeholder="Inserisci l'email" type="email">
+            <input matInput formControlName="email" placeholder="Inserisci l'email (opzionale)" type="email">
             <mat-error *ngIf="tenantForm.get('email')?.invalid && tenantForm.get('email')?.touched">
               {{ getFormControlError('email') }}
             </mat-error>

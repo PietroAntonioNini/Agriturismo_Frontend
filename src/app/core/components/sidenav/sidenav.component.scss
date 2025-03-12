@@ -1,80 +1,66 @@
-.sidenav-list {
+.sidenav {
+  display: flex;
+  flex-direction: column;
+  padding-top: 65px;
+  width: 95px;
+  height: 100vh;
+  background-color: rgba(29, 32, 35, 0.947);
+  color: #ffffff;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
   padding: 0;
-  width: 100%;
+}
+
+.nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.sidenav-header {
-  padding: 16px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #e0e0e0;
-  width: 100%;
-  text-align: center;
-}
-
-.sidenav-title {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.nav-items-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 80px;
-}
-
-.nav-item-content {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-}
-
-.item-label {
-  margin-left: 16px;
-  font-size: 14px;
+  justify-content: center;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-decoration: none;
+  color: #8e8ea0;
+  margin: 10px;
+  border-radius: 10px;
+  
+  &:hover {
+    margin: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #ffffff;
+  }
+  
+  mat-icon {
+    font-size: 24px;
+    height: 24px;
+    width: 24px;
+    margin-bottom: 4px;
+  }
+  
+  .item-label {
+    font-size: 11px;
+    text-align: center;
+  }
 }
 
 .active-link {
-  background-color: rgba(0, 0, 0, 0.04);
-  color: #3f51b5;
-  font-weight: 500;
+  margin: 10px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #ffffff !important;
+  
+  mat-icon {
+    color: #ffffff;
+  }
 }
-
-.active-link mat-icon {
-  color: #3f51b5;
-}
-
-// .nav-item {
-//   padding: 0;
-//   padding-left: 20px;
-//   margin: 8px 0;
-//   height: 40px;
-//   overflow: hidden;
-//   width: 100%;
-
-//   mat-icon {
-//     font-size: 24px;
-//   }
-// }
-
-// .compact-mode {
-//   .nav-item {
-//     padding: 0;
-//     padding-left: 20px;
-//     margin: 8px 0;
-//     height: 40px;
-//     overflow: hidden;
-//     width: 100%;
-    
-//     mat-icon {
-//       font-size: 24px;
-//     }
-//   }
-// }

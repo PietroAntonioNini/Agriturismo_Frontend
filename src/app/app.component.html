@@ -1,22 +1,13 @@
-<mat-sidenav-container class="app-container">
-  <mat-sidenav #sidenav 
-               [mode]="sidenavMode" 
-               [(opened)]="sidenavOpened" 
-               [ngClass]="{'expanded': sidenavExpanded}"
-               class="app-sidenav"
-               (mouseenter)="openSidenav()" 
-               (mouseleave)="closeSidenav()"
-               [disableClose]="true">
-    <app-sidenav [compactMode]="!sidenavExpanded"></app-sidenav>
-  </mat-sidenav>
+<div class="app-wrapper">
+  <app-header (toggleSidenav)="toggleSidenav()"></app-header>
   
-  <mat-sidenav-content class="app-content">
-    <app-header (toggleSidenav)="toggleSidenav()"></app-header>
+  <div class="content-wrapper">
+    <app-sidenav class="fixed-sidenav"></app-sidenav>
     
     <main class="main-content">
       <router-outlet></router-outlet>
-</main>
-
-    <app-footer></app-footer>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+    </main>
+  </div>
+  
+  <app-footer></app-footer>
+</div>

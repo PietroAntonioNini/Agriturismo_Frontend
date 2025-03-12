@@ -30,19 +30,9 @@ import { FooterComponent } from './core/components/footer/footer.component';
 })
 export class AppComponent {
   title = 'Agriturismo Manager';
-  sidenavOpened = true;
-  sidenavMode: MatDrawerMode = 'side';
-  sidenavExpanded = false;
 
   toggleSidenav(): void {
-    this.sidenavExpanded = !this.sidenavExpanded;
-  }
-
-  openSidenav(): void {
-    this.sidenavExpanded = true;
-  }
-
-  closeSidenav(): void {
-    this.sidenavExpanded = false;
+    // This method can be kept for future use or removed
+    // It won't affect the sidenav anymore since we're using a fixed sidenav
   }
 }

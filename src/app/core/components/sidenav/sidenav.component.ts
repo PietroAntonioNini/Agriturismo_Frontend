@@ -1,10 +1,8 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../shared/services/auth.service';
-import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface NavItem {
   label: string;
@@ -21,14 +19,10 @@ interface NavItem {
   imports: [
     CommonModule,
     RouterModule,
-    MatListModule,
-    MatIconModule,
-    MatTooltipModule
+    MatIconModule
   ]
 })
 export class SidenavComponent implements OnInit {
-  @Input() compactMode = false;
-  
   navItems: NavItem[] = [
     {
       label: 'Dashboard',
