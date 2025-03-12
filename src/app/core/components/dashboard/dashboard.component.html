@@ -1,0 +1,141 @@
+<div class="dashboard-container">
+  <h1 class="dashboard-title">Dashboard</h1>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Caricamento dati in corso...</p>
+  </div>
+
+  <div *ngIf="hasError" class="error-container">
+    <mat-icon color="warn">error</mat-icon>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="loadDashboardData()">Riprova</button>
+  </div>
+
+  <div *ngIf="!isLoading && !hasError" class="dashboard-content">
+    <!-- Statistiche principali -->
+    <div class="stats-grid">
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>people</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ totalTenants }}</h2>
+            <p class="stats-label">Inquilini</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>apartment</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ totalApartments }}</h2>
+            <p class="stats-label">Appartamenti</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>home</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ occupiedApartments }}</h2>
+            <p class="stats-label">Occupati</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>home_work</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ availableApartments }}</h2>
+            <p class="stats-label">Disponibili</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Contratti e fatture -->
+    <div class="stats-grid">
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>description</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ activeLeases }}</h2>
+            <p class="stats-label">Contratti attivi</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>alarm</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ expiringLeases }}</h2>
+            <p class="stats-label">Contratti in scadenza</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon">
+            <mat-icon>receipt</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ unpaidInvoices }}</h2>
+            <p class="stats-label">Fatture non pagate</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stats-card">
+        <mat-card-content>
+          <div class="stats-icon warning-icon">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div class="stats-info">
+            <h2 class="stats-value">{{ overdueInvoices }}</h2>
+            <p class="stats-label">Fatture scadute</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Azioni rapide -->
+    <div class="quick-actions">
+      <h2>Azioni rapide</h2>
+      <div class="actions-grid">
+        <button mat-raised-button color="primary" routerLink="/tenant/new">
+          <mat-icon>person_add</mat-icon>
+          Nuovo inquilino
+        </button>
+        <button mat-raised-button color="primary" routerLink="/apartment/new">
+          <mat-icon>add_home</mat-icon>
+          Nuovo appartamento
+        </button>
+        <button mat-raised-button color="primary" routerLink="/lease/new">
+          <mat-icon>note_add</mat-icon>
+          Nuovo contratto
+        </button>
+        <button mat-raised-button color="primary" routerLink="/billing/generate">
+          <mat-icon>receipt_long</mat-icon>
+          Genera fatture
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

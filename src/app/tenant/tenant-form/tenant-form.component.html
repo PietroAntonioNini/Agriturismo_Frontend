@@ -1,0 +1,124 @@
+<div class="container">
+  <mat-card class="tenant-form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h1>{{ isEditMode ? 'Modifica Inquilino' : 'Nuovo Inquilino' }}</h1>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <!-- Messaggio di errore -->
+      <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form [formGroup]="tenantForm" (ngSubmit)="onSubmit()" class="tenant-form">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="firstName" placeholder="Inserisci il nome">
+            <mat-error *ngIf="tenantForm.get('firstName')?.invalid && tenantForm.get('firstName')?.touched">
+              {{ getFormControlError('firstName') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Cognome</mat-label>
+            <input matInput formControlName="lastName" placeholder="Inserisci il cognome">
+            <mat-error *ngIf="tenantForm.get('lastName')?.invalid && tenantForm.get('lastName')?.touched">
+              {{ getFormControlError('lastName') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" placeholder="Inserisci l'email" type="email">
+            <mat-error *ngIf="tenantForm.get('email')?.invalid && tenantForm.get('email')?.touched">
+              {{ getFormControlError('email') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Telefono</mat-label>
+            <input matInput formControlName="phone" placeholder="Inserisci il numero di telefono">
+            <mat-error *ngIf="tenantForm.get('phone')?.invalid && tenantForm.get('phone')?.touched">
+              {{ getFormControlError('phone') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo Documento</mat-label>
+            <mat-select formControlName="documentType">
+              <mat-option *ngFor="let type of documentTypes" [value]="type">
+                {{ type }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="tenantForm.get('documentType')?.invalid && tenantForm.get('documentType')?.touched">
+              {{ getFormControlError('documentType') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Numero Documento</mat-label>
+            <input matInput formControlName="documentNumber" placeholder="Inserisci il numero del documento">
+            <mat-error *ngIf="tenantForm.get('documentNumber')?.invalid && tenantForm.get('documentNumber')?.touched">
+              {{ getFormControlError('documentNumber') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Data Scadenza Documento</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="documentExpiryDate">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+            <mat-error *ngIf="tenantForm.get('documentExpiryDate')?.invalid && tenantForm.get('documentExpiryDate')?.touched">
+              {{ getFormControlError('documentExpiryDate') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Indirizzo</mat-label>
+            <input matInput formControlName="address" placeholder="Inserisci l'indirizzo (opzionale)">
+          </mat-form-field>
+        </div>
+
+        <h3>Preferenze di comunicazione</h3>
+        <div class="form-row" formGroupName="communicationPreferences">
+          <mat-checkbox formControlName="email">Email</mat-checkbox>
+          <mat-checkbox formControlName="sms">SMS</mat-checkbox>
+          <mat-checkbox formControlName="whatsapp">WhatsApp</mat-checkbox>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput formControlName="notes" placeholder="Inserisci eventuali note (opzionale)" rows="4"></textarea>
+          </mat-form-field>
+        </div>
+
+        <mat-divider class="form-divider"></mat-divider>
+
+        <div class="form-actions">
+          <button mat-button type="button" routerLink="/tenant/list">Annulla</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+            {{ isEditMode ? 'Aggiorna' : 'Salva' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div> 

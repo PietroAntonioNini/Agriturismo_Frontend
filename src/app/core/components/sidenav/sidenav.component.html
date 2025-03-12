@@ -1,0 +1,18 @@
+<mat-nav-list class="sidenav-list" [ngClass]="{'compact-mode': compactMode}">
+  
+  <div class="nav-items-container">
+    <a mat-list-item 
+       *ngFor="let item of filteredNavItems" 
+       [routerLink]="item.route" 
+       routerLinkActive="active-link"
+       class="nav-item"
+       matTooltip="{{item.label}}"
+       [matTooltipDisabled]="!compactMode"
+       matTooltipPosition="right">
+      <div class="nav-item-content">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span class="item-label" *ngIf="!compactMode">{{ item.label }}</span>
+      </div>
+    </a>
+  </div>
+</mat-nav-list>
