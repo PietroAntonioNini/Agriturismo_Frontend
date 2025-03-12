@@ -1,0 +1,145 @@
+<div class="container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Dettaglio Contratto</mat-card-title>
+      <div class="header-actions">
+        <button mat-icon-button (click)="goBack()" matTooltip="Torna alla lista">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner></mat-spinner>
+      </div>
+      
+      <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{errorMessage}}</span>
+      </div>
+      
+      <div *ngIf="!isLoading && !errorMessage && lease">
+        <div class="lease-header">
+          <div class="lease-status">
+            <span [ngClass]="getStatusClass(lease.isActive)">
+              {{getStatusLabel(lease.isActive)}}
+            </span>
+          </div>
+          <div class="lease-actions">
+            <button mat-raised-button color="primary" (click)="editLease()">
+              <mat-icon>edit</mat-icon> Modifica
+            </button>
+            <button mat-raised-button color="warn" (click)="deleteLease()">
+              <mat-icon>delete</mat-icon> Elimina
+            </button>
+          </div>
+        </div>
+        
+        <mat-divider></mat-divider>
+        
+        <mat-tab-group>
+          <!-- Informazioni Generali -->
+          <mat-tab label="Informazioni Generali">
+            <div class="tab-content">
+              <div class="info-section">
+                <h3>Dettagli Contratto</h3>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <span class="label">ID Contratto:</span>
+                    <span class="value">{{lease.id}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Inquilino:</span>
+                    <span class="value">{{tenant?.firstName}} {{tenant?.lastName}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Appartamento:</span>
+                    <span class="value">{{apartment?.name}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Data Inizio:</span>
+                    <span class="value">{{formatDate(lease.startDate)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Data Fine:</span>
+                    <span class="value">{{formatDate(lease.endDate)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Canone Mensile:</span>
+                    <span class="value">{{formatCurrency(lease.monthlyRent)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Deposito Cauzionale:</span>
+                    <span class="value">{{formatCurrency(lease.securityDeposit)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="label">Giorno Scadenza Pagamento:</span>
+                    <span class="value">{{lease.paymentDueDay}}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="info-section">
+                <h3>Note</h3>
+                <p class="notes">{{lease.notes || 'Nessuna nota disponibile'}}</p>
+              </div>
+            </div>
+          </mat-tab>
+          
+          <!-- Termini e Condizioni -->
+          <mat-tab label="Termini e Condizioni">
+            <div class="tab-content">
+              <mat-expansion-panel expanded>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>Termini e Condizioni Generali</mat-panel-title>
+                </mat-expansion-panel-header>
+                <div class="terms-content" [innerHTML]="lease.termsAndConditions"></div>
+              </mat-expansion-panel>
+              
+              <mat-expansion-panel *ngIf="lease.specialClauses">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>Clausole Speciali</mat-panel-title>
+                </mat-expansion-panel-header>
+                <div class="terms-content" [innerHTML]="lease.specialClauses"></div>
+              </mat-expansion-panel>
+            </div>
+          </mat-tab>
+          
+          <!-- Documenti -->
+          <mat-tab label="Documenti" *ngIf="lease.documents && lease.documents.length > 0">
+            <div class="tab-content">
+              <div class="documents-list">
+                <div class="document-item" *ngFor="let doc of lease.documents">
+                  <mat-icon>description</mat-icon>
+                  <div class="document-info">
+                    <span class="document-name">{{doc.name}}</span>
+                    <span class="document-date">Caricato il {{formatDate(doc.uploadDate)}}</span>
+                  </div>
+                  <button mat-icon-button matTooltip="Scarica documento">
+                    <mat-icon>download</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+          
+          <!-- Storico Pagamenti -->
+          <mat-tab label="Storico Pagamenti" *ngIf="lease.paymentHistory && lease.paymentHistory.length > 0">
+            <div class="tab-content">
+              <div class="payments-list">
+                <div class="payment-item" *ngFor="let payment of lease.paymentHistory">
+                  <div class="payment-date">{{formatDate(payment.paymentDate)}}</div>
+                  <div class="payment-amount">{{formatCurrency(payment.amount)}}</div>
+                  <div class="payment-type">{{payment.paymentType}}</div>
+                  <div class="payment-reference">{{payment.reference}}</div>
+                  <div class="payment-notes">{{payment.notes || ''}}</div>
+                </div>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

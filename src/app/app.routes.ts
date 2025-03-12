@@ -32,6 +32,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'lease',
+    loadChildren: () => import('./lease/lease.module').then(m => m.LeaseModule),
+    canActivate: [AuthGuard]
+  },
+  {
     path: '**',
     redirectTo: '',
     pathMatch: 'full'
