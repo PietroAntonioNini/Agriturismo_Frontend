@@ -13,6 +13,12 @@ export interface UtilityReading {
     notes?: string;
     createdAt: Date;
     updatedAt: Date;
+    electricityConsumption?: number;
+    waterConsumption?: number;
+    gasConsumption?: number;
+    electricityCost?: number;
+    waterCost?: number;
+    gasCost?: number;
 }
 
 export interface UtilitySummary {
@@ -32,4 +38,25 @@ export interface UtilitySummary {
         cost: number;
     };
     totalCost: number;
-} 
+}
+
+export interface MonthlyUtilityData {
+    month: number;
+    year: number;
+    apartmentId: number;
+    apartmentName: string;
+    electricity: number;
+    water: number;
+    gas: number;
+}
+
+export interface ApartmentUtilityData {
+    apartmentId: number;
+    apartmentName: string;
+    monthlyData: {
+        month: number;
+        electricity: number;
+        water: number;
+        gas: number;
+    }[];
+}

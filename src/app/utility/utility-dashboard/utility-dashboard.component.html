@@ -1,0 +1,64 @@
+<div class="container">
+  <mat-card class="utility-card">
+    <mat-card-header>
+      <mat-card-title class="page-title">
+        <div class="title-section">
+          <h1>Gestione Utenze</h1>
+          <div class="action-buttons">
+            <button mat-raised-button color="primary" (click)="openReadingForm()">
+              <mat-icon>add</mat-icon>
+              Nuova Lettura
+            </button>
+            <button mat-raised-button color="accent" (click)="openReadingHistory()">
+              <mat-icon>history</mat-icon>
+              Storico Letture
+            </button>
+          </div>
+        </div>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Caricamento dati in corso...</p>
+      </div>
+
+      <!-- Messaggio di errore -->
+      <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage" class="utility-content">
+        <!-- Selettore anno -->
+        <div class="year-selector">
+          <mat-form-field appearance="outline">
+            <mat-label>Anno</mat-label>
+            <mat-select [value]="selectedYear" (selectionChange)="onYearChange($event.value)">
+              <mat-option *ngFor="let year of [2022, 2023, 2024]" [value]="year">
+                {{ year }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Tabs per gli appartamenti -->
+        <mat-tab-group (selectedTabChange)="handleTabChange($event)">
+          <mat-tab label="Tutti">
+            <!-- Contenuto per la visualizzazione di tutti gli appartamenti -->
+          </mat-tab>
+          <mat-tab *ngFor="let apartment of apartments" [label]="apartment.name">
+            <!-- Contenuto per la visualizzazione di un singolo appartamento -->
+          </mat-tab>
+        </mat-tab-group>
+
+        <!-- Grafico -->
+        <div class="chart-container">
+          <canvas #chartCanvas></canvas>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

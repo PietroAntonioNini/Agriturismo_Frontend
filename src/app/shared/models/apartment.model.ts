@@ -1,7 +1,6 @@
-// shared/models/index.ts o shared/models/models.ts
-
+import { UtilityReading } from './utility-reading.model';
 export interface Apartment {
-  id?: string;
+  id: number;
   name: string;
   description?: string;
   floor: number;
@@ -21,6 +20,7 @@ export interface Apartment {
     waterMeterNumber: string; 
     gasMeterNumber: string;
   };
+  utilityReadings?: UtilityReading[];
   maintenanceHistory: MaintenanceRecord[];
   amenities?: string[];
   images?: string[];

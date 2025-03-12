@@ -1,0 +1,90 @@
+.container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.utility-card {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  width: 100%;
+}
+
+.title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  
+  p {
+    margin-top: 16px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.utility-content {
+  margin-top: 20px;
+}
+
+.year-selector {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  
+  mat-form-field {
+    width: 120px;
+  }
+}
+
+.chart-container {
+  height: 500px;
+  margin-top: 20px;
+  position: relative;
+}
+
+::ng-deep .mat-tab-group {
+  .mat-tab-label {
+    min-width: 120px;
+    padding: 0 16px;
+  }
+  
+  .mat-tab-body-content {
+    padding: 16px 0;
+  }
+}

@@ -1,0 +1,49 @@
+.loading-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.filter-field {
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.table-container {
+  overflow-x: auto;
+  max-height: 500px;
+}
+
+.readings-table {
+  width: 100%;
+  
+  th.mat-header-cell, td.mat-cell {
+    padding: 0 16px;
+  }
+  
+  th.mat-header-cell:first-of-type, td.mat-cell:first-of-type {
+    padding-left: 24px;
+  }
+  
+  th.mat-header-cell:last-of-type, td.mat-cell:last-of-type {
+    padding-right: 24px;
+  }
+}
+
+mat-dialog-content {
+  max-height: 80vh;
+}

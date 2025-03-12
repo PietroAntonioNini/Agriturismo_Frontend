@@ -52,6 +52,11 @@ export class ApartmentFormComponent implements OnInit {
   selectedAmenities: string[] = [];
   separatorKeysCodes: number[] = [ENTER, COMMA];
   
+  // Immagini
+  currentApartment: Apartment = {} as Apartment;
+  imageFiles: (File | null)[] = [null, null, null, null, null , null, null, null];
+  imagePreviews: (string | null)[] = [null, null, null, null, null , null, null, null];
+  
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -69,6 +74,9 @@ export class ApartmentFormComponent implements OnInit {
       this.isEditMode = true;
       this.apartmentId = id;
       this.loadApartmentData(id);
+    } else {
+      this.isEditMode = false;
+      this.currentApartment = {} as Apartment;
     }
   }
 
@@ -90,14 +98,25 @@ export class ApartmentFormComponent implements OnInit {
     });
   }
 
-  loadApartmentData(id: string): void {
+  loadApartmentData(id: any): void {
     this.isLoading = true;
     this.errorMessage = null;
 
     this.apartmentService.getApartment(id).subscribe({
       next: (apartment) => {
+        this.currentApartment = apartment;
         this.updateForm(apartment);
         this.selectedAmenities = apartment.amenities || [];
+        
+        // Carica le anteprime delle immagini se disponibili
+        if (apartment.images && apartment.images.length > 0) {
+          apartment.images.forEach((imageUrl, index) => {
+            if (index < 5) {
+              this.imagePreviews[index] = imageUrl;
+            }
+          });
+        }
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -124,6 +143,24 @@ export class ApartmentFormComponent implements OnInit {
       status: apartment.status,
       notes: apartment.notes
     });
+  }
+
+  // Gestione delle immagini
+  onImageSelected(event: any, index: number): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.imageFiles[index] = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviews[index] = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage(index: number): void {
+    this.imagePreviews[index] = null;
+    this.imageFiles[index] = null;
   }
 
   addAmenity(event: MatChipInputEvent): void {
@@ -154,16 +191,25 @@ export class ApartmentFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const apartmentData = {
+    this.errorMessage = null;
+    
+    // Aggiorna l'appartamento corrente con i valori del form
+    this.currentApartment = {
+      ...this.currentApartment,
       ...this.apartmentForm.value,
-      amenities: this.selectedAmenities,
-      // Aggiungiamo un array vuoto per maintenanceHistory se è un nuovo appartamento
-      maintenanceHistory: this.isEditMode ? undefined : []
+      amenities: this.selectedAmenities
     };
-
+    
+    // Filtra i file delle immagini non nulli
+    const validImageFiles = this.imageFiles.filter(file => file !== null) as File[];
+    
     if (this.isEditMode && this.apartmentId) {
       // Aggiorna un appartamento esistente
-      this.apartmentService.updateApartment(this.apartmentId, apartmentData).subscribe({
+      this.apartmentService.updateApartment(
+        this.apartmentId, 
+        this.currentApartment,
+        validImageFiles.length > 0 ? validImageFiles : undefined
+      ).subscribe({
         next: () => {
           this.isLoading = false;
           this.snackBar.open('Appartamento aggiornato con successo', 'Chiudi', {
@@ -181,7 +227,10 @@ export class ApartmentFormComponent implements OnInit {
       });
     } else {
       // Crea un nuovo appartamento
-      this.apartmentService.createApartment(apartmentData).subscribe({
+      this.apartmentService.createApartment(
+        this.currentApartment,
+        validImageFiles.length > 0 ? validImageFiles : undefined
+      ).subscribe({
         next: (apartment) => {
           this.isLoading = false;
           this.snackBar.open('Appartamento creato con successo', 'Chiudi', {

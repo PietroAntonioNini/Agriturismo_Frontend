@@ -140,6 +140,27 @@
           </mat-form-field>
         </div>
 
+        <!-- Immagini -->
+        <h3>Immagini dell'appartamento</h3>
+        <div class="form-row image-upload-container">
+          <div *ngFor="let preview of imagePreviews; let i = index" class="image-upload-card">
+            <div class="upload-preview" *ngIf="imagePreviews[i]">
+              <img [src]="imagePreviews[i]" alt="Immagine appartamento {{i+1}}">
+              <button mat-icon-button color="warn" (click)="removeImage(i)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            <div class="upload-placeholder" *ngIf="!imagePreviews[i]">
+              <mat-icon>image</mat-icon>
+              <span>Immagine {{i+1}}</span>
+            </div>
+            <input #fileInput type="file" hidden (change)="onImageSelected($event, i)" accept="image/*">
+            <button mat-stroked-button type="button" (click)="fileInput.click()">
+              <mat-icon>upload</mat-icon> {{ imagePreviews[i] ? 'Cambia' : 'Carica' }} immagine
+            </button>
+          </div>
+        </div>
+
         <mat-divider class="form-divider"></mat-divider>
 
         <div class="form-actions">

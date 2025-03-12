@@ -52,21 +52,22 @@ export class ApartmentDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      this.loadApartmentData(id);
+      // Convert string id to number
+      this.loadApartmentData(parseInt(id, 10));
     } else {
       this.errorMessage = 'ID appartamento non valido.';
       this.isLoading = false;
     }
   }
 
-  loadApartmentData(id: string): void {
+  loadApartmentData(id: number): void {
     this.isLoading = true;
     this.errorMessage = null;
 
     this.apartmentService.getApartment(id).subscribe({
       next: (apartment) => {
         this.apartment = apartment;
-        this.loadApartmentLeases(id);
+        this.loadApartmentLeases(apartment.id);
       },
       error: (error) => {
         console.error('Errore durante il caricamento dell\'appartamento', error);
@@ -76,10 +77,11 @@ export class ApartmentDetailComponent implements OnInit {
     });
   }
 
-  loadApartmentLeases(apartmentId: string): void {
+  loadApartmentLeases(apartmentId: number): void {
     this.leaseService.getActiveLeases().subscribe({
       next: (leases) => {
-        this.activeLeases = leases.filter(lease => lease.apartmentId === parseInt(apartmentId, 10));
+        // Rimuovi la conversione parseInt poiché ora apartmentId è già un numero
+        this.activeLeases = leases.filter(lease => lease.apartmentId === apartmentId);
         this.isLoading = false;
       },
       error: (error) => {

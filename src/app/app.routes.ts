@@ -1,17 +1,39 @@
 import { Routes } from '@angular/router';
-import { PageNotFoundComponent } from './core/components/page-not-found/page-not-found.component';
-import { DashboardComponent } from './core/components/dashboard/dashboard.component';
+import { AuthGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent },
-  { 
+  {
+    path: '',
+    loadComponent: () => import('./core/components/dashboard/dashboard.component').then(m => m.DashboardComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'auth',
+    loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule)
+  },
+  {
     path: 'tenant',
-    loadChildren: () => import('./tenant/tenant.module').then(m => m.TenantModule)
+    loadChildren: () => import('./tenant/tenant.module').then(m => m.TenantModule),
+    canActivate: [AuthGuard]
   },
   {
     path: 'apartment',
-    loadChildren: () => import('./apartment/apartment.module').then(m => m.ApartmentModule)
+    loadChildren: () => import('./apartment/apartment.module').then(m => m.ApartmentModule),
+    canActivate: [AuthGuard]
   },
-  { path: '**', component: PageNotFoundComponent }
+  {
+    path: 'billing',
+    loadChildren: () => import('./billing/billing.module').then(m => m.BillingModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'utility',
+    loadChildren: () => import('./utility/utility.module').then(m => m.UtilityModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: '**',
+    redirectTo: '',
+    pathMatch: 'full'
+  }
 ];
