@@ -13,7 +13,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
 import { TenantService } from '../../shared/services/tenant.service';
 import { Tenant } from '../../shared/models';
 
@@ -40,12 +39,19 @@ import { Tenant } from '../../shared/models';
   styleUrls: ['./tenant-form.component.scss']
 })
 export class TenantFormComponent implements OnInit {
+  currentTenant: Tenant = {} as Tenant;
   tenantForm!: FormGroup;
   isLoading = false;
   isEditMode = false;
   tenantId: number | null = null;
   errorMessage: string | null = null;
-  
+  frontPreview: string | null = null;
+  backPreview: string | null = null;
+  frontImageFile: File | null = null;
+  backImageFile: File | null = null;
+  fileInputFront: any;
+  fileInputBack: any;
+
   // Opzioni per tipo documento
   documentTypes = [
     'Carta d\'identità',
@@ -71,6 +77,9 @@ export class TenantFormComponent implements OnInit {
       this.isEditMode = true;
       this.tenantId = +id;
       this.loadTenantData(+id);
+    } else {
+      this.isEditMode = false;
+      this.currentTenant = {} as Tenant;
     }
   }
 
@@ -83,9 +92,11 @@ export class TenantFormComponent implements OnInit {
       documentType: ['', Validators.required],
       documentNumber: ['', Validators.required],
       documentExpiryDate: ['', Validators.required],
+      documentFrontImage: [null],
+      documentBackImage: [null],
       address: [''],
       communicationPreferences: this.fb.group({
-        email: [true],
+        email: [false],
         sms: [false],
         whatsapp: [false]
       }),
@@ -99,6 +110,7 @@ export class TenantFormComponent implements OnInit {
 
     this.tenantService.getTenantById(id).subscribe({
       next: (tenant) => {
+        this.currentTenant = tenant;
         this.updateForm(tenant);
         this.isLoading = false;
       },
@@ -112,39 +124,119 @@ export class TenantFormComponent implements OnInit {
 
   updateForm(tenant: Tenant): void {
     this.tenantForm.patchValue({
-      firstName: tenant.firstName,
-      lastName: tenant.lastName,
-      email: tenant.email,
-      phone: tenant.phone,
-      documentType: tenant.documentType,
-      documentNumber: tenant.documentNumber,
-      documentExpiryDate: tenant.documentExpiryDate,
-      address: tenant.address,
+      firstName: this.currentTenant.firstName,
+      lastName: this.currentTenant.lastName,
+      email: this.currentTenant.email || '',
+      phone: this.currentTenant.phone,
+      documentType: this.currentTenant.documentType,
+      documentNumber: this.currentTenant.documentNumber,
+      documentExpiryDate: this.currentTenant.documentExpiryDate,
+      address: this.currentTenant.address || '',
       communicationPreferences: {
-        email: tenant.communicationPreferences.email,
-        sms: tenant.communicationPreferences.sms,
-        whatsapp: tenant.communicationPreferences.whatsapp
+        email: this.currentTenant.communicationPreferences?.email || false,
+        sms: this.currentTenant.communicationPreferences?.sms || false,
+        whatsapp: this.currentTenant.communicationPreferences?.whatsapp || false
       },
-      notes: tenant.notes
+      notes: this.currentTenant.notes || '',
+      createdAt: this.currentTenant.createdAt,
+      updatedAt: this.currentTenant.updatedAt,
     });
+    
+    // Set document image previews if available
+    if (this.currentTenant.documentFrontImage) {
+      this.frontPreview = this.currentTenant.documentFrontImage;
+    }
+    
+    if (this.currentTenant.documentBackImage) {
+      this.backPreview = this.currentTenant.documentBackImage;
+    }
+  }
+
+  getFormControlError(controlName: string): string {
+    const control = this.tenantForm.get(controlName);
+    if (control?.hasError('required')) {
+      return 'Campo obbligatorio';
+    }
+    if (control?.hasError('email')) {
+      return 'Email non valida';
+    }
+    if (control?.hasError('maxlength')) {
+      const maxLength = control.errors?.['maxlength'].requiredLength;
+      return `Massimo ${maxLength} caratteri`;
+    }
+    if (control?.hasError('pattern')) {
+      if (controlName === 'phone') {
+        return 'Formato telefono non valido (solo numeri, spazi e +)';
+      }
+      return 'Formato non valido';
+    }
+    return 'Campo non valido';
+  }
+
+  // Fix method names to match HTML template
+  onFrontImageSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.frontImageFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.frontPreview = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onBackImageSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.backImageFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.backPreview = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeFrontImage(): void {
+    this.frontPreview = null;
+    this.frontImageFile = null;
+    this.tenantForm.get('documentFrontImage')?.setValue(null);
+  }
+
+  removeBackImage(): void {
+    this.backPreview = null;
+    this.backImageFile = null;
+    this.tenantForm.get('documentBackImage')?.setValue(null);
   }
 
   onSubmit(): void {
     if (this.tenantForm.invalid) {
-      // Marca tutti i campi come touched per mostrare gli errori
+      // Mark fields as touched to show errors
       Object.keys(this.tenantForm.controls).forEach(key => {
         const control = this.tenantForm.get(key);
         control?.markAsTouched();
       });
       return;
     }
-
+  
     this.isLoading = true;
-    const tenantData = this.tenantForm.value;
-
+    this.errorMessage = null;
+    
+    // Update current tenant with form values
+    this.currentTenant = {
+      ...this.currentTenant,
+      ...this.tenantForm.value
+    };
+    
+    // Use the updated service methods with images
     if (this.isEditMode && this.tenantId) {
-      // Aggiorna un inquilino esistente
-      this.tenantService.updateTenant(this.tenantId, tenantData).subscribe({
+      this.tenantService.updateTenant(
+        this.tenantId, 
+        this.currentTenant,
+        this.frontImageFile || undefined,
+        this.backImageFile || undefined
+      ).subscribe({
         next: () => {
           this.isLoading = false;
           this.snackBar.open('Inquilino aggiornato con successo', 'Chiudi', {
@@ -161,8 +253,12 @@ export class TenantFormComponent implements OnInit {
         }
       });
     } else {
-      // Crea un nuovo inquilino
-      this.tenantService.createTenant(tenantData).subscribe({
+      // Create new tenant
+      this.tenantService.createTenant(
+        this.currentTenant,
+        this.frontImageFile || undefined,
+        this.backImageFile || undefined
+      ).subscribe({
         next: (tenant) => {
           this.isLoading = false;
           this.snackBar.open('Inquilino creato con successo', 'Chiudi', {
@@ -180,21 +276,4 @@ export class TenantFormComponent implements OnInit {
       });
     }
   }
-
-  getFormControlError(controlName: string): string {
-    const control = this.tenantForm.get(controlName);
-    if (control?.hasError('required')) {
-      return 'Campo obbligatorio';
-    }
-    if (control?.hasError('email')) {
-      return 'Email non valida';
-    }
-    if (control?.hasError('pattern')) {
-      return 'Formato non valido';
-    }
-    if (control?.hasError('maxlength')) {
-      return `Massimo ${control.getError('maxlength').requiredLength} caratteri`;
-    }
-    return '';
-  }
-} 
+}

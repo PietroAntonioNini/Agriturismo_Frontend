@@ -20,4 +20,4 @@ export interface Lease {
     contractFile?: string; // file path or URL to the contract document
     createdAt: Date;
     updatedAt: Date;
-} 
+}

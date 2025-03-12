@@ -63,44 +63,74 @@
         </div>
 
         <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Tipo Documento</mat-label>
-            <mat-select formControlName="documentType">
-              <mat-option *ngFor="let type of documentTypes" [value]="type">
-                {{ type }}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="tenantForm.get('documentType')?.invalid && tenantForm.get('documentType')?.touched">
-              {{ getFormControlError('documentType') }}
-            </mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Numero Documento</mat-label>
-            <input matInput formControlName="documentNumber" placeholder="Inserisci il numero del documento">
-            <mat-error *ngIf="tenantForm.get('documentNumber')?.invalid && tenantForm.get('documentNumber')?.touched">
-              {{ getFormControlError('documentNumber') }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Data Scadenza Documento</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="documentExpiryDate">
-            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-            <mat-error *ngIf="tenantForm.get('documentExpiryDate')?.invalid && tenantForm.get('documentExpiryDate')?.touched">
-              {{ getFormControlError('documentExpiryDate') }}
-            </mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Indirizzo</mat-label>
             <input matInput formControlName="address" placeholder="Inserisci l'indirizzo (opzionale)">
           </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <h3>Documento di Identità</h3>
+          <div class="form-row">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Tipo Documento</mat-label>
+                <mat-select formControlName="documentType">
+                  <mat-option *ngFor="let type of documentTypes" [value]="type">
+                    {{ type }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="tenantForm.get('documentType')?.invalid && tenantForm.get('documentType')?.touched">
+                  {{ getFormControlError('documentType') }}
+                </mat-error>
+              </mat-form-field>
+            
+              <mat-form-field appearance="outline">
+                <mat-label>Numero Documento</mat-label>
+                <input matInput formControlName="documentNumber" placeholder="Inserisci il numero del documento">
+                <mat-error *ngIf="tenantForm.get('documentNumber')?.invalid && tenantForm.get('documentNumber')?.touched">
+                  {{ getFormControlError('documentNumber') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Data Scadenza Documento</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="documentExpiryDate">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+                <mat-error *ngIf="tenantForm.get('documentExpiryDate')?.invalid && tenantForm.get('documentExpiryDate')?.touched">
+                  {{ getFormControlError('documentExpiryDate') }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div class="form-row document-upload-container">
+              <div class="document-upload-card">
+                <div class="upload-preview" *ngIf="frontPreview">
+                  <img [src]="frontPreview" alt="Fronte documento">
+                  <button mat-icon-button color="warn" (click)="removeFrontImage()">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                <input #fileInputFront type="file" hidden (change)="onFrontImageSelected($event)" accept="image/*">
+                <button mat-stroked-button type="button" (click)="fileInputFront.click()">
+                  <mat-icon>upload</mat-icon> Carica Fronte
+                </button>
+              </div>
+            
+              <div class="document-upload-card">
+                <div class="upload-preview" *ngIf="backPreview">
+                  <img [src]="backPreview" alt="Retro documento">
+                  <button mat-icon-button color="warn" (click)="removeBackImage()">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+                <input #fileInputBack type="file" hidden (change)="onBackImageSelected($event)" accept="image/*">
+                <button mat-stroked-button type="button" (click)="fileInputBack.click()">
+                  <mat-icon>upload</mat-icon> Carica Retro
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <h3>Preferenze di comunicazione</h3>
@@ -128,4 +158,4 @@
       </form>
     </mat-card-content>
   </mat-card>
-</div> 
+</div>

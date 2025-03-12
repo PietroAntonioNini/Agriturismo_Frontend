@@ -57,7 +57,7 @@ export class DashboardComponent implements OnInit {
     this.hasError = false;
     
     forkJoin({
-      tenants: this.tenantService.getAllTenants(),
+      tenants: this.tenantService.getTenants(), // Change getAllTenants to getTenants
       apartments: this.apartmentService.getApartments(),
       activeLeases: this.leaseService.getActiveLeases(),
       expiringLeases: this.leaseService.getExpiringSoonLeases(),

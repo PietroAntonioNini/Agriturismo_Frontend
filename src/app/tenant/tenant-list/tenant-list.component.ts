@@ -40,7 +40,7 @@ import { Tenant } from '../../shared/models';
   styleUrls: ['./tenant-list.component.scss']
 })
 export class TenantListComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'documents', 'actions'];
   dataSource = new MatTableDataSource<Tenant>([]);
   isLoading = true;
   errorMessage: string | null = null;
@@ -66,8 +66,8 @@ export class TenantListComponent implements OnInit {
   loadTenants(): void {
     this.isLoading = true;
     this.errorMessage = null;
-
-    this.tenantService.getAllTenants().subscribe({
+  
+    this.tenantService.getTenants().subscribe({  // Changed from getAllTenants to getTenants
       next: (tenants) => {
         this.dataSource.data = tenants;
         this.isLoading = false;
@@ -115,4 +115,4 @@ export class TenantListComponent implements OnInit {
   getFullName(tenant: Tenant): string {
     return `${tenant.firstName} ${tenant.lastName}`;
   }
-} 
+}

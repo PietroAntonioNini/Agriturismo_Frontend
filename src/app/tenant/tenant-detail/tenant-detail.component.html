@@ -102,20 +102,6 @@
                   <span matListItemTitle>Note</span>
                   <span matListItemLine>{{ tenant.notes || 'Nessuna nota' }}</span>
                 </mat-list-item>
-                
-                <mat-divider></mat-divider>
-                
-                <mat-list-item>
-                  <span matListItemTitle>Data Creazione</span>
-                  <span matListItemLine>{{ formatDate(tenant.createdAt) }}</span>
-                </mat-list-item>
-                
-                <mat-divider></mat-divider>
-                
-                <mat-list-item>
-                  <span matListItemTitle>Ultimo Aggiornamento</span>
-                  <span matListItemLine>{{ formatDate(tenant.updatedAt) }}</span>
-                </mat-list-item>
               </mat-list>
             </div>
           </mat-tab>
@@ -159,4 +145,4 @@
       </mat-card-content>
     </mat-card>
   </ng-container>
-</div> 
+</div>
