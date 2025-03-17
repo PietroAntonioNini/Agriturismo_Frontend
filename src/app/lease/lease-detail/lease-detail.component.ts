@@ -13,9 +13,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatChipsModule } from '@angular/material/chips';
 
-import { LeaseService } from '../../shared/services/lease.service';
-import { TenantService } from '../../shared/services/tenant.service';
-import { ApartmentService } from '../../shared/services/apartment.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Lease, LeaseDocument, LeasePayment } from '../../shared/models/lease.model';
 import { Tenant } from '../../shared/models';
 import { Apartment } from '../../shared/models';
@@ -50,9 +48,7 @@ export class LeaseDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private leaseService: LeaseService,
-    private tenantService: TenantService,
-    private apartmentService: ApartmentService,
+    private apiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -69,7 +65,7 @@ export class LeaseDetailComponent implements OnInit {
 
   loadLease(id: number): void {
     this.isLoading = true;
-    this.leaseService.getLease(id).subscribe({
+    this.apiService.getById<Lease>('leases', id).subscribe({
       next: (lease) => {
         this.lease = lease;
         this.loadTenant(lease.tenantId);
@@ -84,7 +80,7 @@ export class LeaseDetailComponent implements OnInit {
   }
 
   loadTenant(tenantId: number): void {
-    this.tenantService.getTenantById(tenantId).subscribe({
+    this.apiService.getById<Tenant>('tenants', tenantId).subscribe({
       next: (tenant) => {
         this.tenant = tenant;
       },
@@ -98,7 +94,7 @@ export class LeaseDetailComponent implements OnInit {
   }
 
   loadApartment(apartmentId: number): void {
-    this.apartmentService.getApartment(apartmentId).subscribe({
+    this.apiService.getById<Apartment>('apartments', apartmentId).subscribe({
       next: (apartment) => {
         this.apartment = apartment;
       },
@@ -145,7 +141,7 @@ export class LeaseDetailComponent implements OnInit {
     if (!this.lease) return;
 
     if (confirm('Sei sicuro di voler eliminare questo contratto? Questa azione non può essere annullata.')) {
-      this.leaseService.deleteLease(this.lease.id).subscribe({
+      this.apiService.delete('leases', this.lease.id).subscribe({
         next: () => {
           this.snackBar.open('Contratto eliminato con successo', 'Chiudi', {
             duration: 3000,

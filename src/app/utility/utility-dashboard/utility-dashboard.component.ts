@@ -4,8 +4,6 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Chart, registerables } from 'chart.js';
 import { forkJoin } from 'rxjs';
 
-import { UtilityService } from '../../shared/services/utility.service';
-import { ApartmentService } from '../../shared/services/apartment.service';
 import { Apartment, MonthlyUtilityData, ApartmentUtilityData } from '../../shared/models';
 import { ReadingFormComponent } from '../reading-form/reading-form.component';
 import { ReadingHistoryComponent } from '../reading-history/reading-history.component';
@@ -17,6 +15,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 
 Chart.register(...registerables);
 
@@ -64,8 +63,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   };
 
   constructor(
-    private utilityService: UtilityService,
-    private apartmentService: ApartmentService,
+    private apiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) { }
@@ -84,8 +82,8 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     
     // Carica gli appartamenti e i dati delle utenze
     forkJoin({
-      apartments: this.apartmentService.getApartments(),
-      utilityData: this.utilityService.getUtilityDataByYear(this.selectedYear)
+      apartments: this.apiService.getAll<Apartment>('apartments'),
+      utilityData: this.apiService.getUtilityDataByYear<MonthlyUtilityData>(this.selectedYear)
     }).subscribe({
       next: (result) => {
         this.apartments = result.apartments;

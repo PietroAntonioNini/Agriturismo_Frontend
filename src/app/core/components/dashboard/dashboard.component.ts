@@ -1,15 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { forkJoin } from 'rxjs';
-import { TenantService } from '../../../shared/services/tenant.service';
-import { ApartmentService } from '../../../shared/services/apartment.service';
-import { LeaseService } from '../../../shared/services/lease.service';
-import { InvoiceService } from '../../../shared/services/invoice.service';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatButtonModule } from '@angular/material/button';
-import { RouterModule } from '@angular/router';
+import { Component, OnInit } from '@angular/core'; 
+import { CommonModule } from '@angular/common'; 
+import { forkJoin } from 'rxjs'; 
+import { MatCardModule } from '@angular/material/card'; 
+import { MatIconModule } from '@angular/material/icon'; 
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; 
+import { MatButtonModule } from '@angular/material/button'; 
+import { RouterModule } from '@angular/router'; 
+import { Apartment, Invoice, Lease, Tenant } from '../../../shared/models'; 
+import { GenericApiService } from '../../../shared/services/generic-api.service';  
 
 @Component({
   selector: 'app-dashboard',
@@ -42,10 +40,7 @@ export class DashboardComponent implements OnInit {
   errorMessage = '';
 
   constructor(
-    private tenantService: TenantService,
-    private apartmentService: ApartmentService,
-    private leaseService: LeaseService,
-    private invoiceService: InvoiceService
+    private apiService: GenericApiService
   ) {}
 
   ngOnInit(): void {
@@ -57,12 +52,13 @@ export class DashboardComponent implements OnInit {
     this.hasError = false;
     
     forkJoin({
-      tenants: this.tenantService.getTenants(), // Change getAllTenants to getTenants
-      apartments: this.apartmentService.getApartments(),
-      activeLeases: this.leaseService.getActiveLeases(),
-      expiringLeases: this.leaseService.getExpiringSoonLeases(),
-      unpaidInvoices: this.invoiceService.getUnpaidInvoices(),
-      overdueInvoices: this.invoiceService.getOverdueInvoices()
+      tenants: this.apiService.getAll<Tenant>('tenants'),
+      apartments: this.apiService.getAll<Apartment>('apartments'),
+      activeLeases: this.apiService.getActiveEntities<Lease>('leases'),
+      expiringLeases: this.apiService.getExpiringSoonEntities<Lease>('leases'),
+      // For invoices, we'll need to modify the GenericApiService or use the existing methods
+      unpaidInvoices: this.apiService.getAll<Invoice>('invoices', { isPaid: false }),
+      overdueInvoices: this.apiService.getAll<Invoice>('invoices', { isOverdue: true })
     }).subscribe({
       next: (data) => {
         this.totalTenants = data.tenants.length;

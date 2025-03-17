@@ -14,7 +14,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { TenantService } from '../../shared/services/tenant.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
 
 @Component({
@@ -40,7 +40,7 @@ import { Tenant } from '../../shared/models';
   styleUrls: ['./tenant-list.component.scss']
 })
 export class TenantListComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'documents', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'actions'];
   dataSource = new MatTableDataSource<Tenant>([]);
   isLoading = true;
   errorMessage: string | null = null;
@@ -49,7 +49,7 @@ export class TenantListComponent implements OnInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
-    private tenantService: TenantService,
+    private apiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -66,8 +66,8 @@ export class TenantListComponent implements OnInit {
   loadTenants(): void {
     this.isLoading = true;
     this.errorMessage = null;
-  
-    this.tenantService.getTenants().subscribe({  // Changed from getAllTenants to getTenants
+
+    this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
         this.dataSource.data = tenants;
         this.isLoading = false;
@@ -91,7 +91,7 @@ export class TenantListComponent implements OnInit {
 
   deleteTenant(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questo inquilino? Questa azione non può essere annullata.')) {
-      this.tenantService.deleteTenant(id).subscribe({
+      this.apiService.delete('tenants', id).subscribe({
         next: () => {
           this.loadTenants();
           this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {

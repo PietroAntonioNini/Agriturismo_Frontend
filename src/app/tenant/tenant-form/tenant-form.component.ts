@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TenantService } from '../../shared/services/tenant.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
 
 @Component({
@@ -64,7 +64,7 @@ export class TenantFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private tenantService: TenantService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -108,7 +108,7 @@ export class TenantFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.tenantService.getTenantById(id).subscribe({
+    this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.currentTenant = tenant;
         this.updateForm(tenant);
@@ -173,7 +173,6 @@ export class TenantFormComponent implements OnInit {
     return 'Campo non valido';
   }
 
-  // Fix method names to match HTML template
   onFrontImageSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -229,13 +228,26 @@ export class TenantFormComponent implements OnInit {
       ...this.tenantForm.value
     };
     
-    // Use the updated service methods with images
+    // Prepara i file da inviare (solo quelli esistenti)
+    const files: File[] = [];
+    const fileFieldPrefix = 'document';
+    
+    if (this.frontImageFile) {
+      files.push(this.frontImageFile);
+    }
+    
+    if (this.backImageFile) {
+      files.push(this.backImageFile);
+    }
+    
     if (this.isEditMode && this.tenantId) {
-      this.tenantService.updateTenant(
+      // Aggiorna inquilino esistente
+      this.apiService.update<Tenant>(
+        'tenants', 
         this.tenantId, 
-        this.currentTenant,
-        this.frontImageFile || undefined,
-        this.backImageFile || undefined
+        this.currentTenant, 
+        files.length > 0 ? files : undefined,
+        fileFieldPrefix
       ).subscribe({
         next: () => {
           this.isLoading = false;
@@ -253,11 +265,12 @@ export class TenantFormComponent implements OnInit {
         }
       });
     } else {
-      // Create new tenant
-      this.tenantService.createTenant(
+      // Crea nuovo inquilino
+      this.apiService.create<Tenant>(
+        'tenants',
         this.currentTenant,
-        this.frontImageFile || undefined,
-        this.backImageFile || undefined
+        files.length > 0 ? files : undefined,
+        fileFieldPrefix
       ).subscribe({
         next: (tenant) => {
           this.isLoading = false;

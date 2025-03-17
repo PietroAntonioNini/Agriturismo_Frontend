@@ -11,9 +11,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Lease } from '../../shared/models/lease.model';
-import { TenantService } from '../../shared/services/tenant.service';
-import { LeaseService } from '../../shared/services/lease.service';
+
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
 
 @Component({
@@ -45,8 +44,7 @@ export class TenantDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private tenantService: TenantService,
-    private leaseService: LeaseService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -64,7 +62,7 @@ export class TenantDetailComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.tenantService.getTenantById(id).subscribe({
+    this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.tenant = tenant;
         this.loadTenantLeases(id);
@@ -78,12 +76,12 @@ export class TenantDetailComponent implements OnInit {
   }
 
   loadTenantLeases(tenantId: number): void {
-    this.tenantService.getActiveLeases(tenantId).subscribe({
-      next: (leases: Lease[]) => { // Specify the type for leases
+    this.apiService.getRelatedRecords<any>('tenants', tenantId, 'active-leases').subscribe({
+      next: (leases) => {
         this.activeLeases = leases;
         this.isLoading = false;
       },
-      error: (error: any) => { // Specify the type for error
+      error: (error) => {
         console.error('Errore durante il caricamento dei contratti', error);
         this.isLoading = false;
       }
@@ -94,7 +92,7 @@ export class TenantDetailComponent implements OnInit {
     if (!this.tenant) return;
 
     if (confirm('Sei sicuro di voler eliminare questo inquilino? Questa azione non può essere annullata.')) {
-      this.tenantService.deleteTenant(this.tenant.id!).subscribe({
+      this.apiService.delete('tenants', this.tenant.id).subscribe({
         next: () => {
           this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
             duration: 3000,

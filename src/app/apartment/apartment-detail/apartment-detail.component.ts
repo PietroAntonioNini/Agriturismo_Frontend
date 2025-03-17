@@ -11,9 +11,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { LeaseService } from '../../shared/services/lease.service';
-import { Apartment, MaintenanceRecord } from '../../shared/models';
-import { ApartmentService } from '../../shared/services/apartment.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
+import { Apartment, Lease, MaintenanceRecord } from '../../shared/models';
 
 @Component({
   selector: 'app-apartment-detail',
@@ -44,30 +43,28 @@ export class ApartmentDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private apartmentService: ApartmentService,
-    private leaseService: LeaseService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      // Convert string id to number
-      this.loadApartmentData(parseInt(id, 10));
+      this.loadApartmentData(id);
     } else {
       this.errorMessage = 'ID appartamento non valido.';
       this.isLoading = false;
     }
   }
 
-  loadApartmentData(id: number): void {
+  loadApartmentData(id: string): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.apartmentService.getApartment(id).subscribe({
+    this.apiService.getById<Apartment>('apartments', id).subscribe({
       next: (apartment) => {
         this.apartment = apartment;
-        this.loadApartmentLeases(apartment.id);
+        this.loadApartmentLeases(id);
       },
       error: (error) => {
         console.error('Errore durante il caricamento dell\'appartamento', error);
@@ -77,11 +74,10 @@ export class ApartmentDetailComponent implements OnInit {
     });
   }
 
-  loadApartmentLeases(apartmentId: number): void {
-    this.leaseService.getActiveLeases().subscribe({
+  loadApartmentLeases(apartmentId: string): void {
+    this.apiService.getActiveEntities<Lease>('leases').subscribe({
       next: (leases) => {
-        // Rimuovi la conversione parseInt poiché ora apartmentId è già un numero
-        this.activeLeases = leases.filter(lease => lease.apartmentId === apartmentId);
+        this.activeLeases = leases.filter(lease => lease.apartmentId === parseInt(apartmentId, 10));
         this.isLoading = false;
       },
       error: (error) => {
@@ -95,7 +91,7 @@ export class ApartmentDetailComponent implements OnInit {
     if (!this.apartment) return;
 
     if (confirm('Sei sicuro di voler eliminare questo appartamento? Questa azione non può essere annullata.')) {
-      this.apartmentService.deleteApartment(this.apartment.id!).subscribe({
+      this.apiService.delete('apartments', this.apartment.id!).subscribe({
         next: () => {
           this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
             duration: 3000,
