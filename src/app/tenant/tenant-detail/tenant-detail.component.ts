@@ -1,3 +1,4 @@
+import { environment } from './../../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -40,6 +41,7 @@ export class TenantDetailComponent implements OnInit {
   activeLeases: any[] = [];
   isLoading = true;
   errorMessage: string | null = null;
+  environment = environment;
 
   constructor(
     private route: ActivatedRoute,
@@ -76,13 +78,17 @@ export class TenantDetailComponent implements OnInit {
   }
 
   loadTenantLeases(tenantId: number): void {
-    this.apiService.getRelatedRecords<any>('tenants', tenantId, 'active-leases').subscribe({
+    this.apiService.getAll<any>('leases', { 
+      tenantId: tenantId.toString(), 
+      status: 'active'
+    }).subscribe({
       next: (leases) => {
         this.activeLeases = leases;
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Errore durante il caricamento dei contratti', error);
+        this.errorMessage = 'Errore nel caricamento dei contratti attivi';
         this.isLoading = false;
       }
     });
@@ -116,5 +122,30 @@ export class TenantDetailComponent implements OnInit {
   formatDate(date: Date | string): string {
     if (!date) return 'N/D';
     return new Date(date).toLocaleDateString('it-IT');
+  }
+
+  getImageUrl(relativePath: string): string {
+    // Se il percorso è vuoto o null, restituisci un'immagine placeholder
+    if (!relativePath) {
+      return 'assets/images/no-image.png'; // immagine placeholder
+    }
+    
+    // Se il percorso inizia già con http, restituiscilo come è
+    if (relativePath.startsWith('http')) {
+      return relativePath;
+    }
+    
+    // Assicurati che il percorso inizi con /static/
+    if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
+      relativePath = '/static' + relativePath;
+    }
+    
+    // Altrimenti prependi il base URL dell'API
+    return `${environment.apiUrl}${relativePath}`;
+  }
+  
+  downloadDocument(docType: 'front' | 'back', filename: string): void {
+    const downloadUrl = `${environment.apiUrl}/tenants/${this.tenant!.id}/documents/download/${docType}`;
+    window.open(downloadUrl, '_blank');
   }
 }

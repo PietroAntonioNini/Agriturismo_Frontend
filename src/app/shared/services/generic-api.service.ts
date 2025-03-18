@@ -19,7 +19,9 @@ export class GenericApiService {
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
-        httpParams = httpParams.set(key, params[key]);
+        if (params[key] !== undefined && params[key] !== null) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
       });
     }
     return this.http.get<T[]>(this.apiUrl(entity), { params: httpParams });
@@ -43,14 +45,30 @@ export class GenericApiService {
   }
 
   // PUT: Aggiornamento elemento (anche con immagini opzionali)
-  update<T>(entity: string, id: number | string, data: Partial<T>, files?: File[], fileFieldPrefix?: string): Observable<T> {
-    if (!files || files.length === 0) {
-      return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, data);
+  update<T>(entity: string, id: number | string, data: Partial<T>, files?: File[]): Observable<T> {
+    // Per i tenant, usa SEMPRE l'endpoint with-images
+    if (entity === 'tenants') {
+        const formData = new FormData();
+        formData.append('tenant', JSON.stringify(data));
+        
+        if (files && files.length > 0) {
+            files.forEach((file, index) => {
+                const fieldName = index === 0 ? 'documentFrontImage' : 'documentBackImage';
+                formData.append(fieldName, file);
+            });
+        }
+        
+        return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
     }
-
+    
+    // Per altre entità, comportamento normale
+    if (!files || files.length === 0) {
+        return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, data);
+    }
+    
     const formData = new FormData();
     formData.append(entity, JSON.stringify(data));
-    files.forEach((file, index) => formData.append(`${fileFieldPrefix || 'file'}${index}`, file));
+    files.forEach((file, index) => formData.append(`file${index}`, file));
     return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
   }
 
