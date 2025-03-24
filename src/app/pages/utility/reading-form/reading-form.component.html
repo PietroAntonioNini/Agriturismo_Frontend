@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>Nuova Lettura Contatore</h2>
+
+<div *ngIf="isLoading" class="loading-container">
+  <mat-spinner diameter="40"></mat-spinner>
+</div>
+
+<div *ngIf="errorMessage" class="error-message">
+  <mat-icon>error</mat-icon>
+  <span>{{ errorMessage }}</span>
+</div>
+
+<form [formGroup]="readingForm" (ngSubmit)="onSubmit()">
+  <mat-dialog-content>
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Appartamento</mat-label>
+        <mat-select formControlName="apartmentId">
+          <mat-option *ngFor="let apartment of data.apartments" [value]="apartment.id">
+            {{ apartment.name }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="readingForm.get('apartmentId')?.invalid && readingForm.get('apartmentId')?.touched">
+          {{ getFormControlError('apartmentId') }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Tipo Utenza</mat-label>
+        <mat-select formControlName="type">
+          <mat-option *ngFor="let type of utilityTypes" [value]="type.value">
+            {{ type.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="readingForm.get('type')?.invalid && readingForm.get('type')?.touched">
+          {{ getFormControlError('type') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Data Lettura</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="readingDate">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error *ngIf="readingForm.get('readingDate')?.invalid && readingForm.get('readingDate')?.touched">
+          {{ getFormControlError('readingDate') }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Lettura Precedente</mat-label>
+        <input matInput type="number" formControlName="previousReading">
+        <mat-error *ngIf="readingForm.get('previousReading')?.invalid && readingForm.get('previousReading')?.touched">
+          {{ getFormControlError('previousReading') }}
+        </mat-error>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline">
+        <mat-label>Lettura Attuale</mat-label>
+        <input matInput type="number" formControlName="currentReading">
+        <mat-error *ngIf="readingForm.get('currentReading')?.invalid && readingForm.get('currentReading')?.touched">
+          {{ getFormControlError('currentReading') }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>Costo Unitario</mat-label>
+        <input matInput type="number" formControlName="unitCost">
+        <span matSuffix style="margin-right: 10px;">€</span>
+        <mat-error *ngIf="readingForm.get('unitCost')?.invalid && readingForm.get('unitCost')?.touched">
+          {{ getFormControlError('unitCost') }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">Annulla</button>
+    <button mat-raised-button color="primary" type="submit" [disabled]="readingForm.invalid || isLoading">Salva</button>
+  </mat-dialog-actions>
+</form>

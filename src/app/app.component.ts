@@ -7,9 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
 // Componenti core
-import { HeaderComponent } from './core/components/header/header.component';
-import { SidenavComponent } from './core/components/sidenav/sidenav.component';
-import { FooterComponent } from './core/components/footer/footer.component';
+import { HeaderComponent } from './shared/components/header/header.component';
+import { SidenavComponent } from './shared/components/sidenav/sidenav.component';
+import { FooterComponent } from './shared/components/footer/footer.component';
 
 @Component({
   selector: 'app-root',

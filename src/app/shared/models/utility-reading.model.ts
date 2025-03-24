@@ -10,7 +10,6 @@ export interface UtilityReading {
     totalCost: number; // consumption * unitCost
     isPaid: boolean;
     paidDate?: Date;
-    notes?: string;
     createdAt: Date;
     updatedAt: Date;
     electricityConsumption?: number;

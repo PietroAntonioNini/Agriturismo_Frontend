@@ -1,0 +1,170 @@
+<div class="container">
+  <div class="action-buttons">
+    <button mat-raised-button color="primary" routerLink="/apartment/list">
+      <mat-icon>arrow_back</mat-icon>
+      Torna alla lista
+    </button>
+  </div>
+  
+  <mat-card class="apartment-form-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h1>{{ isEditMode ? 'Modifica Appartamento' : 'Nuovo Appartamento' }}</h1>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading spinner -->
+      <div *ngIf="isLoading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <!-- Messaggio di errore -->
+      <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form [formGroup]="apartmentForm" (ngSubmit)="onSubmit()" class="apartment-form">
+        <!-- Informazioni di base -->
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Nome</mat-label>
+            <input matInput formControlName="name" placeholder="Inserisci il nome">
+            <mat-error *ngIf="apartmentForm.get('name')?.invalid && apartmentForm.get('name')?.touched">
+              {{ getFormControlError('name') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="prezzo">
+            <mat-label>Canone Mensile (€)</mat-label>
+            <input matInput type="number" formControlName="monthlyRent" placeholder="Inserisci il canone mensile">
+            <mat-error *ngIf="apartmentForm.get('monthlyRent')?.invalid && apartmentForm.get('monthlyRent')?.touched">
+              {{ getFormControlError('monthlyRent') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="stato">
+            <mat-label>Stato</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="available">Disponibile</mat-option>
+              <mat-option value="occupied">Occupato</mat-option>
+              <mat-option value="maintenance">In Manutenzione</mat-option>
+            </mat-select>
+            <mat-error *ngIf="apartmentForm.get('status')?.invalid && apartmentForm.get('status')?.touched">
+              {{ getFormControlError('status') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Superficie (m²)</mat-label>
+            <input matInput type="number" formControlName="squareMeters" placeholder="Inserisci i metri quadrati">
+            <mat-error *ngIf="apartmentForm.get('squareMeters')?.invalid && apartmentForm.get('squareMeters')?.touched">
+              {{ getFormControlError('squareMeters') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Piano</mat-label>
+            <input matInput type="number" formControlName="floor" placeholder="Inserisci il piano">
+            <mat-error *ngIf="apartmentForm.get('floor')?.invalid && apartmentForm.get('floor')?.touched">
+              {{ getFormControlError('floor') }}
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Stanze</mat-label>
+            <input matInput type="number" formControlName="rooms" placeholder="Numero di stanze">
+            <mat-error *ngIf="apartmentForm.get('rooms')?.invalid && apartmentForm.get('rooms')?.touched">
+              {{ getFormControlError('rooms') }}
+            </mat-error>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline">
+            <mat-label>Bagni</mat-label>
+            <input matInput type="number" formControlName="bathrooms" placeholder="Numero di bagni">
+            <mat-error *ngIf="apartmentForm.get('bathrooms')?.invalid && apartmentForm.get('bathrooms')?.touched">
+              {{ getFormControlError('bathrooms') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descrizione (Opzionale)</mat-label>
+            <textarea matInput cdkTextareaAutosize formControlName="description" placeholder="Inserisci la descrizione"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Caratteristiche -->
+        <h3>Caratteristiche</h3>
+        <div class="form-row checkbox-row">
+          <mat-checkbox formControlName="hasParking">Parcheggio</mat-checkbox>
+          <mat-checkbox formControlName="isFurnished">Arredato</mat-checkbox>
+          <mat-checkbox formControlName="isAvailable">Disponibile</mat-checkbox>
+        </div>
+
+        <!-- Servizi/Amenità -->
+        <h3>Servizi (Opzionali)</h3>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Servizi disponibili</mat-label>
+            <mat-chip-grid #chipGrid aria-label="Seleziona servizi">
+              <mat-chip-row *ngFor="let amenity of selectedAmenities" 
+                            (removed)="removeAmenity(amenity)">
+                {{amenity}}
+                <button matChipRemove>
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip-row>
+              <input placeholder="Nuovo servizio..." 
+                     [matChipInputFor]="chipGrid"
+                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                     (matChipInputTokenEnd)="addAmenity($event)">
+            </mat-chip-grid>
+          </mat-form-field>
+        </div>
+
+        <!-- Note -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Note</mat-label>
+            <textarea matInput cdkTextareaAutosize formControlName="notes" placeholder="Inserisci eventuali note"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Immagini -->
+        <h3>Immagini dell'appartamento (Opzionali)</h3>
+        <div class="form-row image-upload-container">
+          <div *ngFor="let preview of imagePreviews; let i = index" class="image-upload-card">
+            <div class="upload-preview" *ngIf="imagePreviews[i]">
+              <img [src]="imagePreviews[i]" alt="Immagine appartamento {{i+1}}">
+              <button mat-icon-button color="warn" (click)="removeImage(i)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            <div class="upload-placeholder" *ngIf="!imagePreviews[i]">
+              <mat-icon>image</mat-icon>
+              <span>Immagine {{i+1}}</span>
+            </div>
+            <input #fileInput type="file" hidden (change)="onImageSelected($event, i)" accept="image/*">
+            <button mat-stroked-button type="button" (click)="fileInput.click()">
+              <mat-icon>upload</mat-icon> {{ imagePreviews[i] ? 'Cambia' : 'Carica' }} immagine
+            </button>
+          </div>
+        </div>
+
+        <mat-divider class="form-divider"></mat-divider>
+
+        <div class="form-actions">
+          <button mat-button type="button" routerLink="/apartment/list">Annulla</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+            {{ isEditMode ? 'Aggiorna' : 'Salva' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

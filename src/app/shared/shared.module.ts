@@ -30,12 +30,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatNativeDateModule } from '@angular/material/core';
 
 // Servizi
-import { TenantService } from './services/tenant.service';
-import { ApartmentService } from './services/apartment.service';
-import { LeaseService } from './services/lease.service';
-import { UtilityService } from './services/utility.service';
+import { GenericApiService } from './services/generic-api.service';
 import { InvoiceService } from './services/invoice.service';
 import { AuthService } from './services/auth.service';
+
+// Layout Components
+import { HeaderComponent } from './components/header/header.component';
+import { SidenavComponent } from './components/sidenav/sidenav.component';
+import { FooterComponent } from './components/footer/footer.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
 
 const materialModules = [
   MatButtonModule,
@@ -71,6 +75,11 @@ const materialModules = [
     ReactiveFormsModule,
     RouterModule,
     HttpClientModule,
+    HeaderComponent,
+    SidenavComponent,
+    FooterComponent,
+    DashboardComponent,
+    PageNotFoundComponent,
     ...materialModules
   ],
   exports: [
@@ -79,13 +88,15 @@ const materialModules = [
     ReactiveFormsModule,
     RouterModule,
     HttpClientModule,
+    HeaderComponent,
+    SidenavComponent,
+    FooterComponent,
+    DashboardComponent,
+    PageNotFoundComponent,
     ...materialModules
   ],
   providers: [
-    TenantService,
-    ApartmentService,
-    LeaseService,
-    UtilityService,
+    GenericApiService,
     InvoiceService,
     AuthService
   ]

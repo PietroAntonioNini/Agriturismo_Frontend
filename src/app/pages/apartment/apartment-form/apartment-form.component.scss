@@ -1,0 +1,169 @@
+.container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  .right-buttons {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+.apartment-form-card {
+  margin-bottom: 20px;
+  .apartment-form {
+    padding-top: 20px;
+
+    .stato, .prezzo{
+      max-width: 21%;
+    }
+  }
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+  
+  &.checkbox-row {
+    gap: 24px;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.number-field {
+  max-width: 120px;
+}
+
+.form-divider {
+  margin: 24px 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+mat-form-field {
+  flex: 1;
+}
+
+h3 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  padding-bottom: 8px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+mat-chip-grid {
+  width: 100%;
+}
+
+/* Stili per il caricamento delle immagini */
+.image-upload-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.image-upload-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.upload-preview {
+  position: relative;
+  margin-bottom: 10px;
+  width: 100%;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.upload-preview img {
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: contain;
+}
+
+.upload-preview button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 150px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  
+  mat-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    color: #bdbdbd;
+    margin-bottom: 8px;
+  }
+  
+  span {
+    color: #757575;
+    font-size: 14px;
+  }
+}

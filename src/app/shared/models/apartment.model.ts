@@ -8,7 +8,6 @@ export interface Apartment {
   squareMeters: number;
   rooms: number;
   bathrooms: number;
-  hasBalcony: boolean;
   hasParking: boolean;
   isFurnished: boolean;
   monthlyRent: number;

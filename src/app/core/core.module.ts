@@ -11,13 +11,6 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 
-// Layout Components
-import { HeaderComponent } from './components/header/header.component';
-import { SidenavComponent } from './components/sidenav/sidenav.component';
-import { FooterComponent } from './components/footer/footer.component';
-import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
-
 @NgModule({
   declarations: [
     
@@ -27,17 +20,6 @@ import { PageNotFoundComponent } from './components/page-not-found/page-not-foun
     RouterModule,
     HttpClientModule,
     SharedModule,
-    HeaderComponent,
-    SidenavComponent,
-    FooterComponent,
-    DashboardComponent,
-    PageNotFoundComponent
-  ],
-  exports: [
-    HeaderComponent,
-    SidenavComponent,
-    FooterComponent,
-    DashboardComponent
   ],
   providers: [
     AuthGuard,

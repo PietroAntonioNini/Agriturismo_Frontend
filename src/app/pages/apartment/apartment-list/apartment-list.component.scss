@@ -1,0 +1,144 @@
+.container {
+  padding: 20px 60px 40px;
+}
+
+.apartment-card {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  margin-bottom: 20px;
+}
+
+.title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0;
+    margin-right: 60px;
+    font-size: 24px;
+    font-weight: 500;
+  }
+}
+
+.filter-field {
+  width: 30%;
+  margin-bottom: 20px;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  color: #d32f2f;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+.table-container {
+  position: relative;
+  max-width: 90%;
+  min-height: 200px;
+  margin: auto;
+  overflow: auto;
+}
+
+.loading-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apartment-table {
+  width: 100%;
+}
+
+.action-buttons {
+  height: 100%;
+  text-align: center;
+}
+
+.no-data-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: rgba(0, 0, 0, 0.54);
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+/* Stile per i bottoni di azione */
+.mat-icon-button {
+  line-height: 1;
+}
+
+/* Stili per lo status dell'appartamento */
+.status-available {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 12px;
+}
+
+.status-occupied {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #2196f3;
+  color: white;
+  font-size: 12px;
+}
+
+.status-maintenance {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background-color: #ff9800;
+  color: white;
+  font-size: 12px;
+}
+
+.centered-header{
+  justify-content: center;
+}
+
+.mat-column-name{
+  text-align: center;
+}
+
+.mat-column-status{
+  text-align: center;
+}
+
+.mat-column-rooms{
+  text-align: center;
+}
+
+.mat-column-squareMeters{
+  text-align: center;
+}
+
+.mat-column-monthlyRent{
+  text-align: center;
+}
+
+.mat-column-floor{
+  text-align: center;
+}
