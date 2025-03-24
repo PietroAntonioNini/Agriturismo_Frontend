@@ -1,3 +1,4 @@
+import { GenericApiService } from './../../shared/services/genericApi.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -17,7 +18,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 
-import { ApartmentService } from '../../shared/services/apartment.service';
+// import { ApartmentService } from '../../shared/services/apartment.service';
 import { Apartment } from '../../shared/models';
 
 @Component({
@@ -61,7 +62,7 @@ export class ApartmentFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private apartmentService: ApartmentService,
+    private genericApiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -102,7 +103,7 @@ export class ApartmentFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.apartmentService.getApartment(id).subscribe({
+    this.genericApiService.getById<Apartment>('apartment', id).subscribe({
       next: (apartment) => {
         this.currentApartment = apartment;
         this.updateForm(apartment);
@@ -205,7 +206,8 @@ export class ApartmentFormComponent implements OnInit {
     
     if (this.isEditMode && this.apartmentId) {
       // Aggiorna un appartamento esistente
-      this.apartmentService.updateApartment(
+      this.genericApiService.update<Apartment>(
+        "apartament",
         this.apartmentId, 
         this.currentApartment,
         validImageFiles.length > 0 ? validImageFiles : undefined
@@ -227,8 +229,9 @@ export class ApartmentFormComponent implements OnInit {
       });
     } else {
       // Crea un nuovo appartamento
-      this.apartmentService.createApartment(
-        this.currentApartment,
+      this.genericApiService.create<Apartment>(
+        "apartment",
+        this.currentApartment ,
         validImageFiles.length > 0 ? validImageFiles : undefined
       ).subscribe({
         next: (apartment) => {

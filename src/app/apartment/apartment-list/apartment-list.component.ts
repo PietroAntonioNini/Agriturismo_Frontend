@@ -14,7 +14,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Apartment } from '../../shared/models';
-import { ApartmentService } from '../../shared/services/apartment.service';
+import { GenericApiService } from '../../shared/services/genericApi.service';
 
 @Component({
   selector: 'app-apartment-list',
@@ -49,7 +49,7 @@ export class ApartmentListComponent implements OnInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
-    private apartmentService: ApartmentService,
+    private genericApiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -67,7 +67,7 @@ export class ApartmentListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.apartmentService.getApartments().subscribe({
+    this.genericApiService.getAll<Apartment>("apartment").subscribe({
       next: (apartments) => {
         this.dataSource.data = apartments;
         this.isLoading = false;
@@ -91,7 +91,7 @@ export class ApartmentListComponent implements OnInit {
 
   deleteApartment(id: string): void {
     if (confirm('Sei sicuro di voler eliminare questo appartamento? Questa azione non può essere annullata.')) {
-      this.apartmentService.deleteApartment(id).subscribe({
+      this.genericApiService.delete("apartment", id).subscribe({
         next: () => {
           this.loadApartments();
           this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {

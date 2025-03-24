@@ -1,3 +1,4 @@
+import { GenericApiService } from './../../shared/services/genericApi.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -12,8 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { LeaseService } from '../../shared/services/lease.service';
-import { Apartment, MaintenanceRecord } from '../../shared/models';
-import { ApartmentService } from '../../shared/services/apartment.service';
+import { Apartment } from '../../shared/models';
 
 @Component({
   selector: 'app-apartment-detail',
@@ -44,7 +44,7 @@ export class ApartmentDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private apartmentService: ApartmentService,
+    private genericApiService: GenericApiService,
     private leaseService: LeaseService,
     private snackBar: MatSnackBar
   ) {}
@@ -64,7 +64,7 @@ export class ApartmentDetailComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.apartmentService.getApartment(id).subscribe({
+    this.genericApiService.getById<Apartment>("apartment", id).subscribe({
       next: (apartment) => {
         this.apartment = apartment;
         this.loadApartmentLeases(apartment.id);
@@ -77,10 +77,10 @@ export class ApartmentDetailComponent implements OnInit {
     });
   }
 
+  //getActiveLeases da mettere in genericApiService
   loadApartmentLeases(apartmentId: number): void {
     this.leaseService.getActiveLeases().subscribe({
       next: (leases) => {
-        // Rimuovi la conversione parseInt poiché ora apartmentId è già un numero
         this.activeLeases = leases.filter(lease => lease.apartmentId === apartmentId);
         this.isLoading = false;
       },
@@ -91,11 +91,11 @@ export class ApartmentDetailComponent implements OnInit {
     });
   }
 
-  deleteApartment(): void {
+  deleteApartment(id: string): void {
     if (!this.apartment) return;
 
     if (confirm('Sei sicuro di voler eliminare questo appartamento? Questa azione non può essere annullata.')) {
-      this.apartmentService.deleteApartment(this.apartment.id!).subscribe({
+      this.genericApiService.delete("apartment", id).subscribe({
         next: () => {
           this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
             duration: 3000,

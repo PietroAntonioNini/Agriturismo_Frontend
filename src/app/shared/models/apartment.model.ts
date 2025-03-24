@@ -1,4 +1,5 @@
 import { UtilityReading } from './utility-reading.model';
+
 export interface Apartment {
   id: number;
   name: string;
@@ -27,8 +28,6 @@ export interface Apartment {
   createdAt?: Date;
   updatedAt?: Date;
 }
-
-// Le altre interfacce come sopra
 
 export interface MaintenanceRecord {
     id: number;
