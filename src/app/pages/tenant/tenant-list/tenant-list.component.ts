@@ -40,7 +40,7 @@ import { Tenant } from '../../../shared/models';
   styleUrls: ['./tenant-list.component.scss']
 })
 export class TenantListComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'documents', 'actions'];
   dataSource = new MatTableDataSource<Tenant>([]);
   isLoading = true;
   errorMessage: string | null = null;

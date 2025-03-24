@@ -1,17 +1,44 @@
 .container {
-  padding: 20px;
+  padding: 20px 60px 40px;
 }
 
 .filters-container {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-top: 20px;
   align-items: center;
   
   mat-form-field {
     flex: 1;
     min-width: 200px;
+    max-width: 250px;
+  }
+
+  button{
+    margin-bottom: 20px !important;
+  }
+}
+
+.lease-card {
+  margin-bottom: 20px;
+}
+
+.page-title {
+  margin-bottom: 20px;
+}
+
+.title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h1 {
+    margin: 0;
+    margin-right: 60px;
+    font-size: 24px;
+    font-weight: 500;
   }
 }
 
@@ -21,10 +48,25 @@
   justify-content: flex-end;
 }
 
+.error-message {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  color: #f44336;
+  
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
 .table-container {
   position: relative;
+  max-width: 90%;
   min-height: 200px;
   overflow: auto;
+  margin: auto;
   
   .loading-shade {
     position: absolute;
@@ -38,18 +80,9 @@
     align-items: center;
     justify-content: center;
   }
-  
-  .error-message {
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f5f5f5;
-    color: #f44336;
-    
-    mat-icon {
-      margin-right: 8px;
-    }
+
+  .apartment-table {
+    width: 100%;
   }
 
 }

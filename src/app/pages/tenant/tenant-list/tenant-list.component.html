@@ -71,7 +71,7 @@
 
           <!-- Document Status Column -->
           <ng-container matColumnDef="documents">
-            <th mat-header-cell *matHeaderCellDef> Documenti </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Documenti </th>
             <td mat-cell *matCellDef="let tenant">
               <mat-icon [style.color]="tenant.documentFrontImage && tenant.documentBackImage ? 'green' : 'red'">
                 {{ tenant.documentFrontImage && tenant.documentBackImage ? 'check_circle' : 'cancel' }}

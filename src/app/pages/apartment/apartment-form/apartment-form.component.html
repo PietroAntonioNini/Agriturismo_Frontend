@@ -39,6 +39,7 @@
           <mat-form-field appearance="outline" class="prezzo">
             <mat-label>Canone Mensile (€)</mat-label>
             <input matInput type="number" formControlName="monthlyRent" placeholder="Inserisci il canone mensile">
+            <span matTextPrefix>€&nbsp;</span>
             <mat-error *ngIf="apartmentForm.get('monthlyRent')?.invalid && apartmentForm.get('monthlyRent')?.touched">
               {{ getFormControlError('monthlyRent') }}
             </mat-error>
@@ -61,6 +62,7 @@
           <mat-form-field appearance="outline">
             <mat-label>Superficie (m²)</mat-label>
             <input matInput type="number" formControlName="squareMeters" placeholder="Inserisci i metri quadrati">
+            <span matTextPrefix>m²&nbsp;</span>
             <mat-error *ngIf="apartmentForm.get('squareMeters')?.invalid && apartmentForm.get('squareMeters')?.touched">
               {{ getFormControlError('squareMeters') }}
             </mat-error>

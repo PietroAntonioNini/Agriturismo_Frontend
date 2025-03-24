@@ -25,7 +25,7 @@
 }
 
 .filter-field {
-  width: 100%;
+  width: 30%;
   margin-bottom: 20px;
 }
 
@@ -89,3 +89,31 @@
 .mat-icon-button {
   line-height: 1;
 } 
+
+.mat-column-name{
+  width: 10% !important;
+}
+
+.mat-column-name{
+  width: 18% !important;
+}
+
+.mat-column-email{
+  width: 18% !important;
+}
+
+.mat-column-phone{
+  width: 10% !important;
+}
+
+.mat-column-documentType{
+  width: 13% !important;
+}
+
+.mat-column-documentNumber{
+  width: 13% !important;
+}
+
+.mat-column-documents{
+  width: 11% !important;
+}

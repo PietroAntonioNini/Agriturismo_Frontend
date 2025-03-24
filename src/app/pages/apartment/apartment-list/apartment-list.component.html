@@ -16,7 +16,7 @@
       <!-- Filtro -->
       <mat-form-field appearance="outline" class="filter-field">
         <mat-label>Filtra</mat-label>
-        <input matInput (keyup)="applyFilter($event)" placeholder="Es. Appartamento Centro">
+        <input matInput (keyup)="applyFilter($event)" placeholder="Es. Appartamento 1">
         <mat-icon matSuffix>search</mat-icon>
       </mat-form-field>
 
@@ -41,13 +41,13 @@
 
           <!-- Nome Column -->
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="centered-header"> Nome </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Nome </th>
             <td mat-cell *matCellDef="let apartment"> {{ apartment.name }} </td>
           </ng-container>
 
           <!-- Stato Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="centered-header"> Stato </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Stato </th>
             <td mat-cell *matCellDef="let apartment"> 
               <span [ngClass]="getStatusClass(apartment.status)">
                 {{ getStatusLabel(apartment.status) }}
@@ -57,25 +57,25 @@
 
           <!-- Stanze Column -->
           <ng-container matColumnDef="rooms">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="centered-header"> Stanze </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Stanze </th>
             <td mat-cell *matCellDef="let apartment"> {{ apartment.rooms }} </td>
           </ng-container>
 
           <!-- Metri Quadri Column -->
           <ng-container matColumnDef="squareMeters">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="centered-header"> M² </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> M² </th>
             <td mat-cell *matCellDef="let apartment"> {{ apartment.squareMeters }} m²</td>
           </ng-container>
 
           <!-- Canone Column -->
           <ng-container matColumnDef="monthlyRent">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="centered-header"> Canone </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Canone </th>
             <td mat-cell *matCellDef="let apartment"> €{{ apartment.monthlyRent }} </td>
           </ng-container>
 
           <!-- Piano Column -->
           <ng-container matColumnDef="floor">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header class="centered-header"> Piano </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Piano </th>
             <td mat-cell *matCellDef="let apartment"> {{ apartment.floor }} </td>
           </ng-container>
 

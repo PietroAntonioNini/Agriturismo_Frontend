@@ -39,8 +39,7 @@ import { GenericApiService } from '../../../shared/services/generic-api.service'
   styleUrls: ['./apartment-list.component.scss']
 })
 export class ApartmentListComponent implements OnInit {
-  // Rimuoviamo 'address' e aggiungiamo 'floor' alle colonne
-  displayedColumns: string[] = ['id', 'name', 'rooms', 'squareMeters', 'monthlyRent', 'floor', 'status', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'status', 'squareMeters', 'monthlyRent', 'floor', 'rooms', 'actions'];
   dataSource = new MatTableDataSource<Apartment>([]);
   isLoading = true;
   errorMessage: string | null = null;

@@ -1,7 +1,15 @@
 <div class="container">
-  <mat-card>
+  <mat-card class="lease-card">
     <mat-card-header>
-      <mat-card-title>Gestione Contratti</mat-card-title>
+      <mat-card-title class="page-title">
+        <div class="title-section">
+          <h1>Gestione Contratti</h1>
+          <button mat-raised-button color="primary" routerLink="/lease/new">
+            <mat-icon>add</mat-icon> 
+            Nuovo Contratto
+          </button>
+        </div>
+      </mat-card-title>
     </mat-card-header>
     
     <mat-card-content>
@@ -40,12 +48,10 @@
           <mat-icon>clear</mat-icon> Reset
         </button>
       </div>
-      
-      <!-- Pulsante Nuovo Contratto -->
-      <div class="actions-container">
-        <button mat-raised-button color="primary" routerLink="/lease/new">
-          <mat-icon>add</mat-icon> Nuovo Contratto
-        </button>
+
+      <div *ngIf="errorMessage" class="error-message">
+        <mat-icon>error</mat-icon>
+        <span>{{errorMessage}}</span>
       </div>
       
       <!-- Tabella Contratti -->
@@ -54,12 +60,7 @@
           <mat-spinner></mat-spinner>
         </div>
         
-        <div *ngIf="errorMessage" class="error-message">
-          <mat-icon>error</mat-icon>
-          <span>{{errorMessage}}</span>
-        </div>
-        
-        <table mat-table [dataSource]="dataSource" matSort>
+        <table mat-table [dataSource]="dataSource" matSort class="lease-table">
           <!-- ID Column -->
           <ng-container matColumnDef="id">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
@@ -135,7 +136,7 @@
       </table>
       
       <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleziona pagina di appartamenti"></mat-paginator>
-    </div>
+      </div>
   </mat-card-content>
 </mat-card>
 </div>
