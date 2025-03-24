@@ -105,28 +105,30 @@
             </div>
             <div class="form-row document-upload-container">
               <div class="document-upload-card">
-                <div class="upload-preview" *ngIf="frontPreview">
-                  <img [src]="frontPreview" alt="Fronte documento">
+                <div class="upload-preview" *ngIf="frontPreview || currentTenant?.documentFrontImage">
+                  <img [src]="frontPreview || currentTenant.documentFrontImage" alt="Fronte documento">
                   <button mat-icon-button color="warn" (click)="removeFrontImage()">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
                 <input #fileInputFront type="file" hidden (change)="onFrontImageSelected($event)" accept="image/*">
                 <button mat-stroked-button type="button" (click)="fileInputFront.click()">
-                  <mat-icon>upload</mat-icon> Carica Fronte
+                  <mat-icon>upload</mat-icon>
+                  {{ frontPreview || currentTenant.documentFrontImage ? 'Cambia' : 'Carica' }} Fronte
                 </button>
               </div>
             
               <div class="document-upload-card">
-                <div class="upload-preview" *ngIf="backPreview">
-                  <img [src]="backPreview" alt="Retro documento">
+                <div class="upload-preview" *ngIf="backPreview || currentTenant?.documentBackImage">
+                  <img [src]="backPreview || currentTenant.documentBackImage" alt="Retro documento">
                   <button mat-icon-button color="warn" (click)="removeBackImage()">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
                 <input #fileInputBack type="file" hidden (change)="onBackImageSelected($event)" accept="image/*">
                 <button mat-stroked-button type="button" (click)="fileInputBack.click()">
-                  <mat-icon>upload</mat-icon> Carica Retro
+                  <mat-icon>upload</mat-icon>
+                  {{ backPreview || currentTenant.documentBackImage ? 'Cambia' : 'Carica' }} Retro
                 </button>
               </div>
             </div>

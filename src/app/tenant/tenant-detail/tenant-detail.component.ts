@@ -1,3 +1,4 @@
+import { environment } from './../../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -11,9 +12,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Lease } from '../../shared/models/lease.model';
-import { TenantService } from '../../shared/services/tenant.service';
-import { LeaseService } from '../../shared/services/lease.service';
+
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
 
 @Component({
@@ -41,12 +41,12 @@ export class TenantDetailComponent implements OnInit {
   activeLeases: any[] = [];
   isLoading = true;
   errorMessage: string | null = null;
+  environment = environment;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private tenantService: TenantService,
-    private leaseService: LeaseService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -64,7 +64,7 @@ export class TenantDetailComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.tenantService.getTenantById(id).subscribe({
+    this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.tenant = tenant;
         this.loadTenantLeases(id);
@@ -78,13 +78,17 @@ export class TenantDetailComponent implements OnInit {
   }
 
   loadTenantLeases(tenantId: number): void {
-    this.tenantService.getActiveLeases(tenantId).subscribe({
-      next: (leases: Lease[]) => { // Specify the type for leases
+    this.apiService.getAll<any>('leases', { 
+      tenantId: tenantId.toString(), 
+      status: 'active'
+    }).subscribe({
+      next: (leases) => {
         this.activeLeases = leases;
         this.isLoading = false;
       },
-      error: (error: any) => { // Specify the type for error
+      error: (error) => {
         console.error('Errore durante il caricamento dei contratti', error);
+        this.errorMessage = 'Errore nel caricamento dei contratti attivi';
         this.isLoading = false;
       }
     });
@@ -94,7 +98,7 @@ export class TenantDetailComponent implements OnInit {
     if (!this.tenant) return;
 
     if (confirm('Sei sicuro di voler eliminare questo inquilino? Questa azione non può essere annullata.')) {
-      this.tenantService.deleteTenant(this.tenant.id!).subscribe({
+      this.apiService.delete('tenants', this.tenant.id).subscribe({
         next: () => {
           this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
             duration: 3000,
@@ -118,5 +122,30 @@ export class TenantDetailComponent implements OnInit {
   formatDate(date: Date | string): string {
     if (!date) return 'N/D';
     return new Date(date).toLocaleDateString('it-IT');
+  }
+
+  getImageUrl(relativePath: string): string {
+    // Se il percorso è vuoto o null, restituisci un'immagine placeholder
+    if (!relativePath) {
+      return 'assets/images/no-image.png'; // immagine placeholder
+    }
+    
+    // Se il percorso inizia già con http, restituiscilo come è
+    if (relativePath.startsWith('http')) {
+      return relativePath;
+    }
+    
+    // Assicurati che il percorso inizi con /static/
+    if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
+      relativePath = '/static' + relativePath;
+    }
+    
+    // Altrimenti prependi il base URL dell'API
+    return `${environment.apiUrl}${relativePath}`;
+  }
+  
+  downloadDocument(docType: 'front' | 'back', filename: string): void {
+    const downloadUrl = `${environment.apiUrl}/tenants/${this.tenant!.id}/documents/download/${docType}`;
+    window.open(downloadUrl, '_blank');
   }
 }

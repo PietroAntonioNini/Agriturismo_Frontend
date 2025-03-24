@@ -11,7 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { UtilityService } from '../../shared/services/utility.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { UtilityReading, Apartment } from '../../shared/models';
 
 @Component({
@@ -44,7 +44,7 @@ export class ReadingHistoryComponent implements OnInit {
   errorMessage: string | null = null;
   
   constructor(
-    private utilityService: UtilityService,
+    private apiService: GenericApiService,
     public dialogRef: MatDialogRef<ReadingHistoryComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { 
       apartments: Apartment[],
@@ -60,7 +60,7 @@ export class ReadingHistoryComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
     
-    this.utilityService.getAllReadings().subscribe({
+    this.apiService.getAllReadings<any>().subscribe({
       next: (readings) => {
         // Aggiungi il nome dell'appartamento ai dati
         const readingsWithApartmentName = readings.map(reading => {
@@ -117,7 +117,7 @@ export class ReadingHistoryComponent implements OnInit {
 
   deleteReading(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questa lettura?')) {
-      this.utilityService.deleteReading(id).subscribe({
+      this.apiService.deleteReading(id).subscribe({
         next: () => {
           this.loadReadings();
         },

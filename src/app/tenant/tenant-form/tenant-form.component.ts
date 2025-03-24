@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TenantService } from '../../shared/services/tenant.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
 
 @Component({
@@ -64,7 +64,7 @@ export class TenantFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private tenantService: TenantService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -92,8 +92,6 @@ export class TenantFormComponent implements OnInit {
       documentType: ['', Validators.required],
       documentNumber: ['', Validators.required],
       documentExpiryDate: ['', Validators.required],
-      documentFrontImage: [null],
-      documentBackImage: [null],
       address: [''],
       communicationPreferences: this.fb.group({
         email: [false],
@@ -108,7 +106,7 @@ export class TenantFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.tenantService.getTenantById(id).subscribe({
+    this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.currentTenant = tenant;
         this.updateForm(tenant);
@@ -173,7 +171,6 @@ export class TenantFormComponent implements OnInit {
     return 'Campo non valido';
   }
 
-  // Fix method names to match HTML template
   onFrontImageSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -201,13 +198,35 @@ export class TenantFormComponent implements OnInit {
   removeFrontImage(): void {
     this.frontPreview = null;
     this.frontImageFile = null;
-    this.tenantForm.get('documentFrontImage')?.setValue(null);
+    if (this.currentTenant.documentFrontImage) {
+      this.apiService.deleteFile('tenants', this.tenantId!, 'documentFrontImage').subscribe({
+        next: () => {
+          this.currentTenant.documentFrontImage = '';
+          this.snackBar.open('Fronte del documento rimosso', 'Chiudi', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Errore nella rimozione del documento', error);
+          this.snackBar.open('Errore nella rimozione del documento', 'Chiudi', { duration: 3000 });
+        }
+      });
+    }
   }
 
   removeBackImage(): void {
     this.backPreview = null;
     this.backImageFile = null;
-    this.tenantForm.get('documentBackImage')?.setValue(null);
+    if (this.currentTenant.documentBackImage) {
+      this.apiService.deleteFile('tenants', this.tenantId!, 'documentBackImage').subscribe({
+        next: () => {
+          this.currentTenant.documentBackImage = '';
+          this.snackBar.open('Retro del documento rimosso', 'Chiudi', { duration: 3000 });
+        },
+        error: (error) => {
+          console.error('Errore nella rimozione del documento', error);
+          this.snackBar.open('Errore nella rimozione del documento', 'Chiudi', { duration: 3000 });
+        }
+      });
+    }
   }
 
   onSubmit(): void {
@@ -223,19 +242,50 @@ export class TenantFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
     
-    // Update current tenant with form values
-    this.currentTenant = {
-      ...this.currentTenant,
-      ...this.tenantForm.value
+    // Crea una copia pulita dei valori del form senza campi gestiti dal server
+    const formValues = {...this.tenantForm.value};
+    
+    // Converti la data in formato YYYY-MM-DD
+    if (formValues.documentExpiryDate) {
+      const dateObj = new Date(formValues.documentExpiryDate);
+      formValues.documentExpiryDate = dateObj.toISOString().split('T')[0];
+    }
+    
+    // Crea un oggetto tenant con solo i campi necessari
+    const tenantToUpdate = {
+      firstName: formValues.firstName,
+      lastName: formValues.lastName,
+      email: formValues.email,
+      phone: formValues.phone,
+      documentType: formValues.documentType,
+      documentNumber: formValues.documentNumber,
+      documentExpiryDate: formValues.documentExpiryDate,
+      address: formValues.address || "",
+      communicationPreferences: formValues.communicationPreferences,
+      notes: formValues.notes || "",
+      // Gestisci le immagini correttamente
+      documentFrontImage: this.frontImageFile ? undefined : (this.frontPreview ? this.currentTenant.documentFrontImage : undefined),
+      documentBackImage: this.backImageFile ? undefined : (this.backPreview ? this.currentTenant.documentBackImage : undefined)
     };
     
-    // Use the updated service methods with images
+    // Prepara i file
+    const files: File[] = [];
+    
+    if (this.frontImageFile) {
+      files.push(this.frontImageFile);
+    }
+    
+    if (this.backImageFile) {
+      files.push(this.backImageFile);
+    }
+    
     if (this.isEditMode && this.tenantId) {
-      this.tenantService.updateTenant(
+      // Aggiorna inquilino esistente
+      this.apiService.update<Tenant>(
+        'tenants', 
         this.tenantId, 
-        this.currentTenant,
-        this.frontImageFile || undefined,
-        this.backImageFile || undefined
+        tenantToUpdate, 
+        files  // Passa sempre l'array, anche se vuoto
       ).subscribe({
         next: () => {
           this.isLoading = false;
@@ -253,27 +303,32 @@ export class TenantFormComponent implements OnInit {
         }
       });
     } else {
-      // Create new tenant
-      this.tenantService.createTenant(
-        this.currentTenant,
-        this.frontImageFile || undefined,
-        this.backImageFile || undefined
+      // Crea nuovo inquilino - resto del codice invariato
+      this.apiService.create<Tenant>(
+        'tenants',
+        tenantToUpdate,
+        files,
+        'document'
       ).subscribe({
-        next: (tenant) => {
-          this.isLoading = false;
-          this.snackBar.open('Inquilino creato con successo', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-          this.router.navigate(['/tenant/detail', tenant.id]);
-        },
-        error: (error) => {
-          console.error('Errore durante la creazione dell\'inquilino', error);
-          this.errorMessage = 'Si è verificato un errore durante la creazione dell\'inquilino.';
-          this.isLoading = false;
-        }
+        // ...
       });
     }
+  }
+
+  // Metodi helper
+  private handleSuccess(action: string, id?: number): void {
+    this.isLoading = false;
+    this.snackBar.open(`Inquilino ${action} con successo`, 'Chiudi', {
+      duration: 3000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
+    });
+    this.router.navigate(id ? ['/tenant/detail', id] : ['/tenant/list']);
+  }
+
+  private handleError(error: any, action: string): void {
+    console.error(`Errore durante la ${action} dell'inquilino`, error);
+    this.errorMessage = error.error?.message || `Si è verificato un errore durante la ${action} dell'inquilino.`;
+    this.isLoading = false;
   }
 }

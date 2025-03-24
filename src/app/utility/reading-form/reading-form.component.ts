@@ -10,8 +10,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { UtilityService } from '../../shared/services/utility.service';
 import { Apartment } from '../../shared/models';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 
 @Component({
   selector: 'app-reading-form',
@@ -44,7 +44,7 @@ export class ReadingFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private utilityService: UtilityService,
+    private apiService: GenericApiService,
     public dialogRef: MatDialogRef<ReadingFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { 
       apartments: Apartment[],
@@ -96,7 +96,7 @@ export class ReadingFormComponent implements OnInit {
       isPaid: false
     };
 
-    this.utilityService.createReading(readingData).subscribe({
+    this.apiService.createReading<any>(readingData).subscribe({
       next: () => {
         this.isLoading = false;
         this.dialogRef.close(true);

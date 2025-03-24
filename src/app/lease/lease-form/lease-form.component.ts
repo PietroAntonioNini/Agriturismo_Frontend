@@ -18,9 +18,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatNativeDateModule } from '@angular/material/core';
 
 // Services
-import { LeaseService } from '../../shared/services/lease.service';
-import { TenantService } from '../../shared/services/tenant.service';
-import { ApartmentService } from '../../shared/services/apartment.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 
 // Models
 import { Lease, LeaseFormData } from '../../shared/models/lease.model';
@@ -65,9 +63,7 @@ export class LeaseFormComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private leaseService: LeaseService,
-    private tenantService: TenantService,
-    private apartmentService: ApartmentService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -102,7 +98,7 @@ export class LeaseFormComponent implements OnInit {
 
   loadLease(id: number): void {
     this.isLoading = true;
-    this.leaseService.getLease(id).subscribe({
+    this.apiService.getById<Lease>('leases', id).subscribe({
       next: (lease) => {
         this.leaseForm.patchValue({
           tenantId: lease.tenantId,
@@ -127,7 +123,7 @@ export class LeaseFormComponent implements OnInit {
   }
 
   loadTenants(): void {
-    this.tenantService.getTenants().subscribe({
+    this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
         this.tenants = tenants;
       },
@@ -138,7 +134,7 @@ export class LeaseFormComponent implements OnInit {
   }
   
   loadApartments(): void {
-    this.apartmentService.getApartments().subscribe({
+    this.apiService.getAll<Apartment>('apartments').subscribe({
       next: (apartments) => {
         this.apartments = apartments;
       },
@@ -154,11 +150,11 @@ export class LeaseFormComponent implements OnInit {
       return;
     }
 
-    const formData: LeaseFormData = this.leaseForm.value;
+    const formData = this.leaseForm.value;
     this.isSubmitting = true;
 
     if (this.isEditMode && this.leaseId) {
-      this.leaseService.updateLease(this.leaseId, formData).subscribe({
+      this.apiService.update<Lease>('leases', this.leaseId, formData).subscribe({
         next: () => {
           this.snackBar.open('Contratto aggiornato con successo', 'Chiudi', {
             duration: 3000,
@@ -178,7 +174,7 @@ export class LeaseFormComponent implements OnInit {
         }
       });
     } else {
-      this.leaseService.createLease(formData).subscribe({
+      this.apiService.create<Lease>('leases', formData).subscribe({
         next: () => {
           this.snackBar.open('Contratto creato con successo', 'Chiudi', {
             duration: 3000,

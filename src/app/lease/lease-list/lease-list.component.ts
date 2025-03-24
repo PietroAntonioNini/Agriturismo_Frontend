@@ -19,9 +19,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 // Services
-import { LeaseService } from '../../shared/services/lease.service';
-import { TenantService } from '../../shared/services/tenant.service';
-import { ApartmentService } from '../../shared/services/apartment.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 
 // Models
 import { Lease } from '../../shared/models/lease.model';
@@ -69,9 +67,7 @@ export class LeaseListComponent implements OnInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
-    private leaseService: LeaseService,
-    private tenantService: TenantService,
-    private apartmentService: ApartmentService,
+    private apiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -94,7 +90,7 @@ export class LeaseListComponent implements OnInit {
 
   loadLeases(): void {
     this.isLoading = true;
-    this.leaseService.getLeases().subscribe({
+    this.apiService.getAll<Lease>('leases').subscribe({
       next: (leases) => {
         this.dataSource.data = leases;
         this.isLoading = false;
@@ -108,7 +104,7 @@ export class LeaseListComponent implements OnInit {
   }
   
   loadTenants(): void {
-    this.tenantService.getTenants().subscribe({
+    this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
         this.tenants = tenants;
       },
@@ -119,7 +115,7 @@ export class LeaseListComponent implements OnInit {
   }
   
   loadApartments(): void {
-    this.apartmentService.getApartments().subscribe({
+    this.apiService.getAll<Apartment>('apartments').subscribe({
       next: (apartments) => {
         this.apartments = apartments;
       },
@@ -174,7 +170,7 @@ export class LeaseListComponent implements OnInit {
   
   deleteLease(id: number): void {
     if (confirm('Sei sicuro di voler eliminare questo contratto? Questa azione non può essere annullata.')) {
-      this.leaseService.deleteLease(id).subscribe({
+      this.apiService.delete('leases', id).subscribe({
         next: () => {
           this.snackBar.open('Contratto eliminato con successo', 'Chiudi', {
             duration: 3000,

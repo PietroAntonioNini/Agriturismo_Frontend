@@ -1,4 +1,3 @@
-import { GenericApiService } from './../../shared/services/genericApi.service';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -18,7 +17,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 
-// import { ApartmentService } from '../../shared/services/apartment.service';
+import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Apartment } from '../../shared/models';
 
 @Component({
@@ -55,14 +54,14 @@ export class ApartmentFormComponent implements OnInit {
   
   // Immagini
   currentApartment: Apartment = {} as Apartment;
-  imageFiles: (File | null)[] = [null, null, null, null, null , null, null, null];
-  imagePreviews: (string | null)[] = [null, null, null, null, null , null, null, null];
+  imageFiles: (File | null)[] = [null, null, null, null, null, null, null, null];
+  imagePreviews: (string | null)[] = [null, null, null, null, null, null, null, null];
   
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
-    private genericApiService: GenericApiService,
+    private apiService: GenericApiService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -99,11 +98,11 @@ export class ApartmentFormComponent implements OnInit {
     });
   }
 
-  loadApartmentData(id: any): void {
+  loadApartmentData(id: string): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.genericApiService.getById<Apartment>('apartment', id).subscribe({
+    this.apiService.getById<Apartment>('apartments', id).subscribe({
       next: (apartment) => {
         this.currentApartment = apartment;
         this.updateForm(apartment);
@@ -112,7 +111,7 @@ export class ApartmentFormComponent implements OnInit {
         // Carica le anteprime delle immagini se disponibili
         if (apartment.images && apartment.images.length > 0) {
           apartment.images.forEach((imageUrl, index) => {
-            if (index < 5) {
+            if (index < this.imagePreviews.length) {
               this.imagePreviews[index] = imageUrl;
             }
           });
@@ -206,8 +205,8 @@ export class ApartmentFormComponent implements OnInit {
     
     if (this.isEditMode && this.apartmentId) {
       // Aggiorna un appartamento esistente
-      this.genericApiService.update<Apartment>(
-        "apartament",
+      this.apiService.update<Apartment>(
+        'apartments', 
         this.apartmentId, 
         this.currentApartment,
         validImageFiles.length > 0 ? validImageFiles : undefined
@@ -229,9 +228,9 @@ export class ApartmentFormComponent implements OnInit {
       });
     } else {
       // Crea un nuovo appartamento
-      this.genericApiService.create<Apartment>(
-        "apartment",
-        this.currentApartment ,
+      this.apiService.create<Apartment>(
+        'apartments',
+        this.currentApartment,
         validImageFiles.length > 0 ? validImageFiles : undefined
       ).subscribe({
         next: (apartment) => {
