@@ -2,7 +2,9 @@
   <app-header (toggleSidenav)="toggleSidenav()"></app-header>
   
   <div class="content-wrapper">
-    <app-sidenav class="fixed-sidenav"></app-sidenav>
+    <nav class="fixed-sidenav">
+      <app-sidenav></app-sidenav>
+    </nav>
     
     <main class="main-content">
       <router-outlet></router-outlet>
