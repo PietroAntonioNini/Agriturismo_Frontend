@@ -14,7 +14,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { TenantDetailDialogComponent } from '../tenant-detail-dialog/tenant-detail-dialog.component';
+import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
 

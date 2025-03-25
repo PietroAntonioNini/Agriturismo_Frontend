@@ -26,7 +26,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'list', pathMatch: 'full' },
       { path: 'list', loadComponent: () => import('./tenant-list/tenant-list.component').then(c => c.TenantListComponent) },
-      { path: 'detail/:id', loadComponent: () => import('./tenant-detail-dialog/tenant-detail-dialog.component').then(c => c.TenantDetailDialogComponent) },
+      { path: 'detail/:id', loadComponent: () => import('./tenant-detail/tenant-detail-dialog.component').then(c => c.TenantDetailDialogComponent) },
       { path: 'new', loadComponent: () => import('./tenant-form/tenant-form.component').then(c => c.TenantFormComponent) },
       { path: 'edit/:id', loadComponent: () => import('./tenant-form/tenant-form.component').then(c => c.TenantFormComponent) }
     ]
