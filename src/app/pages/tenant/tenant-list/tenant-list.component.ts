@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
@@ -16,6 +16,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
+import { TenantDetailDialogComponent } from '../../../tenant/tenant-detail-dialog/tenant-detail-dialog.component';
+import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 
 @Component({
   selector: 'app-tenant-list',
@@ -51,7 +53,9 @@ export class TenantListComponent implements OnInit {
   constructor(
     private apiService: GenericApiService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private confirmationService: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
@@ -89,27 +93,47 @@ export class TenantListComponent implements OnInit {
     }
   }
 
-  deleteTenant(id: number): void {
-    if (confirm('Sei sicuro di voler eliminare questo inquilino? Questa azione non può essere annullata.')) {
-      this.apiService.delete('tenants', id).subscribe({
-        next: () => {
+  openTenantDetails(tenantId: number): void {
+    const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
+      data: { tenantId },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.deleted) {
           this.loadTenants();
-          this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-        },
-        error: (error) => {
-          console.error('Errore durante l\'eliminazione dell\'inquilino', error);
-          this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
+        } else if (result.edit) {
+          this.router.navigate(['/tenant/edit', result.tenantId]);
+        }
+      }
+    });
+  }
+
+  deleteTenant(tenant: Tenant): void {
+    // Utilizza il servizio di conferma
+    this.confirmationService.confirmDelete('l\'inquilino', `${tenant.firstName} ${tenant.lastName}`)
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.apiService.delete('tenants', tenant.id).subscribe({
+            next: () => {
+              this.loadTenants();
+              this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione dell\'inquilino', error);
+              this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            }
           });
         }
       });
-    }
   }
 
   getFullName(tenant: Tenant): string {

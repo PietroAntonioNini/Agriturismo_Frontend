@@ -1,0 +1,189 @@
+<div class="dialog-container">
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Messaggio di errore -->
+  <div *ngIf="errorMessage" class="error-message">
+    <mat-icon>error</mat-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <ng-container *ngIf="tenant && !isLoading">
+    <div class="dialog-actions">
+      <button mat-icon-button (click)="editTenant()" matTooltip="Modifica">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button color="warn" (click)="deleteTenant()" matTooltip="Elimina">
+        <mat-icon>delete</mat-icon>
+      </button>
+      <button mat-icon-button (click)="close()" matTooltip="Chiudi">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+
+    <mat-dialog-content class="dialog-content">
+      <mat-card class="tenant-card">
+        <mat-card-header>
+          <div class="tenant-header">
+            <div class="avatar-container mb-3">
+              <div class="tenant-avatar">
+                <mat-icon>person</mat-icon>
+              </div>
+            </div>
+            <div class="tenant-title">
+              <div class="tenant-subtitle">
+                <span class="fs-4"
+                  [matTooltip]="tooltipTexts['name']" 
+                  #nameTooltip="matTooltip"
+                  (click)="copyToClipboard(tenant.firstName + ' ' + tenant.lastName, 'name', nameTooltip)" 
+                  style="cursor: pointer;">
+                    {{ tenant.firstName }} {{ tenant.lastName }}
+                </span>
+              </div>
+              <div *ngIf="tenant.address" class="tenant-subtitle"
+                [matTooltip]="tooltipTexts['address']"
+                #addressTooltip="matTooltip"
+                (click)="copyToClipboard(tenant.address, 'address', addressTooltip)" 
+                style="cursor: pointer;">
+                  <mat-icon>home</mat-icon> 
+                  <span>{{ tenant.address }}</span>
+              </div>
+              <div *ngIf="tenant.email" class="tenant-subtitle"
+                [matTooltip]="tooltipTexts['email']" 
+                #emailTooltip="matTooltip"
+                (click)="copyToClipboard(tenant.email, 'email', emailTooltip)" 
+                style="cursor: pointer;">
+                  <mat-icon>email</mat-icon>
+                  <span>{{ tenant.email }}</span>
+              </div>
+              <div class="tenant-subtitle mb-3" 
+                [matTooltip]="tooltipTexts['phone']" 
+                #phoneTooltip="matTooltip"
+                (click)="copyToClipboard(tenant.phone, 'phone', phoneTooltip)" 
+                style="cursor: pointer;">
+                  <mat-icon>phone</mat-icon>
+                  <span>{{ tenant.phone }}</span>
+              </div>
+            </div>
+            <span matListItemLine>
+              <mat-chip-set>
+                <mat-chip *ngIf="tenant.communicationPreferences.email" class="chip-blue" selected><span class="text-white">Email</span></mat-chip>
+                <mat-chip *ngIf="tenant.communicationPreferences.sms" class="chip-yellow" selected><span class="text-white">SMS</span></mat-chip>
+                <mat-chip *ngIf="tenant.communicationPreferences.whatsapp" class="chip-green" selected><span class="text-white">WhatsApp</span></mat-chip>
+              </mat-chip-set>
+            </span>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <mat-tab-group animationDuration="300ms">
+            <mat-tab label="Documenti">
+              <div class="tab-content">
+                <mat-list *ngIf="tenant.notes" class="text-center">
+                  <mat-list-item>
+                    <h3 matListItemTitle>Note</h3>
+                    <span matListItemLine>{{ tenant.notes || 'Nessuna nota' }}</span>
+                  </mat-list-item>
+                </mat-list>
+
+                <h4 class="text-center mt-4">Documenti d'identità</h4>
+                <div class="tenant-subtitle d-flex flex-column py-2">
+                  <span class="d-flex justify-content-center align-items-center">
+                    <mat-icon class="me-1">assignment_ind</mat-icon> {{ tenant.documentType }} 
+                    <mat-icon class="ms-4 me-1">badge</mat-icon><span [matTooltip]="tooltipTexts['documentNumber']" #documentNumberTooltip="matTooltip" (click)="copyToClipboard(tenant.documentNumber, 'documentNumber', documentNumberTooltip)" style="cursor: pointer; text-transform: uppercase;">{{ tenant.documentNumber }}</span>  
+                    <mat-icon class="ms-4 me-1">calendar_month</mat-icon> {{ formatDate(tenant.documentExpiryDate) }}
+                  </span>
+                </div>
+                <div class="documents-container">
+                  <div class="m-auto d-flex gap-3">
+                    <!-- Immagine fronte documento -->
+                    <div *ngIf="tenant.documentFrontImage" class="document-card">
+                      <div class="document-header">
+                        <h3>Fronte Documento</h3>
+                        <button mat-icon-button color="primary" (click)="downloadDocument('front', 'fronte-documento')">
+                          <mat-icon>file_download</mat-icon>
+                        </button>
+                      </div>
+                      <div class="document-image-container">
+                        <img [src]="getImageUrl(tenant.documentFrontImage)" alt="Fronte documento" class="document-image">
+                      </div>
+                    </div>
+                    
+                    <!-- Messaggio se nessuna immagine fronte -->
+                    <div *ngIf="!tenant.documentFrontImage" class="no-document-card">
+                      <mat-icon>image_not_supported</mat-icon>
+                      <span style="font-size: 12px;">Nessuna immagine fronte caricata</span>
+                    </div>
+                    
+                    <!-- Immagine retro documento -->
+                    <div *ngIf="tenant.documentBackImage" class="document-card">
+                      <div class="document-header">
+                        <h3>Retro Documento</h3>
+                        <button mat-icon-button color="primary" (click)="downloadDocument('back', 'retro-documento')">
+                          <mat-icon>file_download</mat-icon>
+                        </button>
+                      </div>
+                      <div class="document-image-container">
+                        <img [src]="getImageUrl(tenant.documentBackImage)" alt="Retro documento" class="document-image">
+                      </div>
+                    </div>
+                    
+                    <!-- Messaggio se nessuna immagine retro -->
+                    <div *ngIf="!tenant.documentBackImage" class="no-document-card">
+                      <mat-icon>image_not_supported</mat-icon>
+                      <span style="font-size: 12px;">Nessuna immagine retro caricata</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+            
+            <mat-tab label="Contratti">
+              <div class="tab-content">
+                <h2>Contratti Attivi</h2>
+                
+                <div *ngIf="activeLeases.length === 0 && !errorMessage" class="no-data-message">
+                  <mat-icon>info</mat-icon>
+                  <span>Nessun contratto attivo per questo inquilino</span>
+                </div>
+                
+                <div *ngIf="errorMessage" class="error-message">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ errorMessage }}</span>
+                </div>
+                
+                <mat-card *ngFor="let lease of activeLeases" class="lease-card">
+                  <mat-card-header>
+                    <mat-card-title>Contratto #{{ lease.id }}</mat-card-title>
+                    <mat-card-subtitle>Appartamento ID: {{ lease.apartmentId }}</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="lease-info">
+                      <div class="lease-detail">
+                        <strong>Inizio:</strong> {{ formatDate(lease.startDate) }}
+                      </div>
+                      <div class="lease-detail">
+                        <strong>Fine:</strong> {{ formatDate(lease.endDate) }}
+                      </div>
+                      <div class="lease-detail">
+                        <strong>Canone Mensile:</strong> €{{ lease.monthlyRent }}
+                      </div>
+                    </div>
+                  </mat-card-content>
+                  <mat-card-actions>
+                    <button mat-button [routerLink]="['/lease/detail', lease.id]" color="primary" (click)="close()">
+                      <mat-icon>visibility</mat-icon> Visualizza Dettagli
+                    </button>
+                  </mat-card-actions>
+                </mat-card>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        </mat-card-content>
+      </mat-card>
+    </mat-dialog-content>
+  </ng-container>
+</div>
