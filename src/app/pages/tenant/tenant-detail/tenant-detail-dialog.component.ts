@@ -1,10 +1,5 @@
-<<<<<<<< HEAD:src/app/pages/tenant/tenant-detail/tenant-detail.component.ts
-import { environment } from './../../../../environments/environment';
-import { Component, OnInit } from '@angular/core';
-========
-import { environment } from './../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 import { Component, OnInit, Inject, ViewChild, QueryList } from '@angular/core';
->>>>>>>> origin/tenant_popup:src/app/tenant/tenant-detail-dialog/tenant-detail-dialog.component.ts
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -18,15 +13,9 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
-
-<<<<<<<< HEAD:src/app/pages/tenant/tenant-detail/tenant-detail.component.ts
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
-========
-import { GenericApiService } from '../../shared/services/generic-api.service';
-import { Tenant } from '../../shared/models';
-import { ConfirmationDialogService } from '../../shared/services/confirmation-dialog.service';
->>>>>>>> origin/tenant_popup:src/app/tenant/tenant-detail-dialog/tenant-detail-dialog.component.ts
+import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 
 @Component({
   selector: 'app-tenant-detail-dialog',

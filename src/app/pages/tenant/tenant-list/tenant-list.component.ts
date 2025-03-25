@@ -16,7 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
-import { TenantDetailDialogComponent } from '../../../tenant/tenant-detail-dialog/tenant-detail-dialog.component';
+import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 
 @Component({
