@@ -1,0 +1,15 @@
+.confirmation-dialog {
+  width: 400px;
+  max-width: 50vw;
+  .warning-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+
+  }
+
+  mat-dialog-actions {
+    margin-bottom: 0;
+    padding-bottom: 16px;
+  }
+}

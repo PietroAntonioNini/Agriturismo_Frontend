@@ -15,6 +15,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { TenantDetailDialogComponent } from '../tenant-detail-dialog/tenant-detail-dialog.component';
 
 @Component({
   selector: 'app-tenant-form',
@@ -65,7 +67,9 @@ export class TenantFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private apiService: GenericApiService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private dialogRef: MatDialogRef<TenantDetailDialogComponent>,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -294,7 +298,12 @@ export class TenantFormComponent implements OnInit {
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/tenant/detail', this.tenantId]);
+          
+          this.router.navigate(['/tenant/list']).then(() => {
+            setTimeout(() => {
+              this.openTenantDetailDialog(this.tenantId!);
+            }, 300); // Piccolo ritardo per assicurarsi che il componente di lista sia completamente caricato
+          });
         },
         error: (error) => {
           console.error('Errore durante l\'aggiornamento dell\'inquilino', error);
@@ -303,16 +312,51 @@ export class TenantFormComponent implements OnInit {
         }
       });
     } else {
-      // Crea nuovo inquilino - resto del codice invariato
+      // Crea nuovo inquilino
       this.apiService.create<Tenant>(
         'tenants',
         tenantToUpdate,
-        files,
-        'document'
+        files
       ).subscribe({
-        // ...
+        next: (createdTenant) => {
+          this.isLoading = false;
+          this.snackBar.open('Inquilino creato con successo', 'Chiudi', {
+            duration: 3000,
+            horizontalPosition: 'end',
+            verticalPosition: 'top'
+          });
+          
+          // Naviga alla lista e apri il popup con il nuovo tenant
+          this.router.navigate(['/tenant/list']).then(() => {
+            setTimeout(() => {
+              this.openTenantDetailDialog(createdTenant.id);
+            }, 300); // Piccolo ritardo per assicurarsi che il componente di lista sia completamente caricato
+          });
+        },
+        error: (error) => {
+          console.error('Errore durante la creazione dell\'inquilino', error);
+          this.errorMessage = 'Si è verificato un errore durante la creazione dell\'inquilino.';
+          this.isLoading = false;
+        }
       });
     }
+  }
+
+  // Nuovo metodo per aprire il dialog dei dettagli
+  openTenantDetailDialog(tenantId: number): void {
+    const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
+      data: { tenantId },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.deleted) {
+          this.dialogRef.close()
+        } else if (result.edit) {
+          this.router.navigate(['/tenant/edit', result.tenantId]);
+        }
+      }
+    });
   }
 
   // Metodi helper

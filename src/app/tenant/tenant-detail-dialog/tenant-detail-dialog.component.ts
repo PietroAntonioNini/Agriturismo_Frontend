@@ -1,7 +1,8 @@
 import { environment } from './../../../environments/environment';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,17 +12,19 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 
 import { GenericApiService } from '../../shared/services/generic-api.service';
 import { Tenant } from '../../shared/models';
+import { ConfirmationDialogService } from '../../shared/services/confirmation-dialog.service';
 
 @Component({
-  selector: 'app-tenant-detail',
+  selector: 'app-tenant-detail-dialog',
   standalone: true,
   imports: [
     CommonModule,
     RouterModule,
+    MatDialogModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -33,27 +36,39 @@ import { Tenant } from '../../shared/models';
     MatTabsModule,
     MatTooltipModule
   ],
-  templateUrl: './tenant-detail.component.html',
-  styleUrls: ['./tenant-detail.component.scss']
+  templateUrl: './tenant-detail-dialog.component.html',
+  styleUrls: ['./tenant-detail-dialog.component.scss']
 })
-export class TenantDetailComponent implements OnInit {
+export class TenantDetailDialogComponent implements OnInit {
+  @ViewChild(MatTooltip) tooltips!: QueryList<MatTooltip>;
+  
   tenant: Tenant | null = null;
   activeLeases: any[] = [];
   isLoading = true;
   errorMessage: string | null = null;
   environment = environment;
 
+  // Oggetto per gestire i testi dei tooltip per ogni elemento
+  tooltipTexts: { [key: string]: string } = {
+    'name': 'Copia',
+    'address': 'Copia',
+    'email': 'Copia',
+    'phone': 'Copia',
+    'documentNumber': 'Copia'
+  };
+
   constructor(
-    private route: ActivatedRoute,
     private router: Router,
     private apiService: GenericApiService,
-    private snackBar: MatSnackBar
+    private dialogRef: MatDialogRef<TenantDetailDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { tenantId: number },
+    private snackBar: MatSnackBar,
+    private confirmationService: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) {
-      this.loadTenantData(id);
+    if (this.data && this.data.tenantId) {
+      this.loadTenantData(this.data.tenantId);
     } else {
       this.errorMessage = 'ID inquilino non valido.';
       this.isLoading = false;
@@ -97,26 +112,30 @@ export class TenantDetailComponent implements OnInit {
   deleteTenant(): void {
     if (!this.tenant) return;
 
-    if (confirm('Sei sicuro di voler eliminare questo inquilino? Questa azione non può essere annullata.')) {
-      this.apiService.delete('tenants', this.tenant.id).subscribe({
-        next: () => {
-          this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-          this.router.navigate(['/tenant/list']);
-        },
-        error: (error) => {
-          console.error('Errore durante l\'eliminazione dell\'inquilino', error);
-          this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
+    // Usa il servizio di conferma invece di confirm()
+    this.confirmationService.confirmDelete('l\'inquilino', `${this.tenant.firstName} ${this.tenant.lastName}`)
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.apiService.delete('tenants', this.tenant!.id).subscribe({
+            next: () => {
+              this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+              this.dialogRef.close({ deleted: true });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione dell\'inquilino', error);
+              this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            }
           });
         }
       });
-    }
   }
 
   formatDate(date: Date | string): string {
@@ -147,5 +166,43 @@ export class TenantDetailComponent implements OnInit {
   downloadDocument(docType: 'front' | 'back', filename: string): void {
     const downloadUrl = `${environment.apiUrl}/tenants/${this.tenant!.id}/documents/download/${docType}`;
     window.open(downloadUrl, '_blank');
+  }
+
+  close(): void {
+    this.dialogRef.close();
+  }
+
+  editTenant(): void {
+    if (!this.tenant) return;
+    this.dialogRef.close({ edit: true, tenantId: this.tenant.id });
+  }
+  
+  copyToClipboard(text: string, elementType: string, tooltipRef: MatTooltip): void {
+    // Copia il testo negli appunti
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Aggiorna il testo del tooltip
+    this.tooltipTexts[elementType] = 'Copiato!';
+    
+    // Forza la visualizzazione del tooltip
+    tooltipRef.show();
+    
+    // Mostra anche un feedback con snackbar
+    this.snackBar.open(`${text} copiato negli appunti`, 'Chiudi', {
+      duration: 2000,
+      horizontalPosition: 'center',
+      verticalPosition: 'bottom'
+    });
+    
+    // Ripristina il testo originale dopo un ritardo
+    setTimeout(() => {
+      this.tooltipTexts[elementType] = 'Copia';
+      tooltipRef.hide();
+    }, 1500);
   }
 }

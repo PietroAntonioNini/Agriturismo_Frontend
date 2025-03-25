@@ -1,0 +1,22 @@
+<div class="confirmation-dialog p-3">
+  <div mat-dialog-title class="text-center d-flex justify-content-center align-items-center py-3">
+    <mat-icon *ngIf="data.dangerMode" color="warn" class="warning-icon mt-0 me-2">warning</mat-icon>
+    <span class="fs-4">{{data.title}}</span>
+  </div>
+
+  <mat-dialog-content>
+    <div class="message-container d-flex flex-column justify-content-center align-items-center py-3">
+      <span [innerHTML]="data.message"></span>
+      <span [innerHTML]="data.submessage"></span>
+    </div>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions align="center" class="d-flex justify-content-evenly align-items-center">
+    <button mat-raised-button [color]="'primary'" (click)="onCancel()">
+      {{data.cancelText}}
+    </button>
+    <button mat-raised-button [color]="data.dangerMode ? 'warn' : 'primary'" (click)="onConfirm()">
+      {{data.confirmText}}
+    </button>
+  </mat-dialog-actions>
+</div>
