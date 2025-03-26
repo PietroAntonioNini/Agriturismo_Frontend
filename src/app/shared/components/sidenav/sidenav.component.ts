@@ -55,6 +55,11 @@ export class SidenavComponent implements OnInit {
       route: '/billing'
     },
     {
+      label: 'UI Demo',
+      icon: 'palette',
+      route: '/ui-demo'
+    },
+    {
       label: 'Utenti',
       icon: 'admin_panel_settings',
       route: '/admin/users',

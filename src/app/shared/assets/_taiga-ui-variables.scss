@@ -1,0 +1,78 @@
+// This file contains only TaigaUI theme variables as a proper SCSS module
+
+// Define custom variables for light theme
+:root {
+  // Define custom variables for light theme
+  --tui-primary: #3f51b5;
+  --tui-primary-hover: #5c6bc0;
+  --tui-primary-active: #303f9f;
+  --tui-primary-text: #ffffff;
+  --tui-secondary: #ff4081;
+  --tui-secondary-hover: #ff5a92;
+  --tui-secondary-active: #f50057;
+  --tui-secondary-text: #ffffff;
+  --tui-link: #3f51b5;
+  --tui-link-hover: #5c6bc0;
+  
+  // Background colors
+  --tui-base-01: #ffffff;
+  --tui-base-02: #f5f5f5;
+  --tui-base-03: #eeeef0;
+  --tui-base-04: #e0e0e0;
+  
+  // Text colors
+  --tui-text-01: rgba(0, 0, 0, 0.87);
+  --tui-text-02: rgba(0, 0, 0, 0.6);
+  --tui-text-03: rgba(0, 0, 0, 0.38);
+}
+
+// Dark theme variables
+.dark-theme {
+  // Override variables for dark theme
+  --tui-primary: #7986cb;
+  --tui-primary-hover: #9fa8da;
+  --tui-primary-active: #5c6bc0;
+  --tui-primary-text: #ffffff;
+  --tui-secondary: #ff80ab;
+  --tui-secondary-hover: #ff99bc;
+  --tui-secondary-active: #ff4081;
+  --tui-secondary-text: #ffffff;
+  --tui-link: #7986cb;
+  --tui-link-hover: #9fa8da;
+  
+  // Background colors for dark theme
+  --tui-base-01: #121212;
+  --tui-base-02: #1e1e1e;
+  --tui-base-03: #2e2e2e;
+  --tui-base-04: #3e3e3e;
+  
+  // Text colors for dark theme
+  --tui-text-01: rgba(255, 255, 255, 0.87);
+  --tui-text-02: rgba(255, 255, 255, 0.6);
+  --tui-text-03: rgba(255, 255, 255, 0.38);
+}
+
+// Additional helper classes for dark mode
+.dark-theme {
+  .tui-button:not(.t-primary):not(.t-secondary):not(.t-danger):not(.t-success) {
+    background-color: var(--tui-base-03);
+    color: var(--tui-text-01);
+    
+    &:hover {
+      background-color: var(--tui-base-04);
+    }
+  }
+  
+  .tui-dataList {
+    background-color: var(--tui-base-02);
+    border-color: var(--tui-base-03);
+  }
+  
+  .tui-dataList__option {
+    color: var(--tui-text-01);
+    
+    &:hover {
+      background-color: var(--tui-base-03);
+    }
+  }
+}

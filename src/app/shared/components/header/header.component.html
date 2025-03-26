@@ -10,6 +10,9 @@
 
   <div class="spacer"></div>
 
+  <!-- Theme Toggle Button -->
+  <app-theme-toggle></app-theme-toggle>
+
   <div class="user-menu" *ngIf="(currentUser$ | async) as user">
     <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
       <mat-icon>account_circle</mat-icon>

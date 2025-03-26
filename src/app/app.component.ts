@@ -1,12 +1,15 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { MatSidenavModule, MatDrawerMode } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
-// Componenti core
+// Taiga UI
+import { TuiRootModule } from '@taiga-ui/core';
+
+// Core components
 import { HeaderComponent } from './shared/components/header/header.component';
 import { SidenavComponent } from './shared/components/sidenav/sidenav.component';
 import { FooterComponent } from './shared/components/footer/footer.component';
@@ -25,7 +28,8 @@ import { FooterComponent } from './shared/components/footer/footer.component';
     MatButtonModule,
     HeaderComponent,
     SidenavComponent,
-    FooterComponent
+    FooterComponent,
+    TuiRootModule
   ]
 })
 export class AppComponent {

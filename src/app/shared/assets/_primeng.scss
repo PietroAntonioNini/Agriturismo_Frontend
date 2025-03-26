@@ -1,0 +1,88 @@
+// PrimeNG customizations for light theme
+:root {
+  --primary-color: #3f51b5;
+  --primary-color-text: #ffffff;
+  --secondary-color: #ff4081;
+  --secondary-color-text: #ffffff;
+  --surface-a: #ffffff;
+  --surface-b: #f5f5f5;
+  --surface-c: #e0e0e0;
+  --surface-d: #cccccc;
+  --text-color: rgba(0, 0, 0, 0.87);
+  --text-color-secondary: rgba(0, 0, 0, 0.6);
+  --border-radius: 4px;
+  
+  // Set font family to match the rest of the application
+  --font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+// Dark theme customizations
+.dark-theme {
+  // Override with custom colors that match our design
+  --primary-color: #7986cb;
+  --primary-color-text: #ffffff;
+  --secondary-color: #ff80ab;
+  --secondary-color-text: #ffffff;
+  --surface-a: #121212;
+  --surface-b: #1e1e1e;
+  --surface-c: #2e2e2e;
+  --surface-d: #3e3e3e;
+  --text-color: rgba(255, 255, 255, 0.87);
+  --text-color-secondary: rgba(255, 255, 255, 0.6);
+  
+  // Additional dark theme adjustments
+  .p-component {
+    background-color: var(--surface-b);
+    color: var(--text-color);
+  }
+  
+  .p-card {
+    background-color: var(--surface-a);
+    color: var(--text-color);
+  }
+  
+  .p-button.p-button-outlined {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    
+    &:hover {
+      background-color: rgba(121, 134, 203, 0.1);
+    }
+  }
+  
+  .p-inputtext {
+    background-color: var(--surface-b);
+    color: var(--text-color);
+    border-color: var(--surface-d);
+    
+    &:focus {
+      border-color: var(--primary-color);
+    }
+  }
+  
+  .p-dropdown-panel {
+    background-color: var(--surface-a);
+    
+    .p-dropdown-item {
+      color: var(--text-color);
+      
+      &:hover {
+        background-color: var(--surface-c);
+      }
+    }
+  }
+}
+
+// Ensure PrimeNG components play well with Material Design components
+.p-component {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+// Add smooth transitions for theme changes
+.p-component,
+.p-inputtext,
+.p-button,
+.p-dropdown,
+.p-card {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

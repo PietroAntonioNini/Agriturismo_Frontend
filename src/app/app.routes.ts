@@ -8,6 +8,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'ui-demo',
+    loadComponent: () => import('./shared/components/ui-libraries-demo/ui-libraries-demo.component').then(m => m.UiLibrariesDemoComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'auth',
     loadChildren: () => import('./core/auth/auth.module').then(m => m.AuthModule)
   },
