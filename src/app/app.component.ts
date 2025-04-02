@@ -9,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 // Componenti core
 import { HeaderComponent } from './shared/components/header/header.component';
 import { SidenavComponent } from './shared/components/sidenav/sidenav.component';
-import { FooterComponent } from './shared/components/footer/footer.component';
 
 @Component({
   selector: 'app-root',
@@ -25,7 +24,6 @@ import { FooterComponent } from './shared/components/footer/footer.component';
     MatButtonModule,
     HeaderComponent,
     SidenavComponent,
-    FooterComponent
   ]
 })
 export class AppComponent {

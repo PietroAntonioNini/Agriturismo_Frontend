@@ -28,6 +28,11 @@ export class HeaderComponent implements OnInit {
   currentUser$: Observable<User | null>;
   isAdmin = false;
 
+  //copyright: strin
+  currentYear = new Date().getFullYear();
+  appName = 'Agriturismo Manager';
+  version = '1.0.0';
+
   constructor(
     private authService: AuthService,
     private router: Router

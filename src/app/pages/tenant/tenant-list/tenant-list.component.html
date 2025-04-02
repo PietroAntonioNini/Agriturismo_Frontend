@@ -15,9 +15,9 @@
     <mat-card-content>
       <!-- Filtro -->
       <mat-form-field appearance="outline" class="filter-field">
-        <mat-label>Filtra</mat-label>
-        <input matInput (keyup)="applyFilter($event)" placeholder="Es. Mario Rossi">
-        <mat-icon matSuffix>search</mat-icon>
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Cerca Inquilino</mat-label>
+        <input matInput (keyup)="applyFilter($event)">
       </mat-form-field>
 
       <!-- Messaggio di errore -->

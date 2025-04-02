@@ -37,7 +37,6 @@ import { AuthService } from './services/auth.service';
 // Layout Components
 import { HeaderComponent } from './components/header/header.component';
 import { SidenavComponent } from './components/sidenav/sidenav.component';
-import { FooterComponent } from './components/footer/footer.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
 
@@ -77,7 +76,6 @@ const materialModules = [
     HttpClientModule,
     HeaderComponent,
     SidenavComponent,
-    FooterComponent,
     DashboardComponent,
     PageNotFoundComponent,
     ...materialModules
@@ -90,7 +88,6 @@ const materialModules = [
     HttpClientModule,
     HeaderComponent,
     SidenavComponent,
-    FooterComponent,
     DashboardComponent,
     PageNotFoundComponent,
     ...materialModules
