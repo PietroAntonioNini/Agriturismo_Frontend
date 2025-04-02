@@ -12,11 +12,9 @@
   <div class="spacer"></div>
 
   <div class="user-menu" *ngIf="(currentUser$ | async) as user">
-    <button mat-button [matMenuTriggerFor]="userMenu" class="user-button">
-      <span>{{ user.firstName }} {{ user.lastName }}</span>
-      <mat-icon>arrow_drop_down</mat-icon>
-      <!-- <mat-icon>account_circle</mat-icon> -->
-    </button>
+    <div [matMenuTriggerFor]="userMenu" class="user-initials">
+      {{ user.firstName[0] }}{{ user.lastName[0] }}
+    </div>
     <mat-menu #userMenu="matMenu">
       <button mat-menu-item routerLink="/profile">
         <mat-icon>person</mat-icon>
