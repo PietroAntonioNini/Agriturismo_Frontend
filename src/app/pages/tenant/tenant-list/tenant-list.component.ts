@@ -17,6 +17,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
 import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
+import { TenantFormComponent } from '../tenant-form/tenant-form.component';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 
 @Component({
@@ -42,7 +43,7 @@ import { ConfirmationDialogService } from '../../../shared/services/confirmation
   styleUrls: ['./tenant-list.component.scss']
 })
 export class TenantListComponent implements OnInit {
-  displayedColumns: string[] = ['id', 'name', 'email', 'phone', 'documentType', 'documentNumber', 'documents', 'actions'];
+  displayedColumns: string[] = ['name', 'email', 'phone', 'documentType', 'documentNumber', 'documents', 'actions'];
   dataSource = new MatTableDataSource<Tenant>([]);
   isLoading = true;
   errorMessage: string | null = null;
@@ -99,6 +100,7 @@ export class TenantListComponent implements OnInit {
   openTenantDetails(tenantId: number): void {
     const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
       data: { tenantId },
+      width: '800px'
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -106,7 +108,27 @@ export class TenantListComponent implements OnInit {
         if (result.deleted) {
           this.loadTenants();
         } else if (result.edit) {
-          this.router.navigate(['/tenant/edit', result.tenantId]);
+          this.openTenantForm(result.tenantId);
+        }
+      }
+    });
+  }
+  
+  openTenantForm(tenantId?: number): void {
+    const dialogRef = this.dialog.open(TenantFormComponent, {
+      data: { tenantId },
+      width: '900px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this.loadTenants();
+        if (result.tenant) {
+          // Opzionalmente, apri il dialog dei dettagli dopo aver salvato
+          setTimeout(() => {
+            this.openTenantDetails(result.tenant.id);
+          }, 300);
         }
       }
     });

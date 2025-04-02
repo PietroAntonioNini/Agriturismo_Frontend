@@ -1,12 +1,11 @@
-<div class="container">
-  <div class="action-buttons">
-    <button mat-raised-button color="primary" routerLink="/tenant/list">
-      <mat-icon>arrow_back</mat-icon>
-      Torna alla lista
+<div class="dialog-container">
+  <div class="dialog-actions">
+    <button mat-icon-button (click)="onCancel()" matTooltip="Chiudi">
+      <mat-icon>close</mat-icon>
     </button>
   </div>
   
-  <mat-card class="tenant-form-card">
+  <mat-dialog-content class="dialog-content">
     <mat-card-header>
       <mat-card-title>
         <h1>{{ isEditMode ? 'Modifica Inquilino' : 'Nuovo Inquilino' }}</h1>
@@ -152,12 +151,12 @@
         <mat-divider class="form-divider"></mat-divider>
 
         <div class="form-actions">
-          <button mat-button type="button" routerLink="/tenant/list">Annulla</button>
+          <button mat-button type="button" (click)="onCancel()">Annulla</button>
           <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
             {{ isEditMode ? 'Aggiorna' : 'Salva' }}
           </button>
         </div>
       </form>
     </mat-card-content>
-  </mat-card>
+  </mat-dialog-content>
 </div>

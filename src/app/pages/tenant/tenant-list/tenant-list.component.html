@@ -4,7 +4,7 @@
       <mat-card-title class="page-title">
         <div class="title-section">
           <h1>Gestione Inquilini</h1>
-          <button mat-raised-button color="primary" routerLink="/tenant/new">
+          <button mat-raised-button color="primary" (click)="openTenantForm()">
             <mat-icon>person_add</mat-icon>
             Nuovo Inquilino
           </button>
@@ -33,11 +33,12 @@
         </div>
 
         <table mat-table [dataSource]="dataSource" matSort class="tenant-table">
-          <!-- ID Column -->
+          <!-- ID Column nascosta
           <ng-container matColumnDef="id">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
             <td mat-cell *matCellDef="let tenant"> {{ tenant.id }} </td>
           </ng-container>
+          -->
 
           <!-- Nome Column -->
           <ng-container matColumnDef="name">
@@ -86,7 +87,7 @@
               <button mat-icon-button (click)="openTenantDetails(tenant.id)" matTooltip="Visualizza dettagli">
                 <mat-icon>visibility</mat-icon>
               </button>
-              <button mat-icon-button [routerLink]="['/tenant/edit', tenant.id]" matTooltip="Modifica">
+              <button mat-icon-button (click)="openTenantForm(tenant.id)" matTooltip="Modifica">
                 <mat-icon>edit</mat-icon>
               </button>
               <button mat-icon-button (click)="deleteTenant(tenant)" matTooltip="Elimina">
