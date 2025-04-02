@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
@@ -35,7 +35,8 @@ import { Tenant } from '../../../shared/models';
     MatCardModule,
     MatDividerModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatDialogModule
   ],
   templateUrl: './tenant-form.component.html',
   styleUrls: ['./tenant-form.component.scss']
@@ -68,19 +69,19 @@ export class TenantFormComponent implements OnInit {
     private router: Router,
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
-    private dialogRef: MatDialogRef<TenantDetailDialogComponent>,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    public dialogRef: MatDialogRef<TenantFormComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { tenantId?: number }
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     
     // Controlla se siamo in modalità modifica
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    if (this.data && this.data.tenantId) {
       this.isEditMode = true;
-      this.tenantId = +id;
-      this.loadTenantData(+id);
+      this.tenantId = this.data.tenantId;
+      this.loadTenantData(this.data.tenantId);
     } else {
       this.isEditMode = false;
       this.currentTenant = {} as Tenant;
@@ -291,7 +292,7 @@ export class TenantFormComponent implements OnInit {
         tenantToUpdate, 
         files  // Passa sempre l'array, anche se vuoto
       ).subscribe({
-        next: () => {
+        next: (updatedTenant) => {
           this.isLoading = false;
           this.snackBar.open('Inquilino aggiornato con successo', 'Chiudi', {
             duration: 3000,
@@ -299,11 +300,8 @@ export class TenantFormComponent implements OnInit {
             verticalPosition: 'top'
           });
           
-          this.router.navigate(['/tenant/list']).then(() => {
-            setTimeout(() => {
-              this.openTenantDetailDialog(this.tenantId!);
-            }, 300); // Piccolo ritardo per assicurarsi che il componente di lista sia completamente caricato
-          });
+          // Chiudi il dialog e passa i dati aggiornati
+          this.dialogRef.close({ success: true, tenant: updatedTenant });
         },
         error: (error) => {
           console.error('Errore durante l\'aggiornamento dell\'inquilino', error);
@@ -326,12 +324,8 @@ export class TenantFormComponent implements OnInit {
             verticalPosition: 'top'
           });
           
-          // Naviga alla lista e apri il popup con il nuovo tenant
-          this.router.navigate(['/tenant/list']).then(() => {
-            setTimeout(() => {
-              this.openTenantDetailDialog(createdTenant.id);
-            }, 300); // Piccolo ritardo per assicurarsi che il componente di lista sia completamente caricato
-          });
+          // Chiudi il dialog e passa i dati del nuovo tenant
+          this.dialogRef.close({ success: true, tenant: createdTenant });
         },
         error: (error) => {
           console.error('Errore durante la creazione dell\'inquilino', error);
@@ -342,21 +336,9 @@ export class TenantFormComponent implements OnInit {
     }
   }
 
-  // Nuovo metodo per aprire il dialog dei dettagli
-  openTenantDetailDialog(tenantId: number): void {
-    const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
-      data: { tenantId },
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        if (result.deleted) {
-          this.dialogRef.close()
-        } else if (result.edit) {
-          this.router.navigate(['/tenant/edit', result.tenantId]);
-        }
-      }
-    });
+  // Metodo per chiudere il dialog
+  onCancel(): void {
+    this.dialogRef.close();
   }
 
   // Metodi helper

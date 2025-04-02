@@ -64,6 +64,9 @@ export class TenantListComponent implements OnInit {
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
+    if (this.paginator) {
+      this.paginator.pageSize = 10;
+    }
     this.dataSource.sort = this.sort;
   }
 

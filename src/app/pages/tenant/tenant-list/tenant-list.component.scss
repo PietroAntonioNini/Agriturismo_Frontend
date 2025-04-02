@@ -1,9 +1,17 @@
 .container {
-  padding: 20px 0 40px;
+  padding: 40px 0;
+  max-width: 1750px;
 }
 
 .tenant-card {
   margin-bottom: 20px;
+}
+
+mat-card-content{
+  padding: 10px 25px 25px 25px !important;
+}
+mat-card-header{
+  padding: 30px 30px 0 !important;
 }
 
 .page-title {
@@ -25,7 +33,7 @@
 }
 
 .filter-field {
-  width: 30%;
+  width: 40%;
   margin-bottom: 20px;
 }
 
@@ -46,7 +54,7 @@
 .table-container {
   position: relative;
   max-width: 100%;
-  min-height: 240px;
+  min-height: 250px;
   margin: auto;
   overflow: auto;
 }
@@ -116,4 +124,11 @@
 
 .mat-column-documents{
   width: 11% !important;
+}
+
+/* Effetto hover per le righe della tabella */
+tr:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  transition: background-color 0.10s ease-in !important;
+  cursor: pointer !important;
 }

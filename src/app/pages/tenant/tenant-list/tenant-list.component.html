@@ -71,14 +71,9 @@
 
           <!-- Document Status Column -->
           <ng-container matColumnDef="documents">
-<<<<<<< HEAD:src/app/pages/tenant/tenant-list/tenant-list.component.html
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Documenti </th>
             <td mat-cell *matCellDef="let tenant">
-=======
-            <th mat-header-cell *matHeaderCellDef> Documenti </th>
-            <td mat-cell *matCellDef="let tenant" class="text-center">
->>>>>>> origin/tenant_popup:src/app/tenant/tenant-list/tenant-list.component.html
-              <mat-icon [style.color]="tenant.documentFrontImage && tenant.documentBackImage ? 'green' : 'red'">
+              <mat-icon class="ms-4" [style.color]="tenant.documentFrontImage && tenant.documentBackImage ? 'green' : 'red'">
                 {{ tenant.documentFrontImage && tenant.documentBackImage ? 'check_circle' : 'cancel' }}
               </mat-icon>
             </td>
@@ -114,7 +109,9 @@
           </tr>
         </table>
 
-        <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleziona pagina di inquilini"></mat-paginator>
+        @if (dataSource.data.length > 15) {
+          <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" [pageSize]="10" aria-label="Seleziona pagina di inquilini"></mat-paginator>
+        }
       </div>
     </mat-card-content>
   </mat-card>
