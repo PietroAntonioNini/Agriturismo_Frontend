@@ -1,9 +1,18 @@
 .container {
-  padding: 20px 0 40px;
+  padding: 40px 0;
+  max-width: 1750px;
 }
 
 .apartment-card {
   margin-bottom: 20px;
+}
+
+mat-card-content{
+  padding: 10px 25px 25px 25px !important;
+}
+
+mat-card-header{
+  padding: 30px 30px 0 !important;
 }
 
 .page-title {
@@ -25,7 +34,7 @@
 }
 
 .filter-field {
-  width: 30%;
+  width: 40%;
   margin-bottom: 20px;
 }
 
@@ -45,8 +54,8 @@
 
 .table-container {
   position: relative;
-  max-width: 90%;
-  min-height: 200px;
+  max-width: 100%;
+  min-height: 250px;
   margin: auto;
   overflow: auto;
 }
@@ -92,7 +101,7 @@
 
 /* Stili per lo status dell'appartamento */
 .status-available {
-  padding: 3px 8px;
+  padding: 5px 10px 5px 8px;
   border-radius: 12px;
   background-color: #4caf50;
   color: white;
@@ -100,41 +109,57 @@
 }
 
 .status-occupied {
-  padding: 3px 8px;
+  padding: 5px 10px 5px 8px;
   border-radius: 12px;
-  background-color: #2196f3;
+  background-color: #c11919de;
   color: white;
   font-size: 12px;
 }
 
 .status-maintenance {
-  padding: 3px 8px;
+  padding: 5px 10px 5px 8px;
   border-radius: 12px;
-  background-color: #ff9800;
+  background-color: #fa9a0be7;
   color: white;
   font-size: 12px;
 }
 
+/* Stile per le icone di stato */
+.status-icon {
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
+  margin-top: -3px;
+}
+
 .mat-column-name{
-  width: 25% !important;
+  width: 20% !important;
 }
 
 .mat-column-status{
-  width: 11% !important;
+  width: 15% !important;
 }
 
 .mat-column-rooms{
-  width: 11% !important;
+  width: 10% !important;
 }
 
 .mat-column-squareMeters{
-  width: 11% !important;
+  width: 10% !important;
 }
 
 .mat-column-monthlyRent{
-  width: 11% !important;
+  width: 10% !important;
 }
 
 .mat-column-floor{
-  width: 11% !important;
+  width: 10% !important;
+}
+
+tr:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  transition: background-color 0.10s ease-in !important;
+  cursor: pointer !important;
 }
