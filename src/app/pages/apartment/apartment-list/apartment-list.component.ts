@@ -15,6 +15,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Apartment } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 
 @Component({
   selector: 'app-apartment-list',
@@ -50,7 +51,8 @@ export class ApartmentListComponent implements OnInit {
   constructor(
     private apiService: GenericApiService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private confirmationService: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
@@ -88,27 +90,31 @@ export class ApartmentListComponent implements OnInit {
     }
   }
 
-  deleteApartment(id: string): void {
-    if (confirm('Sei sicuro di voler eliminare questo appartamento? Questa azione non può essere annullata.')) {
-      this.apiService.delete('apartments', id).subscribe({
-        next: () => {
-          this.loadApartments();
-          this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-        },
-        error: (error) => {
-          console.error('Errore durante l\'eliminazione dell\'appartamento', error);
-          this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'appartamento', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-        }
-      });
-    }
+  deleteApartment(apartment: Apartment): void {
+    // Utilizza il servizio di conferma
+    this.confirmationService.confirmDelete('l\'appartamento', `${apartment.name}`)
+    .subscribe(confirmed => {
+      if (confirmed) {
+        this.apiService.delete('apartment', apartment.id).subscribe({
+          next: () => {
+            this.loadApartments();
+            this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
+              duration: 3000,
+              horizontalPosition: 'end',
+              verticalPosition: 'top'
+            });
+          },
+          error: (error) => {
+            console.error('Errore durante l\'eliminazione dell\'appartamento', error);
+            this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'appartamento', 'Chiudi', {
+              duration: 3000,
+              horizontalPosition: 'end',
+              verticalPosition: 'top'
+            });
+          }
+        });
+      }
+    });
   }
 
   getStatusClass(status: string): string {

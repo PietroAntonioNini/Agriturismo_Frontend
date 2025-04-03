@@ -137,28 +137,28 @@ export class TenantListComponent implements OnInit {
   deleteTenant(tenant: Tenant): void {
     // Utilizza il servizio di conferma
     this.confirmationService.confirmDelete('l\'inquilino', `${tenant.firstName} ${tenant.lastName}`)
-      .subscribe(confirmed => {
-        if (confirmed) {
-          this.apiService.delete('tenants', tenant.id).subscribe({
-            next: () => {
-              this.loadTenants();
-              this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
-                duration: 3000,
-                horizontalPosition: 'end',
-                verticalPosition: 'top'
-              });
-            },
-            error: (error) => {
-              console.error('Errore durante l\'eliminazione dell\'inquilino', error);
-              this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
-                duration: 3000,
-                horizontalPosition: 'end',
-                verticalPosition: 'top'
-              });
-            }
-          });
-        }
-      });
+    .subscribe(confirmed => {
+      if (confirmed) {
+        this.apiService.delete('tenants', tenant.id).subscribe({
+          next: () => {
+            this.loadTenants();
+            this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
+              duration: 3000,
+              horizontalPosition: 'end',
+              verticalPosition: 'top'
+            });
+          },
+          error: (error) => {
+            console.error('Errore durante l\'eliminazione dell\'inquilino', error);
+            this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
+              duration: 3000,
+              horizontalPosition: 'end',
+              verticalPosition: 'top'
+            });
+          }
+        });
+      }
+    });
   }
 
   getFullName(tenant: Tenant): string {
