@@ -2,7 +2,7 @@ import { environment } from '../../../../environments/environment';
 import { Component, OnInit, Inject, ViewChild, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +16,45 @@ import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+
+// Componente per l'anteprima dell'immagine a schermo intero
+@Component({
+  selector: 'app-image-preview-dialog',
+  standalone: true,
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  template: `
+    <div class="image-preview-container">
+      <button mat-icon-button class="close-button" mat-dialog-close>
+        <mat-icon>close</mat-icon>
+      </button>
+      <img [src]="data.imageUrl" alt="Documento" class="preview-image">
+    </div>
+  `,
+  styles: [`
+    .image-preview-container {
+      position: relative;
+      padding: 16px;
+      max-height: 90vh;
+      display: flex;
+      justify-content: center;
+    }
+    .close-button {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+    }
+    .preview-image {
+      max-width: 100%;
+      max-height: 85vh;
+      object-fit: contain;
+    }
+  `]
+})
+export class ImagePreviewDialogComponent {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { imageUrl: string }) {}
+}
 
 @Component({
   selector: 'app-tenant-detail-dialog',
@@ -62,7 +101,8 @@ export class TenantDetailDialogComponent implements OnInit {
     private dialogRef: MatDialogRef<TenantDetailDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { tenantId: number },
     private snackBar: MatSnackBar,
-    private confirmationService: ConfirmationDialogService
+    private confirmationService: ConfirmationDialogService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -203,5 +243,222 @@ export class TenantDetailDialogComponent implements OnInit {
       this.tooltipTexts[elementType] = 'Copia';
       tooltipRef.hide();
     }, 1500);
+  }
+
+  getContractProgress(startDate: string | Date, endDate: string | Date): string {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    
+    const totalDuration = end.getTime() - start.getTime();
+    const elapsedDuration = today.getTime() - start.getTime();
+    
+    // Calcola la percentuale completata
+    let percentComplete = Math.round((elapsedDuration / totalDuration) * 100);
+    
+    // Assicurati che sia tra 0 e 100
+    percentComplete = Math.max(0, Math.min(100, percentComplete));
+    
+    return percentComplete + '%';
+  }
+  
+  getContractProgressText(startDate: string | Date, endDate: string | Date): string {
+    const percentComplete = this.getContractProgress(startDate, endDate);
+    return percentComplete + ' completato';
+  }
+  
+  getRemainingMonths(endDate: string | Date): number {
+    const end = new Date(endDate);
+    const today = new Date();
+    
+    // Calcola la differenza in mesi
+    const months = (end.getFullYear() - today.getFullYear()) * 12 + 
+                   (end.getMonth() - today.getMonth());
+    
+    return Math.max(0, months);
+  }
+
+  // Metodo per aprire un visualizzatore immagine più grande
+  openImagePreview(imagePath: string): void {
+    const imageUrl = this.getImageUrl(imagePath);
+    
+    this.dialog.open(ImagePreviewDialogComponent, {
+      width: '90%',
+      maxWidth: '1200px',
+      data: { imageUrl }
+    });
+  }
+
+  // Metodo per caricare entrambi i documenti
+  uploadDocuments(): void {
+    // Implementazione di un dialog per il caricamento di entrambi i documenti
+    // Qui potremmo creare un dialog complesso che permette di caricare entrambe le immagini,
+    // ma per semplicità, ora apriamo due finestre di selezione file una dopo l'altra
+    
+    this.snackBar.open('Per favore seleziona prima l\'immagine del fronte', 'OK', {
+      duration: 3000
+    });
+    
+    setTimeout(() => {
+      this.uploadFrontImage();
+      
+      setTimeout(() => {
+        // Se è stato caricato il fronte, chiediamo anche il retro
+        if (this.tenant?.documentFrontImage) {
+          this.snackBar.open('Ora seleziona l\'immagine del retro', 'OK', {
+            duration: 3000
+          });
+          
+          setTimeout(() => {
+            this.uploadBackImage();
+          }, 1000);
+        }
+      }, 3000);
+    }, 500);
+  }
+
+  // Metodo per caricare solo il fronte
+  uploadFrontImage(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        this.uploadDocumentImage('front', file);
+      }
+    };
+    input.click();
+  }
+
+  // Metodo per caricare solo il retro
+  uploadBackImage(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        this.uploadDocumentImage('back', file);
+      }
+    };
+    input.click();
+  }
+
+  // Metodo per sostituire l'immagine fronte
+  replaceFrontImage(): void {
+    this.uploadFrontImage();
+  }
+
+  // Metodo per sostituire l'immagine retro
+  replaceBackImage(): void {
+    this.uploadBackImage();
+  }
+
+  // Metodo per caricare un'immagine documento
+  uploadDocumentImage(type: 'front' | 'back', file: File): void {
+    if (!this.tenant) return;
+
+    this.isLoading = true;
+    
+    // Crea un FormData per inviare il file
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Aggiorna il nome del file con il tipo (fronte o retro)
+    const fileName = type === 'front' ? 'documentFrontImage' : 'documentBackImage';
+    formData.append('fieldName', fileName);
+    
+    // Chiama l'API per caricare il file
+    this.apiService.uploadFile('tenants', this.tenant.id, `documents/${type}`, file).subscribe({
+      next: (response) => {
+        // Aggiorna il modello locale con il nuovo URL dell'immagine
+        if (type === 'front') {
+          this.tenant!.documentFrontImage = response.imageUrl;
+        } else {
+          this.tenant!.documentBackImage = response.imageUrl;
+        }
+        
+        this.snackBar.open(`Immagine ${type === 'front' ? 'fronte' : 'retro'} caricata con successo`, 'Chiudi', {
+          duration: 3000
+        });
+        
+        // Ricarica i dati dell'inquilino per aggiornare l'interfaccia
+        this.loadTenantData(this.tenant!.id);
+      },
+      error: (error) => {
+        console.error(`Errore durante il caricamento dell'immagine ${type}`, error);
+        this.snackBar.open(`Errore durante il caricamento dell'immagine: ${error.message || 'Errore sconosciuto'}`, 'Chiudi', {
+          duration: 3000
+        });
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /// Metodo per eliminare l'immagine fronte
+  removeFrontImage(): void {
+    if (!this.tenant || !this.tenant.documentFrontImage) return;
+    
+    this.confirmationService.confirmDelete('l\'immagine fronte del documento', 'questo documento').subscribe(confirmed => {
+      if (confirmed) {
+        this.isLoading = true;
+        
+        // Chiama l'API per eliminare il file
+        this.apiService.deleteFile('tenants', this.tenant!.id, 'documentFrontImage').subscribe({
+          next: () => {
+            // Aggiorna il modello locale
+            this.tenant!.documentFrontImage = '';
+            
+            this.snackBar.open('Fronte del documento rimosso', 'Chiudi', { 
+              duration: 3000 
+            });
+            
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Errore nella rimozione del documento', error);
+            this.snackBar.open(`Errore nella rimozione del documento: ${error.message || 'Errore sconosciuto'}`, 'Chiudi', { 
+              duration: 3000 
+            });
+            
+            this.isLoading = false;
+          }
+        });
+      }
+    });
+  }
+
+  // Metodo per eliminare l'immagine retro
+  removeBackImage(): void {
+    if (!this.tenant || !this.tenant.documentBackImage) return;
+    
+    this.confirmationService.confirmDelete('l\'immagine retro del documento', 'questo documento').subscribe(confirmed => {
+      if (confirmed) {
+        this.isLoading = true;
+        
+        // Chiama l'API per eliminare il file
+        this.apiService.deleteFile('tenants', this.tenant!.id, 'documentBackImage').subscribe({
+          next: () => {
+            // Aggiorna il modello locale
+            this.tenant!.documentBackImage = '';
+            
+            this.snackBar.open('Retro del documento rimosso', 'Chiudi', { 
+              duration: 3000 
+            });
+            
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Errore nella rimozione del documento', error);
+            this.snackBar.open(`Errore nella rimozione del documento: ${error.message || 'Errore sconosciuto'}`, 'Chiudi', { 
+              duration: 3000 
+            });
+            
+            this.isLoading = false;
+          }
+        });
+      }
+    });
   }
 }

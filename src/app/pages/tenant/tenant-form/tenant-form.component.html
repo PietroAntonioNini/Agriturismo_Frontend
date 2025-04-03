@@ -24,17 +24,17 @@
 
       <form [formGroup]="tenantForm" (ngSubmit)="onSubmit()" class="tenant-form">
         <div class="form-row">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Nome</mat-label>
-            <input matInput formControlName="firstName" placeholder="Inserisci il nome">
+            <input matInput formControlName="firstName">
             <mat-error *ngIf="tenantForm.get('firstName')?.invalid && tenantForm.get('firstName')?.touched">
               {{ getFormControlError('firstName') }}
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Cognome</mat-label>
-            <input matInput formControlName="lastName" placeholder="Inserisci il cognome">
+            <input matInput formControlName="lastName">
             <mat-error *ngIf="tenantForm.get('lastName')?.invalid && tenantForm.get('lastName')?.touched">
               {{ getFormControlError('lastName') }}
             </mat-error>
@@ -42,17 +42,17 @@
         </div>
 
         <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" placeholder="Inserisci l'email (opzionale)" type="email">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Email (opzionale)</mat-label>
+            <input matInput formControlName="email" type="email">
             <mat-error *ngIf="tenantForm.get('email')?.invalid && tenantForm.get('email')?.touched">
               {{ getFormControlError('email') }}
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Telefono</mat-label>
-            <input matInput formControlName="phone" placeholder="Inserisci il numero di telefono">
+            <input matInput formControlName="phone">
             <mat-error *ngIf="tenantForm.get('phone')?.invalid && tenantForm.get('phone')?.touched">
               {{ getFormControlError('phone') }}
             </mat-error>
@@ -60,9 +60,9 @@
         </div>
 
         <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Indirizzo</mat-label>
-            <input matInput formControlName="address" placeholder="Inserisci l'indirizzo (opzionale)">
+          <mat-form-field appearance="outline" class="full-width" floatLabel="always">
+            <mat-label>Indirizzo (opzionale)</mat-label>
+            <input matInput formControlName="address">
           </mat-form-field>
         </div>
 
@@ -70,7 +70,7 @@
           <h3>Documento di Identità</h3>
           <div class="form-row">
             <div class="form-row">
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Tipo Documento</mat-label>
                 <mat-select formControlName="documentType">
                   <mat-option *ngFor="let type of documentTypes" [value]="type">
@@ -82,16 +82,16 @@
                 </mat-error>
               </mat-form-field>
             
-              <mat-form-field appearance="outline">
+              <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Numero Documento</mat-label>
-                <input matInput formControlName="documentNumber" placeholder="Inserisci il numero del documento">
+                <input matInput formControlName="documentNumber">
                 <mat-error *ngIf="tenantForm.get('documentNumber')?.invalid && tenantForm.get('documentNumber')?.touched">
                   {{ getFormControlError('documentNumber') }}
                 </mat-error>
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Data Scadenza Documento</mat-label>
+              <mat-form-field appearance="outline" floatLabel="always">
+                <mat-label>Data Scadenza</mat-label>
                 <input matInput [matDatepicker]="picker" formControlName="documentExpiryDate">
                 <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                 <mat-datepicker #picker></mat-datepicker>
@@ -135,15 +135,15 @@
         <div class="comunications-container">
           <h3>Preferenze di comunicazione</h3>
           <div class="form-row" formGroupName="communicationPreferences">
-            <mat-checkbox formControlName="email">Email</mat-checkbox>
-            <mat-checkbox formControlName="sms">SMS</mat-checkbox>
-            <mat-checkbox formControlName="whatsapp">WhatsApp</mat-checkbox>
-          </div>
+            <mat-checkbox formControlName="email" color="primary">Email</mat-checkbox>
+            <mat-checkbox formControlName="sms" color="primary">SMS</mat-checkbox>
+            <mat-checkbox formControlName="whatsapp" color="primary">WhatsApp</mat-checkbox>
+          </div>          
   
           <div class="full-width">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Note</mat-label>
-              <textarea matInput formControlName="notes" placeholder="Inserisci eventuali note (opzionale)" rows="2"></textarea>
+            <mat-form-field appearance="outline" class="full-width" floatLabel="always">
+              <mat-label>Note (opzionale)</mat-label>
+              <textarea matInput formControlName="notes" rows="2"></textarea>
             </mat-form-field>
           </div>
         </div>

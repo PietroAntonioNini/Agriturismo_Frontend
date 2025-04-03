@@ -1,145 +1,237 @@
-<div class="container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Dettaglio Contratto</mat-card-title>
-      <div class="header-actions">
-        <button mat-icon-button (click)="goBack()" matTooltip="Torna alla lista">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-      </div>
-    </mat-card-header>
-    
-    <mat-card-content>
-      <div *ngIf="isLoading" class="loading-container">
-        <mat-spinner></mat-spinner>
-      </div>
-      
-      <div *ngIf="errorMessage" class="error-message">
-        <mat-icon>error</mat-icon>
-        <span>{{errorMessage}}</span>
-      </div>
-      
-      <div *ngIf="!isLoading && !errorMessage && lease">
-        <div class="lease-header">
-          <div class="lease-status">
-            <span [ngClass]="getStatusClass(lease.isActive)">
-              {{getStatusLabel(lease.isActive)}}
-            </span>
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h1>Dettaglio Contratto</h1>
+    </div>
+    <div class="header-actions" *ngIf="!isLoading && lease">
+      <button mat-button class="action-button edit" (click)="editLease()">
+        <mat-icon>edit</mat-icon>
+        <span>Modifica</span>
+      </button>
+      <button mat-button class="action-button delete" (click)="deleteLease()">
+        <mat-icon>delete</mat-icon>
+        <span>Elimina</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="errorMessage" class="error-message">
+    <mat-icon>error</mat-icon>
+    <span>{{errorMessage}}</span>
+  </div>
+
+  <!-- Contract content -->
+  <div *ngIf="!isLoading && !errorMessage && lease" class="contract-container">
+    <!-- Contract summary card -->
+    <div class="contract-summary-card">
+      <div class="summary-header">
+        <div class="contract-status" [ngClass]="{'active': lease.isActive, 'inactive': !lease.isActive}">
+          <span class="status-dot"></span>
+          <span class="status-text">{{getStatusLabel(lease.isActive)}}</span>
+        </div>
+        <div class="contract-id">
+          <h2>Contratto #{{lease.id}}</h2>
+        </div>
+        <div class="contract-parties">
+          <div class="tenant-info">
+            <mat-icon>person</mat-icon>
+            <span>{{tenant?.firstName}} {{tenant?.lastName}}</span>
           </div>
-          <div class="lease-actions">
-            <button mat-raised-button color="primary" (click)="editLease()">
-              <mat-icon>edit</mat-icon> Modifica
-            </button>
-            <button mat-raised-button color="warn" (click)="deleteLease()">
-              <mat-icon>delete</mat-icon> Elimina
-            </button>
+          <div class="apartment-info">
+            <mat-icon>apartment</mat-icon>
+            <span>{{apartment?.name}}</span>
           </div>
         </div>
-        
-        <mat-divider></mat-divider>
-        
-        <mat-tab-group>
-          <!-- Informazioni Generali -->
-          <mat-tab label="Informazioni Generali">
-            <div class="tab-content">
-              <div class="info-section">
-                <h3>Dettagli Contratto</h3>
-                <div class="info-grid">
-                  <div class="info-item">
-                    <span class="label">ID Contratto:</span>
-                    <span class="value">{{lease.id}}</span>
+      </div>
+
+      <div class="summary-body">
+        <div class="info-section">
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>calendar_today</mat-icon>
+              <span>Inizio</span>
+            </div>
+            <div class="info-value">{{formatDate(lease.startDate)}}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>event</mat-icon>
+              <span>Fine</span>
+            </div>
+            <div class="info-value">{{formatDate(lease.endDate)}}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>payments</mat-icon>
+              <span>Canone</span>
+            </div>
+            <div class="info-value">{{formatCurrency(lease.monthlyRent)}}<span class="period">/mese</span></div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>account_balance_wallet</mat-icon>
+              <span>Deposito</span>
+            </div>
+            <div class="info-value">{{formatCurrency(lease.securityDeposit)}}</div>
+          </div>
+        </div>
+
+        <div class="contract-timeline">
+          <div class="timeline-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
+            </div>
+            <div class="progress-labels">
+              <span>{{getContractProgressText(lease.startDate, lease.endDate)}}</span>
+              <span>{{getRemainingMonths(lease.endDate)}} mesi rimanenti</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract tabs -->
+    <div class="contract-tabs">
+      <mat-tab-group animationDuration="300ms" class="custom-tabs">
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">info</mat-icon>
+            <span>Informazioni Generali</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="info-section">
+              <h3>Dettagli Pagamento</h3>
+              <div class="payment-details">
+                <div class="payment-item">
+                  <div class="payment-label">
+                    <mat-icon>date_range</mat-icon>
+                    <span>Giorno Scadenza Pagamento</span>
                   </div>
-                  <div class="info-item">
-                    <span class="label">Inquilino:</span>
-                    <span class="value">{{tenant?.firstName}} {{tenant?.lastName}}</span>
+                  <div class="payment-value">
+                    <span class="day-badge">{{lease.paymentDueDay}}</span>
+                    <span> di ogni mese</span>
                   </div>
-                  <div class="info-item">
-                    <span class="label">Appartamento:</span>
-                    <span class="value">{{apartment?.name}}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Data Inizio:</span>
-                    <span class="value">{{formatDate(lease.startDate)}}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Data Fine:</span>
-                    <span class="value">{{formatDate(lease.endDate)}}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Canone Mensile:</span>
-                    <span class="value">{{formatCurrency(lease.monthlyRent)}}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Deposito Cauzionale:</span>
-                    <span class="value">{{formatCurrency(lease.securityDeposit)}}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Giorno Scadenza Pagamento:</span>
-                    <span class="value">{{lease.paymentDueDay}}</span>
+                </div>
+                
+                <div class="payment-methods">
+                  <h4>Metodi di pagamento accettati</h4>
+                  <div class="methods-container">
+                    <div class="method-chip">
+                      <mat-icon>account_balance</mat-icon>
+                      <span>Bonifico Bancario</span>
+                    </div>
+                    <div class="method-chip">
+                      <mat-icon>credit_card</mat-icon>
+                      <span>Carta di Credito</span>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div class="info-section">
-                <h3>Note</h3>
-                <p class="notes">{{lease.notes || 'Nessuna nota disponibile'}}</p>
+            </div>
+
+            <div class="info-section notes-section">
+              <h3>Note</h3>
+              <div class="notes-content">
+                <mat-icon *ngIf="!lease.notes">note_off</mat-icon>
+                <p>{{lease.notes || 'Nessuna nota disponibile'}}</p>
               </div>
             </div>
-          </mat-tab>
-          
-          <!-- Termini e Condizioni -->
-          <mat-tab label="Termini e Condizioni">
-            <div class="tab-content">
-              <mat-expansion-panel expanded>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>Termini e Condizioni Generali</mat-panel-title>
-                </mat-expansion-panel-header>
-                <div class="terms-content" [innerHTML]="lease.termsAndConditions"></div>
-              </mat-expansion-panel>
-              
-              <mat-expansion-panel *ngIf="lease.specialClauses">
-                <mat-expansion-panel-header>
-                  <mat-panel-title>Clausole Speciali</mat-panel-title>
-                </mat-expansion-panel-header>
-                <div class="terms-content" [innerHTML]="lease.specialClauses"></div>
-              </mat-expansion-panel>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">description</mat-icon>
+            <span>Termini e Condizioni</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="terms-section">
+              <h3>Termini e Condizioni Generali</h3>
+              <div class="terms-content" [innerHTML]="lease.termsAndConditions || 'Nessun termine disponibile'"></div>
             </div>
-          </mat-tab>
-          
-          <!-- Documenti -->
-          <mat-tab label="Documenti" *ngIf="lease.documents && lease.documents.length > 0">
-            <div class="tab-content">
-              <div class="documents-list">
-                <div class="document-item" *ngFor="let doc of lease.documents">
-                  <mat-icon>description</mat-icon>
-                  <div class="document-info">
-                    <span class="document-name">{{doc.name}}</span>
+            
+            <div class="terms-section special-clauses" *ngIf="lease.specialClauses">
+              <h3>Clausole Speciali</h3>
+              <div class="terms-content" [innerHTML]="lease.specialClauses"></div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">insert_drive_file</mat-icon>
+            <span>Documenti</span>
+          </ng-template>
+          <div class="tab-content">
+            <div *ngIf="lease.documents && lease.documents.length > 0; else noDocuments">
+              <div class="documents-grid">
+                <div class="document-card" *ngFor="let doc of lease.documents">
+                  <div class="document-icon">
+                    <mat-icon>description</mat-icon>
+                  </div>
+                  <div class="document-details">
+                    <h4>{{doc.name}}</h4>
                     <span class="document-date">Caricato il {{formatDate(doc.uploadDate)}}</span>
                   </div>
-                  <button mat-icon-button matTooltip="Scarica documento">
-                    <mat-icon>download</mat-icon>
+                  <button class="document-download" matTooltip="Scarica documento">
+                    <mat-icon>file_download</mat-icon>
                   </button>
                 </div>
               </div>
             </div>
-          </mat-tab>
-          
-          <!-- Storico Pagamenti -->
-          <mat-tab label="Storico Pagamenti" *ngIf="lease.paymentHistory && lease.paymentHistory.length > 0">
-            <div class="tab-content">
-              <div class="payments-list">
-                <div class="payment-item" *ngFor="let payment of lease.paymentHistory">
-                  <div class="payment-date">{{formatDate(payment.paymentDate)}}</div>
-                  <div class="payment-amount">{{formatCurrency(payment.amount)}}</div>
-                  <div class="payment-type">{{payment.paymentType}}</div>
-                  <div class="payment-reference">{{payment.reference}}</div>
-                  <div class="payment-notes">{{payment.notes || ''}}</div>
+            <ng-template #noDocuments>
+              <div class="no-data-message">
+                <mat-icon>folder_off</mat-icon>
+                <span>Nessun documento disponibile</span>
+              </div>
+            </ng-template>
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">payment</mat-icon>
+            <span>Storico Pagamenti</span>
+          </ng-template>
+          <div class="tab-content">
+            <div *ngIf="lease.paymentHistory && lease.paymentHistory.length > 0; else noPayments">
+              <div class="payments-table">
+                <div class="table-header">
+                  <div class="header-cell">Data</div>
+                  <div class="header-cell">Importo</div>
+                  <div class="header-cell">Metodo</div>
+                  <div class="header-cell">Riferimento</div>
+                  <div class="header-cell">Note</div>
+                </div>
+                <div class="table-row" *ngFor="let payment of lease.paymentHistory">
+                  <div class="table-cell date">{{formatDate(payment.paymentDate)}}</div>
+                  <div class="table-cell amount">{{formatCurrency(payment.amount)}}</div>
+                  <div class="table-cell method">
+                    <span class="method-badge">{{payment.paymentType}}</span>
+                  </div>
+                  <div class="table-cell reference">{{payment.reference}}</div>
+                  <div class="table-cell notes">{{payment.notes || '-'}}</div>
                 </div>
               </div>
             </div>
-          </mat-tab>
-        </mat-tab-group>
-      </div>
-    </mat-card-content>
-  </mat-card>
+            <ng-template #noPayments>
+              <div class="no-data-message">
+                <mat-icon>account_balance_wallet</mat-icon>
+                <span>Nessun pagamento registrato</span>
+              </div>
+            </ng-template>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
 </div>

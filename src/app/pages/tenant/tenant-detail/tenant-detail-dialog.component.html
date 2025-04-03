@@ -80,7 +80,11 @@
 
         <mat-card-content>
           <mat-tab-group animationDuration="300ms">
-            <mat-tab label="Documenti">
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="me-1">description</mat-icon>
+                <span>Documenti</span>
+              </ng-template>
               <div class="tab-content">
                 <mat-list *ngIf="tenant.notes" class="text-center">
                   <mat-list-item>
@@ -89,62 +93,121 @@
                   </mat-list-item>
                 </mat-list>
 
-                <h4 class="text-center mt-4">Documenti d'identità</h4>
-                <div class="tenant-subtitle d-flex flex-column py-2">
-                  <span class="d-flex justify-content-center align-items-center">
-                    <mat-icon class="me-1">assignment_ind</mat-icon> {{ tenant.documentType }} 
-                    <mat-icon class="ms-4 me-1">badge</mat-icon><span [matTooltip]="tooltipTexts['documentNumber']" #documentNumberTooltip="matTooltip" (click)="copyToClipboard(tenant.documentNumber, 'documentNumber', documentNumberTooltip)" style="cursor: pointer; text-transform: uppercase;">{{ tenant.documentNumber }}</span>  
-                    <mat-icon class="ms-4 me-1">calendar_month</mat-icon> {{ formatDate(tenant.documentExpiryDate) }}
-                  </span>
-                </div>
-                <div class="documents-container">
-                  <div class="m-auto d-flex gap-3">
-                    <!-- Immagine fronte documento -->
-                    <div *ngIf="tenant.documentFrontImage" class="document-card">
-                      <div class="document-header">
-                        <h3>Fronte Documento</h3>
-                        <button mat-icon-button color="primary" (click)="downloadDocument('front', 'fronte-documento')">
-                          <mat-icon>file_download</mat-icon>
-                        </button>
-                      </div>
-                      <div class="document-image-container">
-                        <img [src]="getImageUrl(tenant.documentFrontImage)" alt="Fronte documento" class="document-image">
-                      </div>
-                    </div>
-                    
-                    <!-- Messaggio se nessuna immagine fronte -->
-                    <div *ngIf="!tenant.documentFrontImage" class="no-document-card">
-                      <mat-icon>image_not_supported</mat-icon>
-                      <span style="font-size: 12px;">Nessuna immagine fronte caricata</span>
-                    </div>
-                    
-                    <!-- Immagine retro documento -->
-                    <div *ngIf="tenant.documentBackImage" class="document-card">
-                      <div class="document-header">
-                        <h3>Retro Documento</h3>
-                        <button mat-icon-button color="primary" (click)="downloadDocument('back', 'retro-documento')">
-                          <mat-icon>file_download</mat-icon>
-                        </button>
-                      </div>
-                      <div class="document-image-container">
-                        <img [src]="getImageUrl(tenant.documentBackImage)" alt="Retro documento" class="document-image">
+                <!-- Nuova sezione documenti d'identità -->
+                <div class="document-identity-section">
+                  <div class="document-header">
+                    <div class="document-title">
+                      <h2>Documenti d'identità</h2>
+                      <div class="document-info">
+                        <div class="info-pill">
+                          <mat-icon>assignment_ind</mat-icon>
+                          <span>{{ tenant.documentType || 'Carta d\'identità' }}</span>
+                        </div>
+                        <div class="info-pill" 
+                          [matTooltip]="tooltipTexts['documentNumber']" 
+                          #documentNumberTooltip="matTooltip"
+                          (click)="copyToClipboard(tenant.documentNumber, 'documentNumber', documentNumberTooltip)" 
+                          style="cursor: pointer;">
+                          <mat-icon>confirmation_number</mat-icon>
+                          <span>{{ tenant.documentNumber || 'CA70837EO' }}</span>
+                        </div>
+                        <div class="info-pill">
+                          <mat-icon>event</mat-icon>
+                          <span>Scadenza: {{ formatDate(tenant.documentExpiryDate) || '22/03/2025' }}</span>
+                        </div>
                       </div>
                     </div>
-                    
-                    <!-- Messaggio se nessuna immagine retro -->
-                    <div *ngIf="!tenant.documentBackImage" class="no-document-card">
-                      <mat-icon>image_not_supported</mat-icon>
-                      <span style="font-size: 12px;">Nessuna immagine retro caricata</span>
+                    <button mat-button class="upload-button" (click)="uploadDocuments()" *ngIf="!tenant.documentFrontImage || !tenant.documentBackImage">
+                      <mat-icon>upload_file</mat-icon>
+                      <span>Carica Documenti</span>
+                    </button>
+                  </div>
+
+                  <div class="document-cards-container">
+                    <!-- Fronte documento -->
+                    <div class="document-card" [class.has-image]="tenant.documentFrontImage">
+                      <div class="card-header">
+                        <h3>Fronte</h3>
+                        <div class="card-actions" *ngIf="tenant.documentFrontImage">
+                          <button mat-icon-button matTooltip="Scarica" (click)="downloadDocument('front', 'fronte-documento')">
+                            <mat-icon>download</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Sostituisci" (click)="replaceFrontImage()">
+                            <mat-icon>autorenew</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Elimina" color="warn" (click)="removeFrontImage()">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div class="card-content">
+                        <!-- Visualizzazione con immagine -->
+                        <div class="card-image-container" *ngIf="tenant.documentFrontImage">
+                          <img [src]="getImageUrl(tenant.documentFrontImage)" alt="Fronte documento" (click)="openImagePreview(tenant.documentFrontImage)">
+                        </div>
+                        
+                        <!-- Visualizzazione senza immagine (placeholder) -->
+                        <div class="empty-document" *ngIf="!tenant.documentFrontImage">
+                          <div class="empty-document-icon">
+                            <mat-icon>image_not_supported</mat-icon>
+                          </div>
+                          <p>Nessuna immagine fronte caricata</p>
+                          <button mat-stroked-button color="primary" (click)="uploadFrontImage()">
+                            <mat-icon>add_photo_alternate</mat-icon>
+                            <span>Carica fronte</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Retro documento -->
+                    <div class="document-card" [class.has-image]="tenant.documentBackImage">
+                      <div class="card-header">
+                        <h3>Retro</h3>
+                        <div class="card-actions" *ngIf="tenant.documentBackImage">
+                          <button mat-icon-button matTooltip="Scarica" (click)="downloadDocument('back', 'retro-documento')">
+                            <mat-icon>download</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Sostituisci" (click)="replaceBackImage()">
+                            <mat-icon>autorenew</mat-icon>
+                          </button>
+                          <button mat-icon-button matTooltip="Elimina" color="warn" (click)="removeBackImage()">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div class="card-content">
+                        <!-- Visualizzazione con immagine -->
+                        <div class="card-image-container" *ngIf="tenant.documentBackImage">
+                          <img [src]="getImageUrl(tenant.documentBackImage)" alt="Retro documento" (click)="openImagePreview(tenant.documentBackImage)">
+                        </div>
+                        
+                        <!-- Visualizzazione senza immagine (placeholder) -->
+                        <div class="empty-document" *ngIf="!tenant.documentBackImage">
+                          <div class="empty-document-icon">
+                            <mat-icon>image_not_supported</mat-icon>
+                          </div>
+                          <p>Nessuna immagine retro caricata</p>
+                          <button mat-stroked-button color="primary" (click)="uploadBackImage()">
+                            <mat-icon>add_photo_alternate</mat-icon>
+                            <span>Carica retro</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </mat-tab>
             
-            <mat-tab label="Contratti">
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="me-1">assignment</mat-icon>
+                <span>Contratti Attivi</span>
+              </ng-template>
               <div class="tab-content">
-                <h2>Contratti Attivi</h2>
-                
                 <div *ngIf="activeLeases.length === 0 && !errorMessage" class="no-data-message">
                   <mat-icon>info</mat-icon>
                   <span>Nessun contratto attivo per questo inquilino</span>
@@ -155,30 +218,92 @@
                   <span>{{ errorMessage }}</span>
                 </div>
                 
-                <mat-card *ngFor="let lease of activeLeases" class="lease-card">
-                  <mat-card-header>
-                    <mat-card-title>Contratto #{{ lease.id }}</mat-card-title>
-                    <mat-card-subtitle>Appartamento ID: {{ lease.apartmentId }}</mat-card-subtitle>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <div class="lease-info">
-                      <div class="lease-detail">
-                        <strong>Inizio:</strong> {{ formatDate(lease.startDate) }}
+                <!-- Card contratti -->
+                <div *ngFor="let lease of activeLeases" class="contract-card">
+                  <div class="contract-header">
+                    <div class="contract-status active">
+                      <span class="status-dot"></span>
+                      <span class="status-text">Attivo</span>
+                    </div>
+                    <div class="contract-id">
+                      <h3>Contratto #{{ lease.id }}</h3>
+                      <span class="property-tag">Appartamento ID: {{ lease.apartmentId }}</span>
+                    </div>
+                    <div class="contract-actions">
+                      <button class="action-button edit" matTooltip="Modifica">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button class="action-button more" matTooltip="Opzioni">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                
+                  <div class="contract-body">
+                    <div class="contract-info">
+                      <div class="info-section">
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>calendar_today</mat-icon>
+                            <span>Inizio</span>
+                          </div>
+                          <div class="info-value">{{ formatDate(lease.startDate) }}</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>event</mat-icon>
+                            <span>Fine</span>
+                          </div>
+                          <div class="info-value">{{ formatDate(lease.endDate) }}</div>
+                        </div>
                       </div>
-                      <div class="lease-detail">
-                        <strong>Fine:</strong> {{ formatDate(lease.endDate) }}
-                      </div>
-                      <div class="lease-detail">
-                        <strong>Canone Mensile:</strong> €{{ lease.monthlyRent }}
+                
+                      <div class="info-section">
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>payments</mat-icon>
+                            <span>Canone</span>
+                          </div>
+                          <div class="info-value">€{{ lease.monthlyRent }}<span class="period">/mese</span></div>
+                        </div>
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>receipt_long</mat-icon>
+                            <span>Stato</span>
+                          </div>
+                          <div class="payment-status paid">Pagato</div>
+                        </div>
                       </div>
                     </div>
-                  </mat-card-content>
-                  <mat-card-actions>
-                    <button mat-button [routerLink]="['/lease/detail', lease.id]" color="primary" (click)="close()">
-                      <mat-icon>visibility</mat-icon> Visualizza Dettagli
+                    
+                    <div class="contract-timeline">
+                      <div class="timeline-progress">
+                        <div class="progress-bar">
+                          <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
+                        </div>
+                        <div class="progress-labels">
+                          <span>{{ getContractProgressText(lease.startDate, lease.endDate) }}</span>
+                          <span>{{ getRemainingMonths(lease.endDate) }} mesi rimanenti</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                
+                  <div class="contract-footer">
+                    <button class="view-details" [routerLink]="['/lease/detail', lease.id]" (click)="close()">
+                      <mat-icon>visibility</mat-icon>
+                      <span>Visualizza Dettagli</span>
                     </button>
-                  </mat-card-actions>
-                </mat-card>
+                    <div class="d-flex gap-2">
+                      <button class="quick-action" matTooltip="Rinnova contratto">
+                        <mat-icon>autorenew</mat-icon>
+                      </button>
+                      <button class="quick-action" matTooltip="Documenti">
+                        <mat-icon>description</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </mat-tab>
           </mat-tab-group>

@@ -165,4 +165,37 @@ export class LeaseDetailComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/lease/list']);
   }
+
+  getContractProgress(startDate: string | Date, endDate: string | Date): string {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const today = new Date();
+    
+    const totalDuration = end.getTime() - start.getTime();
+    const elapsedDuration = today.getTime() - start.getTime();
+    
+    // Calcola la percentuale completata
+    let percentComplete = Math.round((elapsedDuration / totalDuration) * 100);
+    
+    // Assicurati che sia tra 0 e 100
+    percentComplete = Math.max(0, Math.min(100, percentComplete));
+    
+    return percentComplete + '%';
+  }
+  
+  getContractProgressText(startDate: string | Date, endDate: string | Date): string {
+    const percentComplete = this.getContractProgress(startDate, endDate).replace('%', '');
+    return percentComplete + '% completato';
+  }
+  
+  getRemainingMonths(endDate: string | Date): number {
+    const end = new Date(endDate);
+    const today = new Date();
+    
+    // Calcola la differenza in mesi
+    const months = (end.getFullYear() - today.getFullYear()) * 12 + 
+                   (end.getMonth() - today.getMonth());
+    
+    return Math.max(0, months);
+  }
 }
