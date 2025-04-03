@@ -43,7 +43,7 @@ import { ConfirmationDialogService } from '../../../shared/services/confirmation
   styleUrls: ['./tenant-list.component.scss']
 })
 export class TenantListComponent implements OnInit {
-  displayedColumns: string[] = ['name', 'email', 'phone', 'documentType', 'documentNumber', 'documents', 'actions'];
+  displayedColumns: string[] = ['name', 'phone', 'email', 'documentType', 'documentNumber', 'documents', 'actions'];
   dataSource = new MatTableDataSource<Tenant>([]);
   isLoading = true;
   errorMessage: string | null = null;

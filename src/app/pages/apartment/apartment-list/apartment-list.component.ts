@@ -62,6 +62,23 @@ export class ApartmentListComponent implements OnInit {
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+    
+    // Configurazione personalizzata del paginatore
+    if (this.paginator) {
+      this.paginator._intl.nextPageLabel = 'Pagina successiva';
+      this.paginator._intl.previousPageLabel = 'Pagina precedente';
+      this.paginator._intl.firstPageLabel = 'Prima pagina';
+      this.paginator._intl.lastPageLabel = 'Ultima pagina';
+      this.paginator._intl.getRangeLabel = (page: number, pageSize: number, length: number) => {
+        if (length === 0 || pageSize === 0) {
+          return `0 di ${length}`;
+        }
+        length = Math.max(length, 0);
+        const startIndex = page * pageSize;
+        const endIndex = startIndex < length ? Math.min(startIndex + pageSize, length) : startIndex + pageSize;
+        return `${page + 1} di ${Math.ceil(length / pageSize)}`;
+      };
+    }
   }
 
   loadApartments(): void {
@@ -92,7 +109,7 @@ export class ApartmentListComponent implements OnInit {
 
   deleteApartment(apartment: Apartment): void {
     // Utilizza il servizio di conferma
-    this.confirmationService.confirmDelete('l\'appartamento', `${apartment.name}`)
+    this.confirmationService.confirmDelete('l\'appartamento', apartment.name)
     .subscribe(confirmed => {
       if (confirmed) {
         this.apiService.delete('apartment', apartment.id).subscribe({

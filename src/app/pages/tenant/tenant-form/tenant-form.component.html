@@ -1,9 +1,7 @@
 <div class="dialog-container">
-  <div class="dialog-actions">
-    <button mat-icon-button (click)="onCancel()" matTooltip="Chiudi">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
+  <button class="close-button-dialog" mat-icon-button (click)="onCancel()" matTooltip="Chiudi">
+    <mat-icon>close</mat-icon>
+  </button>
   
   <mat-dialog-content class="dialog-content">
     <mat-card-header>
@@ -68,7 +66,7 @@
           </mat-form-field>
         </div>
 
-        <div class="form-row">
+        <div class="form-row documents-container">
           <h3>Documento di Identità</h3>
           <div class="form-row">
             <div class="form-row">
@@ -134,25 +132,31 @@
           </div>
         </div>
 
-        <h3>Preferenze di comunicazione</h3>
-        <div class="form-row" formGroupName="communicationPreferences">
-          <mat-checkbox formControlName="email">Email</mat-checkbox>
-          <mat-checkbox formControlName="sms">SMS</mat-checkbox>
-          <mat-checkbox formControlName="whatsapp">WhatsApp</mat-checkbox>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Note</mat-label>
-            <textarea matInput formControlName="notes" placeholder="Inserisci eventuali note (opzionale)" rows="4"></textarea>
-          </mat-form-field>
+        <div class="comunications-container">
+          <h3>Preferenze di comunicazione</h3>
+          <div class="form-row" formGroupName="communicationPreferences">
+            <mat-checkbox formControlName="email">Email</mat-checkbox>
+            <mat-checkbox formControlName="sms">SMS</mat-checkbox>
+            <mat-checkbox formControlName="whatsapp">WhatsApp</mat-checkbox>
+          </div>
+  
+          <div class="full-width">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Note</mat-label>
+              <textarea matInput formControlName="notes" placeholder="Inserisci eventuali note (opzionale)" rows="2"></textarea>
+            </mat-form-field>
+          </div>
         </div>
 
         <mat-divider class="form-divider"></mat-divider>
 
         <div class="form-actions">
-          <button mat-button type="button" (click)="onCancel()">Annulla</button>
+          <button mat-button type="button" (click)="onCancel()">
+            <mat-icon>arrow_back</mat-icon>
+            Annulla
+          </button>
           <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+            <mat-icon>save</mat-icon>
             {{ isEditMode ? 'Aggiorna' : 'Salva' }}
           </button>
         </div>

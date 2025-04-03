@@ -6,17 +6,37 @@
   overflow: hidden;
 }
 
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 16px;
-  border-bottom: 1px solid #e0e0e0;
+.close-button-dialog {
+  position: absolute;
+  top: 10px;
+  right: 18px;
+  z-index: 1;
+
+  ::ng-deep .mat-mdc-button-persistent-ripple {
+    display: none !important;
+  }
+
+  &:hover{
+    transform: scale(1.15);
+    transition: transform 0.06s linear;
+    cursor:pointer;
+  }
 }
 
 .dialog-content {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+
+  mat-card-header{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    h1{
+      font-size: 30px;
+      padding-bottom: 25px;
+    }
+  }
 }
 
 .loading-container {
@@ -26,20 +46,6 @@
   height: 100px;
 }
 
-.error-message {
-  display: flex;
-  align-items: center;
-  color: #f44336;
-  margin: 10px 0;
-  padding: 10px;
-  background-color: #ffebee;
-  border-radius: 4px;
-}
-
-.error-message mat-icon {
-  margin-right: 8px;
-}
-
 .tenant-form {
   display: flex;
   flex-direction: column;
@@ -47,36 +53,62 @@
 
 .form-row {
   display: flex;
+  flex-grow: 1;
+  gap: 20px;
+  margin-bottom: 15px;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 16px;
+
+  mat-form-field {
+    flex: 1;
+    min-width: 200px;
+  }
 }
 
-.form-row mat-form-field {
-  flex: 1;
-  min-width: 200px;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.form-divider {
-  margin: 24px 0;
-}
-
-.form-actions {
+.documents-container{
   display: flex;
-  justify-content: flex-end;
-  gap: 16px;
-  margin-top: 16px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 15px;
+
+  h3{
+    font-size: 20px;
+  }
 }
 
-h3 {
-  margin-top: 24px;
-  margin-bottom: 16px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
+.comunications-container{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 18px;
+
+  h3{
+    font-size: 20px;
+    padding-bottom: 10px;
+  }
+}
+
+.form-actions{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  padding-top: 32px;
+
+  button{
+    width: 150px;
+    font-size: 16px;
+
+    &:hover{
+      transform: scale(1.10);
+      transition: transform 0.06s linear;
+      opacity: 0.8;
+    }
+  }
+}
+
+.full-width{
+  width: 100%;
 }
 
 .document-upload-container {
@@ -122,52 +154,4 @@ h3 {
   top: 0;
   right: 0;
   background-color: rgba(255, 255, 255, 0.7);
-}
-
-.form-row {
-  display: flex;
-  flex-grow: 1;
-  gap: 20px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-}
-
-.form-row mat-form-field {
-  flex: 1;
-  min-width: 200px;
-}
-
-.full-width {
-  width: 100%;
-}
-
-.form-divider {
-  margin: 20px 0;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-}
-
-.error-message {
-  display: flex;
-  align-items: center;
-  background-color: #ffebee;
-  color: #c62828;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.error-message mat-icon {
-  margin-right: 8px;
 }

@@ -1,6 +1,6 @@
 .container {
   padding: 40px 0;
-  max-width: 1750px;
+  max-width: 1700px;
 }
 
 .tenant-card {
@@ -17,6 +17,12 @@ mat-card-header{
 
 .page-title {
   margin-bottom: 20px;
+
+  button:hover{
+    transform: scale(1.05);
+    transition: transform 0.1s linear;
+    opacity: 0.8;
+  }
 }
 
 .title-section {
@@ -54,7 +60,7 @@ mat-card-header{
 
 .table-container {
   position: relative;
-  max-width: 100%;
+  max-width: 90%;
   min-height: 250px;
   margin: auto;
   overflow: auto;
@@ -80,6 +86,24 @@ mat-card-header{
 .action-buttons {
   height: 100%;
   text-align: center;
+
+  button {
+    cursor:default;
+    ::ng-deep .mat-mdc-button-persistent-ripple {
+      display: none !important;
+    }
+  }
+  
+  mat-icon {
+    margin-right: 8px;
+
+    &:hover{
+      transform: scale(1.15);
+      transition: transform 0.05s linear;
+      opacity: 0.8;
+      cursor:pointer;
+    }
+  }
 }
 
 .no-data-message {
@@ -131,5 +155,4 @@ mat-card-header{
 tr:hover {
   background-color: rgba(0, 0, 0, 0.04) !important;
   transition: background-color 0.10s ease-in !important;
-  cursor: pointer !important;
 }

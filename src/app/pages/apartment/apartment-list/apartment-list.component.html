@@ -3,7 +3,7 @@
     <mat-card-header>
       <mat-card-title class="page-title">
         <div class="title-section">
-          <h1>Gestione Appartamenti</h1>
+          <h1>Gestione Appartamenti ({{dataSource.data.length}})</h1>
           <button mat-raised-button color="primary" routerLink="/apartment/new">
             <mat-icon>add_home</mat-icon>
             Nuovo Appartamento
@@ -86,14 +86,14 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let apartment" class="action-buttons">
-              <button mat-icon-button [routerLink]="['/apartment/detail', apartment.id]" matTooltip="Visualizza dettagli">
-                <mat-icon>visibility</mat-icon>
+              <button mat-icon-button [routerLink]="['/apartment/detail', apartment.id]">
+                <mat-icon matTooltip="Visualizza dettagli">visibility</mat-icon>
               </button>
-              <button mat-icon-button [routerLink]="['/apartment/edit', apartment.id]" matTooltip="Modifica">
-                <mat-icon>edit</mat-icon>
+              <button mat-icon-button [routerLink]="['/apartment/edit', apartment.id]">
+                <mat-icon matTooltip="Modifica">edit</mat-icon>
               </button>
-              <button mat-icon-button (click)="deleteApartment(apartment.id)" matTooltip="Elimina">
-                <mat-icon color="warn">delete</mat-icon>
+              <button mat-icon-button (click)="deleteApartment(apartment)">
+                <mat-icon color="warn" matTooltip="Elimina">delete</mat-icon>
               </button>
             </td>
           </ng-container>
@@ -112,9 +112,21 @@
           </tr>
         </table>
 
-        @if (dataSource.data.length > 15) {
-          <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" [pageSize]="10" aria-label="Seleziona pagina di appartamenti"></mat-paginator>
-        }
+        <div class="custom-paginator-container">
+          <!-- <div class="paginator-info">
+            <span>elementi totali: {{dataSource.data.length}}</span>
+          </div> -->
+          <div class="paginator-controls">
+            <button mat-icon-button [disabled]="!paginator.hasPreviousPage()" (click)="paginator.previousPage()">
+              <mat-icon>navigate_before</mat-icon>
+            </button>
+            <span class="current-page">{{paginator.pageIndex + 1}}</span>
+            <button mat-icon-button [disabled]="!paginator.hasNextPage()" (click)="paginator.nextPage()">
+              <mat-icon>navigate_next</mat-icon>
+            </button>
+          </div>
+        </div>
+        <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[10]" hidePageSize="true" showFirstLastButtons="false" aria-label="Seleziona pagina di appartamenti" class="hidden-paginator"></mat-paginator>
       </div>
     </mat-card-content>
   </mat-card>
