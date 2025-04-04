@@ -1,0 +1,334 @@
+<div class="dialog-container">
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Messaggio di errore -->
+  <div *ngIf="errorMessage" class="error-message">
+    <mat-icon>error</mat-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <ng-container *ngIf="apartment && !isLoading">
+    <div class="dialog-actions">
+      <button mat-icon-button (click)="editApartment()" matTooltip="Modifica">
+        <mat-icon>edit</mat-icon>
+      </button>
+      <button mat-icon-button color="warn" (click)="deleteApartment()" matTooltip="Elimina">
+        <mat-icon>delete</mat-icon>
+      </button>
+      <button mat-icon-button (click)="close()" matTooltip="Chiudi">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <mat-dialog-content class="dialog-content">
+      <mat-card class="apartment-card">
+        <mat-card-header>
+          <div class="apartment-header">
+            <div class="apartment-title">
+              <div class="apartment-name">
+                <span class="fs-4"
+                  [matTooltip]="tooltipTexts['name']"
+                  #nameTooltip="matTooltip"
+                  (click)="copyToClipboard(apartment.name, 'name', nameTooltip)"
+                  style="cursor: pointer;">
+                    {{ apartment.name }}
+                </span>
+              </div>
+              <div class="apartment-status">
+                <span [ngClass]="getStatusClass(apartment.status)">
+                  <mat-icon *ngIf="apartment.status === 'available'" class="status-icon">check_circle</mat-icon>
+                  <mat-icon *ngIf="apartment.status === 'occupied'" class="status-icon">cancel</mat-icon>
+                  <mat-icon *ngIf="apartment.status === 'maintenance'" class="status-icon">warning</mat-icon>
+                  {{ getStatusLabel(apartment.status) }}
+                </span>
+              </div>
+              <div class="apartment-price">
+                <mat-icon>euro</mat-icon>
+                <span>{{ apartment.monthlyRent }} €/mese</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-header>
+
+        <!-- Carosello di immagini -->
+        <div *ngIf="hasValidImages()" class="image-carousel">
+          <div class="carousel-container">
+            <div class="carousel-inner" #carouselInner>
+              <div *ngFor="let image of getValidImages(); let i = index" 
+                   class="carousel-item"
+                   [class.active]="i === currentImageIndex">
+                <img [src]="getImageUrl(image)" [alt]="apartment.name" class="carousel-image"
+                    (click)="openImagePreview(image)">
+              </div>
+            </div>
+            <button *ngIf="getValidImages().length > 1" class="carousel-control prev" (click)="scrollCarousel(-1)">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <button *ngIf="getValidImages().length > 1" class="carousel-control next" (click)="scrollCarousel(1)">
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          </div>
+          <div *ngIf="getValidImages().length > 1" class="carousel-dots">
+            <span *ngFor="let image of getValidImages(); let i = index" 
+                  class="carousel-dot" 
+                  [class.active]="currentImageIndex === i"
+                  (click)="navigateToImage(i)"></span>
+          </div>
+        </div>
+
+        <mat-card-content>
+          <mat-tab-group animationDuration="300ms">
+            <!-- Tab Informazioni -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="me-1">info</mat-icon>
+                <span>Informazioni</span>
+              </ng-template>
+              <div class="tab-content">
+                <div class="info-grid">
+                  <div class="info-section">
+                    <h3>Dettagli Appartamento</h3>
+                    <div class="info-grid-row">
+                      <div class="info-item">
+                        <div class="info-label">
+                          <mat-icon>straighten</mat-icon>
+                          <span>Superficie</span>
+                        </div>
+                        <div class="info-value">{{ apartment.squareMeters }} m²</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="info-label">
+                          <mat-icon>meeting_room</mat-icon>
+                          <span>Stanze</span>
+                        </div>
+                        <div class="info-value">{{ apartment.rooms }}</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="info-label">
+                          <mat-icon>bathtub</mat-icon>
+                          <span>Bagni</span>
+                        </div>
+                        <div class="info-value">{{ apartment.bathrooms }}</div>
+                      </div>
+                      <div class="info-item">
+                        <div class="info-label">
+                          <mat-icon>layers</mat-icon>
+                          <span>Piano</span>
+                        </div>
+                        <div class="info-value">{{ apartment.floor }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Caratteristiche -->
+                  <div class="info-section">
+                    <h3>Caratteristiche</h3>
+                    <div class="features-list">
+                      <div class="feature-item" [class.feature-active]="apartment.hasParking">
+                        <mat-icon>local_parking</mat-icon>
+                        <span>Parcheggio</span>
+                      </div>
+                      <div class="feature-item" [class.feature-active]="apartment.isFurnished">
+                        <mat-icon>weekend</mat-icon>
+                        <span>Arredato</span>
+                      </div>
+                      <!-- Rimosso il tag "Disponibile" come richiesto -->
+                    </div>
+                  </div>
+
+                  <!-- Servizi -->
+                  <div class="info-section" *ngIf="apartment.amenities && apartment.amenities.length > 0">
+                    <h3>Servizi Disponibili</h3>
+                    <div class="amenities-container">
+                      <mat-chip-set>
+                        <mat-chip *ngFor="let amenity of apartment.amenities">{{ amenity }}</mat-chip>
+                      </mat-chip-set>
+                    </div>
+                  </div>
+
+                  <!-- Descrizione -->
+                  <div class="info-section" *ngIf="apartment.description">
+                    <h3>Descrizione</h3>
+                    <div class="description-container">
+                      {{ apartment.description }}
+                    </div>
+                  </div>
+
+                  <!-- Note -->
+                  <div class="info-section" *ngIf="apartment.notes">
+                    <h3>Note</h3>
+                    <div class="notes-container">
+                      {{ apartment.notes }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+
+            <!-- Tab Foto -->
+            <mat-tab *ngIf="hasValidImages()">
+              <ng-template mat-tab-label>
+                <mat-icon class="me-1">photo_library</mat-icon>
+                <span>Galleria</span>
+              </ng-template>
+              <div class="tab-content">
+                <div class="gallery-container">
+                  <div *ngFor="let image of getValidImages()" class="gallery-item">
+                    <img [src]="getImageUrl(image)" [alt]="apartment.name" 
+                        (click)="openImagePreview(image)" class="gallery-image">
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+
+            <!-- Tab Inquilini -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="me-1">people</mat-icon>
+                <span>Inquilini</span>
+              </ng-template>
+              <div class="tab-content">
+                <!-- Nessun inquilino trovato -->
+                <div *ngIf="!hasActiveTenant && !errorMessage" class="no-data-message">
+                  <mat-icon>info</mat-icon>
+                  <span>Nessun inquilino attualmente associato a questo appartamento</span>
+                </div>
+                
+                <!-- Visualizza solo l'inquilino associato all'appartamento -->
+                <div *ngIf="activeTenant" class="tenant-card">
+                  <div class="tenant-info">
+                    <div class="tenant-avatar">
+                      <mat-icon>person</mat-icon>
+                    </div>
+                    <div class="tenant-details">
+                      <h3>{{ activeTenant.firstName }} {{ activeTenant.lastName }}</h3>
+                      <div class="tenant-contact">
+                        <div class="contact-item">
+                          <mat-icon>phone</mat-icon>
+                          <span>{{ activeTenant.phone }}</span>
+                        </div>
+                        <div class="contact-item" *ngIf="activeTenant.email">
+                          <mat-icon>email</mat-icon>
+                          <span>{{ activeTenant.email }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tenant-actions">
+                    <button mat-icon-button (click)="viewTenantDetails(activeTenant.id)" matTooltip="Visualizza dettagli">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+
+            <!-- Tab Contratti -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon class="me-1">description</mat-icon>
+                <span>Contratti</span>
+              </ng-template>
+              <div class="tab-content">
+                <div *ngIf="activeLeases.length === 0 && !errorMessage" class="no-data-message">
+                  <mat-icon>info</mat-icon>
+                  <span>Nessun contratto attivo per questo appartamento</span>
+                </div>
+                
+                <!-- Card contratti -->
+                <div *ngFor="let lease of activeLeases" class="contract-card">
+                  <div class="contract-header">
+                    <div class="contract-status active">
+                      <span class="status-dot"></span>
+                      <span class="status-text">Attivo</span>
+                    </div>
+                    <div class="contract-id">
+                      <h3>Contratto #{{ lease.id }}</h3>
+                      <span class="tenant-tag" *ngIf="getTenantName(lease.tenantId)">Inquilino: {{ getTenantName(lease.tenantId) }}</span>
+                    </div>
+                    <div class="contract-actions">
+                      <button class="action-button edit" matTooltip="Modifica">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button class="action-button more" matTooltip="Opzioni">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                
+                  <div class="contract-body">
+                    <div class="contract-info">
+                      <div class="info-section">
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>calendar_today</mat-icon>
+                            <span>Inizio</span>
+                          </div>
+                          <div class="info-value">{{ formatDate(lease.startDate) }}</div>
+                        </div>
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>event</mat-icon>
+                            <span>Fine</span>
+                          </div>
+                          <div class="info-value">{{ formatDate(lease.endDate) }}</div>
+                        </div>
+                      </div>
+                
+                      <div class="info-section">
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>payments</mat-icon>
+                            <span>Canone</span>
+                          </div>
+                          <div class="info-value">€{{ lease.monthlyRent }}<span class="period">/mese</span></div>
+                        </div>
+                        <div class="info-item">
+                          <div class="info-label">
+                            <mat-icon>receipt_long</mat-icon>
+                            <span>Stato</span>
+                          </div>
+                          <div class="payment-status paid">Pagato</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="contract-timeline">
+                      <div class="timeline-progress">
+                        <div class="progress-bar">
+                          <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
+                        </div>
+                        <div class="progress-labels">
+                          <span>{{ getContractProgressText(lease.startDate, lease.endDate) }}</span>
+                          <span>{{ getRemainingMonths(lease.endDate) }} mesi rimanenti</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                
+                  <div class="contract-footer">
+                    <button class="view-details" [routerLink]="['/lease/detail', lease.id]" (click)="close()">
+                      <mat-icon>visibility</mat-icon>
+                      <span>Visualizza Dettagli</span>
+                    </button>
+                    <div class="d-flex gap-2">
+                      <button class="quick-action" matTooltip="Rinnova contratto">
+                        <mat-icon>autorenew</mat-icon>
+                      </button>
+                      <button class="quick-action" matTooltip="Documenti">
+                        <mat-icon>description</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        </mat-card-content>
+      </mat-card>
+    </mat-dialog-content>
+  </ng-container>
+</div>

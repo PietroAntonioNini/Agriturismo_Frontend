@@ -19,7 +19,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
 import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
-import { TenantFormComponent } from '../tenant-form/tenant-form.component';
+import { TenantFormComponent } from '../tenant-form/tenant-form-dialog.component';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 import { DocumentPreviewTooltipComponent } from '../../../shared/components/document-preview-tooltip/document-preview-tooltip.component';
 import { environment } from '../../../../environments/environment';

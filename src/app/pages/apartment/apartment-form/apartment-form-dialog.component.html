@@ -1,12 +1,9 @@
-<div class="container">
-  <div class="action-buttons">
-    <button mat-raised-button color="primary" routerLink="/apartment/list">
-      <mat-icon>arrow_back</mat-icon>
-      Torna alla lista
-    </button>
-  </div>
+<div class="dialog-container">
+  <button class="close-button-dialog" mat-icon-button (click)="onCancel()" matTooltip="Chiudi">
+    <mat-icon>close</mat-icon>
+  </button>
   
-  <mat-card class="apartment-form-card">
+  <mat-dialog-content class="dialog-content">
     <mat-card-header>
       <mat-card-title>
         <h1>{{ isEditMode ? 'Modifica Appartamento' : 'Nuovo Appartamento' }}</h1>
@@ -28,7 +25,7 @@
       <form [formGroup]="apartmentForm" (ngSubmit)="onSubmit()" class="apartment-form">
         <!-- Informazioni di base -->
         <div class="form-row">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Nome</mat-label>
             <input matInput formControlName="name" placeholder="Inserisci il nome">
             <mat-error *ngIf="apartmentForm.get('name')?.invalid && apartmentForm.get('name')?.touched">
@@ -36,7 +33,7 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="prezzo">
+          <mat-form-field appearance="outline" floatLabel="always" class="prezzo">
             <mat-label>Canone Mensile (€)</mat-label>
             <input matInput type="number" formControlName="monthlyRent" placeholder="Inserisci il canone mensile">
             <span matTextPrefix>€&nbsp;</span>
@@ -45,7 +42,7 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="stato">
+          <mat-form-field appearance="outline" floatLabel="always" class="stato">
             <mat-label>Stato</mat-label>
             <mat-select formControlName="status">
               <mat-option value="available">Disponibile</mat-option>
@@ -59,7 +56,7 @@
         </div>
 
         <div class="form-row">
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Superficie (m²)</mat-label>
             <input matInput type="number" formControlName="squareMeters" placeholder="Inserisci i metri quadrati">
             <span matTextPrefix>m²&nbsp;</span>
@@ -68,7 +65,7 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Piano</mat-label>
             <input matInput type="number" formControlName="floor" placeholder="Inserisci il piano">
             <mat-error *ngIf="apartmentForm.get('floor')?.invalid && apartmentForm.get('floor')?.touched">
@@ -76,7 +73,7 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Stanze</mat-label>
             <input matInput type="number" formControlName="rooms" placeholder="Numero di stanze">
             <mat-error *ngIf="apartmentForm.get('rooms')?.invalid && apartmentForm.get('rooms')?.touched">
@@ -84,7 +81,7 @@
             </mat-error>
           </mat-form-field>
           
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Bagni</mat-label>
             <input matInput type="number" formControlName="bathrooms" placeholder="Numero di bagni">
             <mat-error *ngIf="apartmentForm.get('bathrooms')?.invalid && apartmentForm.get('bathrooms')?.touched">
@@ -94,7 +91,7 @@
         </div>
 
         <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width" floatLabel="always">
             <mat-label>Descrizione (Opzionale)</mat-label>
             <textarea matInput cdkTextareaAutosize formControlName="description" placeholder="Inserisci la descrizione"></textarea>
           </mat-form-field>
@@ -103,19 +100,19 @@
         <!-- Caratteristiche -->
         <h3>Caratteristiche</h3>
         <div class="form-row checkbox-row">
-          <mat-checkbox formControlName="hasParking">Parcheggio</mat-checkbox>
-          <mat-checkbox formControlName="isFurnished">Arredato</mat-checkbox>
-          <mat-checkbox formControlName="isAvailable">Disponibile</mat-checkbox>
+          <mat-checkbox formControlName="hasParking" color="primary">Parcheggio</mat-checkbox>
+          <mat-checkbox formControlName="isFurnished" color="primary">Arredato</mat-checkbox>
+          <mat-checkbox formControlName="isAvailable" color="primary">Disponibile</mat-checkbox>
         </div>
 
         <!-- Servizi/Amenità -->
         <h3>Servizi (Opzionali)</h3>
         <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width" floatLabel="always">
             <mat-label>Servizi disponibili</mat-label>
             <mat-chip-grid #chipGrid aria-label="Seleziona servizi">
               <mat-chip-row *ngFor="let amenity of selectedAmenities" 
-                            (removed)="removeAmenity(amenity)">
+                          (removed)="removeAmenity(amenity)">
                 {{amenity}}
                 <button matChipRemove>
                   <mat-icon>cancel</mat-icon>
@@ -131,7 +128,7 @@
 
         <!-- Note -->
         <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
+          <mat-form-field appearance="outline" class="full-width" floatLabel="always">
             <mat-label>Note</mat-label>
             <textarea matInput cdkTextareaAutosize formControlName="notes" placeholder="Inserisci eventuali note"></textarea>
           </mat-form-field>
@@ -140,10 +137,11 @@
         <!-- Immagini -->
         <h3>Immagini dell'appartamento (Opzionali)</h3>
         <div class="form-row image-upload-container">
-          <div *ngFor="let preview of imagePreviews; let i = index" class="image-upload-card">
+          <div *ngFor="let preview of imagePreviews; let i = index" class="image-upload-card" 
+               [class.has-image]="imagePreviews[i]">
             <div class="upload-preview" *ngIf="imagePreviews[i]">
               <img [src]="imagePreviews[i]" alt="Immagine appartamento {{i+1}}">
-              <button mat-icon-button color="warn" (click)="removeImage(i)">
+              <button mat-icon-button color="warn" (click)="removeImage(i)" matTooltip="Elimina immagine">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -152,8 +150,9 @@
               <span>Immagine {{i+1}}</span>
             </div>
             <input #fileInput type="file" hidden (change)="onImageSelected($event, i)" accept="image/*">
-            <button mat-stroked-button type="button" (click)="fileInput.click()">
-              <mat-icon>upload</mat-icon> {{ imagePreviews[i] ? 'Cambia' : 'Carica' }} immagine
+            <button mat-stroked-button type="button" (click)="fileInput.click()" class="upload-button">
+              <mat-icon>{{ imagePreviews[i] ? 'autorenew' : 'upload' }}</mat-icon> 
+              {{ imagePreviews[i] ? 'Cambia' : 'Carica' }}
             </button>
           </div>
         </div>
@@ -161,12 +160,16 @@
         <mat-divider class="form-divider"></mat-divider>
 
         <div class="form-actions">
-          <button mat-button type="button" routerLink="/apartment/list">Annulla</button>
+          <button mat-button type="button" (click)="onCancel()">
+            <mat-icon>arrow_back</mat-icon>
+            Annulla
+          </button>
           <button mat-raised-button color="primary" type="submit" [disabled]="isLoading">
+            <mat-icon>save</mat-icon>
             {{ isEditMode ? 'Aggiorna' : 'Salva' }}
           </button>
         </div>
       </form>
     </mat-card-content>
-  </mat-card>
+  </mat-dialog-content>
 </div>

@@ -38,8 +38,8 @@ import { Tenant } from '../../../shared/models';
     MatProgressSpinnerModule,
     MatDialogModule
   ],
-  templateUrl: './tenant-form.component.html',
-  styleUrls: ['./tenant-form.component.scss']
+  templateUrl: './tenant-form-dialog.component.html',
+  styleUrls: ['./tenant-form-dialog.component.scss']
 })
 export class TenantFormComponent implements OnInit {
   currentTenant: Tenant = {} as Tenant;

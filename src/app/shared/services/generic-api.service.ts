@@ -46,7 +46,6 @@ export class GenericApiService {
 
   // PUT: Aggiornamento elemento (anche con immagini opzionali)
   update<T>(entity: string, id: number | string, data: Partial<T>, files?: File[]): Observable<T> {
-    // Per i tenant, usa SEMPRE l'endpoint with-images
     if (entity === 'tenants') {
         const formData = new FormData();
         formData.append('tenant', JSON.stringify(data));
@@ -59,16 +58,29 @@ export class GenericApiService {
         }
         
         return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
-    }
+    } else if (entity === 'apartments') {
+      const formData = new FormData();
+      formData.append('apartment', JSON.stringify(data));
+      
+      if (files && files.length > 0) {
+          // Usa nomi file specifici come richiesto dal backend
+          files.forEach((file, index) => {
+              formData.append(`file${index}`, file);
+          });
+      }
+      
+      return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
+    } 
     
-    // Per altre entità, comportamento normale
     if (!files || files.length === 0) {
-        return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, data);
+      return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, data);
     }
     
     const formData = new FormData();
     formData.append(entity, JSON.stringify(data));
-    files.forEach((file, index) => formData.append(`file${index}`, file));
+    if (files) {
+      files.forEach((file, index) => formData.append(`file${index}`, file));
+    }
     return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
   }
 

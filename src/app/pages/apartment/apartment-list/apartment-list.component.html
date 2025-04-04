@@ -4,7 +4,7 @@
       <mat-card-title class="page-title">
         <div class="title-section">
           <h1>Gestione Appartamenti ({{dataSource.data.length}})</h1>
-          <button mat-raised-button color="primary" routerLink="/apartment/new">
+          <button mat-raised-button color="primary" (click)="openApartmentForm()">
             <mat-icon>add_home</mat-icon>
             Nuovo Appartamento
           </button>
@@ -33,12 +33,6 @@
         </div>
 
         <table mat-table [dataSource]="dataSource" matSort class="apartment-table">
-          <!-- ID Column -->
-          <!-- <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
-            <td mat-cell *matCellDef="let apartment"> {{ apartment.id }} </td>
-          </ng-container> -->
-
           <!-- Nome Column -->
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Nome </th>
@@ -86,10 +80,10 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef></th>
             <td mat-cell *matCellDef="let apartment" class="action-buttons">
-              <button mat-icon-button [routerLink]="['/apartment/detail', apartment.id]">
+              <button mat-icon-button (click)="openApartmentDetails(apartment.id)">
                 <mat-icon matTooltip="Visualizza dettagli">visibility</mat-icon>
               </button>
-              <button mat-icon-button [routerLink]="['/apartment/edit', apartment.id]">
+              <button mat-icon-button (click)="openApartmentForm(apartment.id)">
                 <mat-icon matTooltip="Modifica">edit</mat-icon>
               </button>
               <button mat-icon-button (click)="deleteApartment(apartment)">
@@ -113,9 +107,6 @@
         </table>
 
         <div class="custom-paginator-container">
-          <!-- <div class="paginator-info">
-            <span>elementi totali: {{dataSource.data.length}}</span>
-          </div> -->
           <div class="paginator-controls">
             <button mat-icon-button [disabled]="!paginator.hasPreviousPage()" (click)="paginator.previousPage()">
               <mat-icon>navigate_before</mat-icon>

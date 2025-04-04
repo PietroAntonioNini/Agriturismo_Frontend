@@ -26,9 +26,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'list', pathMatch: 'full' },
       { path: 'list', loadComponent: () => import('./apartment-list/apartment-list.component').then(c => c.ApartmentListComponent) },
-      { path: 'detail/:id', loadComponent: () => import('./apartment-detail/apartment-detail.component').then(c => c.ApartmentDetailComponent) },
-      { path: 'new', loadComponent: () => import('./apartment-form/apartment-form.component').then(c => c.ApartmentFormComponent) },
-      { path: 'edit/:id', loadComponent: () => import('./apartment-form/apartment-form.component').then(c => c.ApartmentFormComponent) }
+      // Nota: Mantengo solo la rotta di list perché le altre vengono gestite tramite dialog
     ]
   }
 ];

@@ -1,12 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -14,8 +13,11 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
+import { environment } from '../../../../environments/environment';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Apartment } from '../../../shared/models';
@@ -31,23 +33,24 @@ import { Apartment } from '../../../shared/models';
     MatInputModule,
     MatSelectModule,
     MatCheckboxModule,
-    MatDatepickerModule,
     MatButtonModule,
     MatIconModule,
     MatCardModule,
     MatDividerModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    MatChipsModule
+    MatChipsModule,
+    MatDialogModule,
+    MatTooltipModule
   ],
-  templateUrl: './apartment-form.component.html',
-  styleUrls: ['./apartment-form.component.scss']
+  templateUrl: './apartment-form-dialog.component.html',
+  styleUrls: ['./apartment-form-dialog.component.scss']
 })
 export class ApartmentFormComponent implements OnInit {
   apartmentForm!: FormGroup;
   isLoading = false;
   isEditMode = false;
-  apartmentId: string | null = null;
+  apartmentId: number | null = null;
   errorMessage: string | null = null;
   selectedAmenities: string[] = [];
   separatorKeysCodes: number[] = [ENTER, COMMA];
@@ -59,21 +62,20 @@ export class ApartmentFormComponent implements OnInit {
   
   constructor(
     private fb: FormBuilder,
-    private route: ActivatedRoute,
-    private router: Router,
     private apiService: GenericApiService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    public dialogRef: MatDialogRef<ApartmentFormComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { apartmentId?: number }
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     
     // Controlla se siamo in modalità modifica
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    if (this.data && this.data.apartmentId) {
       this.isEditMode = true;
-      this.apartmentId = id;
-      this.loadApartmentData(id);
+      this.apartmentId = this.data.apartmentId;
+      this.loadApartmentData(this.data.apartmentId);
     } else {
       this.isEditMode = false;
       this.currentApartment = {} as Apartment;
@@ -97,7 +99,7 @@ export class ApartmentFormComponent implements OnInit {
     });
   }
 
-  loadApartmentData(id: string): void {
+  loadApartmentData(id: number): void {
     this.isLoading = true;
     this.errorMessage = null;
 
@@ -109,9 +111,15 @@ export class ApartmentFormComponent implements OnInit {
         
         // Carica le anteprime delle immagini se disponibili
         if (apartment.images && apartment.images.length > 0) {
+          // Pulisce prima tutte le anteprime
+          this.imagePreviews = this.imagePreviews.map(() => null);
+          
+          // Carica ogni immagine con il suo URL corretto
           apartment.images.forEach((imageUrl, index) => {
             if (index < this.imagePreviews.length) {
-              this.imagePreviews[index] = imageUrl;
+              // Usa il metodo getImageUrl per ottenere l'URL completo
+              this.imagePreviews[index] = this.getImageUrl(imageUrl);
+              console.log(`Caricata immagine ${index}: ${imageUrl}`);
             }
           });
         }
@@ -157,8 +165,128 @@ export class ApartmentFormComponent implements OnInit {
   }
 
   removeImage(index: number): void {
-    this.imagePreviews[index] = null;
-    this.imageFiles[index] = null;
+    // Se siamo in modalità modifica e l'appartamento ha già immagini salvate
+    if (this.isEditMode && this.apartmentId && 
+        this.currentApartment.images && 
+        this.currentApartment.images[index]) {
+      
+      this.isLoading = true;
+      
+      // Ottieni il path completo dell'immagine da eliminare
+      const imagePath = this.currentApartment.images[index];
+      const apartmentId = this.apartmentId;
+      
+      // Estrai il nome del file dal path (l'ultimo segmento dopo l'ultimo /)
+      const fileName = imagePath.split('/').pop() || '';
+      console.log(`Eliminazione immagine: ${fileName} da appartamento ${apartmentId}`);
+      
+      // Chiamiamo il deleteFile con il nome file specifico
+      this.apiService.deleteFile('apartments', apartmentId, `images/${fileName}`).subscribe({
+        next: () => {
+          console.log(`Immagine ${fileName} eliminata con successo`);
+          
+          // Rimuovi l'immagine dall'array delle immagini dell'appartamento
+          if (this.currentApartment.images) {
+            this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
+          }
+          
+          // Pulisci l'anteprima e il file
+          this.imagePreviews[index] = null;
+          this.imageFiles[index] = null;
+          
+          // Riorganizza gli array dopo l'eliminazione
+          this.reorderImagesAfterDelete(index);
+          
+          // Notifica all'utente con un toast rapido
+          this.snackBar.open('Immagine eliminata con successo', '', {
+            duration: 2000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom'
+          });
+          
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Errore durante l\'eliminazione dell\'immagine', error);
+          console.log('Path usato:', `images/${fileName}`);
+          
+          // Rimuovi comunque l'immagine dall'UI anche se c'è un errore lato server
+          if (this.currentApartment.images) {
+            this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
+          }
+          this.imagePreviews[index] = null;
+          this.imageFiles[index] = null;
+          
+          // Riorganizza gli array dopo l'eliminazione
+          this.reorderImagesAfterDelete(index);
+          
+          // Notifica all'utente
+          this.snackBar.open('Immagine rimossa dall\'interfaccia', '', {
+            duration: 2000,
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom'
+          });
+          
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Se è solo un'immagine locale non ancora salvata, rimuovila senza chiamare il server
+      this.imagePreviews[index] = null;
+      this.imageFiles[index] = null;
+      
+      // Riorganizza gli array dopo l'eliminazione
+      this.reorderImagesAfterDelete(index);
+    }
+  }
+
+  // Nuovo metodo per riordinare gli array dopo l'eliminazione
+  reorderImagesAfterDelete(deletedIndex: number): void {
+    // Crea nuovi array compatti senza elementi null
+    const newImageFiles: (File | null)[] = [];
+    const newImagePreviews: (string | null)[] = [];
+    
+    // Copia tutti gli elementi validi negli array temporanei
+    for (let i = 0; i < this.imageFiles.length; i++) {
+      if (i !== deletedIndex && this.imageFiles[i] !== null) {
+        newImageFiles.push(this.imageFiles[i]);
+      }
+      
+      if (i !== deletedIndex && this.imagePreviews[i] !== null) {
+        newImagePreviews.push(this.imagePreviews[i]);
+      }
+    }
+    
+    // Riempi gli array originali con i nuovi valori seguiti da null
+    for (let i = 0; i < this.imageFiles.length; i++) {
+      if (i < newImageFiles.length) {
+        this.imageFiles[i] = newImageFiles[i];
+        this.imagePreviews[i] = newImagePreviews[i];
+      } else {
+        this.imageFiles[i] = null;
+        this.imagePreviews[i] = null;
+      }
+    }
+  }
+
+  getImageUrl(url: string | undefined): string {
+    if (!url || url === '') {
+      return '';
+    }
+    
+    // Se il percorso inizia già con http, restituiscilo come è
+    if (url.startsWith('http')) {
+      return `${url}?t=${new Date().getTime()}`;
+    }
+    
+    // Assicurati che il percorso inizi con /static/
+    if (!url.startsWith('/static/') && url.startsWith('/')) {
+      url = '/static' + url;
+    }
+    
+    // Altrimenti prependi il base URL dell'API e aggiungi timestamp per evitare il caching
+    const apiUrl = environment.apiUrl;
+    return `${apiUrl}${url}?t=${new Date().getTime()}`;
   }
 
   addAmenity(event: MatChipInputEvent): void {
@@ -209,14 +337,20 @@ export class ApartmentFormComponent implements OnInit {
         this.currentApartment,
         validImageFiles.length > 0 ? validImageFiles : undefined
       ).subscribe({
-        next: () => {
+        next: (updatedApartment) => {
           this.isLoading = false;
           this.snackBar.open('Appartamento aggiornato con successo', 'Chiudi', {
             duration: 3000,
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/apartment/detail', this.apartmentId]);
+          
+          // Passa un flag per indicare di non aprire il dialog di dettaglio
+          this.dialogRef.close({ 
+            success: true, 
+            apartment: updatedApartment, 
+            skipDetailView: true 
+          });
         },
         error: (error) => {
           console.error('Errore durante l\'aggiornamento dell\'appartamento', error);
@@ -238,7 +372,13 @@ export class ApartmentFormComponent implements OnInit {
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/apartment/detail', apartment.id]);
+          
+          // Passa un flag per indicare di non aprire il dialog di dettaglio
+          this.dialogRef.close({ 
+            success: true, 
+            apartment: apartment, 
+            skipDetailView: true 
+          });
         },
         error: (error) => {
           console.error('Errore durante la creazione dell\'appartamento', error);
@@ -277,5 +417,9 @@ export class ApartmentFormComponent implements OnInit {
       return `Massimo ${control.getError('maxlength').requiredLength} caratteri`;
     }
     return '';
+  }
+
+  onCancel(): void {
+    this.dialogRef.close();
   }
 }

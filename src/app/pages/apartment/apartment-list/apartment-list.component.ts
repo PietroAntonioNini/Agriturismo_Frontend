@@ -16,6 +16,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Apartment } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+import { ApartmentFormComponent } from '../apartment-form/apartment-form-dialog.component';
+import { ApartmentDetailDialogComponent } from '../apartment-detail/apartment-detail-dialog.component';
 
 @Component({
   selector: 'app-apartment-list',
@@ -40,7 +42,7 @@ import { ConfirmationDialogService } from '../../../shared/services/confirmation
   styleUrls: ['./apartment-list.component.scss']
 })
 export class ApartmentListComponent implements OnInit {
-  displayedColumns: string[] = [ 'name', 'status', 'monthlyRent', 'squareMeters', 'floor', 'rooms', 'actions'];
+  displayedColumns: string[] = ['name', 'status', 'monthlyRent', 'squareMeters', 'floor', 'rooms', 'actions'];
   dataSource = new MatTableDataSource<Apartment>([]);
   isLoading = true;
   errorMessage: string | null = null;
@@ -107,12 +109,51 @@ export class ApartmentListComponent implements OnInit {
     }
   }
 
+  openApartmentDetails(apartmentId: number): void {
+    const dialogRef = this.dialog.open(ApartmentDetailDialogComponent, {
+      data: { apartmentId },
+      width: '800px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.deleted) {
+          this.loadApartments();
+        } else if (result.edit) {
+          this.openApartmentForm(result.apartmentId);
+        }
+      }
+    });
+  }
+
+  openApartmentForm(apartmentId?: number): void {
+    const dialogRef = this.dialog.open(ApartmentFormComponent, {
+      data: { apartmentId },
+      width: '900px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this.loadApartments();
+        
+        // Apri il dialog dei dettagli solo se non è stato richiesto di saltarlo
+        if (result.apartment && !result.skipDetailView) {
+          setTimeout(() => {
+            this.openApartmentDetails(result.apartment.id);
+          }, 300);
+        }
+      }
+    });
+  }
+
   deleteApartment(apartment: Apartment): void {
     // Utilizza il servizio di conferma
     this.confirmationService.confirmDelete('l\'appartamento', apartment.name)
     .subscribe(confirmed => {
       if (confirmed) {
-        this.apiService.delete('apartment', apartment.id).subscribe({
+        this.apiService.delete('apartments', apartment.id).subscribe({
           next: () => {
             this.loadApartments();
             this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
