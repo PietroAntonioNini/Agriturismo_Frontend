@@ -126,11 +126,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  &:not(.has-image):hover {
+    transform: scale(1.05);
+    transition: transform 0.06s linear;
+    cursor: pointer;
+  }
+  
+  &.has-image {
+    cursor: default;
+    
+    &:hover {
+      transform: none;
+    }
+  }
 }
 
-.upload-label {
-  font-weight: 500;
-  margin-bottom: 10px;
+.upload-button{
+  ::ng-deep .mat-mdc-button-persistent-ripple {
+    display: none !important;
+  }
 }
 
 .upload-preview {

@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -52,8 +52,9 @@ export class TenantFormComponent implements OnInit {
   backPreview: string | null = null;
   frontImageFile: File | null = null;
   backImageFile: File | null = null;
-  fileInputFront: any;
-  fileInputBack: any;
+  
+  @ViewChild('fileInputFront') fileInputFront!: ElementRef;
+  @ViewChild('fileInputBack') fileInputBack!: ElementRef;
 
   // Opzioni per tipo documento
   documentTypes = [
@@ -155,6 +156,14 @@ export class TenantFormComponent implements OnInit {
     }
   }
 
+  getImageUrl(url: string | undefined): string {
+    if (!url || url === '') {
+      return '';
+    }
+    // Aggiungi un timestamp all'URL per evitare il caching
+    return `${url}?t=${new Date().getTime()}`;
+  }
+
   getFormControlError(controlName: string): string {
     const control = this.tenantForm.get(controlName);
     if (control?.hasError('required')) {
@@ -177,34 +186,68 @@ export class TenantFormComponent implements OnInit {
   }
 
   onFrontImageSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
+    // Verifica se ci sono file selezionati
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      console.log('File fronte selezionato:', file.name);
+      
+      // Salva il file per l'upload
       this.frontImageFile = file;
+      
+      // Crea l'anteprima dell'immagine
       const reader = new FileReader();
       reader.onload = () => {
+        console.log('Anteprima fronte generata');
         this.frontPreview = reader.result as string;
+        
+        // Forza l'aggiornamento della vista
+        setTimeout(() => {
+          // Questo aiuta a forzare l'aggiornamento dell'UI in alcuni casi
+        }, 0);
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log('Nessun file fronte selezionato');
     }
   }
 
   onBackImageSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
+    // Verifica se ci sono file selezionati
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+      console.log('File retro selezionato:', file.name);
+      
+      // Salva il file per l'upload
       this.backImageFile = file;
+      
+      // Crea l'anteprima dell'immagine
       const reader = new FileReader();
       reader.onload = () => {
+        console.log('Anteprima retro generata');
         this.backPreview = reader.result as string;
+        
+        // Forza l'aggiornamento della vista
+        setTimeout(() => {
+          // Questo aiuta a forzare l'aggiornamento dell'UI in alcuni casi
+        }, 0);
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log('Nessun file retro selezionato');
     }
   }
 
   removeFrontImage(): void {
     this.frontPreview = null;
     this.frontImageFile = null;
+    
+    // Resetta anche l'input file
+    if (this.fileInputFront) {
+      this.fileInputFront.nativeElement.value = '';
+    }
+    
     if (this.currentTenant.documentFrontImage) {
-      this.apiService.deleteFile('tenants', this.tenantId!, 'documentFrontImage').subscribe({
+      this.apiService.deleteFile('tenants', this.tenantId!, 'documents/front').subscribe({
         next: () => {
           this.currentTenant.documentFrontImage = '';
           this.snackBar.open('Fronte del documento rimosso', 'Chiudi', { duration: 3000 });
@@ -220,8 +263,14 @@ export class TenantFormComponent implements OnInit {
   removeBackImage(): void {
     this.backPreview = null;
     this.backImageFile = null;
+    
+    // Resetta anche l'input file
+    if (this.fileInputBack) {
+      this.fileInputBack.nativeElement.value = '';
+    }
+    
     if (this.currentTenant.documentBackImage) {
-      this.apiService.deleteFile('tenants', this.tenantId!, 'documentBackImage').subscribe({
+      this.apiService.deleteFile('tenants', this.tenantId!, 'documents/back').subscribe({
         next: () => {
           this.currentTenant.documentBackImage = '';
           this.snackBar.open('Retro del documento rimosso', 'Chiudi', { duration: 3000 });

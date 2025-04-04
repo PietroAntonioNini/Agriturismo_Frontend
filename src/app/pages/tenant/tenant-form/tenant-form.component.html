@@ -101,31 +101,33 @@
               </mat-form-field>
             </div>
             <div class="form-row document-upload-container">
-              <div class="document-upload-card">
-                <div class="upload-preview" *ngIf="frontPreview || currentTenant?.documentFrontImage">
-                  <img [src]="frontPreview || currentTenant.documentFrontImage" alt="Fronte documento">
-                  <button mat-icon-button color="warn" (click)="removeFrontImage()">
+              <div class="document-upload-card" [class.has-image]="frontPreview || (currentTenant.documentFrontImage && currentTenant.documentFrontImage !== '')" 
+                   (click)="!frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '') && fileInputFront.click()">
+                <div class="upload-preview" *ngIf="frontPreview || (currentTenant.documentFrontImage && currentTenant.documentFrontImage !== '')">
+                  <img [src]="frontPreview || getImageUrl(currentTenant.documentFrontImage)" alt="Fronte documento">
+                  <button mat-icon-button color="warn" (click)="removeFrontImage(); $event.stopPropagation()">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
                 <input #fileInputFront type="file" hidden (change)="onFrontImageSelected($event)" accept="image/*">
-                <button mat-stroked-button type="button" (click)="fileInputFront.click()">
+                <button class="upload-button" mat-stroked-button type="button" (click)="fileInputFront.click(); $event.stopPropagation()">
                   <mat-icon>upload</mat-icon>
-                  {{ frontPreview || currentTenant.documentFrontImage ? 'Cambia' : 'Carica' }} Fronte
+                  {{ frontPreview || (currentTenant.documentFrontImage && currentTenant.documentFrontImage !== '') ? 'Cambia' : 'Carica' }} Fronte
                 </button>
               </div>
             
-              <div class="document-upload-card">
-                <div class="upload-preview" *ngIf="backPreview || currentTenant?.documentBackImage">
-                  <img [src]="backPreview || currentTenant.documentBackImage" alt="Retro documento">
-                  <button mat-icon-button color="warn" (click)="removeBackImage()">
+              <div class="document-upload-card" [class.has-image]="backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '')" 
+                   (click)="!backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '') && fileInputBack.click()">
+                <div class="upload-preview" *ngIf="backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '')">
+                  <img [src]="backPreview || getImageUrl(currentTenant.documentBackImage)" alt="Retro documento">
+                  <button mat-icon-button color="warn" (click)="removeBackImage(); $event.stopPropagation()">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
                 <input #fileInputBack type="file" hidden (change)="onBackImageSelected($event)" accept="image/*">
-                <button mat-stroked-button type="button" (click)="fileInputBack.click()">
+                <button class="upload-button" mat-stroked-button type="button" (click)="fileInputBack.click(); $event.stopPropagation()">
                   <mat-icon>upload</mat-icon>
-                  {{ backPreview || currentTenant.documentBackImage ? 'Cambia' : 'Carica' }} Retro
+                  {{ backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '') ? 'Cambia' : 'Carica' }} Retro
                 </button>
               </div>
             </div>

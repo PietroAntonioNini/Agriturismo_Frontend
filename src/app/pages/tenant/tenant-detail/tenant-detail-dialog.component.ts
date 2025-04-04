@@ -289,34 +289,6 @@ export class TenantDetailDialogComponent implements OnInit {
     });
   }
 
-  // Metodo per caricare entrambi i documenti
-  uploadDocuments(): void {
-    // Implementazione di un dialog per il caricamento di entrambi i documenti
-    // Qui potremmo creare un dialog complesso che permette di caricare entrambe le immagini,
-    // ma per semplicità, ora apriamo due finestre di selezione file una dopo l'altra
-    
-    this.snackBar.open('Per favore seleziona prima l\'immagine del fronte', 'OK', {
-      duration: 3000
-    });
-    
-    setTimeout(() => {
-      this.uploadFrontImage();
-      
-      setTimeout(() => {
-        // Se è stato caricato il fronte, chiediamo anche il retro
-        if (this.tenant?.documentFrontImage) {
-          this.snackBar.open('Ora seleziona l\'immagine del retro', 'OK', {
-            duration: 3000
-          });
-          
-          setTimeout(() => {
-            this.uploadBackImage();
-          }, 1000);
-        }
-      }, 3000);
-    }, 500);
-  }
-
   // Metodo per caricare solo il fronte
   uploadFrontImage(): void {
     const input = document.createElement('input');
@@ -405,7 +377,7 @@ export class TenantDetailDialogComponent implements OnInit {
         this.isLoading = true;
         
         // Chiama l'API per eliminare il file
-        this.apiService.deleteFile('tenants', this.tenant!.id, 'documentFrontImage').subscribe({
+        this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/front').subscribe({
           next: () => {
             // Aggiorna il modello locale
             this.tenant!.documentFrontImage = '';
@@ -438,7 +410,7 @@ export class TenantDetailDialogComponent implements OnInit {
         this.isLoading = true;
         
         // Chiama l'API per eliminare il file
-        this.apiService.deleteFile('tenants', this.tenant!.id, 'documentBackImage').subscribe({
+        this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/back').subscribe({
           next: () => {
             // Aggiorna il modello locale
             this.tenant!.documentBackImage = '';
