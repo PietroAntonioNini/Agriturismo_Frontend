@@ -110,10 +110,12 @@
                   </button>
                 </div>
                 <input #fileInputFront type="file" hidden (change)="onFrontImageSelected($event)" accept="image/*">
-                <button class="upload-button" mat-stroked-button type="button" (click)="fileInputFront.click(); $event.stopPropagation()">
-                  <mat-icon>upload</mat-icon>
-                  {{ frontPreview || (currentTenant.documentFrontImage && currentTenant.documentFrontImage !== '') ? 'Cambia' : 'Carica' }} Fronte
-                </button>
+                @if (!frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '')) {
+                  <button class="upload-button" mat-stroked-button type="button" (click)="fileInputFront.click(); $event.stopPropagation()">
+                    <mat-icon>upload</mat-icon>
+                    Carica Fronte
+                  </button>
+                }
               </div>
             
               <div class="document-upload-card" [class.has-image]="backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '')" 
@@ -125,10 +127,12 @@
                   </button>
                 </div>
                 <input #fileInputBack type="file" hidden (change)="onBackImageSelected($event)" accept="image/*">
-                <button class="upload-button" mat-stroked-button type="button" (click)="fileInputBack.click(); $event.stopPropagation()">
-                  <mat-icon>upload</mat-icon>
-                  {{ backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '') ? 'Cambia' : 'Carica' }} Retro
-                </button>
+                @if (!backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '')) {
+                  <button class="upload-button" mat-stroked-button type="button" (click)="fileInputBack.click(); $event.stopPropagation()">
+                    <mat-icon>upload</mat-icon>
+                    Carica Retro
+                  </button>
+                }
               </div>
             </div>
           </div>

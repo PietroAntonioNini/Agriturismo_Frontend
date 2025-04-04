@@ -30,3 +30,28 @@ body {
   padding: 20px;
   flex: 1;
 }
+
+//stili overlay documenti
+.document-preview-overlay {
+  z-index: 1000;
+}
+
+.document-icon-container {
+  display: inline-block;
+  cursor: pointer;
+}
+
+// Stili per il pannello del dialogo di conferma
+.confirmation-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    overflow: hidden;
+    
+    .mdc-dialog__surface {
+      background-color: transparent !important;
+      box-shadow: none !important;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  }
+}

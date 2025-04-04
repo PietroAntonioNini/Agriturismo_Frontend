@@ -1,16 +1,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { ConfirmationDialogComponent } from '../components/confirmation-dialog/confirmation-dialog.component';
-
-export interface ConfirmationDialogData {
-  title?: string;
-  message: string;
-  submessage: string;
-  cancelText?: string;
-  confirmText?: string;
-  dangerMode?: boolean;
-}
+import { ConfirmationDialogComponent, ConfirmationDialogData } from '../components/confirmation-dialog/confirmation-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -18,41 +9,37 @@ export interface ConfirmationDialogData {
 export class ConfirmationDialogService {
   constructor(private dialog: MatDialog) {}
 
-  /**
-   * Apre un dialogo di conferma
-   * @param data Dati per il dialogo (messaggio, titolo, testi pulsanti)
-   * @returns Observable che emette true se l'utente conferma, altrimenti undefined
-   */
-  confirm(data: ConfirmationDialogData): Observable<boolean> {
+  confirm(title: string, message: string, options: Partial<ConfirmationDialogData> = {}): Observable<boolean> {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
       data: {
-        title: data.title || 'Conferma',
-        message: data.message,
-        submessage: data.submessage,
-        cancelText: data.cancelText || 'Annulla',
-        confirmText: data.confirmText || 'Conferma',
-        dangerMode: data.dangerMode !== undefined ? data.dangerMode : true
+        title,
+        message,
+        cancelText: options.cancelText || 'Annulla',
+        confirmText: options.confirmText || 'Conferma',
+        submessage: options.submessage,
+        highlightItem: options.highlightItem,
+        cancelIcon: options.cancelIcon,
+        confirmIcon: options.confirmIcon,
+        dangerMode: options.dangerMode || false
       },
       disableClose: true,
+      panelClass: 'confirmation-dialog-panel'
     });
 
     return dialogRef.afterClosed();
   }
 
-  /**
-   * Metodo di scorciatoia per dialoghi di conferma eliminazione
-   * @param entityName Nome dell'entità da eliminare (es. "inquilino", "contratto")
-   * @param name Nome specifico dell'elemento (es. "Mario Rossi")
-   * @returns Observable che emette true se l'utente conferma, altrimenti undefined
-   */
-  confirmDelete(entityName: string, name: string): Observable<boolean> {
-    return this.confirm({
-      title: `Elimina ${entityName}`,
-      message: `Eliminare <strong>${name}</strong>?`,
-      submessage: `Questa azione non può essere annullata.`,
-      cancelText: 'Annulla',
-      confirmText: 'Elimina',
-      dangerMode: true
-    });
+  confirmDelete(itemType: string, itemName: string): Observable<boolean> {
+    return this.confirm(
+      `Elimina ${itemType}`,
+      `Sei sicuro di voler eliminare ${itemType}?`,
+      {
+        highlightItem: itemName,
+        submessage: 'Questa azione non può essere annullata.',
+        confirmText: 'Elimina',
+        confirmIcon: 'delete',
+        dangerMode: true
+      }
+    );
   }
 }

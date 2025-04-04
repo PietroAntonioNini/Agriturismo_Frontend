@@ -3,7 +3,7 @@
     <mat-card-header>
       <mat-card-title class="page-title">
         <div class="title-section">
-          <h1>Gestione Inquilini</h1>
+          <h1>Gestione Inquilini ({{dataSource.data.length}})</h1>
           <button mat-raised-button color="primary" (click)="openTenantForm()">
             <mat-icon>person_add</mat-icon>
             Nuovo Inquilino
@@ -16,7 +16,7 @@
       <!-- Filtro -->
       <mat-form-field appearance="outline" class="filter-field">
         <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Cerca Inquilino</mat-label>
+        <mat-label>Cerca Inquilino (nome, cognome, email, telefono, numero documento)</mat-label>
         <input matInput (keyup)="applyFilter($event)">
       </mat-form-field>
 
@@ -33,13 +33,6 @@
         </div>
 
         <table mat-table [dataSource]="dataSource" matSort class="tenant-table">
-          <!-- ID Column nascosta
-          <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
-            <td mat-cell *matCellDef="let tenant"> {{ tenant.id }} </td>
-          </ng-container>
-          -->
-
           <!-- Nome Column -->
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Nome </th>
@@ -74,9 +67,14 @@
           <ng-container matColumnDef="documents">
             <th mat-header-cell *matHeaderCellDef mat-sort-header> Documenti </th>
             <td mat-cell *matCellDef="let tenant">
-              <mat-icon class="ms-4" [style.color]="tenant.documentFrontImage && tenant.documentBackImage ? 'green' : 'red'">
-                {{ tenant.documentFrontImage && tenant.documentBackImage ? 'check_circle' : 'cancel' }}
-              </mat-icon>
+              <!-- Container per gestire l'hover e il tooltip -->
+              <div class="document-icon-container" 
+                  (mouseenter)="showDocumentPreview(tenant, $event)" 
+                  (mouseleave)="hideDocumentPreview()">
+                <mat-icon class="ms-4" [style.color]="tenant.documentFrontImage && tenant.documentBackImage ? 'green' : 'red'">
+                  {{ tenant.documentFrontImage && tenant.documentBackImage ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+              </div>
             </td>
           </ng-container>
 
@@ -110,9 +108,18 @@
           </tr>
         </table>
 
-        @if (dataSource.data.length > 15) {
-          <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" [pageSize]="10" aria-label="Seleziona pagina di inquilini"></mat-paginator>
-        }
+        <div class="custom-paginator-container">
+          <div class="paginator-controls">
+            <button mat-icon-button [disabled]="!paginator.hasPreviousPage()" (click)="paginator.previousPage()">
+              <mat-icon>navigate_before</mat-icon>
+            </button>
+            <span class="current-page">{{paginator.pageIndex + 1}}</span>
+            <button mat-icon-button [disabled]="!paginator.hasNextPage()" (click)="paginator.nextPage()">
+              <mat-icon>navigate_next</mat-icon>
+            </button>
+          </div>
+        </div>
+        <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[10]" hidePageSize="true" showFirstLastButtons="false" aria-label="Seleziona pagina di inquilini" class="hidden-paginator"></mat-paginator>
       </div>
     </mat-card-content>
   </mat-card>

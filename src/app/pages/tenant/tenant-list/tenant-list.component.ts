@@ -13,12 +13,19 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
 import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { TenantFormComponent } from '../tenant-form/tenant-form.component';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+import { DocumentPreviewTooltipComponent } from '../../../shared/components/document-preview-tooltip/document-preview-tooltip.component';
+import { environment } from '../../../../environments/environment';
+
+// Importazione del componente per l'anteprima dell'immagine a schermo intero
+import { ImagePreviewDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 
 @Component({
   selector: 'app-tenant-list',
@@ -37,7 +44,7 @@ import { ConfirmationDialogService } from '../../../shared/services/confirmation
     MatDialogModule,
     MatSnackBarModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ],
   templateUrl: './tenant-list.component.html',
   styleUrls: ['./tenant-list.component.scss']
@@ -47,6 +54,7 @@ export class TenantListComponent implements OnInit {
   dataSource = new MatTableDataSource<Tenant>([]);
   isLoading = true;
   errorMessage: string | null = null;
+  private overlayRef: OverlayRef | null = null;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -56,7 +64,8 @@ export class TenantListComponent implements OnInit {
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private router: Router,
-    private confirmationService: ConfirmationDialogService
+    private confirmationService: ConfirmationDialogService,
+    private overlay: Overlay 
   ) {}
 
   ngOnInit(): void {
@@ -65,10 +74,24 @@ export class TenantListComponent implements OnInit {
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
-    if (this.paginator) {
-      this.paginator.pageSize = 10;
-    }
     this.dataSource.sort = this.sort;
+    
+    // Configurazione personalizzata del paginatore
+    if (this.paginator) {
+      this.paginator._intl.nextPageLabel = 'Pagina successiva';
+      this.paginator._intl.previousPageLabel = 'Pagina precedente';
+      this.paginator._intl.firstPageLabel = 'Prima pagina';
+      this.paginator._intl.lastPageLabel = 'Ultima pagina';
+      this.paginator._intl.getRangeLabel = (page: number, pageSize: number, length: number) => {
+        if (length === 0 || pageSize === 0) {
+          return `0 di ${length}`;
+        }
+        length = Math.max(length, 0);
+        const startIndex = page * pageSize;
+        const endIndex = startIndex < length ? Math.min(startIndex + pageSize, length) : startIndex + pageSize;
+        return `${page + 1} di ${Math.ceil(length / pageSize)}`;
+      };
+    }
   }
 
   loadTenants(): void {
@@ -109,6 +132,9 @@ export class TenantListComponent implements OnInit {
           this.loadTenants();
         } else if (result.edit) {
           this.openTenantForm(result.tenantId);
+        } else if (result.documentsModified) {
+          // Ricarica i dati se i documenti sono stati modificati
+          this.loadTenants();
         }
       }
     });
@@ -163,5 +189,93 @@ export class TenantListComponent implements OnInit {
 
   getFullName(tenant: Tenant): string {
     return `${tenant.firstName} ${tenant.lastName}`;
+  }
+
+  // Metodo per mostrare il tooltip con le anteprime dei documenti
+  showDocumentPreview(tenant: Tenant, event: MouseEvent): void {
+    // Mostra solo se ci sono entrambi i documenti
+    if (!tenant.documentFrontImage || !tenant.documentBackImage) {
+      return;
+    }
+
+    // Chiudi qualsiasi tooltip esistente
+    this.hideDocumentPreview();
+    
+    // Ottieni l'elemento che ha innescato l'evento (l'icona check)
+    const targetElement = event.currentTarget as HTMLElement;
+
+    // Crea una posizione per il tooltip ancorato all'icona
+    const positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(targetElement)
+      .withPositions([
+        { 
+          originX: 'center', 
+          originY: 'bottom', 
+          overlayX: 'center', 
+          overlayY: 'top', 
+          offsetY: 5 
+        }
+      ]);
+
+    // Crea l'overlay per il tooltip
+    this.overlayRef = this.overlay.create({
+      positionStrategy,
+      scrollStrategy: this.overlay.scrollStrategies.close(),
+      hasBackdrop: false,
+      panelClass: 'document-preview-overlay'
+    });
+
+    // Crea il componente per il tooltip
+    const tooltipPortal = new ComponentPortal(DocumentPreviewTooltipComponent);
+    const tooltipRef = this.overlayRef.attach(tooltipPortal);
+    
+    // Passa i dati al tooltip
+    tooltipRef.instance.documentFront = this.getImageUrl(tenant.documentFrontImage);
+    tooltipRef.instance.documentBack = this.getImageUrl(tenant.documentBackImage);
+    tooltipRef.instance.documentFrontPath = tenant.documentFrontImage;
+    tooltipRef.instance.documentBackPath = tenant.documentBackImage;
+    
+    // Sottoscrizione all'evento di apertura dell'anteprima completa
+    tooltipRef.instance.onImageClick.subscribe((imagePath: string) => {
+      this.hideDocumentPreview(); // Chiudi il tooltip prima di aprire l'anteprima
+      this.openImagePreview(imagePath);
+    });
+  }
+
+  // Metodo per nascondere il tooltip
+  hideDocumentPreview(): void {
+    if (this.overlayRef) {
+      this.overlayRef.detach();
+      this.overlayRef.dispose();
+      this.overlayRef = null;
+    }
+  }
+
+  // Metodo per ottenere l'URL dell'immagine
+  getImageUrl(relativePath: string): string {
+    if (!relativePath) {
+      return 'assets/images/no-image.png';
+    }
+    
+    if (relativePath.startsWith('http')) {
+      return relativePath;
+    }
+    
+    if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
+      relativePath = '/static' + relativePath;
+    }
+    
+    return `${environment.apiUrl}${relativePath}`;
+  }
+
+  // Metodo per aprire l'anteprima completa dell'immagine
+  openImagePreview(imagePath: string): void {
+    const imageUrl = this.getImageUrl(imagePath);
+    
+    this.dialog.open(ImagePreviewDialogComponent, {
+      width: '90%',
+      maxWidth: '1200px',
+      data: { imageUrl }
+    });
   }
 }

@@ -1,31 +1,136 @@
 .confirmation-dialog {
-  width: 500px;
-  max-width: 60vw;
-  .warning-icon {
-    font-size: 30px;
-    width: 30px;
-    height: 30px;
-
-  }
-
-  .message-container{
-
-    .message{
-      font-size: 20px;
-      margin-bottom: 5px;
+  min-width: 450px;
+  max-width: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+    background-color: #2c2c2c;
+    
+    &.danger {
+      background-color: rgba(220, 53, 69, 0.15);
+      
+      .warning-icon {
+        color: #dc3545;
+      }
     }
-
-    .submessage{
-      font-size: 14px;
+    
+    .icon-container {
+      margin-right: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      
+      .warning-icon, .info-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
+      
+      .info-icon {
+        color: #3f51b5;
+      }
+    }
+    
+    .dialog-title {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 500;
+      flex-grow: 1;
     }
   }
-
-  mat-dialog-actions {
-    margin-bottom: 0;
-    padding-bottom: 16px;
-
-    button:hover {
-      opacity: 0.8;
+  
+  mat-divider {
+    opacity: 0.2;
+  }
+  
+  .dialog-content {
+    padding: 24px;
+    
+    .message {
+      font-size: 1.1rem;
+      margin: 0 0 12px 0;
+      line-height: 1.4;
+    }
+    
+    .submessage {
+      color: rgba(255, 255, 255, 0.7);
+      margin: 0 0 20px 0;
+      font-size: 0.95rem;
+    }
+    
+    .highlight-box {
+      background-color: rgba(255, 255, 255, 0.768);
+      border-radius: 6px;
+      padding: 12px 16px;
+      max-width: 60%;
+      margin: 16px 0 0;
+      border-left: 4px solid #3f51b5;
+      
+      .item-name {
+        font-weight: 500;
+        font-size: 1.3rem;
+      }
     }
   }
+  
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0px 24px 24px;
+    gap: 16px;
+    
+    button {
+      min-width: 100px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+    
+    .cancel-button {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.15);
+      }
+    }
+    
+    .confirm-button {
+      background-color: #3f51b5;
+      color: white;
+      position: relative;
+      
+      &.danger-button {
+        background-color: #dc3545;
+      }
+      
+      .button-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
+}
+
+// Stato disabilitato per i pulsanti
+button[disabled] {
+  opacity: 0.6;
+  pointer-events: none;
 }

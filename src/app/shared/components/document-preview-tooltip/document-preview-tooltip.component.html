@@ -1,0 +1,10 @@
+<div class="documents-preview-tooltip">
+  <div class="preview-container" *ngIf="documentFront">
+    <img [src]="documentFront" alt="Fronte documento" (click)="onPreviewClick(documentFrontPath)">
+    <div class="preview-label">Fronte</div>
+  </div>
+  <div class="preview-container" *ngIf="documentBack">
+    <img [src]="documentBack" alt="Retro documento" (click)="onPreviewClick(documentBackPath)">
+    <div class="preview-label">Retro</div>
+  </div>
+</div>

@@ -85,7 +85,8 @@ export class TenantDetailDialogComponent implements OnInit {
   isLoading = true;
   errorMessage: string | null = null;
   environment = environment;
-
+  documentsModified: boolean = false;
+  
   // Oggetto per gestire i testi dei tooltip per ogni elemento
   tooltipTexts: { [key: string]: string } = {
     'name': 'Copia',
@@ -208,7 +209,7 @@ export class TenantDetailDialogComponent implements OnInit {
   }
 
   close(): void {
-    this.dialogRef.close();
+    this.dialogRef.close({ documentsModified: this.documentsModified });
   }
 
   editTenant(): void {
@@ -356,6 +357,7 @@ export class TenantDetailDialogComponent implements OnInit {
         });
         
         // Ricarica i dati dell'inquilino per aggiornare l'interfaccia
+        this.documentsModified = true;
         this.loadTenantData(this.tenant!.id);
       },
       error: (error) => {
@@ -386,6 +388,7 @@ export class TenantDetailDialogComponent implements OnInit {
               duration: 3000 
             });
             
+            this.documentsModified = true;
             this.isLoading = false;
           },
           error: (error) => {
@@ -419,6 +422,7 @@ export class TenantDetailDialogComponent implements OnInit {
               duration: 3000 
             });
             
+            this.documentsModified = true;
             this.isLoading = false;
           },
           error: (error) => {

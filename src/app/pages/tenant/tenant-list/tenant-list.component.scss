@@ -156,3 +156,38 @@ tr:hover {
   background-color: rgba(0, 0, 0, 0.04) !important;
   transition: background-color 0.10s ease-in !important;
 }
+
+/* Stili per il paginatore personalizzato */
+.custom-paginator-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.paginator-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.current-page {
+  margin: 0 16px;
+  min-width: 24px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Nasconde il paginatore originale ma mantiene la sua funzionalità */
+.hidden-paginator {
+  height: 0;
+  min-height: 0;
+  visibility: hidden;
+  overflow: hidden;
+}
+
+/* Nasconde l'etichetta "Items per page" nel paginatore */
+::ng-deep .mat-paginator-page-size-label {
+  display: none;
+}

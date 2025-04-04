@@ -1,0 +1,40 @@
+.documents-preview-tooltip {
+  display: flex;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  gap: 16px;
+  min-width: 280px;
+  z-index: 1000;
+  transform: translateY(5px);
+}
+
+.preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.preview-container img {
+  width: 140px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  border: 1px solid #eee;
+}
+
+.preview-container img:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.preview-label {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}

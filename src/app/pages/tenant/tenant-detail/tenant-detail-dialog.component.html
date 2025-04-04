@@ -97,7 +97,6 @@
                 <div class="document-identity-section">
                   <div class="document-header">
                     <div class="document-title">
-                      <h2>Documenti d'identità</h2>
                       <div class="document-info">
                         <div class="info-pill">
                           <mat-icon>assignment_ind</mat-icon>
@@ -109,7 +108,7 @@
                           (click)="copyToClipboard(tenant.documentNumber, 'documentNumber', documentNumberTooltip)" 
                           style="cursor: pointer;">
                           <mat-icon>confirmation_number</mat-icon>
-                          <span>{{ tenant.documentNumber || 'CA70837EO' }}</span>
+                          <span class="text-uppercase">{{ tenant.documentNumber || 'CA70837EO' }}</span>
                         </div>
                         <div class="info-pill">
                           <mat-icon>event</mat-icon>

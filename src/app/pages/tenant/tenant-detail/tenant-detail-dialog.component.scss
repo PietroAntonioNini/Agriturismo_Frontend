@@ -83,7 +83,7 @@
 }
 
 mat-tab-group{
-  height: 570px;
+  height: 530px;
 }
 
 .tab-content {
@@ -154,35 +154,32 @@ mat-tab-group{
 }
 
 .document-title {
-  h2 {
-    margin: 0 0 12px 0;
-    font-size: 24px;
-    font-weight: 500;
-    color: #333;
-  }
+  width: 100%;
 }
 
 .document-info {
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
   flex-wrap: wrap;
+  padding-bottom: 14px;
 }
 
 .info-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 6px 12px;
   background-color: #f5f5f5;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 18px;
   color: #555;
   
   mat-icon {
     color: #3f51b5;
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
   }
 }
 
