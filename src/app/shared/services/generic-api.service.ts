@@ -37,10 +37,27 @@ export class GenericApiService {
     if (!files || files.length === 0) {
       return this.http.post<T>(this.apiUrl(entity), data);
     }
-
+  
     const formData = new FormData();
-    formData.append(entity, JSON.stringify(data));
-    files.forEach((file, index) => formData.append(`${fileFieldPrefix || 'file'}${index}`, file));
+    
+    // Use 'apartment' key for apartment entity, not the entity name
+    if (entity === 'apartments') {
+      formData.append('apartment', JSON.stringify(data));
+      
+      if (files && files.length > 0) {
+        files.forEach(file => {
+          formData.append('files', file);
+        });
+      }
+    } else {
+      formData.append(entity, JSON.stringify(data));
+
+      files.forEach((file, index) => {
+        const fieldName = `file${index}`;
+        formData.append(fieldName, file);
+      });
+    }
+    
     return this.http.post<T>(`${this.apiUrl(entity)}/with-images`, formData);
   }
 
@@ -64,8 +81,8 @@ export class GenericApiService {
       
       if (files && files.length > 0) {
           // Usa nomi file specifici come richiesto dal backend
-          files.forEach((file, index) => {
-              formData.append(`file${index}`, file);
+          files.forEach(file => {
+            formData.append('files', file);
           });
       }
       

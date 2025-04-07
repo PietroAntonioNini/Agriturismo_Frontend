@@ -12,12 +12,14 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { environment } from '../../../../environments/environment';
+import { finalize } from 'rxjs/operators';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Apartment } from '../../../shared/models';
@@ -39,6 +41,7 @@ import { Apartment } from '../../../shared/models';
     MatDividerModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    MatProgressBarModule,
     MatChipsModule,
     MatDialogModule,
     MatTooltipModule
@@ -54,11 +57,12 @@ export class ApartmentFormComponent implements OnInit {
   errorMessage: string | null = null;
   selectedAmenities: string[] = [];
   separatorKeysCodes: number[] = [ENTER, COMMA];
+  isDragging = false;
   
-  // Immagini
+  // New approach with dynamic arrays
   currentApartment: Apartment = {} as Apartment;
-  imageFiles: (File | null)[] = [null, null, null, null, null, null, null, null];
-  imagePreviews: (string | null)[] = [null, null, null, null, null, null, null, null];
+  imageFiles: File[] = [];
+  imagePreviews: string[] = [];
   
   constructor(
     private fb: FormBuilder,
@@ -103,24 +107,25 @@ export class ApartmentFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
+    // Use the getById method without the third parameter
     this.apiService.getById<Apartment>('apartments', id).subscribe({
       next: (apartment) => {
+        console.log('Images from server:', apartment.images);
         this.currentApartment = apartment;
         this.updateForm(apartment);
         this.selectedAmenities = apartment.amenities || [];
         
+        // Clear existing arrays
+        this.imageFiles = [];
+        this.imagePreviews = [];
+        
         // Carica le anteprime delle immagini se disponibili
         if (apartment.images && apartment.images.length > 0) {
-          // Pulisce prima tutte le anteprime
-          this.imagePreviews = this.imagePreviews.map(() => null);
-          
           // Carica ogni immagine con il suo URL corretto
-          apartment.images.forEach((imageUrl, index) => {
-            if (index < this.imagePreviews.length) {
-              // Usa il metodo getImageUrl per ottenere l'URL completo
-              this.imagePreviews[index] = this.getImageUrl(imageUrl);
-              console.log(`Caricata immagine ${index}: ${imageUrl}`);
-            }
+          apartment.images.forEach((imageUrl) => {
+            // Usa il metodo getImageUrl per ottenere l'URL completo
+            const fullUrl = this.getImageUrl(imageUrl);
+            this.imagePreviews.push(fullUrl);
           });
         }
         
@@ -151,121 +156,159 @@ export class ApartmentFormComponent implements OnInit {
     });
   }
 
-  // Gestione delle immagini
-  onImageSelected(event: any, index: number): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.imageFiles[index] = file;
+  // Image management methods for dynamic arrays
+  getImageCount(): number {
+    return this.imagePreviews.length;
+  }
+
+  onMultipleImagesSelected(event: any): void {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    // Calculate available slots
+    const currentCount = this.getImageCount();
+    const availableSlots = 8 - currentCount;
+    
+    if (availableSlots <= 0) {
+      this.snackBar.open('Hai già caricato il numero massimo di immagini (8)', 'Chiudi', {
+        duration: 3000
+      });
+      return;
+    }
+    
+    // Process files with proper type casting
+    const filesToProcess = Array.from(files).slice(0, availableSlots) as File[];
+    
+    filesToProcess.forEach((file: File) => {
+      // Add the file to our array
+      this.imageFiles.push(file);
+      
+      // Create a preview
       const reader = new FileReader();
       reader.onload = () => {
-        this.imagePreviews[index] = reader.result as string;
+        this.imagePreviews.push(reader.result as string);
       };
       reader.readAsDataURL(file);
+    });
+    
+    // Notify if we couldn't add all files
+    if (files.length > availableSlots) {
+      this.snackBar.open(`Sono state aggiunte ${availableSlots} immagini. Limite massimo di 8 immagini raggiunto.`, 'Chiudi', {
+        duration: 4000
+      });
+    }
+  }
+
+  // Drag & drop
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+    
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      // Create a mock event object to reuse existing logic
+      const mockEvent = { target: { files: files } };
+      this.onMultipleImagesSelected(mockEvent);
     }
   }
 
   removeImage(index: number): void {
-    // Se siamo in modalità modifica e l'appartamento ha già immagini salvate
-    if (this.isEditMode && this.apartmentId && 
-        this.currentApartment.images && 
-        this.currentApartment.images[index]) {
-      
-      this.isLoading = true;
-      
-      // Ottieni il path completo dell'immagine da eliminare
-      const imagePath = this.currentApartment.images[index];
-      const apartmentId = this.apartmentId;
-      
-      // Estrai il nome del file dal path (l'ultimo segmento dopo l'ultimo /)
-      const fileName = imagePath.split('/').pop() || '';
-      console.log(`Eliminazione immagine: ${fileName} da appartamento ${apartmentId}`);
-      
-      // Chiamiamo il deleteFile con il nome file specifico
-      this.apiService.deleteFile('apartments', apartmentId, `images/${fileName}`).subscribe({
-        next: () => {
-          console.log(`Immagine ${fileName} eliminata con successo`);
-          
-          // Rimuovi l'immagine dall'array delle immagini dell'appartamento
-          if (this.currentApartment.images) {
-            this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
-          }
-          
-          // Pulisci l'anteprima e il file
-          this.imagePreviews[index] = null;
-          this.imageFiles[index] = null;
-          
-          // Riorganizza gli array dopo l'eliminazione
-          this.reorderImagesAfterDelete(index);
-          
-          // Notifica all'utente con un toast rapido
-          this.snackBar.open('Immagine eliminata con successo', '', {
-            duration: 2000,
-            horizontalPosition: 'center',
-            verticalPosition: 'bottom'
+    this.isLoading = true;
+    
+    // If we're in edit mode with an existing apartment
+    if (this.isEditMode && this.apartmentId) {
+      // Check if this is an existing image from the backend (stored in currentApartment.images)
+      if (this.currentApartment.images && index < this.currentApartment.images.length) {
+        const imagePath = this.currentApartment.images[index];
+        const fileName = imagePath.split('/').pop() || '';
+        
+        console.log(`Eliminazione immagine: ${fileName} da appartamento ${this.apartmentId}`);
+        
+        // Immediately update local state to reflect deletion
+        // Create a copy of the array and remove the item
+        this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
+        this.imagePreviews.splice(index, 1);
+        
+        // Call API to delete the file from backend
+        this.apiService.deleteFile('apartments', this.apartmentId, `images/${fileName}`)
+          .pipe(
+            finalize(() => {
+              this.isLoading = false;
+            })
+          )
+          .subscribe({
+            next: () => {
+              console.log(`Immagine ${fileName} eliminata con successo`);
+              
+              this.snackBar.open('Immagine eliminata con successo', '', {
+                duration: 2000,
+                horizontalPosition: 'center',
+                verticalPosition: 'bottom'
+              });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione dell\'immagine', error);
+              
+              // Since we already updated the UI, we need to reload on error to show correct state
+              this.forceFreshReload();
+              
+              this.snackBar.open('Errore nella rimozione dell\'immagine', '', {
+                duration: 2000,
+                horizontalPosition: 'center',
+                verticalPosition: 'bottom'
+              });
+            }
           });
-          
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Errore durante l\'eliminazione dell\'immagine', error);
-          console.log('Path usato:', `images/${fileName}`);
-          
-          // Rimuovi comunque l'immagine dall'UI anche se c'è un errore lato server
-          if (this.currentApartment.images) {
-            this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
-          }
-          this.imagePreviews[index] = null;
-          this.imageFiles[index] = null;
-          
-          // Riorganizza gli array dopo l'eliminazione
-          this.reorderImagesAfterDelete(index);
-          
-          // Notifica all'utente
-          this.snackBar.open('Immagine rimossa dall\'interfaccia', '', {
-            duration: 2000,
-            horizontalPosition: 'center',
-            verticalPosition: 'bottom'
-          });
-          
-          this.isLoading = false;
-        }
-      });
+      } else {
+        // This is a newly added image that's not yet on the backend
+        this.imagePreviews.splice(index, 1);
+        this.imageFiles.splice(index, 1);
+        this.isLoading = false;
+      }
     } else {
-      // Se è solo un'immagine locale non ancora salvata, rimuovila senza chiamare il server
-      this.imagePreviews[index] = null;
-      this.imageFiles[index] = null;
-      
-      // Riorganizza gli array dopo l'eliminazione
-      this.reorderImagesAfterDelete(index);
+      // For a new apartment that hasn't been saved yet
+      this.imagePreviews.splice(index, 1);
+      this.imageFiles.splice(index, 1);
+      this.isLoading = false;
     }
   }
 
-  // Nuovo metodo per riordinare gli array dopo l'eliminazione
-  reorderImagesAfterDelete(deletedIndex: number): void {
-    // Crea nuovi array compatti senza elementi null
-    const newImageFiles: (File | null)[] = [];
-    const newImagePreviews: (string | null)[] = [];
-    
-    // Copia tutti gli elementi validi negli array temporanei
-    for (let i = 0; i < this.imageFiles.length; i++) {
-      if (i !== deletedIndex && this.imageFiles[i] !== null) {
-        newImageFiles.push(this.imageFiles[i]);
-      }
-      
-      if (i !== deletedIndex && this.imagePreviews[i] !== null) {
-        newImagePreviews.push(this.imagePreviews[i]);
-      }
-    }
-    
-    // Riempi gli array originali con i nuovi valori seguiti da null
-    for (let i = 0; i < this.imageFiles.length; i++) {
-      if (i < newImageFiles.length) {
-        this.imageFiles[i] = newImageFiles[i];
-        this.imagePreviews[i] = newImagePreviews[i];
-      } else {
-        this.imageFiles[i] = null;
-        this.imagePreviews[i] = null;
-      }
+  // Force a reload without the invalid third parameter
+  private forceFreshReload(): void {
+    if (this.apartmentId) {
+      this.apiService.getById<Apartment>('apartments', this.apartmentId).subscribe({
+        next: (apartment) => {
+          this.currentApartment = apartment;
+          
+          // Clear arrays and rebuild them
+          this.imagePreviews = [];
+          this.imageFiles = [];
+          
+          if (apartment.images && apartment.images.length > 0) {
+            apartment.images.forEach((imageUrl) => {
+              // Add timestamp to URL for cache busting
+              const fullUrl = this.getImageUrl(imageUrl);
+              this.imagePreviews.push(fullUrl);
+            });
+          }
+        },
+        error: (error) => {
+          console.error('Errore durante il caricamento dei dati aggiornati', error);
+        }
+      });
     }
   }
 
@@ -274,17 +317,17 @@ export class ApartmentFormComponent implements OnInit {
       return '';
     }
     
-    // Se il percorso inizia già con http, restituiscilo come è
+    // If path already starts with http, return as is
     if (url.startsWith('http')) {
       return `${url}?t=${new Date().getTime()}`;
     }
     
-    // Assicurati che il percorso inizi con /static/
+    // Make sure path starts with /static/
     if (!url.startsWith('/static/') && url.startsWith('/')) {
       url = '/static' + url;
     }
     
-    // Altrimenti prependi il base URL dell'API e aggiungi timestamp per evitare il caching
+    // Prepend API URL and add timestamp to prevent caching
     const apiUrl = environment.apiUrl;
     return `${apiUrl}${url}?t=${new Date().getTime()}`;
   }
@@ -311,7 +354,7 @@ export class ApartmentFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.apartmentForm.invalid) {
-      // Marca tutti i campi come touched per mostrare gli errori
+      // Mark all fields as touched to show errors
       this.markFormGroupTouched(this.apartmentForm);
       return;
     }
@@ -319,23 +362,20 @@ export class ApartmentFormComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
     
-    // Aggiorna l'appartamento corrente con i valori del form
+    // Update current apartment with form values
     this.currentApartment = {
       ...this.currentApartment,
       ...this.apartmentForm.value,
       amenities: this.selectedAmenities
     };
     
-    // Filtra i file delle immagini non nulli
-    const validImageFiles = this.imageFiles.filter(file => file !== null) as File[];
-    
     if (this.isEditMode && this.apartmentId) {
-      // Aggiorna un appartamento esistente
+      // Update existing apartment
       this.apiService.update<Apartment>(
         'apartments', 
         this.apartmentId, 
         this.currentApartment,
-        validImageFiles.length > 0 ? validImageFiles : undefined
+        this.imageFiles.length > 0 ? this.imageFiles : undefined
       ).subscribe({
         next: (updatedApartment) => {
           this.isLoading = false;
@@ -345,7 +385,7 @@ export class ApartmentFormComponent implements OnInit {
             verticalPosition: 'top'
           });
           
-          // Passa un flag per indicare di non aprire il dialog di dettaglio
+          // Pass a flag to indicate not to open detail dialog
           this.dialogRef.close({ 
             success: true, 
             apartment: updatedApartment, 
@@ -359,11 +399,11 @@ export class ApartmentFormComponent implements OnInit {
         }
       });
     } else {
-      // Crea un nuovo appartamento
+      // Create new apartment
       this.apiService.create<Apartment>(
         'apartments',
         this.currentApartment,
-        validImageFiles.length > 0 ? validImageFiles : undefined
+        this.imageFiles.length > 0 ? this.imageFiles : undefined
       ).subscribe({
         next: (apartment) => {
           this.isLoading = false;
@@ -373,7 +413,7 @@ export class ApartmentFormComponent implements OnInit {
             verticalPosition: 'top'
           });
           
-          // Passa un flag per indicare di non aprire il dialog di dettaglio
+          // Pass a flag to indicate not to open detail dialog
           this.dialogRef.close({ 
             success: true, 
             apartment: apartment, 

@@ -55,7 +55,7 @@
           </mat-form-field>
         </div>
 
-        <div class="form-row">
+        <div class="form-row measurements-row">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Superficie (m²)</mat-label>
             <input matInput type="number" formControlName="squareMeters" placeholder="Inserisci i metri quadrati">
@@ -64,7 +64,7 @@
               {{ getFormControlError('squareMeters') }}
             </mat-error>
           </mat-form-field>
-
+        
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Piano</mat-label>
             <input matInput type="number" formControlName="floor" placeholder="Inserisci il piano">
@@ -72,7 +72,7 @@
               {{ getFormControlError('floor') }}
             </mat-error>
           </mat-form-field>
-
+        
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Stanze</mat-label>
             <input matInput type="number" formControlName="rooms" placeholder="Numero di stanze">
@@ -136,24 +136,46 @@
 
         <!-- Immagini -->
         <h3>Immagini dell'appartamento (Opzionali)</h3>
-        <div class="form-row image-upload-container">
-          <div *ngFor="let preview of imagePreviews; let i = index" class="image-upload-card" 
-               [class.has-image]="imagePreviews[i]">
-            <div class="upload-preview" *ngIf="imagePreviews[i]">
-              <img [src]="imagePreviews[i]" alt="Immagine appartamento {{i+1}}">
-              <button mat-icon-button color="warn" (click)="removeImage(i)" matTooltip="Elimina immagine">
-                <mat-icon>delete</mat-icon>
-              </button>
+        <div class="image-upload-container"
+          [class.drag-active]="isDragging"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          >
+          <div class="image-upload-header">
+            <div class="image-counter">
+              <span class="counter-text">{{ getImageCount() }} / 8 immagini</span>
+              <mat-progress-bar mode="determinate" [value]="getImageCount() / 8 * 100"></mat-progress-bar>
             </div>
-            <div class="upload-placeholder" *ngIf="!imagePreviews[i]">
-              <mat-icon>image</mat-icon>
-              <span>Immagine {{i+1}}</span>
-            </div>
-            <input #fileInput type="file" hidden (change)="onImageSelected($event, i)" accept="image/*">
-            <button mat-stroked-button type="button" (click)="fileInput.click()" class="upload-button">
-              <mat-icon>{{ imagePreviews[i] ? 'autorenew' : 'upload' }}</mat-icon> 
-              {{ imagePreviews[i] ? 'Cambia' : 'Carica' }}
+            
+            <input #multipleFileInput type="file" hidden multiple accept="image/*" (change)="onMultipleImagesSelected($event)">
+            <button mat-raised-button color="primary" type="button" 
+                    [disabled]="getImageCount() >= 8"
+                    (click)="multipleFileInput.click()" class="upload-multiple-button">
+              <mat-icon>add_photo_alternate</mat-icon> 
+              {{ getImageCount() > 0 ? 'Aggiungi altre immagini' : 'Carica immagini' }}
             </button>
+          </div>
+          
+          <!-- Gallery of uploaded images -->
+          <div class="image-gallery" *ngIf="getImageCount() > 0">
+            <div *ngFor="let preview of imagePreviews; let i = index" class="image-card">
+              <div class="image-preview">
+                <img [src]="preview" alt="Immagine appartamento {{i+1}}">
+                <div class="image-actions">
+                  <button mat-mini-fab color="warn" (click)="removeImage(i)" matTooltip="Elimina immagine">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Empty state -->
+          <div class="empty-gallery" *ngIf="getImageCount() === 0">
+            <mat-icon class="empty-icon">photo_library</mat-icon>
+            <p>Nessuna immagine caricata</p>
+            <span class="empty-hint">Carica fino a 8 immagini dell'appartamento</span>
           </div>
         </div>
 
