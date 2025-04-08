@@ -71,14 +71,23 @@
 
 .status-available {
   color: #4CAF50;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
 }
 
 .status-occupied {
   color: #F44336;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
 }
 
 .status-maintenance {
   color: #FF9800;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
 }
 
 /* Carousel Styles */
@@ -248,33 +257,42 @@ mat-tab-group {
 
 .info-grid-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
+  justify-content: space-between;
+  flex-wrap: no-wrap;
 
-.info-item {
-  flex: 1;
-  min-width: 180px;
-}
-
-.info-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-  color: #757575;
+  .info-item:first-child {
+    border-left: 1px solid lightgray;
+  }
   
-  mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
+  .info-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid lightgray;
+    padding: 5px;
+  }
+  
+  .info-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: #757575;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+  
+  .info-value {
+    font-size: 18px;
+    font-weight: 500;
   }
 }
 
-.info-value {
-  font-size: 18px;
-  font-weight: 500;
-}
 
 /* Stile per le caratteristiche */
 .features-list {
@@ -315,33 +333,6 @@ mat-tab-group {
   background-color: #f9f9f9;
   border-radius: 4px;
   line-height: 1.6;
-}
-
-/* Stile per la galleria di immagini */
-.gallery-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.gallery-item {
-  width: calc(33.333% - 16px);
-  height: 180px;
-  overflow: hidden;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  
-  &:hover {
-    transform: scale(1.05);
-  }
-  
-  .gallery-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 }
 
 /* Stile per schede inquilini */

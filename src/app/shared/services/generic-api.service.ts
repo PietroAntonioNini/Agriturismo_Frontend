@@ -42,7 +42,14 @@ export class GenericApiService {
     
     // Use 'apartment' key for apartment entity, not the entity name
     if (entity === 'apartments') {
-      formData.append('apartment', JSON.stringify(data));
+      const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+
+      // This ensures it's always included in the JSON data
+      if (!apartmentData.amenities) {
+        apartmentData.amenities = [];
+      }
+
+      formData.append('apartment', JSON.stringify(apartmentData));
       
       if (files && files.length > 0) {
         files.forEach(file => {
@@ -77,7 +84,15 @@ export class GenericApiService {
         return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
     } else if (entity === 'apartments') {
       const formData = new FormData();
-      formData.append('apartment', JSON.stringify(data));
+
+      const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+
+      // This ensures it's always included in the JSON data
+      if (!apartmentData.amenities) {
+        apartmentData.amenities = [];
+      }
+
+      formData.append('apartment', JSON.stringify(apartmentData));
       
       if (files && files.length > 0) {
           // Usa nomi file specifici come richiesto dal backend
@@ -149,10 +164,6 @@ export class GenericApiService {
   // Metodi specifici migrati da ApartmentService
   updateStatus<T>(entity: string, id: number | string, status: string): Observable<T> {
     return this.http.patch<T>(`${this.apiUrl(entity)}/${id}/status`, { status });
-  }
-
-  getAvailableEntities<T>(entity: string): Observable<T[]> {
-    return this.getAll<T>(entity, { isAvailable: true });
   }
 
   getActiveEntities<T>(entity: string): Observable<T[]> {

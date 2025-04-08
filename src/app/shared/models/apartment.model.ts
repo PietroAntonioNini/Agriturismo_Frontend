@@ -12,7 +12,6 @@ export interface Apartment {
   isFurnished: boolean;
   monthlyRent: number;
   status: 'available' | 'occupied' | 'maintenance';
-  isAvailable?: boolean;
   notes?: string;
   // Aggiungi questa proprietà se vuoi tenere traccia dei numeri dei contatori
   utilityMetersInfo?: {

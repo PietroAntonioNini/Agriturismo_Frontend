@@ -63,7 +63,6 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.totalTenants = data.tenants.length;
         this.totalApartments = data.apartments.length;
-        this.availableApartments = data.apartments.filter(apt => apt.isAvailable).length;
         this.occupiedApartments = this.totalApartments - this.availableApartments;
         this.activeLeases = data.activeLeases.length;
         this.expiringLeases = data.expiringLeases.length;

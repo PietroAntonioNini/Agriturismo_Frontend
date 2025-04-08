@@ -96,7 +96,6 @@ export class ApartmentFormComponent implements OnInit {
       bathrooms: [1, [Validators.required, Validators.min(1)]],
       hasParking: [true],
       isFurnished: [true],
-      isAvailable: [true],
       monthlyRent: [0, [Validators.required, Validators.min(0)]],
       status: ['available', Validators.required],
       notes: ['']
@@ -149,7 +148,6 @@ export class ApartmentFormComponent implements OnInit {
       bathrooms: apartment.bathrooms,
       hasParking: apartment.hasParking,
       isFurnished: apartment.isFurnished,
-      isAvailable: apartment.isAvailable,
       monthlyRent: apartment.monthlyRent,
       status: apartment.status,
       notes: apartment.notes

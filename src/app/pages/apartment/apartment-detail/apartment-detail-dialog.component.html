@@ -75,7 +75,8 @@
             <span *ngFor="let image of getValidImages(); let i = index" 
                   class="carousel-dot" 
                   [class.active]="currentImageIndex === i"
-                  (click)="navigateToImage(i)"></span>
+                  (click)="navigateToImage(i)">
+            </span>
           </div>
         </div>
 
@@ -135,7 +136,6 @@
                         <mat-icon>weekend</mat-icon>
                         <span>Arredato</span>
                       </div>
-                      <!-- Rimosso il tag "Disponibile" come richiesto -->
                     </div>
                   </div>
 
@@ -163,22 +163,6 @@
                     <div class="notes-container">
                       {{ apartment.notes }}
                     </div>
-                  </div>
-                </div>
-              </div>
-            </mat-tab>
-
-            <!-- Tab Foto -->
-            <mat-tab *ngIf="hasValidImages()">
-              <ng-template mat-tab-label>
-                <mat-icon class="me-1">photo_library</mat-icon>
-                <span>Galleria</span>
-              </ng-template>
-              <div class="tab-content">
-                <div class="gallery-container">
-                  <div *ngFor="let image of getValidImages()" class="gallery-item">
-                    <img [src]="getImageUrl(image)" [alt]="apartment.name" 
-                        (click)="openImagePreview(image)" class="gallery-image">
                   </div>
                 </div>
               </div>
