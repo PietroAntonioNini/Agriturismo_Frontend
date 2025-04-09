@@ -29,7 +29,7 @@
           <div class="apartment-header">
             <div class="apartment-title">
               <div class="apartment-name">
-                <span class="fs-4"
+                <span
                   [matTooltip]="tooltipTexts['name']"
                   #nameTooltip="matTooltip"
                   (click)="copyToClipboard(apartment.name, 'name', nameTooltip)"
@@ -37,17 +37,10 @@
                     {{ apartment.name }}
                 </span>
               </div>
-              <div class="apartment-status">
-                <span [ngClass]="getStatusClass(apartment.status)">
-                  <mat-icon *ngIf="apartment.status === 'available'" class="status-icon">check_circle</mat-icon>
-                  <mat-icon *ngIf="apartment.status === 'occupied'" class="status-icon">cancel</mat-icon>
-                  <mat-icon *ngIf="apartment.status === 'maintenance'" class="status-icon">warning</mat-icon>
-                  {{ getStatusLabel(apartment.status) }}
-                </span>
-              </div>
+              <!-- Rimosso il div apartment-status da qui -->
               <div class="apartment-price">
                 <mat-icon>euro</mat-icon>
-                <span>{{ apartment.monthlyRent }} €/mese</span>
+                <span>{{ apartment.monthlyRent }}/mese</span>
               </div>
             </div>
           </div>
@@ -82,86 +75,122 @@
 
         <mat-card-content>
           <mat-tab-group animationDuration="300ms">
-            <!-- Tab Informazioni -->
+            <!-- Tab Informazioni REDESIGNED -->
             <mat-tab>
               <ng-template mat-tab-label>
                 <mat-icon class="me-1">info</mat-icon>
                 <span>Informazioni</span>
               </ng-template>
               <div class="tab-content">
-                <div class="info-grid">
-                  <div class="info-section">
-                    <h3>Dettagli Appartamento</h3>
-                    <div class="info-grid-row">
-                      <div class="info-item">
-                        <div class="info-label">
+                <div class="info-container-redesigned">
+                  <!-- Dettagli Appartamento Card -->
+                  <div class="info-card">
+                    <div class="info-header">
+                      <h3>Dettagli Appartamento</h3>
+                    </div>
+                    <div class="info-details-grid">
+                      <div class="info-detail-item">
+                        <div class="detail-icon">
                           <mat-icon>straighten</mat-icon>
-                          <span>Superficie</span>
                         </div>
-                        <div class="info-value">{{ apartment.squareMeters }} m²</div>
+                        <div class="detail-content">
+                          <div class="detail-label">Superficie</div>
+                          <div class="detail-value">{{ apartment.squareMeters }} m²</div>
+                        </div>
                       </div>
-                      <div class="info-item">
-                        <div class="info-label">
+                      
+                      <div class="info-detail-item">
+                        <div class="detail-icon">
                           <mat-icon>meeting_room</mat-icon>
-                          <span>Stanze</span>
                         </div>
-                        <div class="info-value">{{ apartment.rooms }}</div>
+                        <div class="detail-content">
+                          <div class="detail-label">Stanze</div>
+                          <div class="detail-value">{{ apartment.rooms }}</div>
+                        </div>
                       </div>
-                      <div class="info-item">
-                        <div class="info-label">
+                      
+                      <div class="info-detail-item">
+                        <div class="detail-icon">
                           <mat-icon>bathtub</mat-icon>
-                          <span>Bagni</span>
                         </div>
-                        <div class="info-value">{{ apartment.bathrooms }}</div>
+                        <div class="detail-content">
+                          <div class="detail-label">Bagni</div>
+                          <div class="detail-value">{{ apartment.bathrooms }}</div>
+                        </div>
                       </div>
-                      <div class="info-item">
-                        <div class="info-label">
+                      
+                      <div class="info-detail-item">
+                        <div class="detail-icon">
                           <mat-icon>layers</mat-icon>
-                          <span>Piano</span>
                         </div>
-                        <div class="info-value">{{ apartment.floor }}</div>
+                        <div class="detail-content">
+                          <div class="detail-label">Piano</div>
+                          <div class="detail-value">{{ apartment.floor }}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Caratteristiche -->
-                  <div class="info-section">
-                    <h3>Caratteristiche</h3>
-                    <div class="features-list">
-                      <div class="feature-item" [class.feature-active]="apartment.hasParking">
-                        <mat-icon>local_parking</mat-icon>
-                        <span>Parcheggio</span>
+                  
+                  <!-- Caratteristiche Card -->
+                  <div class="info-card">
+                    <div class="info-header">
+                      <h3>Caratteristiche</h3>
+                    </div>
+                    <div class="features-container">
+                      <div class="feature-item" [ngClass]="getStatusFeatureClass(apartment.status)">
+                        <div class="feature-icon">
+                          <mat-icon *ngIf="apartment.status === 'available'">check_circle</mat-icon>
+                          <mat-icon *ngIf="apartment.status === 'occupied'">cancel</mat-icon>
+                          <mat-icon *ngIf="apartment.status === 'maintenance'">warning</mat-icon>
+                        </div>
+                        <div class="feature-label">{{ getStatusLabel(apartment.status) }}</div>
                       </div>
-                      <div class="feature-item" [class.feature-active]="apartment.isFurnished">
-                        <mat-icon>weekend</mat-icon>
-                        <span>Arredato</span>
+
+                      <div class="feature-item" [ngClass]="{'feature-active': apartment.hasParking}">
+                        <div class="feature-icon">
+                          <mat-icon>local_parking</mat-icon>
+                        </div>
+                        <div class="feature-label">Parcheggio</div>
+                      </div>
+                      
+                      <div class="feature-item" [ngClass]="{'feature-active': apartment.isFurnished}">
+                        <div class="feature-icon">
+                          <mat-icon>weekend</mat-icon>
+                        </div>
+                        <div class="feature-label">Arredato</div>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Servizi -->
-                  <div class="info-section" *ngIf="apartment.amenities && apartment.amenities.length > 0">
-                    <h3>Servizi Disponibili</h3>
+                  
+                  <!-- Servizi Card -->
+                  <div class="info-card" *ngIf="apartment.amenities && apartment.amenities.length > 0">
+                    <div class="info-header">
+                      <h3>Servizi Disponibili</h3>
+                    </div>
                     <div class="amenities-container">
-                      <mat-chip-set>
-                        <mat-chip *ngFor="let amenity of apartment.amenities">{{ amenity }}</mat-chip>
-                      </mat-chip-set>
+                      <div class="amenity-tag" *ngFor="let amenity of apartment.amenities">
+                        {{ amenity }}
+                      </div>
                     </div>
                   </div>
-
-                  <!-- Descrizione -->
-                  <div class="info-section" *ngIf="apartment.description">
-                    <h3>Descrizione</h3>
+                  
+                  <!-- Descrizione Card -->
+                  <div class="info-card" *ngIf="apartment.description">
+                    <div class="info-header">
+                      <h3>Descrizione</h3>
+                    </div>
                     <div class="description-container">
-                      {{ apartment.description }}
+                      <p>{{ apartment.description }}</p>
                     </div>
                   </div>
-
-                  <!-- Note -->
-                  <div class="info-section" *ngIf="apartment.notes">
-                    <h3>Note</h3>
+                  
+                  <!-- Note Card -->
+                  <div class="info-card" *ngIf="apartment.notes">
+                    <div class="info-header">
+                      <h3>Note</h3>
+                    </div>
                     <div class="notes-container">
-                      {{ apartment.notes }}
+                      <p>{{ apartment.notes }}</p>
                     </div>
                   </div>
                 </div>
@@ -181,7 +210,7 @@
                   <span>Nessun inquilino attualmente associato a questo appartamento</span>
                 </div>
                 
-                <!-- Visualizza solo l'inquilino associato all'appartamento -->
+                <!-- Visualizza l'inquilino associato all'appartamento -->
                 <div *ngIf="activeTenant" class="tenant-card">
                   <div class="tenant-info">
                     <div class="tenant-avatar">
@@ -244,51 +273,41 @@
                   </div>
                 
                   <div class="contract-body">
-                    <div class="contract-info">
-                      <div class="info-section">
-                        <div class="info-item">
-                          <div class="info-label">
+                    <div class="contract-info-redesigned">
+                      <div class="contract-dates">
+                        <div class="date-item">
+                          <div class="date-label">
                             <mat-icon>calendar_today</mat-icon>
-                            <span>Inizio</span>
+                            Inizio
                           </div>
-                          <div class="info-value">{{ formatDate(lease.startDate) }}</div>
+                          <div class="date-value">{{ formatDate(lease.startDate) }}</div>
                         </div>
-                        <div class="info-item">
-                          <div class="info-label">
+                          <div class="contract-timeline">
+                            <div class="timeline-progress">
+                              <span class="m-auto">{{ getRemainingMonths(lease.endDate) }} mesi rimanenti</span>
+                              <div class="progress-bar">
+                                <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
+                              </div>
+                            </div>
+                          </div>
+                        <div class="date-item">
+                          <div class="date-label">
                             <mat-icon>event</mat-icon>
-                            <span>Fine</span>
+                            Fine
                           </div>
-                          <div class="info-value">{{ formatDate(lease.endDate) }}</div>
+                          <div class="date-value">{{ formatDate(lease.endDate) }}</div>
                         </div>
                       </div>
-                
-                      <div class="info-section">
-                        <div class="info-item">
-                          <div class="info-label">
+                      
+                      <div class="contract-details">
+                        <div class="detail-item">
+                          <div class="detail-badge">
                             <mat-icon>payments</mat-icon>
-                            <span>Canone</span>
+                            Canone
                           </div>
-                          <div class="info-value">€{{ lease.monthlyRent }}<span class="period">/mese</span></div>
+                          <div class="detail-value">€{{ lease.monthlyRent }}<span class="detail-period">/mese</span></div>
                         </div>
-                        <div class="info-item">
-                          <div class="info-label">
-                            <mat-icon>receipt_long</mat-icon>
-                            <span>Stato</span>
-                          </div>
-                          <div class="payment-status paid">Pagato</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="contract-timeline">
-                      <div class="timeline-progress">
-                        <div class="progress-bar">
-                          <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
-                        </div>
-                        <div class="progress-labels">
-                          <span>{{ getContractProgressText(lease.startDate, lease.endDate) }}</span>
-                          <span>{{ getRemainingMonths(lease.endDate) }} mesi rimanenti</span>
-                        </div>
+                        <div class="payment-status-badge paid">Pagato</div>
                       </div>
                     </div>
                   </div>

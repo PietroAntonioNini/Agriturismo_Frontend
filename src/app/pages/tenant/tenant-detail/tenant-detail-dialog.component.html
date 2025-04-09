@@ -235,55 +235,45 @@
                   </div>
                 
                   <div class="contract-body">
-                    <div class="contract-info">
-                      <div class="info-section">
-                        <div class="info-item">
-                          <div class="info-label">
+                    <div class="contract-info-redesigned">
+                      <div class="contract-dates">
+                        <div class="date-item">
+                          <div class="date-label">
                             <mat-icon>calendar_today</mat-icon>
-                            <span>Inizio</span>
+                            Inizio
                           </div>
-                          <div class="info-value">{{ formatDate(lease.startDate) }}</div>
+                          <div class="date-value">{{ formatDate(lease.startDate) }}</div>
                         </div>
-                        <div class="info-item">
-                          <div class="info-label">
+                          <div class="contract-timeline">
+                            <div class="timeline-progress">
+                              <span class="m-auto">{{ getRemainingMonths(lease.endDate) }} mesi rimanenti</span>
+                              <div class="progress-bar">
+                                <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
+                              </div>
+                            </div>
+                          </div>
+                        <div class="date-item">
+                          <div class="date-label">
                             <mat-icon>event</mat-icon>
-                            <span>Fine</span>
+                            Fine
                           </div>
-                          <div class="info-value">{{ formatDate(lease.endDate) }}</div>
+                          <div class="date-value">{{ formatDate(lease.endDate) }}</div>
                         </div>
                       </div>
-                
-                      <div class="info-section">
-                        <div class="info-item">
-                          <div class="info-label">
+                      
+                      <div class="contract-details">
+                        <div class="detail-item">
+                          <div class="detail-badge">
                             <mat-icon>payments</mat-icon>
-                            <span>Canone</span>
+                            Canone
                           </div>
-                          <div class="info-value">€{{ lease.monthlyRent }}<span class="period">/mese</span></div>
+                          <div class="detail-value">€{{ lease.monthlyRent }}<span class="detail-period">/mese</span></div>
                         </div>
-                        <div class="info-item">
-                          <div class="info-label">
-                            <mat-icon>receipt_long</mat-icon>
-                            <span>Stato</span>
-                          </div>
-                          <div class="payment-status paid">Pagato</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="contract-timeline">
-                      <div class="timeline-progress">
-                        <div class="progress-bar">
-                          <div class="progress-fill" [style.width]="getContractProgress(lease.startDate, lease.endDate)"></div>
-                        </div>
-                        <div class="progress-labels">
-                          <span>{{ getContractProgressText(lease.startDate, lease.endDate) }}</span>
-                          <span>{{ getRemainingMonths(lease.endDate) }} mesi rimanenti</span>
-                        </div>
+                        <div class="payment-status-badge paid">Pagato</div>
                       </div>
                     </div>
                   </div>
-                
+
                   <div class="contract-footer">
                     <button class="view-details" [routerLink]="['/lease/detail', lease.id]" (click)="close()">
                       <mat-icon>visibility</mat-icon>

@@ -14,7 +14,7 @@
 }
 
 .dialog-content {
-  max-height: 80vh;
+  max-height: 84vh;
   padding: 0 !important;
 }
 
@@ -162,7 +162,6 @@ mat-tab-group{
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding-bottom: 14px;
 }
 
 .info-pill {
@@ -212,13 +211,7 @@ mat-tab-group{
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  }
-  
+
   &.has-image {
     .card-content {
       padding: 0;
@@ -230,6 +223,7 @@ mat-tab-group{
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 65px;
   padding: 16px 20px;
   background-color: #f8f8f8;
   border-bottom: 1px solid #eee;
@@ -243,17 +237,34 @@ mat-tab-group{
   
   .card-actions {
     display: flex;
+    flex-direction: row;
     gap: 4px;
     
     button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 32px;
       height: 32px;
       line-height: 32px;
-      
+      cursor:default;
+      min-width: 32px;
+      padding: 0;
+
+      ::ng-deep .mat-mdc-button-persistent-ripple {
+        display: none !important;
+      }
+
       mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+
+        &:hover{
+          transform: scale(1.15);
+          transition: transform 0.05s linear;
+          cursor:pointer;
+        }
       }
     }
   }
@@ -289,11 +300,6 @@ mat-tab-group{
     height: 100%;
     object-fit: contain;
     cursor: pointer;
-    transition: transform 0.3s ease;
-    
-    &:hover {
-      transform: scale(1.05);
-    }
   }
 }
 
@@ -340,13 +346,7 @@ mat-tab-group{
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
-  
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  }
 }
 
 .contract-header {
@@ -446,80 +446,125 @@ mat-tab-group{
   padding: 20px;
 }
 
-.contract-info {
+.contract-info-redesigned {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.contract-dates {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  padding: 0 20px;
+  
+  .date-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    .date-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #757575;
+      font-size: 14px;
+      margin-bottom: 8px;
+      
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+    
+    .date-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+}
+
+.contract-details {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.info-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.info-label {
-  display: flex;
   align-items: center;
-  gap: 6px;
-  color: #757575;
-  font-size: 13px;
+  border-top: 1px dashed #e0e0e0;
+  padding-top: 20px;
   
-  mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-  }
-}
-
-.info-value {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  
-  .period {
-    font-size: 13px;
-    font-weight: normal;
-    color: #757575;
-  }
-}
-
-.payment-status {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  
-  &.paid {
-    background-color: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-  }
-  
-  &.pending {
-    background-color: rgba(255, 193, 7, 0.1);
-    color: #FFC107;
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    
+    .detail-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #757575;
+      font-size: 14px;
+      margin-bottom: 8px;
+      
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+    
+    .detail-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #333;
+      
+      .detail-period {
+        font-size: 14px;
+        font-weight: 400;
+        color: #757575;
+        margin-left: 4px;
+      }
+    }
   }
   
-  &.overdue {
-    background-color: rgba(244, 67, 54, 0.1);
-    color: #F44336;
+  .payment-status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    
+    &.paid {
+      background-color: rgba(76, 175, 80, 0.1);
+      color: #4CAF50;
+      border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+    
+    &.pending {
+      background-color: rgba(255, 193, 7, 0.1);
+      color: #FFC107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    &.overdue {
+      background-color: rgba(244, 67, 54, 0.1);
+      color: #F44336;
+      border: 1px solid rgba(244, 67, 54, 0.3);
+    }
   }
 }
 
 .contract-timeline {
-  margin-top: 20px;
+  width: 100%;
+  margin: 0 20px;
 }
 
 .timeline-progress {
+  display: flex;
+  flex-direction: column;
+  
   .progress-bar {
     height: 6px;
     background-color: #f0f0f0;
@@ -531,14 +576,6 @@ mat-tab-group{
       background-color: #2196F3;
       border-radius: 3px;
     }
-  }
-  
-  .progress-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 8px;
-    font-size: 12px;
-    color: #757575;
   }
 }
 

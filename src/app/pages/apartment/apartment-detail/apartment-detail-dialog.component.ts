@@ -292,6 +292,19 @@ export class ApartmentDetailDialogComponent implements OnInit {
     }
   }
 
+  getStatusFeatureClass(status: string): string {
+    switch (status) {
+      case 'available':
+        return 'feature-status-available';
+      case 'occupied':
+        return 'feature-status-occupied';
+      case 'maintenance':
+        return 'feature-status-maintenance';
+      default:
+        return '';
+    }
+  }
+
   getStatusLabel(status: string): string {
     switch (status) {
       case 'available':
@@ -299,7 +312,7 @@ export class ApartmentDetailDialogComponent implements OnInit {
       case 'occupied':
         return 'Occupato';
       case 'maintenance':
-        return 'In Manutenzione';
+        return 'Manutenzione';
       default:
         return status;
     }
@@ -320,11 +333,6 @@ export class ApartmentDetailDialogComponent implements OnInit {
     percentComplete = Math.max(0, Math.min(100, percentComplete));
     
     return percentComplete + '%';
-  }
-  
-  getContractProgressText(startDate: string | Date, endDate: string | Date): string {
-    const percentComplete = this.getContractProgress(startDate, endDate);
-    return percentComplete + ' completato';
   }
   
   getRemainingMonths(endDate: string | Date): number {
