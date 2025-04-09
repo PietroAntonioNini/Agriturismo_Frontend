@@ -1,126 +1,211 @@
-<div class="container">
-  <mat-card class="tenant-card">
-    <mat-card-header>
-      <mat-card-title class="page-title">
-        <div class="title-section">
-          <h1>Gestione Inquilini ({{dataSource.data.length}})</h1>
-          <button mat-raised-button color="primary" (click)="openTenantForm()">
-            <mat-icon>person_add</mat-icon>
-            Nuovo Inquilino
-          </button>
-        </div>
-      </mat-card-title>
-    </mat-card-header>
+<div class="tenant-management-container">
+  <div class="header-section">
+    <div class="title-area">
+      <h1>Gestione Inquilini <span class="counter">{{tenants.length}}</span></h1>
+      <p class="subtitle">Visualizza e gestisci tutti i tuoi inquilini</p>
+    </div>
+    
+    <button mat-flat-button color="primary" class="new-tenant-button" (click)="openTenantForm()">
+      <mat-icon>person_add</mat-icon>
+      Nuovo Inquilino
+    </button>
+  </div>
 
-    <mat-card-content>
-      <!-- Filtro -->
-      <mat-form-field appearance="outline" class="filter-field">
+  <div class="search-filter-section">
+    <div class="search-container">
+      <mat-form-field appearance="outline" class="search-field">
         <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Cerca Inquilino (nome, cognome, email, telefono, numero documento)</mat-label>
-        <input matInput (keyup)="applyFilter($event)">
+        <input matInput placeholder="Cerca inquilino..." [(ngModel)]="searchQuery" (input)="applyFilter()">
+        <button *ngIf="searchQuery" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
       </mat-form-field>
-
-      <!-- Messaggio di errore -->
-      <div *ngIf="errorMessage" class="error-message">
-        <mat-icon>error</mat-icon>
-        <span>{{ errorMessage }}</span>
+      
+      <div class="filter-chips">
+        <mat-chip-listbox aria-label="Filtri" [multiple]="true" (change)="updateFilters()">
+          <mat-chip-option color="primary" value="active">Attivi</mat-chip-option>
+          <mat-chip-option color="accent" value="pending">In attesa</mat-chip-option>
+          <mat-chip-option color="warn" value="expired">Documento scaduto</mat-chip-option>
+        </mat-chip-listbox>
       </div>
+    </div>
+    
+    <div class="view-options">
+      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
+  </div>
 
-      <!-- Tabella con loading spinner -->
-      <div class="table-container mat-elevation-z8">
-        <div *ngIf="isLoading" class="loading-shade">
-          <mat-spinner diameter="40"></mat-spinner>
+  <!-- Loading indicator -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p class="loading-text">Caricamento inquilini in corso...</p>
+  </div>
+
+  <!-- Error message -->
+  <div *ngIf="errorMessage" class="error-container">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <div class="error-details">
+      <h3>Si è verificato un errore</h3>
+      <p>{{errorMessage}}</p>
+    </div>
+    <button mat-button color="primary" (click)="loadTenants()">Riprova</button>
+  </div>
+
+  <!-- No results -->
+  <div *ngIf="!isLoading && !errorMessage && filteredTenants.length === 0" class="no-results-container">
+    <div class="no-results-content">
+      <mat-icon>search_off</mat-icon>
+      <h3>Nessun inquilino trovato</h3>
+      <p>Modifica i criteri di ricerca o aggiungi un nuovo inquilino</p>
+      <button mat-flat-button color="primary" (click)="openTenantForm()">
+        <mat-icon>person_add</mat-icon>
+        Nuovo Inquilino
+      </button>
+    </div>
+  </div>
+
+  <!-- Grid View -->
+  <div *ngIf="viewMode === 'grid' && filteredTenants.length > 0" class="tenants-grid">
+    <div *ngFor="let tenant of filteredTenants" class="tenant-card" [class.expired]="isDocumentExpired(tenant)">
+      <div class="tenant-header">
+        <div class="tenant-avatar">
+          <span>{{getTenantInitials(tenant)}}</span>
         </div>
-
-        <table mat-table [dataSource]="dataSource" matSort class="tenant-table">
-          <!-- Nome Column -->
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Nome </th>
-            <td mat-cell *matCellDef="let tenant"> {{ getFullName(tenant) }} </td>
-          </ng-container>
-
-          <!-- Email Column -->
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Email </th>
-            <td mat-cell *matCellDef="let tenant"> {{ tenant.email }} </td>
-          </ng-container>
-
-          <!-- Telefono Column -->
-          <ng-container matColumnDef="phone">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Telefono </th>
-            <td mat-cell *matCellDef="let tenant"> {{ tenant.phone }} </td>
-          </ng-container>
-
-          <!-- Tipo Documento Column -->
-          <ng-container matColumnDef="documentType">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Tipo Documento </th>
-            <td mat-cell *matCellDef="let tenant"> {{ tenant.documentType }} </td>
-          </ng-container>
-
-          <!-- Numero Documento Column -->
-          <ng-container matColumnDef="documentNumber">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> N° Documento </th>
-            <td mat-cell *matCellDef="let tenant" style="text-transform: uppercase;"> {{ tenant.documentNumber }} </td>
-          </ng-container>
-
-          <!-- Document Status Column -->
-          <ng-container matColumnDef="documents">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Documenti </th>
-            <td mat-cell *matCellDef="let tenant">
-              <!-- Container per gestire l'hover e il tooltip -->
-              <div class="document-icon-container" 
-                  (mouseenter)="showDocumentPreview(tenant, $event)" 
-                  (mouseleave)="hideDocumentPreview()">
-                <mat-icon class="ms-4" [style.color]="tenant.documentFrontImage && tenant.documentBackImage ? 'green' : 'red'">
-                  {{ tenant.documentFrontImage && tenant.documentBackImage ? 'check_circle' : 'cancel' }}
-                </mat-icon>
-              </div>
-            </td>
-          </ng-container>
-
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let tenant" class="action-buttons">
-              <button mat-icon-button (click)="openTenantDetails(tenant.id)">
-                <mat-icon matTooltip="Visualizza dettagli">visibility</mat-icon>
-              </button>
-              <button mat-icon-button (click)="openTenantForm(tenant.id)">
-                <mat-icon matTooltip="Modifica">edit</mat-icon>
-              </button>
-              <button mat-icon-button (click)="deleteTenant(tenant)">
-                <mat-icon color="warn" matTooltip="Elimina">delete</mat-icon>
-              </button>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-          <!-- Row mostrata quando non ci sono risultati o durante il filtraggio -->
-          <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell" colspan="8">
-              <div class="no-data-message">
-                <mat-icon>info</mat-icon>
-                <span>Nessun inquilino corrisponde al filtro "{{dataSource.filter}}"</span>
-              </div>
-            </td>
-          </tr>
-        </table>
-
-        <div class="custom-paginator-container">
-          <div class="paginator-controls">
-            <button mat-icon-button [disabled]="!paginator.hasPreviousPage()" (click)="paginator.previousPage()">
-              <mat-icon>navigate_before</mat-icon>
-            </button>
-            <span class="current-page">{{paginator.pageIndex + 1}}</span>
-            <button mat-icon-button [disabled]="!paginator.hasNextPage()" (click)="paginator.nextPage()">
-              <mat-icon>navigate_next</mat-icon>
-            </button>
+        <div class="tenant-status-badge" [class]="getTenantStatusClass(tenant)">
+          {{getTenantStatusLabel(tenant)}}
+        </div>
+      </div>
+      
+      <div class="tenant-info">
+        <h3 class="tenant-name">{{tenant.firstName}} {{tenant.lastName}}</h3>
+        
+        <div class="tenant-contact">
+          <div class="contact-item">
+            <mat-icon>phone</mat-icon>
+            <span>{{tenant.phone}}</span>
+          </div>
+          <div class="contact-item">
+            <mat-icon>email</mat-icon>
+            <span>{{tenant.email}}</span>
           </div>
         </div>
-        <mat-paginator #paginator [pageSize]="10" [pageSizeOptions]="[10]" hidePageSize="true" showFirstLastButtons="false" aria-label="Seleziona pagina di inquilini" class="hidden-paginator"></mat-paginator>
+        
+        <div class="tenant-document">
+          <div class="document-type">
+            <mat-icon>badge</mat-icon>
+            <span>{{tenant.documentType}}</span>
+          </div>
+          <div class="document-number text-uppercase">{{tenant.documentNumber}}</div>
+        </div>
       </div>
-    </mat-card-content>
-  </mat-card>
+      
+      <div class="tenant-actions">
+        <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" (click)="viewTenantDetails(tenant.id)">
+          <mat-icon>visibility</mat-icon>
+        </button>
+        <button mat-icon-button color="accent" matTooltip="Modifica" (click)="editTenant(tenant.id)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" matTooltip="Elimina" (click)="deleteTenant(tenant)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div *ngIf="viewMode === 'list' && filteredTenants.length > 0" class="tenants-table-container">
+    <table mat-table [dataSource]="filteredTenants" class="tenants-table mat-elevation-z2">
+      <!-- Avatar Column -->
+      <ng-container matColumnDef="avatar">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let tenant" class="avatar-cell">
+          <div class="table-avatar">
+            <span>{{getTenantInitials(tenant)}}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Nome</th>
+        <td mat-cell *matCellDef="let tenant" class="name-cell">
+          <div class="tenant-name-container">
+            <span class="tenant-fullname">{{tenant.firstName}} {{tenant.lastName}}</span>
+            <span *ngIf="isDocumentExpired(tenant)" class="expired-badge">Scaduto</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Contact Column -->
+      <ng-container matColumnDef="contact">
+        <th mat-header-cell *matHeaderCellDef>Contatti</th>
+        <td mat-cell *matCellDef="let tenant" class="contact-cell">
+          <div class="table-contact-info">
+            <div class="table-contact-item">
+              <mat-icon>phone</mat-icon>
+              <span>{{tenant.phone}}</span>
+            </div>
+            <div class="table-contact-item">
+              <mat-icon>email</mat-icon>
+              <span>{{tenant.email}}</span>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Document Column -->
+      <ng-container matColumnDef="document">
+        <th mat-header-cell *matHeaderCellDef>Documento</th>
+        <td mat-cell *matCellDef="let tenant" class="document-cell">
+          <div class="document-info">
+            <span class="document-type">{{tenant.documentType}}</span>
+            <span class="document-number text-uppercase">{{tenant.documentNumber}}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let tenant" class="actions-cell">
+          <div class="table-actions">
+            <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" (click)="viewTenantDetails(tenant.id)">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button color="accent" matTooltip="Modifica" (click)="editTenant(tenant.id)">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" matTooltip="Elimina" (click)="deleteTenant(tenant)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.expired-row]="isDocumentExpired(row)"></tr>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="filteredTenants.length > 0" class="pagination-controls">
+    <div class="page-info">
+      <span>Visualizzazione {{paginationStart}} - {{paginationEnd}} di {{tenants.length}} inquilini</span>
+    </div>
+    <div class="pagination-buttons">
+      <button mat-icon-button [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+        <mat-icon>navigate_before</mat-icon>
+      </button>
+      <span class="page-number">{{currentPage}} / {{totalPages}}</span>
+      <button mat-icon-button [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+        <mat-icon>navigate_next</mat-icon>
+      </button>
+    </div>
+  </div>
 </div>

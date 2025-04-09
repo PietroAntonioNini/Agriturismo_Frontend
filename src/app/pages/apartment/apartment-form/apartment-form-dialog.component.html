@@ -106,23 +106,61 @@
 
         <!-- Servizi/Amenità -->
         <h3>Servizi (Opzionali)</h3>
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width" floatLabel="always">
-            <mat-label>Servizi disponibili</mat-label>
-            <mat-chip-grid #chipGrid aria-label="Seleziona servizi">
-              <mat-chip-row *ngFor="let amenity of selectedAmenities" 
-                          (removed)="removeAmenity(amenity)">
-                {{amenity}}
-                <button matChipRemove>
-                  <mat-icon>cancel</mat-icon>
-                </button>
-              </mat-chip-row>
-              <input placeholder="Nuovo servizio..." 
-                     [matChipInputFor]="chipGrid"
-                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     (matChipInputTokenEnd)="addAmenity($event)">
-            </mat-chip-grid>
-          </mat-form-field>
+        <div class="services-section">
+          <!-- Servizi comuni preselezionati -->
+          <div class="common-services">
+            <div class="service-category">
+              <h4>Servizi comuni</h4>
+              <div class="common-services-grid">
+                <div *ngFor="let service of commonServices" 
+                    class="service-toggle-item"
+                    [class.selected]="isServiceSelected(service.name)"
+                    (click)="toggleService(service.name)">
+                  <div class="service-icon">
+                    <mat-icon>{{ service.icon }}</mat-icon>
+                  </div>
+                  <div class="service-name">{{ service.name }}</div>
+                  <div class="service-check" *ngIf="isServiceSelected(service.name)">
+                    <mat-icon>check</mat-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Servizi personalizzati -->
+          <div class="custom-services">
+            <h4>Servizi personalizzati</h4>
+            <div class="custom-services-input">
+              <mat-form-field appearance="outline" class="full-width" floatLabel="always">
+                <mat-label>Aggiungi servizi personalizzati</mat-label>
+                <div class="input-with-button">
+                  <input matInput #serviceInput placeholder="Inserisci servizio...">
+                  <button mat-mini-fab color="primary" type="button" 
+                          (click)="addCustomService(serviceInput.value); serviceInput.value=''"
+                          [disabled]="!serviceInput.value.trim()">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+              </mat-form-field>
+            </div>
+            
+            <!-- Lista dei servizi selezionati -->
+            <div class="selected-services" *ngIf="selectedAmenities.length > 0">
+              <div class="selected-services-list">
+                <div *ngFor="let amenity of selectedAmenities" class="selected-service-item">
+                  <div class="service-content">
+                    <mat-icon>{{ getServiceIcon(amenity) }}</mat-icon>
+                    <span>{{ amenity }}</span>
+                  </div>
+                  <button mat-icon-button color="warn" (click)="removeAmenity(amenity)" 
+                          matTooltip="Rimuovi servizio">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Note -->

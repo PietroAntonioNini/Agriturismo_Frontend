@@ -75,7 +75,7 @@
 
         <mat-card-content>
           <mat-tab-group animationDuration="300ms">
-            <!-- Tab Informazioni REDESIGNED -->
+            <!-- Tab Informazioni -->
             <mat-tab>
               <ng-template mat-tab-label>
                 <mat-icon class="me-1">info</mat-icon>
@@ -133,7 +133,7 @@
                   
                   <!-- Caratteristiche Card -->
                   <div class="info-card">
-                    <div class="info-header">
+                    <div class="info-header"> 
                       <h3>Caratteristiche</h3>
                     </div>
                     <div class="features-container">
@@ -167,9 +167,12 @@
                     <div class="info-header">
                       <h3>Servizi Disponibili</h3>
                     </div>
-                    <div class="amenities-container">
-                      <div class="amenity-tag" *ngFor="let amenity of apartment.amenities">
-                        {{ amenity }}
+                    <div class="amenities-container-redesigned">
+                      <div class="amenity-item" *ngFor="let amenity of apartment.amenities">
+                        <div class="amenity-icon">
+                          <mat-icon>{{ getAmenityIcon(amenity) }}</mat-icon>
+                        </div>
+                        <div class="amenity-label">{{ amenity }}</div>
                       </div>
                     </div>
                   </div>

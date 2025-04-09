@@ -132,6 +132,168 @@ h3 {
   }
 }
 
+/* Stili per la sezione servizi */
+.services-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #f9f9f9;
+}
+
+.service-category h4, .custom-services h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+}
+
+/* Stili per i servizi comuni */
+.common-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.service-toggle-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border-radius: 8px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  height: 90px;
+  
+  &:hover {
+    background-color: #f5f5f5;
+    transform: translateY(-2px);
+  }
+  
+  &.selected {
+    background-color: rgba(63, 81, 181, 0.1);
+    border-color: rgba(63, 81, 181, 0.3);
+    
+    .service-icon {
+      background-color: rgba(63, 81, 181, 0.2);
+    }
+    
+    .service-name {
+      color: #3f51b5;
+    }
+  }
+  
+  .service-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+    
+    mat-icon {
+      color: #666;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+  
+  .service-name {
+    font-size: 13px;
+    text-align: center;
+    color: #555;
+  }
+  
+  .service-check {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: #3f51b5;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    mat-icon {
+      color: white;
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+/* Stili per servizi personalizzati */
+.custom-services-input {
+  margin-bottom: 16px;
+  
+  .input-with-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+/* Lista dei servizi selezionati */
+.selected-services-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.selected-service-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  
+  .service-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    mat-icon {
+      color: #3f51b5;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+    
+    span {
+      font-size: 14px;
+      color: #333;
+    }
+  }
+  
+  button {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
 /* Stili per il caricamento delle immagini - New Version */
 .image-upload-container {
   display: flex;

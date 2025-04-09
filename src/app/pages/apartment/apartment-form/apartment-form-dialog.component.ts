@@ -24,6 +24,12 @@ import { finalize } from 'rxjs/operators';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Apartment } from '../../../shared/models';
 
+// Definizione dell'interfaccia per i servizi comuni
+interface CommonService {
+  name: string;
+  icon: string;
+}
+
 @Component({
   selector: 'app-apartment-form',
   standalone: true,
@@ -63,6 +69,25 @@ export class ApartmentFormComponent implements OnInit {
   currentApartment: Apartment = {} as Apartment;
   imageFiles: File[] = [];
   imagePreviews: string[] = [];
+
+  // Lista di servizi comuni con le loro icone
+  commonServices: CommonService[] = [
+    { name: 'WiFi', icon: 'wifi' },
+    { name: 'Aria Condizionata', icon: 'ac_unit' },
+    { name: 'Riscaldamento', icon: 'wb_sunny' },
+    { name: 'Lavatrice', icon: 'local_laundry_service' },
+    { name: 'TV', icon: 'tv' },
+    { name: 'Ascensore', icon: 'elevator' },
+    { name: 'Balcone', icon: 'balcony' },
+    { name: 'Lavastoviglie', icon: 'countertops' },
+    { name: 'Palestra', icon: 'fitness_center' },
+    { name: 'Animali ammessi', icon: 'pets' },
+    { name: 'Sicurezza', icon: 'security' },
+    { name: 'Area BBQ comune', icon: 'outdoor_grill' },
+    { name: 'Fumo', icon: 'smoking_rooms' },
+    { name: 'Cassaforte', icon: 'lock' },
+    { name: 'Accesso disabili', icon: 'accessible' },
+  ];
   
   constructor(
     private fb: FormBuilder,
@@ -109,10 +134,12 @@ export class ApartmentFormComponent implements OnInit {
     // Use the getById method without the third parameter
     this.apiService.getById<Apartment>('apartments', id).subscribe({
       next: (apartment) => {
-        console.log('Images from server:', apartment.images);
+        console.log('Apartment data from server:', apartment);
+        console.log('Amenities from server:', apartment.amenities);
         this.currentApartment = apartment;
         this.updateForm(apartment);
         this.selectedAmenities = apartment.amenities || [];
+        console.log('Selected amenities after loading:', this.selectedAmenities);
         
         // Clear existing arrays
         this.imageFiles = [];
@@ -359,20 +386,38 @@ export class ApartmentFormComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = null;
-    
+
     // Update current apartment with form values
     this.currentApartment = {
       ...this.currentApartment,
       ...this.apartmentForm.value,
       amenities: this.selectedAmenities
     };
+
+    console.log('Submitting apartment with amenities:', this.selectedAmenities);
     
+    // Crea un oggetto che includa esplicitamente tutti i campi necessari
+    const apartmentData = {
+      name: this.apartmentForm.value.name,
+      description: this.apartmentForm.value.description,
+      floor: this.apartmentForm.value.floor,
+      squareMeters: this.apartmentForm.value.squareMeters,
+      rooms: this.apartmentForm.value.rooms,
+      bathrooms: this.apartmentForm.value.bathrooms,
+      hasParking: this.apartmentForm.value.hasParking,
+      isFurnished: this.apartmentForm.value.isFurnished,
+      monthlyRent: this.apartmentForm.value.monthlyRent,
+      status: this.apartmentForm.value.status,
+      notes: this.apartmentForm.value.notes,
+      amenities: this.selectedAmenities
+    };
+
     if (this.isEditMode && this.apartmentId) {
       // Update existing apartment
       this.apiService.update<Apartment>(
         'apartments', 
         this.apartmentId, 
-        this.currentApartment,
+        apartmentData,
         this.imageFiles.length > 0 ? this.imageFiles : undefined
       ).subscribe({
         next: (updatedApartment) => {
@@ -400,7 +445,7 @@ export class ApartmentFormComponent implements OnInit {
       // Create new apartment
       this.apiService.create<Apartment>(
         'apartments',
-        this.currentApartment,
+        apartmentData,
         this.imageFiles.length > 0 ? this.imageFiles : undefined
       ).subscribe({
         next: (apartment) => {
@@ -459,5 +504,67 @@ export class ApartmentFormComponent implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  // Verifica se un servizio è già selezionato
+  isServiceSelected(serviceName: string): boolean {
+    return this.selectedAmenities.includes(serviceName);
+  }
+
+  // Attiva/disattiva un servizio dalla lista
+  toggleService(serviceName: string): void {
+    if (this.isServiceSelected(serviceName)) {
+      this.removeAmenity(serviceName);
+    } else {
+      this.selectedAmenities.push(serviceName);
+    }
+  }
+
+  // Aggiunge un servizio personalizzato
+  addCustomService(serviceName: string): void {
+    const trimmedName = serviceName.trim();
+    
+    if (!trimmedName) {
+      return;
+    }
+    
+    // Controlla se il servizio esiste già
+    if (!this.isServiceSelected(trimmedName)) {
+      this.selectedAmenities.push(trimmedName);
+    }
+  }
+
+  // Ottiene l'icona appropriata per un servizio
+  getServiceIcon(serviceName: string): string {
+    const serviceLower = serviceName.toLowerCase();
+    
+    // Cerca nei servizi comuni
+    for (const service of this.commonServices) {
+      if (service.name.toLowerCase() === serviceLower) {
+        return service.icon;
+      }
+    }
+    
+    // Mappa per servizi aggiuntivi
+    const iconMap: { [key: string]: string } = {
+      'internet': 'wifi',
+      'garage': 'garage',
+      'asciugatrice': 'dry_cleaning',
+      'terrazza': 'deck',
+      'giardino': 'grass',
+      'portiere': 'person',
+      'pulizie': 'cleaning_services',
+      'piscina': 'pool'
+    };
+    
+    // Cerca corrispondenze parziali
+    for (const key in iconMap) {
+      if (serviceLower.includes(key) || key.includes(serviceLower)) {
+        return iconMap[key];
+      }
+    }
+    
+    // Icona predefinita
+    return 'check_circle';
   }
 }

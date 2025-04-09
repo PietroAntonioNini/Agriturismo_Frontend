@@ -35,15 +35,15 @@ export interface ConfirmationDialogData {
   animations: [
     trigger('dialogAnimation', [
       state('void', style({
-        transform: 'scale(0.9)',
+        transform: 'scale(0.95)',
         opacity: 0
       })),
       state('*', style({
         transform: 'scale(1)',
         opacity: 1
       })),
-      transition('void => *', animate('200ms ease-out')),
-      transition('* => void', animate('150ms ease-in'))
+      transition('void => *', animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+      transition('* => void', animate('200ms cubic-bezier(0.4, 0.0, 0.2, 1)'))
     ]),
     trigger('buttonAnimation', [
       state('void', style({
@@ -54,7 +54,7 @@ export interface ConfirmationDialogData {
         transform: 'translateY(0)',
         opacity: 1
       })),
-      transition('void => in', animate('300ms 100ms ease-out'))
+      transition('void => in', animate('300ms 150ms cubic-bezier(0.4, 0.0, 0.2, 1)'))
     ])
   ]
 })

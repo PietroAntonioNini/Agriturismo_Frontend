@@ -35,6 +35,15 @@ export class GenericApiService {
   // POST: Creazione elemento (anche con immagini opzionali)
   create<T>(entity: string, data: Partial<T>, files?: File[], fileFieldPrefix?: string): Observable<T> {
     if (!files || files.length === 0) {
+      // Se è un'entità apartment, assicuriamoci che amenities sia sempre un array
+      if (entity === 'apartments') {
+        const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+        if (!apartmentData.amenities) {
+          apartmentData.amenities = [];
+        }
+        console.log('Sending apartment data without files:', apartmentData);
+        return this.http.post<T>(this.apiUrl(entity), apartmentData);
+      }
       return this.http.post<T>(this.apiUrl(entity), data);
     }
   
@@ -49,6 +58,7 @@ export class GenericApiService {
         apartmentData.amenities = [];
       }
 
+      console.log('Sending apartment data with files:', apartmentData);
       formData.append('apartment', JSON.stringify(apartmentData));
       
       if (files && files.length > 0) {
@@ -92,6 +102,7 @@ export class GenericApiService {
         apartmentData.amenities = [];
       }
 
+      console.log('Updating apartment with amenities:', apartmentData.amenities);
       formData.append('apartment', JSON.stringify(apartmentData));
       
       if (files && files.length > 0) {
@@ -105,6 +116,15 @@ export class GenericApiService {
     } 
     
     if (!files || files.length === 0) {
+      // Se è un'entità apartment, assicuriamoci che amenities sia sempre un array
+      if (entity === 'apartments') {
+        const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+        if (!apartmentData.amenities) {
+          apartmentData.amenities = [];
+        }
+        console.log('Updating apartment without files:', apartmentData);
+        return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, apartmentData);
+      }
       return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, data);
     }
     

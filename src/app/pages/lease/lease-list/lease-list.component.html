@@ -1,142 +1,299 @@
-<div class="container">
-  <mat-card class="lease-card">
-    <mat-card-header>
-      <mat-card-title class="page-title">
-        <div class="title-section">
-          <h1>Gestione Contratti</h1>
-          <button mat-raised-button color="primary" routerLink="/lease/new">
-            <mat-icon>add</mat-icon> 
-            Nuovo Contratto
-          </button>
-        </div>
-      </mat-card-title>
-    </mat-card-header>
+<div class="lease-management-container">
+  <!-- Header con titolo e pulsante principale -->
+  <div class="header-section">
+    <div class="title-area">
+      <h1>Gestione Contratti <span class="counter">{{dataSource.data.length}}</span></h1>
+      <p class="subtitle">Visualizza e gestisci tutti i contratti di locazione</p>
+    </div>
     
-    <mat-card-content>
-      <!-- Filtri -->
-      <div class="filters-container">
-        <mat-form-field appearance="outline">
-          <mat-label>Stato</mat-label>
-          <mat-select [formControl]="statusFilter">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option value="active">Attivi</mat-option>
-            <mat-option value="inactive">Terminati</mat-option>
-          </mat-select>
-        </mat-form-field>
+    <button mat-flat-button color="primary" class="new-lease-button" routerLink="/lease/new">
+      <mat-icon>add</mat-icon>
+      Nuovo Contratto
+    </button>
+  </div>
+
+  <!-- Sezione filtri e ricerca -->
+  <div class="search-filter-section">
+    <div class="search-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Cerca contratto..." [(ngModel)]="searchText" (input)="applyTextFilter()">
+        <button *ngIf="searchText" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+      
+      <div class="filter-chips">
+        <mat-chip-listbox multiple>
+          <mat-chip-option color="primary" value="active" (click)="toggleStatusFilter('active')" 
+            [selected]="isFilterActive('active')">
+            <mat-icon>check_circle</mat-icon>
+            Attivi
+          </mat-chip-option>
+          <mat-chip-option color="warn" value="inactive" (click)="toggleStatusFilter('inactive')"
+            [selected]="isFilterActive('inactive')">
+            <mat-icon>cancel</mat-icon>
+            Terminati
+          </mat-chip-option>
+          <mat-chip-option color="accent" value="expiring" (click)="toggleStatusFilter('expiring')"
+            [selected]="isFilterActive('expiring')">
+            <mat-icon>schedule</mat-icon>
+            In Scadenza
+          </mat-chip-option>
+        </mat-chip-listbox>
         
-        <mat-form-field appearance="outline">
-          <mat-label>Inquilino</mat-label>
-          <mat-select [formControl]="tenantFilter">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option *ngFor="let tenant of tenants" [value]="tenant.id">
-              {{tenant.firstName}} {{tenant.lastName}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        
-        <mat-form-field appearance="outline">
-          <mat-label>Appartamento</mat-label>
-          <mat-select [formControl]="apartmentFilter">
-            <mat-option value="">Tutti</mat-option>
-            <mat-option *ngFor="let apartment of apartments" [value]="apartment.id">
-              {{apartment.name}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        
-        <button mat-button color="primary" (click)="resetFilters()">
-          <mat-icon>clear</mat-icon> Reset
+        <button mat-button color="primary" (click)="resetFilters()" class="reset-filters">
+          <mat-icon>filter_alt</mat-icon>
+          Reset Filtri
         </button>
       </div>
+    </div>
+    
+    <div class="view-options">
+      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
+        <mat-icon>dashboard</mat-icon>
+      </button>
+      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
+  </div>
 
-      <div *ngIf="errorMessage" class="error-message">
-        <mat-icon>error</mat-icon>
-        <span>{{errorMessage}}</span>
+  <!-- Indicatore di caricamento -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p class="loading-text">Caricamento contratti in corso...</p>
+  </div>
+
+  <!-- Messaggio di errore -->
+  <div *ngIf="errorMessage" class="error-container">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <div class="error-details">
+      <h3>Si è verificato un errore</h3>
+      <p>{{errorMessage}}</p>
+    </div>
+    <button mat-button color="primary" (click)="loadLeases()">Riprova</button>
+  </div>
+  
+  <!-- Nessun risultato -->
+  <div *ngIf="!isLoading && !errorMessage && dataSource.filteredData.length === 0" class="no-results-container">
+    <div class="no-results-content">
+      <mat-icon>search_off</mat-icon>
+      <h3>Nessun contratto trovato</h3>
+      <p>Modifica i criteri di ricerca o aggiungi un nuovo contratto</p>
+      <button mat-flat-button color="primary" routerLink="/lease/new">
+        <mat-icon>add</mat-icon>
+        Nuovo Contratto
+      </button>
+    </div>
+  </div>
+
+  <!-- Vista Griglia -->
+  <div *ngIf="viewMode === 'grid' && !isLoading && dataSource.filteredData.length > 0" class="leases-grid">
+    <div *ngFor="let lease of dataSource.filteredData" class="lease-card" [class.active-lease]="lease.isActive">
+      <div class="lease-header">
+        <div class="lease-id">Contratto #{{lease.id}}</div>
+        <div class="lease-status-badge" [class]="getStatusClass(lease.isActive)">
+          <mat-icon *ngIf="lease.isActive" class="status-icon">check_circle</mat-icon>
+          <mat-icon *ngIf="!lease.isActive" class="status-icon">cancel</mat-icon>
+          {{getStatusLabel(lease.isActive)}}
+        </div>
       </div>
       
-      <!-- Tabella Contratti -->
-      <div class="table-container mat-elevation-z8">
-        <div *ngIf="isLoading" class="loading-shade">
-          <mat-spinner></mat-spinner>
+      <div class="lease-content">
+        <!-- Sezione Inquilino -->
+        <div class="lease-section tenant-section">
+          <div class="section-icon tenant-icon">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="section-info">
+            <div class="section-label">Inquilino</div>
+            <div class="section-value">{{getTenantName(lease.tenantId)}}</div>
+          </div>
         </div>
         
-        <table mat-table [dataSource]="dataSource" matSort class="lease-table">
-          <!-- ID Column -->
-          <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
-            <td mat-cell *matCellDef="let lease"> {{lease.id}} </td>
-          </ng-container>
-          
-          <!-- Tenant Column -->
-          <ng-container matColumnDef="tenant">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Inquilino </th>
-            <td mat-cell *matCellDef="let lease"> {{getTenantName(lease.tenantId)}} </td>
-          </ng-container>
-          
-          <!-- Apartment Column -->
-          <ng-container matColumnDef="apartment">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Appartamento </th>
-            <td mat-cell *matCellDef="let lease"> {{getApartmentName(lease.apartmentId)}} </td>
-          </ng-container>
-          
-          <!-- Start Date Column -->
-          <ng-container matColumnDef="startDate">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Data Inizio </th>
-            <td mat-cell *matCellDef="let lease"> {{formatDate(lease.startDate)}} </td>
-          </ng-container>
-          
-          <!-- End Date Column -->
-          <ng-container matColumnDef="endDate">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Data Fine </th>
-            <td mat-cell *matCellDef="let lease"> {{formatDate(lease.endDate)}} </td>
-          </ng-container>
-          
-          <!-- Monthly Rent Column -->
-          <ng-container matColumnDef="monthlyRent">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Canone Mensile </th>
-            <td mat-cell *matCellDef="let lease"> €{{lease.monthlyRent}} </td>
-          </ng-container>
-          
-          <!-- Status Column -->
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header> Stato </th>
-            <td mat-cell *matCellDef="let lease"> 
-              <span [ngClass]="getStatusClass(lease.isActive)">
-                {{getStatusLabel(lease.isActive)}}
-              </span>
-            </td>
-          </ng-container>
-          
-          <!-- Actions Column -->
-          <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef></th>
-            <td mat-cell *matCellDef="let lease">
-              <button mat-icon-button [routerLink]="['/lease/detail', lease.id]"
-                matTooltip="Visualizza dettagli">
-                <mat-icon>visibility</mat-icon>
-              </button>
-              <button mat-icon-button [routerLink]="['/lease/edit', lease.id]"
-                matTooltip="Modifica contratto">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button (click)="deleteLease(lease.id)"
-                matTooltip="Elimina contratto">
-                <mat-icon color="warn">delete</mat-icon>
-              </button>
-          </td>
-        </ng-container>
+        <!-- Sezione Appartamento -->
+        <div class="lease-section apartment-section">
+          <div class="section-icon apartment-icon">
+            <mat-icon>apartment</mat-icon>
+          </div>
+          <div class="section-info">
+            <div class="section-label">Appartamento</div>
+            <div class="section-value">{{getApartmentName(lease.apartmentId)}}</div>
+          </div>
+        </div>
         
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <!-- Sezione Date -->
+        <div class="dates-section">
+          <div class="date-column">
+            <div class="date-label">Data Inizio</div>
+            <div class="date-container start-date">
+              <div class="date-calendar">
+                <span class="month">{{getMonthName(lease.startDate)}}</span>
+                <span class="day">{{getDayFromDate(lease.startDate)}}</span>
+              </div>
+              <span class="full-date">{{formatDate(lease.startDate)}}</span>
+            </div>
+          </div>
+          
+          <div class="date-column">
+            <div class="date-label">Data Fine</div>
+            <div class="date-container end-date">
+              <div class="date-calendar">
+                <span class="month">{{getMonthName(lease.endDate)}}</span>
+                <span class="day">{{getDayFromDate(lease.endDate)}}</span>
+              </div>
+              <span class="full-date">{{formatDate(lease.endDate)}}</span>
+            </div>
+          </div>
+        </div>
         
-        <!-- Row shown when there is no matching data -->
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell" colspan="8">Nessun contratto trovato</td>
-        </tr>
-      </table>
-      
-      <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label="Seleziona pagina di appartamenti"></mat-paginator>
+        <!-- Sezione Canone -->
+        <div class="payment-section">
+          <div class="rent-info">
+            <div class="section-icon payment-icon">
+              <mat-icon>payments</mat-icon>
+            </div>
+            <div class="section-info">
+              <div class="section-label">Canone Mensile</div>
+              <div class="section-value rent-value">€{{lease.monthlyRent}}</div>
+            </div>
+          </div>
+          
+          <div class="payment-day" *ngIf="lease.paymentDueDay">
+            <mat-icon>event</mat-icon>
+            <span>Pagamento il {{lease.paymentDueDay}} di ogni mese</span>
+          </div>
+        </div>
       </div>
-  </mat-card-content>
-</mat-card>
+      
+      <!-- Azioni -->
+      <div class="lease-actions">
+        <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" [routerLink]="['/lease/detail', lease.id]">
+          <mat-icon>visibility</mat-icon>
+        </button>
+        <button mat-icon-button color="accent" matTooltip="Modifica contratto" [routerLink]="['/lease/edit', lease.id]">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" matTooltip="Elimina contratto" (click)="deleteLease(lease.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista Lista -->
+  <div *ngIf="viewMode === 'list' && !isLoading && dataSource.filteredData.length > 0" class="leases-table-container">
+    <table mat-table [dataSource]="dataSource" matSort class="leases-table mat-elevation-z2">
+      <!-- ID Column -->
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="lease-id-cell">
+            <div class="id-badge">#{{lease.id}}</div>
+            <div class="id-code">LOC{{lease.id.toString().padStart(4, '0')}}</div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Tenant Column -->
+      <ng-container matColumnDef="tenant">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Inquilino</th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="tenant-cell">
+            <mat-icon class="tenant-icon">person</mat-icon>
+            <span>{{getTenantName(lease.tenantId)}}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Apartment Column -->
+      <ng-container matColumnDef="apartment">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Appartamento</th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="apartment-cell">
+            <mat-icon class="apartment-icon">apartment</mat-icon>
+            <span>{{getApartmentName(lease.apartmentId)}}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Dates Column -->
+      <ng-container matColumnDef="dates">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="dates-cell">
+            <div class="date-item">
+              <div class="date-label">Inizio:</div>
+              <div class="date-badge start-date">{{formatDate(lease.startDate)}}</div>
+            </div>
+            <div class="date-item">
+              <div class="date-label">Fine:</div>
+              <div class="date-badge end-date">{{formatDate(lease.endDate)}}</div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Rent Column -->
+      <ng-container matColumnDef="rent">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Canone</th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="rent-cell">
+            <span class="rent-amount">€{{lease.monthlyRent}}</span>
+            <span class="rent-period">/mese</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Stato</th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="status-badge" [class]="getStatusClass(lease.isActive)">
+            <mat-icon *ngIf="lease.isActive" class="status-icon">check_circle</mat-icon>
+            <mat-icon *ngIf="!lease.isActive" class="status-icon">cancel</mat-icon>
+            {{getStatusLabel(lease.isActive)}}
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let lease">
+          <div class="table-actions">
+            <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" [routerLink]="['/lease/detail', lease.id]">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button color="accent" matTooltip="Modifica contratto" [routerLink]="['/lease/edit', lease.id]">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" matTooltip="Elimina contratto" (click)="deleteLease(lease.id)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+          [class.active-row]="row.isActive" 
+          [class.inactive-row]="!row.isActive">
+      </tr>
+    </table>
+  </div>
+
+  <!-- Paginazione -->
+  <div *ngIf="dataSource.filteredData.length > 0" class="pagination-controls">
+    <div class="page-info">
+      <span>Visualizzazione {{paginationStart}} - {{paginationEnd}} di {{dataSource.data.length}} contratti</span>
+    </div>
+    <div class="pagination-buttons">
+      <mat-paginator [pageSizeOptions]="[5, 10, 25]" 
+                    showFirstLastButtons
+                    aria-label="Seleziona pagina di contratti">
+      </mat-paginator>
+    </div>
+  </div>
 </div>

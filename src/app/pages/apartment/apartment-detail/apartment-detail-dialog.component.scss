@@ -421,32 +421,54 @@ mat-tab-group {
   }
 }
 
-.amenities-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+.amenities-container-redesigned {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 16px;
   padding: 20px;
 }
 
-.amenity-tag {
-  padding: 8px 16px;
-  border-radius: 50px;
-  background-color: #f1f3f9;
-  color: #3f51b5;
-  font-size: 14px;
-  font-weight: 500;
+.amenity-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  white-space: nowrap;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  padding: 16px 8px;
+  transition: all 0.2s ease;
+  border: 1px solid #f0f0f0;
   
-  &::before {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    background-color: rgba(63, 81, 181, 0.05);
+  }
+  
+  .amenity-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background-color: #3f51b5;
-    margin-right: 8px;
+    background-color: rgba(63, 81, 181, 0.1);
+    margin-bottom: 12px;
+    
+    mat-icon {
+      color: #3f51b5;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+  
+  .amenity-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    white-space: normal;
+    word-break: break-word;
   }
 }
 

@@ -396,4 +396,43 @@ export class ApartmentDetailDialogComponent implements OnInit {
       this.currentImageIndex = index;
     }
   }
+
+  // Metodo per ottenere l'icona appropriata in base al servizio
+getAmenityIcon(amenity: string): string {
+  const amenityLower = amenity.toLowerCase();
+  
+  // Mappa dei servizi comuni alle relative icone
+  const iconMap: { [key: string]: string } = {
+    'wifi': 'wifi',
+    'internet': 'wifi',
+    'parcheggio': 'local_parking',
+    'garage': 'garage',
+    'ascensore': 'elevator',
+    'aria condizionata': 'ac_unit',
+    'riscaldamento': 'wb_sunny',
+    'lavatrice': 'local_laundry_service',
+    'asciugatrice': 'dry_cleaning',
+    'lavastoviglie': 'countertops',
+    'tv': 'tv',
+    'palestra': 'fitness_center',
+    'piscina': 'pool',
+    'balcone': 'balcony',
+    'terrazza': 'deck',
+    'giardino': 'grass',
+    'sicurezza': 'security',
+    'portiere': 'person',
+    'animali': 'pets',
+    'pulizie': 'cleaning_services'
+  };
+  
+  // Cerca corrispondenze parziali
+  for (const key in iconMap) {
+    if (amenityLower.includes(key) || key.includes(amenityLower)) {
+      return iconMap[key];
+    }
+  }
+  
+  // Icona predefinita se non ci sono corrispondenze
+  return 'check_circle';
+}
 }

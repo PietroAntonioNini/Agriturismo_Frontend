@@ -1,44 +1,48 @@
 <div class="confirmation-dialog" [@dialogAnimation]="state">
-  <div class="dialog-header" [ngClass]="{'danger': data.dangerMode}">
-    <div class="icon-container">
-      <mat-icon *ngIf="data.dangerMode" class="warning-icon">warning</mat-icon>
-      <mat-icon *ngIf="!data.dangerMode" class="info-icon">info</mat-icon>
+  <div class="dialog-content-wrapper">
+    <!-- Icona principale centralizzata -->
+    <div class="main-icon" [ngClass]="{'danger': data.dangerMode}">
+      <mat-icon *ngIf="data.dangerMode">warning</mat-icon>
+      <mat-icon *ngIf="!data.dangerMode">info</mat-icon>
     </div>
-    <h2 class="dialog-title">{{data.title}}</h2>
-  </div>
-  
-  <mat-divider></mat-divider>
-  
-  <div class="dialog-content">
-    <p class="message" [innerHTML]="data.message"></p>
-    <p class="submessage" *ngIf="data.submessage" [innerHTML]="data.submessage"></p>
     
+    <!-- Titolo centralizzato -->
+    <h2 class="dialog-title">{{data.title}}</h2>
+    
+    <!-- Contenuto centralizzato -->
+    <div class="dialog-content">
+      <p class="message" [innerHTML]="data.message"></p>
+      <p class="submessage" *ngIf="data.submessage" [innerHTML]="data.submessage"></p>
+    </div>
+    
+    <!-- Elemento evidenziato centralizzato -->
     <div class="highlight-box" *ngIf="data.highlightItem">
       <span class="item-name">{{data.highlightItem}}</span>
     </div>
-  </div>
-  
-  <div class="dialog-actions">
-    <button 
-      mat-button 
-      class="cancel-button" 
-      (click)="onCancel()" 
-      [disabled]="isProcessing"
-      [@buttonAnimation]="'in'">
-      <mat-icon *ngIf="data.cancelIcon">{{data.cancelIcon}}</mat-icon>
-      {{data.cancelText}}
-    </button>
     
-    <button 
-      mat-raised-button 
-      class="confirm-button" 
-      [ngClass]="{'danger-button': data.dangerMode}"
-      (click)="onConfirm()" 
-      [disabled]="isProcessing"
-      [@buttonAnimation]="'in'">
-      <mat-spinner *ngIf="isProcessing" diameter="20" class="button-spinner"></mat-spinner>
-      <mat-icon *ngIf="!isProcessing && data.confirmIcon">{{data.confirmIcon}}</mat-icon>
-      {{data.confirmText}}
-    </button>
+    <!-- Azioni centralizzate -->
+    <div class="dialog-actions">
+      <button 
+        mat-button 
+        class="cancel-button" 
+        (click)="onCancel()" 
+        [disabled]="isProcessing"
+        [@buttonAnimation]="'in'">
+        <mat-icon *ngIf="data.cancelIcon">{{data.cancelIcon}}</mat-icon>
+        <span>{{data.cancelText}}</span>
+      </button>
+      
+      <button 
+        mat-raised-button 
+        class="confirm-button" 
+        [ngClass]="{'danger-button': data.dangerMode}"
+        (click)="onConfirm()" 
+        [disabled]="isProcessing"
+        [@buttonAnimation]="'in'">
+        <mat-spinner *ngIf="isProcessing" diameter="20" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!isProcessing && data.confirmIcon">{{data.confirmIcon}}</mat-icon>
+        <span>{{data.confirmText}}</span>
+      </button>
+    </div>
   </div>
 </div>

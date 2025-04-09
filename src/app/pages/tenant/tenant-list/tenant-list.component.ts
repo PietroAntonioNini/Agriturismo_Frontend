@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatSortModule, MatSort } from '@angular/material/sort';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { MatTableModule } from '@angular/material/table';
+import { MatSortModule } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,30 +12,35 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
-
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatChipsModule } from '@angular/material/chips';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
-import { Tenant } from '../../../shared/models';
+import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { TenantFormComponent } from '../tenant-form/tenant-form-dialog.component';
-import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
-import { DocumentPreviewTooltipComponent } from '../../../shared/components/document-preview-tooltip/document-preview-tooltip.component';
-import { environment } from '../../../../environments/environment';
 
-// Importazione del componente per l'anteprima dell'immagine a schermo intero
-import { ImagePreviewDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
+interface Tenant {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  documentType: string;
+  documentNumber: string;
+  documentExpiry?: Date;
+  status?: string;
+  // Altre proprietà dell'inquilino
+}
 
 @Component({
   selector: 'app-tenant-list',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterModule,
     MatTableModule,
     MatSortModule,
-    MatPaginatorModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -44,63 +49,52 @@ import { ImagePreviewDialogComponent } from '../tenant-detail/tenant-detail-dial
     MatDialogModule,
     MatSnackBarModule,
     MatTooltipModule,
-    MatProgressSpinnerModule,
+    MatProgressBarModule,
+    MatChipsModule
   ],
   templateUrl: './tenant-list.component.html',
   styleUrls: ['./tenant-list.component.scss']
 })
 export class TenantListComponent implements OnInit {
-  displayedColumns: string[] = ['name', 'phone', 'email', 'documentType', 'documentNumber', 'documents', 'actions'];
-  dataSource = new MatTableDataSource<Tenant>([]);
-  isLoading = true;
+  // Proprietà per la visualizzazione dati
+  tenants: Tenant[] = [];
+  filteredTenants: Tenant[] = [];
+  displayedColumns: string[] = ['avatar', 'name', 'contact', 'document', 'actions'];
+  searchQuery: string = '';
+  isLoading: boolean = true;
   errorMessage: string | null = null;
-  private overlayRef: OverlayRef | null = null;
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  viewMode: 'grid' | 'list' = 'grid';
+  
+  // Proprietà per la paginazione
+  currentPage: number = 1;
+  pageSize: number = 8;
+  totalPages: number = 1;
+  paginationStart: number = 1;
+  paginationEnd: number = 0;
+  
+  // Filtri attivi
+  activeFilters: string[] = [];
 
   constructor(
     private apiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private router: Router,
-    private confirmationService: ConfirmationDialogService,
-    private overlay: Overlay 
+    private confirmationService: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
     this.loadTenants();
   }
 
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-    
-    // Configurazione personalizzata del paginatore
-    if (this.paginator) {
-      this.paginator._intl.nextPageLabel = 'Pagina successiva';
-      this.paginator._intl.previousPageLabel = 'Pagina precedente';
-      this.paginator._intl.firstPageLabel = 'Prima pagina';
-      this.paginator._intl.lastPageLabel = 'Ultima pagina';
-      this.paginator._intl.getRangeLabel = (page: number, pageSize: number, length: number) => {
-        if (length === 0 || pageSize === 0) {
-          return `0 di ${length}`;
-        }
-        length = Math.max(length, 0);
-        const startIndex = page * pageSize;
-        const endIndex = startIndex < length ? Math.min(startIndex + pageSize, length) : startIndex + pageSize;
-        return `${page + 1} di ${Math.ceil(length / pageSize)}`;
-      };
-    }
-  }
-
+  // Carica gli inquilini dall'API
   loadTenants(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
     this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
-        this.dataSource.data = tenants;
+        this.tenants = tenants;
+        this.applyFilter(); // Applica eventuali filtri già impostati
         this.isLoading = false;
       },
       error: (error) => {
@@ -111,171 +105,180 @@ export class TenantListComponent implements OnInit {
     });
   }
 
-  applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
+  // Applica filtri e ricerca
+  applyFilter(): void {
+    let filtered = [...this.tenants];
+    
+    // Applica filtro di ricerca
+    if (this.searchQuery) {
+      const query = this.searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(tenant => 
+        tenant.firstName.toLowerCase().includes(query) ||
+        tenant.lastName.toLowerCase().includes(query) ||
+        tenant.email.toLowerCase().includes(query) ||
+        tenant.phone.includes(query) ||
+        tenant.documentNumber.toLowerCase().includes(query)
+      );
+    }
+    
+    // Applica filtri attivi
+    if (this.activeFilters.length > 0) {
+      filtered = filtered.filter(tenant => {
+        if (this.activeFilters.includes('expired') && this.isDocumentExpired(tenant)) {
+          return true;
+        }
+        
+        if (this.activeFilters.includes('active') && tenant.status === 'active') {
+          return true;
+        }
+        
+        if (this.activeFilters.includes('pending') && tenant.status === 'pending') {
+          return true;
+        }
+        
+        return this.activeFilters.length === 0;
+      });
+    }
+    
+    this.updatePagination(filtered);
+  }
 
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+  // Aggiorna paginazione
+  updatePagination(filteredData: Tenant[]): void {
+    this.totalPages = Math.max(1, Math.ceil(filteredData.length / this.pageSize));
+    this.currentPage = Math.min(this.currentPage, this.totalPages);
+    
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = Math.min(startIndex + this.pageSize, filteredData.length);
+    
+    this.paginationStart = filteredData.length > 0 ? startIndex + 1 : 0;
+    this.paginationEnd = endIndex;
+    
+    this.filteredTenants = filteredData.slice(startIndex, endIndex);
+  }
+
+  // Cambia pagina
+  changePage(page: number): void {
+    this.currentPage = page;
+    this.applyFilter();
+  }
+
+  // Pulisci ricerca
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.applyFilter();
+  }
+
+  // Imposta modalità di visualizzazione
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode = mode;
+  }
+
+  // Aggiorna filtri attivi
+  updateFilters(): void {
+    // Questa funzione riceverà i cambiamenti dai chip di filtro
+    // e aggiornerà l'array activeFilters
+    this.applyFilter();
+  }
+
+  // Controlla se il documento è scaduto
+  isDocumentExpired(tenant: Tenant): boolean {
+    if (!tenant.documentExpiry) return false;
+    
+    const expiryDate = new Date(tenant.documentExpiry);
+    const today = new Date();
+    
+    return expiryDate < today;
+  }
+
+  // Ottieni le iniziali dell'inquilino
+  getTenantInitials(tenant: Tenant): string {
+    return `${tenant.firstName.charAt(0)}${tenant.lastName.charAt(0)}`.toUpperCase();
+  }
+
+  // Ottieni classe CSS dello stato dell'inquilino
+  getTenantStatusClass(tenant: Tenant): string {
+    if (this.isDocumentExpired(tenant)) return 'status-expired';
+    
+    switch (tenant.status) {
+      case 'active':
+        return 'status-active';
+      case 'pending':
+        return 'status-pending';
+      default:
+        return '';
     }
   }
 
-  openTenantDetails(tenantId: number): void {
-    const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
-      data: { tenantId },
-      width: '800px'
-    });
+  // Ottieni etichetta dello stato dell'inquilino
+  getTenantStatusLabel(tenant: Tenant): string {
+    if (this.isDocumentExpired(tenant)) return 'Documento Scaduto';
+    
+    switch (tenant.status) {
+      case 'active':
+        return 'Attivo';
+      case 'pending':
+        return 'In Attesa';
+      default:
+        return 'Stato Sconosciuto';
+    }
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        if (result.deleted) {
-          this.loadTenants();
-        } else if (result.edit) {
-          this.openTenantForm(result.tenantId);
-        } else if (result.documentsModified) {
-          // Ricarica i dati se i documenti sono stati modificati
-          this.loadTenants();
-        }
-      }
+  // Azioni dell'interfaccia
+  viewTenantDetails(tenantId: number): void {
+    this.dialog.open(TenantDetailDialogComponent, {
+      data: { tenantId },
+      width: '800px',
+      maxHeight: '90vh'
     });
   }
-  
-  openTenantForm(tenantId?: number): void {
+
+  editTenant(tenantId: number): void {
     const dialogRef = this.dialog.open(TenantFormComponent, {
       data: { tenantId },
-      width: '900px',
+      width: '800px',
       maxHeight: '90vh'
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
         this.loadTenants();
-        if (result.tenant) {
-          // Opzionalmente, apri il dialog dei dettagli dopo aver salvato
-          setTimeout(() => {
-            this.openTenantDetails(result.tenant.id);
-          }, 300);
-        }
+      }
+    });
+  }
+
+  openTenantForm(): void {
+    const dialogRef = this.dialog.open(TenantFormComponent, {
+      width: '800px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this.loadTenants();
       }
     });
   }
 
   deleteTenant(tenant: Tenant): void {
-    // Utilizza il servizio di conferma
     this.confirmationService.confirmDelete('l\'inquilino', `${tenant.firstName} ${tenant.lastName}`)
-    .subscribe(confirmed => {
-      if (confirmed) {
-        this.apiService.delete('tenants', tenant.id).subscribe({
-          next: () => {
-            this.loadTenants();
-            this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
-              duration: 3000,
-              horizontalPosition: 'end',
-              verticalPosition: 'top'
-            });
-          },
-          error: (error) => {
-            console.error('Errore durante l\'eliminazione dell\'inquilino', error);
-            this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
-              duration: 3000,
-              horizontalPosition: 'end',
-              verticalPosition: 'top'
-            });
-          }
-        });
-      }
-    });
-  }
-
-  getFullName(tenant: Tenant): string {
-    return `${tenant.firstName} ${tenant.lastName}`;
-  }
-
-  // Metodo per mostrare il tooltip con le anteprime dei documenti
-  showDocumentPreview(tenant: Tenant, event: MouseEvent): void {
-    // Mostra solo se ci sono entrambi i documenti
-    if (!tenant.documentFrontImage || !tenant.documentBackImage) {
-      return;
-    }
-
-    // Chiudi qualsiasi tooltip esistente
-    this.hideDocumentPreview();
-    
-    // Ottieni l'elemento che ha innescato l'evento (l'icona check)
-    const targetElement = event.currentTarget as HTMLElement;
-
-    // Crea una posizione per il tooltip ancorato all'icona
-    const positionStrategy = this.overlay.position()
-      .flexibleConnectedTo(targetElement)
-      .withPositions([
-        { 
-          originX: 'center', 
-          originY: 'bottom', 
-          overlayX: 'center', 
-          overlayY: 'top', 
-          offsetY: 5 
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.apiService.delete('tenants', tenant.id).subscribe({
+            next: () => {
+              this.loadTenants();
+              this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
+                duration: 3000
+              });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione dell\'inquilino', error);
+              this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
+                duration: 3000
+              });
+            }
+          });
         }
-      ]);
-
-    // Crea l'overlay per il tooltip
-    this.overlayRef = this.overlay.create({
-      positionStrategy,
-      scrollStrategy: this.overlay.scrollStrategies.close(),
-      hasBackdrop: false,
-      panelClass: 'document-preview-overlay'
-    });
-
-    // Crea il componente per il tooltip
-    const tooltipPortal = new ComponentPortal(DocumentPreviewTooltipComponent);
-    const tooltipRef = this.overlayRef.attach(tooltipPortal);
-    
-    // Passa i dati al tooltip
-    tooltipRef.instance.documentFront = this.getImageUrl(tenant.documentFrontImage);
-    tooltipRef.instance.documentBack = this.getImageUrl(tenant.documentBackImage);
-    tooltipRef.instance.documentFrontPath = tenant.documentFrontImage;
-    tooltipRef.instance.documentBackPath = tenant.documentBackImage;
-    
-    // Sottoscrizione all'evento di apertura dell'anteprima completa
-    tooltipRef.instance.onImageClick.subscribe((imagePath: string) => {
-      this.hideDocumentPreview(); // Chiudi il tooltip prima di aprire l'anteprima
-      this.openImagePreview(imagePath);
-    });
-  }
-
-  // Metodo per nascondere il tooltip
-  hideDocumentPreview(): void {
-    if (this.overlayRef) {
-      this.overlayRef.detach();
-      this.overlayRef.dispose();
-      this.overlayRef = null;
-    }
-  }
-
-  // Metodo per ottenere l'URL dell'immagine
-  getImageUrl(relativePath: string): string {
-    if (!relativePath) {
-      return 'assets/images/no-image.png';
-    }
-    
-    if (relativePath.startsWith('http')) {
-      return relativePath;
-    }
-    
-    if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
-      relativePath = '/static' + relativePath;
-    }
-    
-    return `${environment.apiUrl}${relativePath}`;
-  }
-
-  // Metodo per aprire l'anteprima completa dell'immagine
-  openImagePreview(imagePath: string): void {
-    const imageUrl = this.getImageUrl(imagePath);
-    
-    this.dialog.open(ImagePreviewDialogComponent, {
-      width: '90%',
-      maxWidth: '1200px',
-      data: { imageUrl }
-    });
+      });
   }
 }

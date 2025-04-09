@@ -1,223 +1,617 @@
-.container {
-  padding: 40px 0;
-  max-width: 1700px;
+// Variabili
+$primary-color: #3f51b5;
+$accent-color: #ff9800;
+$warn-color: #f44336;
+$available-color: #4caf50;
+$occupied-color: #f44336;
+$maintenance-color: #ff9800;
+$background-color: #121212;
+$card-background: #1d1d1d;
+$surface-color: #242424;
+$text-primary: rgba(255, 255, 255, 0.87);
+$text-secondary: rgba(255, 255, 255, 0.6);
+$border-color: rgba(255, 255, 255, 0.12);
+$hover-color: rgba(255, 255, 255, 0.1);
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+$transition-speed: 0.25s;
+
+.apartment-management-container {
+  padding: 24px;
+  max-width: 1800px;
+  margin: 0 auto;
+  color: $text-primary;
 }
 
-.apartment-card {
-  margin-bottom: 20px;
-}
-
-mat-card-content{
-  padding: 10px 25px 25px 25px !important;
-}
-
-mat-card-header{
-  padding: 30px 30px 0 !important;
-}
-
-.page-title {
-  margin-bottom: 20px;
-
-  button:hover{
-    transform: scale(1.05);
-    transition: transform 0.1s linear;
-    opacity: 0.8;
-  }
-}
-
-.title-section {
+// Header section
+.header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-
-  h1 {
-    margin: 0;
-    margin-right: 60px;
-    font-size: 24px;
-    font-weight: 500;
-  }
-}
-
-.filter-field {
-  width: 40%;
-  margin-bottom: 20px;
-}
-
-.error-message {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  margin-bottom: 20px;
-  background-color: #ffebee;
-  border-radius: 4px;
-  color: #d32f2f;
-
-  mat-icon {
-    margin-right: 8px;
-  }
-}
-
-.table-container {
-  position: relative;
-  max-width: 90%;
-  min-height: 250px;
-  margin: auto;
-  overflow: auto;
-}
-
-.loading-shade {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.8);
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.apartment-table {
-  width: 100%;
-}
-
-.action-buttons {
-  height: 100%;
-  text-align: center;
-
-  button {
-    cursor:default;
-    ::ng-deep .mat-mdc-button-persistent-ripple {
-      display: none !important;
+  margin-bottom: 32px;
+  
+  .title-area {
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      
+      .counter {
+        font-size: 1.2rem;
+        background-color: $primary-color;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-left: 16px;
+      }
+    }
+    
+    .subtitle {
+      color: $text-secondary;
+      margin: 8px 0 0;
+      font-size: 1rem;
     }
   }
   
-  mat-icon {
-    margin-right: 8px;
-
-    &:hover{
-      transform: scale(1.15);
-      transition: transform 0.05s linear;
-      opacity: 0.8;
-      cursor:pointer;
+  .new-apartment-button {
+    padding: 0 24px;
+    height: 48px;
+    font-size: 1rem;
+    border-radius: $radius-sm;
+    font-weight: 500;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
     }
   }
 }
 
-/* Stile per i bottoni di azione */
-.mat-icon-button {
-  line-height: 1;
-}
-
-/* Stili per lo status dell'appartamento */
-.status-available {
-  padding: 5px 10px 5px 8px;
-  border-radius: 12px;
-  background-color: #4caf50;
-  color: white;
-  font-size: 12px;
-}
-
-.status-occupied {
-  padding: 5px 10px 5px 8px;
-  border-radius: 12px;
-  background-color: #c11919de;
-  color: white;
-  font-size: 12px;
-}
-
-.status-maintenance {
-  padding: 5px 10px 5px 8px;
-  border-radius: 12px;
-  background-color: #fa9a0be7;
-  color: white;
-  font-size: 12px;
-}
-
-/* Stile per le icone di stato */
-.status-icon {
-  font-size: 18px;
-  height: 18px;
-  width: 18px;
-  vertical-align: middle;
-  margin-right: 4px;
-  margin-top: -3px;
-}
-
-.mat-column-name{
-  width: 20% !important;
-}
-
-.mat-column-status{
-  width: 15% !important;
-}
-
-.mat-column-rooms{
-  width: 10% !important;
-}
-
-.mat-column-squareMeters{
-  width: 13% !important;
-}
-
-.mat-column-monthlyRent{
-  width: 13% !important;
-}
-
-.mat-column-floor{
-  width: 10% !important;
-}
-
-tr:hover {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  transition: background-color 0.10s ease-in !important;
-}
-
-.no-data-message {
+// Search and filter section
+.search-filter-section {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  height: 100px;
-  color: rgba(0, 0, 0, 0.54);
-
-  mat-icon {
-    margin-right: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  
+  .search-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 300px;
+    
+    .search-field {
+      width: 100%;
+      max-width: 500px;
+      
+      ::ng-deep .mat-mdc-form-field-flex {
+        background-color: $surface-color;
+        border-radius: $radius-sm;
+      }
+      
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: transparent;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-label {
+        color: $text-secondary;
+      }
+    }
+    
+    .filter-chips {
+      margin-top: 8px;
+      
+      ::ng-deep .mat-mdc-chip-set {
+        min-height: 40px;
+      }
+      
+      ::ng-deep .mat-mdc-chip {
+        background-color: $surface-color;
+        color: $text-primary;
+        
+        &.mat-mdc-chip-selected {
+          &.mat-primary {
+            background-color: rgba($available-color, 0.2);
+            color: lighten($available-color, 20%);
+          }
+          
+          &.mat-warn {
+            background-color: rgba($occupied-color, 0.2);
+            color: lighten($occupied-color, 20%);
+          }
+          
+          &.mat-accent {
+            background-color: rgba($maintenance-color, 0.2);
+            color: lighten($maintenance-color, 20%);
+          }
+        }
+      }
+    }
+  }
+  
+  .view-options {
+    display: flex;
+    gap: 8px;
+    
+    button {
+      background-color: $surface-color;
+      color: $text-secondary;
+      
+      &.active {
+        background-color: rgba($primary-color, 0.2);
+        color: lighten($primary-color, 20%);
+      }
+      
+      &:hover {
+        background-color: $hover-color;
+      }
+    }
   }
 }
 
-/* Stili per il paginatore personalizzato */
-.custom-paginator-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 18px 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.paginator-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.current-page {
-  margin: 0 16px;
-  min-width: 24px;
+// Loading container
+.loading-container {
+  padding: 32px;
+  background-color: $surface-color;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  margin-bottom: 24px;
   text-align: center;
-  font-size: 14px;
+  
+  mat-progress-bar {
+    margin-bottom: 16px;
+  }
+  
+  .loading-text {
+    color: $text-secondary;
+    font-size: 1rem;
+    margin: 0;
+  }
 }
 
-/* Nasconde il paginatore originale ma mantiene la sua funzionalità */
-.hidden-paginator {
-  height: 0;
-  min-height: 0;
-  visibility: hidden;
-  overflow: hidden;
+// Error container
+.error-container {
+  padding: 32px;
+  background-color: rgba($warn-color, 0.1);
+  border-radius: $radius-md;
+  border-left: 4px solid $warn-color;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  
+  mat-icon {
+    font-size: 32px;
+    height: 32px;
+    width: 32px;
+    margin-right: 24px;
+  }
+  
+  .error-details {
+    flex: 1;
+    
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+    }
+    
+    p {
+      margin: 0;
+      color: $text-secondary;
+    }
+  }
 }
 
-/* Nasconde l'etichetta "Items per page" nel paginatore */
-::ng-deep .mat-paginator-page-size-label {
-  display: none;
+// No results container
+.no-results-container {
+  padding: 64px 32px;
+  background-color: $surface-color;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  text-align: center;
+  
+  .no-results-content {
+    max-width: 400px;
+    margin: 0 auto;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+      color: $text-secondary;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 0 0 8px;
+    }
+    
+    p {
+      color: $text-secondary;
+      margin: 0 0 24px;
+    }
+  }
+}
+
+// Grid view
+.apartments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+  
+  .apartment-card {
+    background-color: $card-background;
+    border-radius: $radius-md;
+    overflow: hidden;
+    transition: transform $transition-speed ease, box-shadow $transition-speed ease;
+    box-shadow: $card-shadow;
+    display: flex;
+    flex-direction: column;
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+    
+    &.highlight-available {
+      border-left: 3px solid $available-color;
+    }
+    
+    .apartment-header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      
+      .apartment-name {
+        font-size: 1.25rem;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .apartment-status-badge {
+        display: flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        
+        &.status-available {
+          background-color: rgba($available-color, 0.2);
+          color: lighten($available-color, 10%);
+        }
+        
+        &.status-occupied {
+          background-color: rgba($occupied-color, 0.2);
+          color: lighten($occupied-color, 10%);
+        }
+        
+        &.status-maintenance {
+          background-color: rgba($maintenance-color, 0.2);
+          color: lighten($maintenance-color, 10%);
+        }
+        
+        .status-icon {
+          font-size: 16px;
+          height: 16px;
+          width: 16px;
+          margin-right: 4px;
+        }
+      }
+    }
+    
+    .apartment-preview {
+      position: relative;
+      height: 160px;
+      cursor: pointer;
+      
+      .preview-placeholder {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        
+        mat-icon {
+          font-size: 48px;
+          height: 48px;
+          width: 48px;
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+
+      .preview-image {
+        height: 100%;
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      
+      .price-tag {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        
+        span {
+          font-size: 1.4rem;
+          font-weight: 600;
+        }
+        
+        small {
+          font-size: 0.8rem;
+          color: $text-secondary;
+        }
+      }
+    }
+    
+    .apartment-details {
+      padding: 16px;
+      flex: 1;
+      
+      .detail-group {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .detail-item {
+          display: flex;
+          align-items: center;
+          
+          mat-icon {
+            font-size: 18px;
+            height: 18px;
+            width: 18px;
+            margin-right: 6px;
+            color: $text-secondary;
+          }
+          
+          span {
+            font-size: 0.95rem;
+          }
+        }
+      }
+    }
+    
+    .apartment-actions {
+      padding: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      background-color: rgba(0, 0, 0, 0.2);
+      
+      button {
+        transition: transform 0.15s ease;
+        
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+}
+
+// List view
+.apartments-table-container {
+  overflow-x: auto;
+  margin-bottom: 24px;
+  border-radius: $radius-md;
+  
+  .apartments-table {
+    width: 100%;
+    background-color: $card-background;
+    
+    .mat-mdc-header-row {
+      background-color: rgba(0, 0, 0, 0.2);
+      height: 56px;
+      
+      .mat-mdc-header-cell {
+        color: $text-secondary;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .mat-mdc-row {
+      height: 72px;
+      transition: background-color 0.15s ease;
+      
+      &:hover {
+        background-color: $hover-color;
+      }
+      
+      &.available-row {
+        border-left: 3px solid $available-color;
+      }
+      
+      &.occupied-row {
+        border-left: 3px solid $occupied-color;
+      }
+      
+      &.maintenance-row {
+        border-left: 3px solid $maintenance-color;
+      }
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 16px;
+      width: fit-content;
+      font-size: 0.85rem;
+      
+      &.status-available {
+        background-color: rgba($available-color, 0.2);
+        color: lighten($available-color, 10%);
+      }
+      
+      &.status-occupied {
+        background-color: rgba($occupied-color, 0.2);
+        color: lighten($occupied-color, 10%);
+      }
+      
+      &.status-maintenance {
+        background-color: rgba($maintenance-color, 0.2);
+        color: lighten($maintenance-color, 10%);
+      }
+      
+      .status-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+        margin-right: 4px;
+      }
+    }
+    
+    .price-cell {
+      .price-value {
+        font-size: 1.1rem;
+        font-weight: 500;
+      }
+      
+      .price-period {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+    }
+    
+    .apartment-specs {
+      display: flex;
+      gap: 16px;
+      
+      .spec-item {
+        display: flex;
+        align-items: center;
+        
+        mat-icon {
+          font-size: 16px;
+          height: 16px;
+          width: 16px;
+          margin-right: 4px;
+          color: $text-secondary;
+        }
+        
+        span {
+          font-size: 0.9rem;
+        }
+      }
+    }
+    
+    .actions-cell {
+      .table-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        
+        button {
+          transition: transform 0.15s ease;
+          
+          &:hover {
+            transform: scale(1.1);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Pagination controls
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: $card-background;
+  padding: 16px 24px;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  
+  .page-info {
+    color: $text-secondary;
+    font-size: 0.9rem;
+  }
+  
+  .pagination-buttons {
+    display: flex;
+    align-items: center;
+    
+    .page-number {
+      margin: 0 16px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    
+    button {
+      color: $text-primary;
+      
+      &:disabled {
+        color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &:not(:disabled):hover {
+        background-color: $hover-color;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .apartment-management-container {
+    padding: 16px;
+  }
+  
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    
+    .new-apartment-button {
+      align-self: stretch;
+    }
+  }
+  
+  .apartments-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .apartment-specs {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  
+  .pagination-controls {
+    flex-direction: column;
+    gap: 16px;
+    
+    .page-info {
+      text-align: center;
+    }
+  }
 }

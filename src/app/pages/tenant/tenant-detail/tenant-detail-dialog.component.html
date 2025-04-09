@@ -124,14 +124,14 @@
                       <div class="card-header">
                         <h3>Fronte</h3>
                         <div class="card-actions" *ngIf="tenant.documentFrontImage">
-                          <button mat-icon-button matTooltip="Scarica" (click)="downloadDocument('front', 'fronte-documento')">
-                            <mat-icon>download</mat-icon>
+                          <button mat-icon-button (click)="downloadDocument('front', 'fronte-documento')">
+                            <mat-icon matTooltip="Scarica">download</mat-icon>
                           </button>
-                          <button mat-icon-button matTooltip="Sostituisci" (click)="replaceFrontImage()">
-                            <mat-icon>autorenew</mat-icon>
+                          <button mat-icon-button (click)="replaceFrontImage()">
+                            <mat-icon matTooltip="Sostituisci">autorenew</mat-icon>
                           </button>
-                          <button mat-icon-button matTooltip="Elimina" color="warn" (click)="removeFrontImage()">
-                            <mat-icon>delete</mat-icon>
+                          <button mat-icon-button color="warn" (click)="removeFrontImage()">
+                            <mat-icon matTooltip="Elimina">delete</mat-icon>
                           </button>
                         </div>
                       </div>

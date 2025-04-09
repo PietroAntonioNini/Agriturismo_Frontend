@@ -1,117 +1,717 @@
-.container {
-  padding: 20px 0 40px;
+// Variabili
+$primary-color: #3f51b5;
+$accent-color: #ff9800;
+$warn-color: #f44336;
+$available-color: #4caf50;
+$occupied-color: #f44336;
+$maintenance-color: #ff9800;
+$background-color: #121212;
+$card-background: #1d1d1d;
+$surface-color: #242424;
+$text-primary: rgba(255, 255, 255, 0.87);
+$text-secondary: rgba(255, 255, 255, 0.6);
+$border-color: rgba(255, 255, 255, 0.12);
+$hover-color: rgba(255, 255, 255, 0.1);
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+$transition-speed: 0.25s;
+
+.lease-management-container {
+  padding: 24px;
+  max-width: 1800px;
+  margin: 0 auto;
+  color: $text-primary;
 }
 
-.filters-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 20px;
-  align-items: center;
-  
-  mat-form-field {
-    flex: 1;
-    min-width: 200px;
-    max-width: 250px;
-  }
-
-  button{
-    margin-bottom: 20px !important;
-  }
-}
-
-.lease-card {
-  margin-bottom: 20px;
-}
-
-.page-title {
-  margin-bottom: 20px;
-}
-
-.title-section {
+// Header section
+.header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-
-  h1 {
-    margin: 0;
-    margin-right: 60px;
-    font-size: 24px;
+  margin-bottom: 32px;
+  
+  .title-area {
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      
+      .counter {
+        font-size: 1.2rem;
+        background-color: $primary-color;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-left: 16px;
+      }
+    }
+    
+    .subtitle {
+      color: $text-secondary;
+      margin: 8px 0 0;
+      font-size: 1rem;
+    }
+  }
+  
+  .new-lease-button {
+    padding: 0 24px;
+    height: 48px;
+    font-size: 1rem;
+    border-radius: $radius-sm;
     font-weight: 500;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+    }
   }
 }
 
-.actions-container {
-  margin-bottom: 20px;
+// Search and filter section
+.search-filter-section {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  
+  .search-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 300px;
+    
+    .search-field {
+      width: 100%;
+      max-width: 500px;
+      
+      ::ng-deep .mat-mdc-form-field-flex {
+        background-color: $surface-color;
+        border-radius: $radius-sm;
+      }
+      
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: transparent;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-label {
+        color: $text-secondary;
+      }
+    }
+    
+    .filter-chips {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      
+      ::ng-deep .mat-mdc-chip-set {
+        min-height: 40px;
+      }
+      
+      ::ng-deep .mat-mdc-chip {
+        background-color: $surface-color;
+        color: $text-primary;
+        
+        mat-icon {
+          margin-right: 4px;
+          font-size: 16px;
+          height: 16px;
+          width: 16px;
+        }
+        
+        &.mat-mdc-chip-selected {
+          &.mat-primary {
+            background-color: rgba($available-color, 0.2);
+            color: lighten($available-color, 20%);
+          }
+          
+          &.mat-warn {
+            background-color: rgba($occupied-color, 0.2);
+            color: lighten($occupied-color, 20%);
+          }
+          
+          &.mat-accent {
+            background-color: rgba($maintenance-color, 0.2);
+            color: lighten($maintenance-color, 20%);
+          }
+        }
+      }
+      
+      .reset-filters {
+        mat-icon {
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+  
+  .view-options {
+    display: flex;
+    gap: 8px;
+    
+    button {
+      background-color: $surface-color;
+      color: $text-secondary;
+      
+      &.active {
+        background-color: rgba($primary-color, 0.2);
+        color: lighten($primary-color, 20%);
+      }
+      
+      &:hover {
+        background-color: $hover-color;
+      }
+    }
+  }
 }
 
-.error-message {
-  padding: 16px;
+// Loading container
+.loading-container {
+  padding: 32px;
+  background-color: $surface-color;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  margin-bottom: 24px;
+  text-align: center;
+  
+  mat-progress-bar {
+    margin-bottom: 16px;
+  }
+  
+  .loading-text {
+    color: $text-secondary;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// Error container
+.error-container {
+  padding: 32px;
+  background-color: rgba($warn-color, 0.1);
+  border-radius: $radius-md;
+  border-left: 4px solid $warn-color;
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  color: #f44336;
   
   mat-icon {
-    margin-right: 8px;
+    font-size: 32px;
+    height: 32px;
+    width: 32px;
+    margin-right: 24px;
+  }
+  
+  .error-details {
+    flex: 1;
+    
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.2rem;
+    }
+    
+    p {
+      margin: 0;
+      color: $text-secondary;
+    }
   }
 }
 
-.table-container {
-  position: relative;
-  max-width: 90%;
-  min-height: 200px;
-  overflow: auto;
-  margin: auto;
+// No results container
+.no-results-container {
+  padding: 64px 32px;
+  background-color: $surface-color;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  text-align: center;
   
-  .loading-shade {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.15);
-    z-index: 1;
+  .no-results-content {
+    max-width: 400px;
+    margin: 0 auto;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+      color: $text-secondary;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 0 0 8px;
+    }
+    
+    p {
+      color: $text-secondary;
+      margin: 0 0 24px;
+    }
+  }
+}
+
+// Grid view
+.leases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+  
+  .lease-card {
+    background-color: $card-background;
+    border-radius: $radius-md;
+    overflow: hidden;
+    transition: transform $transition-speed ease, box-shadow $transition-speed ease;
+    box-shadow: $card-shadow;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
+    
+    &.active-lease {
+      border-left: 3px solid $available-color;
+    }
+    
+    .lease-header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      
+      .lease-id {
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+      
+      .lease-status-badge {
+        display: flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        
+        &.status-active {
+          background-color: rgba($available-color, 0.2);
+          color: lighten($available-color, 10%);
+        }
+        
+        &.status-inactive {
+          background-color: rgba($occupied-color, 0.2);
+          color: lighten($occupied-color, 10%);
+        }
+        
+        .status-icon {
+          font-size: 16px;
+          height: 16px;
+          width: 16px;
+          margin-right: 4px;
+        }
+      }
+    }
+    
+    .lease-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+      
+      .lease-section {
+        display: flex;
+        align-items: center;
+        
+        .section-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 12px;
+          
+          &.tenant-icon {
+            background-color: rgba($primary-color, 0.2);
+            color: lighten($primary-color, 20%);
+          }
+          
+          &.apartment-icon {
+            background-color: rgba($accent-color, 0.2);
+            color: lighten($accent-color, 10%);
+          }
+          
+          &.payment-icon {
+            background-color: rgba($available-color, 0.2);
+            color: lighten($available-color, 10%);
+          }
+        }
+        
+        .section-info {
+          .section-label {
+            font-size: 0.9rem;
+            color: $text-secondary;
+            margin-bottom: 4px;
+          }
+          
+          .section-value {
+            font-weight: 500;
+            
+            &.rent-value {
+              font-size: 1.2rem;
+              font-weight: 600;
+            }
+          }
+        }
+      }
+      
+      .dates-section {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 8px 0;
+        
+        .date-column {
+          flex: 1;
+          
+          .date-label {
+            font-size: 0.9rem;
+            color: $text-secondary;
+            margin-bottom: 8px;
+          }
+          
+          .date-container {
+            display: flex;
+            align-items: center;
+            
+            &.start-date .date-calendar {
+              background-color: rgba($primary-color, 0.2);
+              border: 1px solid rgba($primary-color, 0.3);
+            }
+            
+            &.end-date .date-calendar {
+              background-color: rgba($warn-color, 0.2);
+              border: 1px solid rgba($warn-color, 0.3);
+            }
+            
+            .date-calendar {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              padding: 4px 8px;
+              border-radius: 8px;
+              margin-right: 12px;
+              min-width: 50px;
+              
+              .month {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                font-weight: 500;
+              }
+              
+              .day {
+                font-size: 1.4rem;
+                font-weight: 700;
+                line-height: 1.2;
+              }
+            }
+            
+            .full-date {
+              font-weight: 500;
+            }
+          }
+        }
+      }
+      
+      .payment-section {
+        .rent-info {
+          display: flex;
+          margin-bottom: 12px;
+        }
+        
+        .payment-day {
+          display: flex;
+          align-items: center;
+          background-color: rgba(255, 255, 255, 0.05);
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          
+          mat-icon {
+            font-size: 18px;
+            height: 18px;
+            width: 18px;
+            margin-right: 8px;
+            color: $text-secondary;
+          }
+        }
+      }
+    }
+    
+    .lease-actions {
+      padding: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      background-color: rgba(0, 0, 0, 0.2);
+      
+      button {
+        transition: transform 0.15s ease;
+        
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
   }
-
-  .apartment-table {
-    width: 100%;
-  }
-
 }
 
-table {
-  width: 100%;
+// List view
+.leases-table-container {
+  overflow-x: auto;
+  margin-bottom: 24px;
+  border-radius: $radius-md;
   
-  .mat-column-actions {
-    width: 260px;
-    text-align: center;
+  .leases-table {
+    width: 100%;
+    background-color: $card-background;
+    
+    .mat-mdc-header-row {
+      background-color: rgba(0, 0, 0, 0.2);
+      height: 56px;
+      
+      .mat-mdc-header-cell {
+        color: $text-secondary;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .mat-mdc-row {
+      height: 72px;
+      transition: background-color 0.15s ease;
+      
+      &:hover {
+        background-color: $hover-color;
+      }
+      
+      &.active-row {
+        border-left: 3px solid $available-color;
+      }
+      
+      &.inactive-row {
+        border-left: 3px solid $occupied-color;
+      }
+    }
+    
+    // Cell styles
+    .lease-id-cell {
+      display: flex;
+      flex-direction: column;
+      
+      .id-badge {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      
+      .id-code {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+    }
+    
+    .tenant-cell, .apartment-cell {
+      display: flex;
+      align-items: center;
+      
+      mat-icon {
+        margin-right: 8px;
+        
+        &.tenant-icon {
+          color: lighten($primary-color, 20%);
+        }
+        
+        &.apartment-icon {
+          color: lighten($accent-color, 10%);
+        }
+      }
+    }
+    
+    .dates-cell {
+      display: flex;
+      gap: 16px;
+      
+      .date-item {
+        display: flex;
+        align-items: center;
+        
+        .date-label {
+          margin-right: 8px;
+          color: $text-secondary;
+          font-size: 0.9rem;
+        }
+        
+        .date-badge {
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          
+          &.start-date {
+            background-color: rgba($primary-color, 0.2);
+            color: lighten($primary-color, 20%);
+          }
+          
+          &.end-date {
+            background-color: rgba($warn-color, 0.2);
+            color: lighten($warn-color, 20%);
+          }
+        }
+      }
+    }
+    
+    .rent-cell {
+      .rent-amount {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      
+      .rent-period {
+        font-size: 0.8rem;
+        color: $text-secondary;
+        margin-left: 4px;
+      }
+    }
+    
+    .status-badge {
+      display: flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      width: fit-content;
+      
+      &.status-active {
+        background-color: rgba($available-color, 0.2);
+        color: lighten($available-color, 10%);
+      }
+      
+      &.status-inactive {
+        background-color: rgba($occupied-color, 0.2);
+        color: lighten($occupied-color, 10%);
+      }
+      
+      .status-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+        margin-right: 4px;
+      }
+    }
+    
+    .table-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      
+      button {
+        transition: transform 0.15s ease;
+        
+        &:hover {
+          transform: scale(1.1);
+        }
+      }
+    }
   }
 }
 
-.status-active {
-  color: #4caf50;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background-color: rgba(76, 175, 80, 0.1);
+// Pagination controls
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: $card-background;
+  padding: 8px 16px;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  
+  .page-info {
+    color: $text-secondary;
+    font-size: 0.9rem;
+  }
+  
+  ::ng-deep .mat-mdc-paginator {
+    background: transparent;
+    
+    .mat-mdc-paginator-container {
+      min-height: unset;
+    }
+    
+    .mat-mdc-paginator-range-label, 
+    .mat-mdc-paginator-page-size-label {
+      color: $text-secondary;
+    }
+    
+    .mat-mdc-icon-button {
+      color: $text-primary;
+      
+      &:disabled {
+        color: rgba(255, 255, 255, 0.3);
+      }
+    }
+    
+    .mat-mdc-select-value-text {
+      color: $text-primary;
+    }
+  }
 }
 
-.status-inactive {
-  color: #f44336;
-  font-weight: 500;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background-color: rgba(244, 67, 54, 0.1);
-}
-
-mat-paginator {
-  margin-top: 0;
+// Responsive adjustments
+@media (max-width: 768px) {
+  .lease-management-container {
+    padding: 16px;
+  }
+  
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    
+    .new-lease-button {
+      align-self: stretch;
+    }
+  }
+  
+  .leases-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dates-section {
+    flex-direction: column;
+  }
+  
+  .pagination-controls {
+    flex-direction: column;
+    gap: 16px;
+    
+    .page-info {
+      text-align: center;
+    }
+  }
 }
