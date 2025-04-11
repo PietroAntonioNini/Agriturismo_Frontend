@@ -18,6 +18,9 @@ import { GenericApiService } from '../../../shared/services/generic-api.service'
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { TenantFormComponent } from '../tenant-form/tenant-form-dialog.component';
+import { MatChipListboxChange } from '@angular/material/chips';
+import { MatChipOption } from '@angular/material/chips';
+import { MatChipListbox } from '@angular/material/chips';
 
 interface Tenant {
   id: number;
@@ -29,6 +32,7 @@ interface Tenant {
   documentNumber: string;
   documentExpiry?: Date;
   status?: string;
+  hasLease?: boolean;
   // Altre proprietà dell'inquilino
 }
 
@@ -91,11 +95,27 @@ export class TenantListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
+    // Prima carica tutti gli inquilini
     this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
-        this.tenants = tenants;
-        this.applyFilter(); // Applica eventuali filtri già impostati
-        this.isLoading = false;
+        // Per ogni inquilino, verifica se ha contratti attivi
+        const tenantPromises = tenants.map(tenant => 
+          this.apiService.getAll<any>('leases', { 
+            tenantId: tenant.id.toString(), 
+            status: 'active'
+          }).toPromise()
+          .then(leases => {
+            tenant.hasLease = leases && leases.length > 0;
+            return tenant;
+          })
+        );
+
+        // Quando tutti i controlli sono completati
+        Promise.all(tenantPromises).then(tenantsWithLeaseStatus => {
+          this.tenants = tenantsWithLeaseStatus;
+          this.applyFilter();
+          this.isLoading = false;
+        });
       },
       error: (error) => {
         console.error('Errore durante il caricamento degli inquilini', error);
@@ -109,7 +129,7 @@ export class TenantListComponent implements OnInit {
   applyFilter(): void {
     let filtered = [...this.tenants];
     
-    // Applica filtro di ricerca
+    // Applica filtri Ricerca
     if (this.searchQuery) {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter(tenant => 
@@ -121,25 +141,20 @@ export class TenantListComponent implements OnInit {
       );
     }
     
-    // Applica filtri attivi
+    // Applica filtri per stato contratto
     if (this.activeFilters.length > 0) {
       filtered = filtered.filter(tenant => {
-        if (this.activeFilters.includes('expired') && this.isDocumentExpired(tenant)) {
+        if (this.activeFilters.includes('with_lease') && tenant.hasLease) {
           return true;
         }
-        
-        if (this.activeFilters.includes('active') && tenant.status === 'active') {
+        if (this.activeFilters.includes('without_lease') && !tenant.hasLease) {
           return true;
         }
-        
-        if (this.activeFilters.includes('pending') && tenant.status === 'pending') {
-          return true;
-        }
-        
-        return this.activeFilters.length === 0;
+        return false;
       });
     }
     
+    // Aggiorna paginazione con i risultati filtrati
     this.updatePagination(filtered);
   }
 
@@ -175,9 +190,39 @@ export class TenantListComponent implements OnInit {
   }
 
   // Aggiorna filtri attivi
-  updateFilters(): void {
-    // Questa funzione riceverà i cambiamenti dai chip di filtro
-    // e aggiornerà l'array activeFilters
+  onFilterChange(event: MatChipListboxChange): void {
+    // Controlla se abbiamo selezioni e gestiscile correttamente
+    if (event.source) {
+      const selectedOptions = event.source.selected;
+      
+      // Crea un array vuoto per i nostri valori di filtro
+      this.activeFilters = [];
+      
+      // Controlla se abbiamo selezioni multiple o una selezione
+      if (Array.isArray(selectedOptions)) {
+        // È un array di selezioni
+        this.activeFilters = selectedOptions.map((chip: MatChipOption) => chip.value as string);
+      } else if (selectedOptions) {
+        // È una selezione singola
+        this.activeFilters.push(selectedOptions.value as string);
+      }
+      
+      this.applyFilter();
+    }
+  }
+
+  updateFilters(chipListbox: MatChipListbox): void {
+    // Ottieni tutti i valori selezionati
+    this.activeFilters = [];
+    
+    // Processa ogni opzione nell'elenco
+    chipListbox._chips.forEach(chip => {
+      if (chip.selected) {
+        this.activeFilters.push(chip.value as string);
+      }
+    });
+    
+    // Applica i filtri
     this.applyFilter();
   }
 
@@ -196,32 +241,14 @@ export class TenantListComponent implements OnInit {
     return `${tenant.firstName.charAt(0)}${tenant.lastName.charAt(0)}`.toUpperCase();
   }
 
-  // Ottieni classe CSS dello stato dell'inquilino
-  getTenantStatusClass(tenant: Tenant): string {
-    if (this.isDocumentExpired(tenant)) return 'status-expired';
-    
-    switch (tenant.status) {
-      case 'active':
-        return 'status-active';
-      case 'pending':
-        return 'status-pending';
-      default:
-        return '';
-    }
-  }
-
   // Ottieni etichetta dello stato dell'inquilino
   getTenantStatusLabel(tenant: Tenant): string {
-    if (this.isDocumentExpired(tenant)) return 'Documento Scaduto';
-    
-    switch (tenant.status) {
-      case 'active':
-        return 'Attivo';
-      case 'pending':
-        return 'In Attesa';
-      default:
-        return 'Stato Sconosciuto';
-    }
+    return tenant.hasLease ? 'Con contratto' : 'Senza contratto';
+  }
+
+  // Ottieni classe CSS dello stato dell'inquilino
+  getTenantStatusClass(tenant: Tenant): string {
+    return tenant.hasLease ? 'status-active' : 'status-expired';
   }
 
   // Azioni dell'interfaccia

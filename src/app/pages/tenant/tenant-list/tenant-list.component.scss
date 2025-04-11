@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // Variables
 $primary-color: #3f51b5;
 $accent-color: #ff4081;
@@ -119,7 +121,7 @@ $radius-lg: 16px;
         
         &.mat-mdc-chip-selected {
           background-color: rgba($primary-color, 0.2);
-          color: lighten($primary-color, 20%);
+          color: color.adjust($primary-color, $lightness: 20%);
         }
       }
     }
@@ -135,7 +137,7 @@ $radius-lg: 16px;
       
       &.active {
         background-color: rgba($primary-color, 0.2);
-        color: lighten($primary-color, 20%);
+        color: color.adjust($primary-color, $lightness: 20%);
       }
       
       &:hover {
@@ -237,23 +239,24 @@ $radius-lg: 16px;
   margin-bottom: 24px;
   
   .tenant-card {
-    background-color: $card-background;
+    background: linear-gradient(145deg, $card-background, color.adjust($card-background, $lightness: -5%));
     border-radius: $radius-md;
     overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
     box-shadow: $card-shadow;
     position: relative;
     display: flex;
     flex-direction: column;
     
     &:hover {
+      cursor: pointer;
       transform: translateY(-4px);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     }
     
     &.expired {
-      border: 1px solid rgba($warn-color, 0.3);
-      background-color: rgba($warn-color, 0.05);
+      border-left: 4px solid $warn-color;
+      background: linear-gradient(145deg, color.adjust($card-background, $lightness: -2%), color.mix($card-background, $warn-color, 95%));
     }
     
     .tenant-header {
@@ -261,83 +264,137 @@ $radius-lg: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 24px;
+        right: 24px;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+      }
       
       .tenant-avatar {
-        width: 60px;
-        height: 60px;
+        width: 64px;
+        height: 64px;
         border-radius: 50%;
-        background-color: $primary-color;
+        background: linear-gradient(145deg, $primary-color, color.adjust($primary-color, $lightness: -15%));
         display: flex;
         justify-content: center;
         align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.1);
         
         span {
           color: white;
-          font-size: 1.4rem;
-          font-weight: 500;
+          font-size: 1.5rem;
+          font-weight: 600;
+          letter-spacing: -0.5px;
         }
       }
       
       .tenant-status-badge {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         padding: 6px 12px;
         border-radius: 20px;
         font-weight: 500;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        
+        &::before {
+          content: '';
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-right: 6px;
+        }
         
         &.status-active {
-          background-color: rgba(76, 175, 80, 0.2);
+          background-color: rgba(76, 175, 80, 0.15);
           color: #66bb6a;
+          border: 1px solid rgba(76, 175, 80, 0.3);
+          
+          &::before {
+            background-color: #66bb6a;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+          }
         }
         
         &.status-pending {
-          background-color: rgba(255, 193, 7, 0.2);
+          background-color: rgba(255, 193, 7, 0.15);
           color: #ffd54f;
+          border: 1px solid rgba(255, 193, 7, 0.3);
+          
+          &::before {
+            background-color: #ffd54f;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+          }
         }
         
         &.status-expired {
-          background-color: rgba(244, 67, 54, 0.2);
+          background-color: rgba(244, 67, 54, 0.15);
           color: #e57373;
+          border: 1px solid rgba(244, 67, 54, 0.3);
+          
+          &::before {
+            background-color: #e57373;
+            box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+          }
         }
       }
     }
     
     .tenant-info {
-      padding: 0 24px 16px;
+      padding: 16px 24px;
       flex: 1;
       
       .tenant-name {
-        font-size: 1.3rem;
+        font-size: 1.4rem;
         margin: 0 0 16px;
         font-weight: 500;
+        letter-spacing: 0.3px;
+        color: $text-primary;
       }
       
       .tenant-contact {
-        margin-bottom: 16px;
+        margin-bottom: 20px;
         
         .contact-item {
           display: flex;
           align-items: center;
-          margin-bottom: 8px;
+          margin-bottom: 12px;
+          transition: transform 0.2s ease;
+          
+          &:hover {
+            transform: translateX(4px);
+          }
           
           mat-icon {
-            font-size: 18px;
-            height: 18px;
-            width: 18px;
-            margin-right: 8px;
-            color: $text-secondary;
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: color.adjust($primary-color, $lightness: 20%);
           }
           
           span {
             color: $text-secondary;
             font-size: 0.95rem;
+            letter-spacing: 0.2px;
           }
         }
       }
       
       .tenant-document {
-        padding: 12px;
-        background-color: rgba(255, 255, 255, 0.05);
+        padding: 14px;
+        background-color: rgba(255, 255, 255, 0.03);
         border-radius: $radius-sm;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
         
         .document-type {
           display: flex;
@@ -348,39 +405,35 @@ $radius-lg: 16px;
             font-size: 18px;
             height: 18px;
             width: 18px;
-            margin-right: 8px;
-            color: $text-secondary;
+            margin-right: 10px;
+            color: color.adjust($primary-color, $lightness: 20%);
           }
           
           span {
             color: $text-secondary;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
           }
         }
         
         .document-number {
-          font-size: 1.1rem;
-          font-weight: 500;
-          letter-spacing: 0.5px;
+          font-size: 1.15rem;
+          font-weight: 600;
+          letter-spacing: 1px;
+          color: color.adjust($primary-color, $lightness: 25%);
+          font-family: 'Roboto Mono', monospace;
         }
       }
     }
     
     .tenant-actions {
-      padding: 16px;
+      padding: 12px;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
-      background-color: rgba(0, 0, 0, 0.2);
-      
-      button {
-        transition: transform 0.15s ease;
-        
-        &:hover {
-          transform: scale(1.1);
-        }
-      }
+      background-color: rgba(0, 0, 0, 0.25);
     }
   }
 }
@@ -482,10 +535,9 @@ $radius-lg: 16px;
           
           mat-icon {
             font-size: 16px;
-            height: 16px;
             width: 16px;
-            margin-right: 8px;
-            color: $text-secondary;
+            height: 16px;
+            color: color.adjust($primary-color, $lightness: 20%);
           }
           
           span {
@@ -524,14 +576,6 @@ $radius-lg: 16px;
         display: flex;
         justify-content: flex-end;
         gap: 8px;
-        
-        button {
-          transition: transform 0.15s ease;
-          
-          &:hover {
-            transform: scale(1.1);
-          }
-        }
       }
     }
   }

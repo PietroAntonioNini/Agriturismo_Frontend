@@ -134,12 +134,9 @@ export class ApartmentFormComponent implements OnInit {
     // Use the getById method without the third parameter
     this.apiService.getById<Apartment>('apartments', id).subscribe({
       next: (apartment) => {
-        console.log('Apartment data from server:', apartment);
-        console.log('Amenities from server:', apartment.amenities);
         this.currentApartment = apartment;
         this.updateForm(apartment);
         this.selectedAmenities = apartment.amenities || [];
-        console.log('Selected amenities after loading:', this.selectedAmenities);
         
         // Clear existing arrays
         this.imageFiles = [];

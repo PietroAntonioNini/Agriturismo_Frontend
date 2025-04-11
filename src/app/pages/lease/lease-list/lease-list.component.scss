@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // Variabili
 $primary-color: #3f51b5;
 $accent-color: #ff9800;
@@ -134,17 +136,17 @@ $transition-speed: 0.25s;
         &.mat-mdc-chip-selected {
           &.mat-primary {
             background-color: rgba($available-color, 0.2);
-            color: lighten($available-color, 20%);
+            color: color.adjust($available-color, $lightness: 20%);
           }
           
           &.mat-warn {
             background-color: rgba($occupied-color, 0.2);
-            color: lighten($occupied-color, 20%);
+            color: color.adjust($occupied-color, $lightness: 20%);
           }
           
           &.mat-accent {
             background-color: rgba($maintenance-color, 0.2);
-            color: lighten($maintenance-color, 20%);
+            color: color.adjust($maintenance-color, $lightness: 20%);
           }
         }
       }
@@ -167,7 +169,7 @@ $transition-speed: 0.25s;
       
       &.active {
         background-color: rgba($primary-color, 0.2);
-        color: lighten($primary-color, 20%);
+        color: color.adjust($primary-color, $lightness: 20%);
       }
       
       &:hover {
@@ -279,8 +281,7 @@ $transition-speed: 0.25s;
     border: 1px solid rgba(255, 255, 255, 0.05);
     
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
     }
     
     &.active-lease {
@@ -296,32 +297,25 @@ $transition-speed: 0.25s;
       
       .lease-id {
         font-size: 1.25rem;
-        font-weight: 500;
+        font-weight: 600;
       }
       
       .lease-status-badge {
         display: flex;
         align-items: center;
-        padding: 4px 8px;
-        border-radius: 12px;
+        padding: 4px 12px;
+        border-radius: 30px;
         font-size: 0.85rem;
         font-weight: 500;
         
         &.status-active {
           background-color: rgba($available-color, 0.2);
-          color: lighten($available-color, 10%);
+          color: color.adjust($available-color, $lightness: 20%);
         }
         
         &.status-inactive {
           background-color: rgba($occupied-color, 0.2);
-          color: lighten($occupied-color, 10%);
-        }
-        
-        .status-icon {
-          font-size: 16px;
-          height: 16px;
-          width: 16px;
-          margin-right: 4px;
+          color: color.adjust($occupied-color, $lightness: 20%);
         }
       }
     }
@@ -330,61 +324,122 @@ $transition-speed: 0.25s;
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
       flex: 1;
       
-      .lease-section {
+      // Sezione informazioni principali
+      .lease-info-container {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        gap: 16px;
         
-        .section-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 12px;
-          
-          &.tenant-icon {
-            background-color: rgba($primary-color, 0.2);
-            color: lighten($primary-color, 20%);
-          }
-          
-          &.apartment-icon {
-            background-color: rgba($accent-color, 0.2);
-            color: lighten($accent-color, 10%);
-          }
-          
-          &.payment-icon {
-            background-color: rgba($available-color, 0.2);
-            color: lighten($available-color, 10%);
-          }
-        }
-        
-        .section-info {
-          .section-label {
-            font-size: 0.9rem;
+        .lease-info-section {
+          .info-label {
+            display: flex;
+            align-items: center;
             color: $text-secondary;
-            margin-bottom: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            
+            .section-icon {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-right: 8px;
+              
+              &.tenant-icon {
+                background-color: rgba($primary-color, 0.2);
+                color: color.adjust($primary-color, $lightness: 20%);
+              }
+              
+              &.apartment-icon {
+                background-color: rgba($accent-color, 0.2);
+                color: color.adjust($accent-color, $lightness: 10%);
+              }
+              
+              mat-icon {
+                font-size: 14px;
+                height: 14px;
+                width: 14px;
+              }
+            }
           }
           
-          .section-value {
+          .info-value {
             font-weight: 500;
-            
-            &.rent-value {
-              font-size: 1.2rem;
-              font-weight: 600;
-            }
+            font-size: 1.1rem;
+            padding-left: 32px;
           }
         }
       }
       
-      .dates-section {
+      // Sezione finanziaria
+      .lease-financial-section {
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.15);
+        border-radius: $radius-sm;
+        
+        .info-label {
+          display: flex;
+          align-items: center;
+          color: $text-secondary;
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+          
+          .section-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            
+            &.payment-icon {
+              background-color: rgba($available-color, 0.2);
+              color: color.adjust($available-color, $lightness: 10%);
+            }
+            
+            mat-icon {
+              font-size: 14px;
+              height: 14px;
+              width: 14px;
+            }
+          }
+        }
+        
+        .rent-value {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: color.adjust($available-color, $lightness: 10%);
+          margin: 6px 0 10px 32px;
+        }
+        
+        .payment-schedule {
+          display: flex;
+          align-items: center;
+          font-size: 0.85rem;
+          color: $text-secondary;
+          padding-top: 8px;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          
+          mat-icon {
+            font-size: 16px;
+            height: 16px;
+            width: 16px;
+            margin-right: 8px;
+          }
+        }
+      }
+      
+      // Sezione date
+      .lease-dates-section {
         display: flex;
         justify-content: space-between;
-        gap: 12px;
-        margin: 8px 0;
+        gap: 16px;
         
         .date-column {
           flex: 1;
@@ -392,42 +447,44 @@ $transition-speed: 0.25s;
           .date-label {
             font-size: 0.9rem;
             color: $text-secondary;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
           }
           
-          .date-container {
+          .date-value {
             display: flex;
             align-items: center;
-            
-            &.start-date .date-calendar {
-              background-color: rgba($primary-color, 0.2);
-              border: 1px solid rgba($primary-color, 0.3);
-            }
-            
-            &.end-date .date-calendar {
-              background-color: rgba($warn-color, 0.2);
-              border: 1px solid rgba($warn-color, 0.3);
-            }
             
             .date-calendar {
               display: flex;
               flex-direction: column;
               align-items: center;
-              padding: 4px 8px;
-              border-radius: 8px;
+              justify-content: center;
+              width: 60px;
+              height: 60px;
+              border-radius: $radius-sm;
               margin-right: 12px;
-              min-width: 50px;
+              
+              &.start-date {
+                background-color: rgba($primary-color, 0.15);
+                border: 1px solid rgba($primary-color, 0.3);
+              }
+              
+              &.end-date {
+                background-color: rgba($warn-color, 0.15);
+                border: 1px solid rgba($warn-color, 0.3);
+              }
               
               .month {
                 font-size: 0.8rem;
                 text-transform: uppercase;
                 font-weight: 500;
+                margin-bottom: 2px;
               }
               
               .day {
-                font-size: 1.4rem;
+                font-size: 1.8rem;
                 font-weight: 700;
-                line-height: 1.2;
+                line-height: 1;
               }
             }
             
@@ -437,44 +494,22 @@ $transition-speed: 0.25s;
           }
         }
       }
-      
-      .payment-section {
-        .rent-info {
-          display: flex;
-          margin-bottom: 12px;
-        }
-        
-        .payment-day {
-          display: flex;
-          align-items: center;
-          background-color: rgba(255, 255, 255, 0.05);
-          padding: 8px 12px;
-          border-radius: 8px;
-          font-size: 0.9rem;
-          
-          mat-icon {
-            font-size: 18px;
-            height: 18px;
-            width: 18px;
-            margin-right: 8px;
-            color: $text-secondary;
-          }
-        }
-      }
     }
     
+    // Azioni
     .lease-actions {
-      padding: 12px;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+      padding: 12px;
       background-color: rgba(0, 0, 0, 0.2);
       
       button {
-        transition: transform 0.15s ease;
+        transition: all 0.2s ease;
         
         &:hover {
-          transform: scale(1.1);
+          transform: translateY(-3px);
+          box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
         }
       }
     }
@@ -544,11 +579,11 @@ $transition-speed: 0.25s;
         margin-right: 8px;
         
         &.tenant-icon {
-          color: lighten($primary-color, 20%);
+          color: color.adjust($primary-color, $lightness: 20%);
         }
         
         &.apartment-icon {
-          color: lighten($accent-color, 10%);
+          color: color.adjust($accent-color, $lightness: 10%);
         }
       }
     }
@@ -574,12 +609,12 @@ $transition-speed: 0.25s;
           
           &.start-date {
             background-color: rgba($primary-color, 0.2);
-            color: lighten($primary-color, 20%);
+            color: color.adjust($primary-color, $lightness: 20%);
           }
           
           &.end-date {
             background-color: rgba($warn-color, 0.2);
-            color: lighten($warn-color, 20%);
+            color: color.adjust($warn-color, $lightness: 20%);
           }
         }
       }
@@ -609,12 +644,12 @@ $transition-speed: 0.25s;
       
       &.status-active {
         background-color: rgba($available-color, 0.2);
-        color: lighten($available-color, 10%);
+        color: color.adjust($available-color, $lightness: 20%);
       }
       
       &.status-inactive {
         background-color: rgba($occupied-color, 0.2);
-        color: lighten($occupied-color, 10%);
+        color: color.adjust($occupied-color, $lightness: 20%);
       }
       
       .status-icon {

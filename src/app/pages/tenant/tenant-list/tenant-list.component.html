@@ -22,10 +22,9 @@
       </mat-form-field>
       
       <div class="filter-chips">
-        <mat-chip-listbox aria-label="Filtri" [multiple]="true" (change)="updateFilters()">
-          <mat-chip-option color="primary" value="active">Attivi</mat-chip-option>
-          <mat-chip-option color="accent" value="pending">In attesa</mat-chip-option>
-          <mat-chip-option color="warn" value="expired">Documento scaduto</mat-chip-option>
+        <mat-chip-listbox #filterChips aria-label="Filtri" multiple>
+          <mat-chip-option color="primary" [value]="'with_lease'" (selectionChange)="updateFilters(filterChips)">Con contratto</mat-chip-option>
+          <mat-chip-option color="warn" [value]="'without_lease'" (selectionChange)="updateFilters(filterChips)">Senza contratto</mat-chip-option>
         </mat-chip-listbox>
       </div>
     </div>
@@ -86,7 +85,7 @@
         
         <div class="tenant-contact">
           <div class="contact-item">
-            <mat-icon>phone</mat-icon>
+            <mat-icon>smartphone</mat-icon>
             <span>{{tenant.phone}}</span>
           </div>
           <div class="contact-item">

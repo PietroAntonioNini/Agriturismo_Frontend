@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // Variabili
 $primary-color: #3f51b5;
 $accent-color: #ff9800;
@@ -123,17 +125,17 @@ $transition-speed: 0.25s;
         &.mat-mdc-chip-selected {
           &.mat-primary {
             background-color: rgba($available-color, 0.2);
-            color: lighten($available-color, 20%);
+            color: color.adjust($available-color, $lightness: 20%);
           }
           
           &.mat-warn {
             background-color: rgba($occupied-color, 0.2);
-            color: lighten($occupied-color, 20%);
+            color: color.adjust($occupied-color, $lightness: 20%);
           }
           
           &.mat-accent {
             background-color: rgba($maintenance-color, 0.2);
-            color: lighten($maintenance-color, 20%);
+            color: color.adjust($maintenance-color, $lightness: 20%);
           }
         }
       }
@@ -150,7 +152,7 @@ $transition-speed: 0.25s;
       
       &.active {
         background-color: rgba($primary-color, 0.2);
-        color: lighten($primary-color, 20%);
+        color: color.adjust($primary-color, $lightness: 20%);
       }
       
       &:hover {
@@ -261,6 +263,7 @@ $transition-speed: 0.25s;
     flex-direction: column;
     
     &:hover {
+      cursor: pointer;
       transform: translateY(-4px);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     }
@@ -268,6 +271,14 @@ $transition-speed: 0.25s;
     &.highlight-available {
       border-left: 3px solid $available-color;
     }
+
+    &.highlight-occupied {
+      border-left: 3px solid $occupied-color;
+    }
+
+    &.highlight-maintenance {
+      border-left: 3px solid $maintenance-color;
+    } 
     
     .apartment-header {
       padding: 16px;
@@ -275,6 +286,10 @@ $transition-speed: 0.25s;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+      &:hover {
+        cursor: pointer;
+      }
       
       .apartment-name {
         font-size: 1.25rem;
@@ -285,33 +300,55 @@ $transition-speed: 0.25s;
       }
       
       .apartment-status-badge {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
         display: flex;
         align-items: center;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+        &::before {
+          content: '';
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-right: 6px;
+        }
         
         &.status-available {
-          background-color: rgba($available-color, 0.2);
-          color: lighten($available-color, 10%);
+          background-color: rgba(76, 175, 80, 0.15);
+          color: #66bb6a;
+          border: 1px solid rgba(76, 175, 80, 0.3);
+          
+          &::before {
+            background-color: #66bb6a;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+          }
         }
         
         &.status-occupied {
-          background-color: rgba($occupied-color, 0.2);
-          color: lighten($occupied-color, 10%);
+          background-color: rgba(244, 67, 54, 0.15);
+          color: #e57373;
+          border: 1px solid rgba(244, 67, 54, 0.3);
+          
+          &::before {
+            background-color: #e57373;
+            box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+          }
         }
         
         &.status-maintenance {
-          background-color: rgba($maintenance-color, 0.2);
-          color: lighten($maintenance-color, 10%);
-        }
-        
-        .status-icon {
-          font-size: 16px;
-          height: 16px;
-          width: 16px;
-          margin-right: 4px;
+          background-color: rgba(255, 193, 7, 0.15);
+          color: #ffd54f;
+          border: 1px solid rgba(255, 193, 7, 0.3);
+          
+          &::before {
+            background-color: #ffd54f;
+            box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+          }
         }
       }
     }
@@ -353,6 +390,7 @@ $transition-speed: 0.25s;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
+        border-top-left-radius: 8px;
         
         span {
           font-size: 1.4rem;
@@ -404,14 +442,6 @@ $transition-speed: 0.25s;
       justify-content: flex-end;
       gap: 8px;
       background-color: rgba(0, 0, 0, 0.2);
-      
-      button {
-        transition: transform 0.15s ease;
-        
-        &:hover {
-          transform: scale(1.1);
-        }
-      }
     }
   }
 }
@@ -469,24 +499,17 @@ $transition-speed: 0.25s;
       
       &.status-available {
         background-color: rgba($available-color, 0.2);
-        color: lighten($available-color, 10%);
+        color: color.adjust($available-color, $lightness: 10%);
       }
       
       &.status-occupied {
         background-color: rgba($occupied-color, 0.2);
-        color: lighten($occupied-color, 10%);
+        color: color.adjust($occupied-color, $lightness: 10%);
       }
       
       &.status-maintenance {
         background-color: rgba($maintenance-color, 0.2);
-        color: lighten($maintenance-color, 10%);
-      }
-      
-      .status-icon {
-        font-size: 16px;
-        height: 16px;
-        width: 16px;
-        margin-right: 4px;
+        color: color.adjust($maintenance-color, $lightness: 10%);
       }
     }
     
@@ -529,14 +552,6 @@ $transition-speed: 0.25s;
         display: flex;
         justify-content: flex-end;
         gap: 8px;
-        
-        button {
-          transition: transform 0.15s ease;
-          
-          &:hover {
-            transform: scale(1.1);
-          }
-        }
       }
     }
   }

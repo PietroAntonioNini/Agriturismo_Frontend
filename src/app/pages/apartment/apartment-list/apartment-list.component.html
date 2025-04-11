@@ -73,13 +73,10 @@
 
   <!-- Vista Griglia -->
   <div *ngIf="viewMode === 'grid' && filteredApartments.length > 0" class="apartments-grid">
-    <div *ngFor="let apartment of filteredApartments" class="apartment-card" [class.highlight-available]="apartment.status === 'available'">
+    <div *ngFor="let apartment of filteredApartments" class="apartment-card" [class.highlight-available]="apartment.status === 'available'" [class.highlight-occupied]="apartment.status === 'occupied'" [class.highlight-maintenance]="apartment.status === 'maintenance'">
       <div class="apartment-header">
         <div class="apartment-name">{{apartment.name}}</div>
         <div class="apartment-status-badge" [class]="getStatusClass(apartment.status)">
-          <mat-icon *ngIf="apartment.status === 'available'" class="status-icon">check_circle</mat-icon>
-          <mat-icon *ngIf="apartment.status === 'occupied'" class="status-icon">cancel</mat-icon>
-          <mat-icon *ngIf="apartment.status === 'maintenance'" class="status-icon">warning</mat-icon>
           {{getStatusLabel(apartment.status)}}
         </div>
       </div>
@@ -148,9 +145,6 @@
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Stato</th>
         <td mat-cell *matCellDef="let apartment">
           <div class="status-indicator" [class]="getStatusClass(apartment.status)">
-            <mat-icon *ngIf="apartment.status === 'available'" class="status-icon">check_circle</mat-icon>
-            <mat-icon *ngIf="apartment.status === 'occupied'" class="status-icon">cancel</mat-icon>
-            <mat-icon *ngIf="apartment.status === 'maintenance'" class="status-icon">warning</mat-icon>
             {{getStatusLabel(apartment.status)}}
           </div>
         </td>

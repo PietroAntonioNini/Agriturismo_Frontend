@@ -90,84 +90,84 @@
 
   <!-- Vista Griglia -->
   <div *ngIf="viewMode === 'grid' && !isLoading && dataSource.filteredData.length > 0" class="leases-grid">
-    <div *ngFor="let lease of dataSource.filteredData" class="lease-card" [class.active-lease]="lease.isActive">
+    <div *ngFor="let lease of dataSource.filteredData" class="lease-card" [class.active-lease]="lease.isActive" [routerLink]="['/lease/detail', lease.id]">
+      <!-- Header con ID e stato -->
       <div class="lease-header">
         <div class="lease-id">Contratto #{{lease.id}}</div>
         <div class="lease-status-badge" [class]="getStatusClass(lease.isActive)">
-          <mat-icon *ngIf="lease.isActive" class="status-icon">check_circle</mat-icon>
-          <mat-icon *ngIf="!lease.isActive" class="status-icon">cancel</mat-icon>
           {{getStatusLabel(lease.isActive)}}
         </div>
       </div>
       
+      <!-- Contenuto principale -->
       <div class="lease-content">
-        <!-- Sezione Inquilino -->
-        <div class="lease-section tenant-section">
-          <div class="section-icon tenant-icon">
-            <mat-icon>person</mat-icon>
-          </div>
-          <div class="section-info">
-            <div class="section-label">Inquilino</div>
-            <div class="section-value">{{getTenantName(lease.tenantId)}}</div>
-          </div>
-        </div>
-        
-        <!-- Sezione Appartamento -->
-        <div class="lease-section apartment-section">
-          <div class="section-icon apartment-icon">
-            <mat-icon>apartment</mat-icon>
-          </div>
-          <div class="section-info">
-            <div class="section-label">Appartamento</div>
-            <div class="section-value">{{getApartmentName(lease.apartmentId)}}</div>
-          </div>
-        </div>
-        
-        <!-- Sezione Date -->
-        <div class="dates-section">
-          <div class="date-column">
-            <div class="date-label">Data Inizio</div>
-            <div class="date-container start-date">
-              <div class="date-calendar">
-                <span class="month">{{getMonthName(lease.startDate)}}</span>
-                <span class="day">{{getDayFromDate(lease.startDate)}}</span>
+        <!-- Sezione principale con inquilino e appartamento -->
+        <div class="lease-info-container">
+          <!-- Inquilino -->
+          <div class="lease-info-section">
+            <div class="info-label">
+              <div class="section-icon tenant-icon">
+                <mat-icon>person</mat-icon>
               </div>
-              <span class="full-date">{{formatDate(lease.startDate)}}</span>
+              Inquilino
             </div>
+            <div class="info-value">{{getTenantName(lease.tenantId)}}</div>
           </div>
           
-          <div class="date-column">
-            <div class="date-label">Data Fine</div>
-            <div class="date-container end-date">
-              <div class="date-calendar">
-                <span class="month">{{getMonthName(lease.endDate)}}</span>
-                <span class="day">{{getDayFromDate(lease.endDate)}}</span>
+          <!-- Appartamento -->
+          <div class="lease-info-section">
+            <div class="info-label">
+              <div class="section-icon apartment-icon">
+                <mat-icon>apartment</mat-icon>
               </div>
-              <span class="full-date">{{formatDate(lease.endDate)}}</span>
+              Appartamento
             </div>
+            <div class="info-value">{{getApartmentName(lease.apartmentId)}}</div>
           </div>
         </div>
         
-        <!-- Sezione Canone -->
-        <div class="payment-section">
-          <div class="rent-info">
+        <!-- Sezione finanziaria -->
+        <div class="lease-financial-section">
+          <div class="info-label">
             <div class="section-icon payment-icon">
               <mat-icon>payments</mat-icon>
             </div>
-            <div class="section-info">
-              <div class="section-label">Canone Mensile</div>
-              <div class="section-value rent-value">€{{lease.monthlyRent}}</div>
-            </div>
+            Canone Mensile
           </div>
-          
-          <div class="payment-day" *ngIf="lease.paymentDueDay">
+          <div class="rent-value">€{{lease.monthlyRent}}</div>
+          <div class="payment-schedule" *ngIf="lease.paymentDueDay">
             <mat-icon>event</mat-icon>
             <span>Pagamento il {{lease.paymentDueDay}} di ogni mese</span>
           </div>
         </div>
+        
+        <!-- Sezione date -->
+        <div class="lease-dates-section">
+          <div class="date-column">
+            <div class="date-label">Inizio</div>
+            <div class="date-value">
+              <div class="date-calendar start-date">
+                <div class="month">{{getMonthName(lease.startDate)}}</div>
+                <div class="day">{{getDayFromDate(lease.startDate)}}</div>
+              </div>
+              <div class="full-date">{{formatDate(lease.startDate)}}</div>
+            </div>
+          </div>
+          
+          <div class="date-column">
+            <div class="date-label">Fine</div>
+            <div class="date-value">
+              <div class="date-calendar end-date">
+                <div class="month">{{getMonthName(lease.endDate)}}</div>
+                <div class="day">{{getDayFromDate(lease.endDate)}}</div>
+              </div>
+              <div class="full-date">{{formatDate(lease.endDate)}}</div>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <!-- Azioni -->
+      <!-- Footer con azioni -->
       <div class="lease-actions">
         <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" [routerLink]="['/lease/detail', lease.id]">
           <mat-icon>visibility</mat-icon>
