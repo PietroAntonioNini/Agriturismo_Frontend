@@ -2,11 +2,11 @@
 
 // Variabili
 $primary-color: #3f51b5;
-$accent-color: #ff9800;
+$accent-color: #ffe924;
 $warn-color: #f44336;
 $available-color: #4caf50;
 $occupied-color: #f44336;
-$maintenance-color: #ff9800;
+$maintenance-color: #ffe924;
 $background-color: #121212;
 $card-background: #1d1d1d;
 $surface-color: #242424;
@@ -104,6 +104,7 @@ $transition-speed: 0.25s;
       
       ::ng-deep .mat-mdc-text-field-wrapper {
         background-color: transparent;
+        padding: 0px !important;
       }
       
       ::ng-deep .mat-mdc-form-field-label {
@@ -125,17 +126,14 @@ $transition-speed: 0.25s;
         &.mat-mdc-chip-selected {
           &.mat-primary {
             background-color: rgba($available-color, 0.2);
-            color: color.adjust($available-color, $lightness: 20%);
           }
           
           &.mat-warn {
             background-color: rgba($occupied-color, 0.2);
-            color: color.adjust($occupied-color, $lightness: 20%);
           }
           
           &.mat-accent {
-            background-color: rgba($maintenance-color, 0.2);
-            color: color.adjust($maintenance-color, $lightness: 20%);
+            background-color: rgba($maintenance-color, 0.4);
           }
         }
       }

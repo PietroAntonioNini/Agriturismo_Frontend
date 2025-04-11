@@ -3,7 +3,9 @@
 // Variables
 $primary-color: #3f51b5;
 $accent-color: #ff4081;
-$warn-color: #f44336;
+$danger-color: #f44336;
+$available-color: #4caf50;
+$warning-color: #ffe924;
 $background-color: #121212;
 $card-background: #1d1d1d;
 $surface-color: #242424;
@@ -16,6 +18,8 @@ $card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 $radius-sm: 8px;
 $radius-md: 12px;
 $radius-lg: 16px;
+$card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+$transition-speed: 0.25s;
 
 .tenant-management-container {
   padding: 24px;
@@ -101,6 +105,7 @@ $radius-lg: 16px;
       
       ::ng-deep .mat-mdc-text-field-wrapper {
         background-color: transparent;
+        padding: 0px !important;
       }
       
       ::ng-deep .mat-mdc-form-field-label {
@@ -120,8 +125,15 @@ $radius-lg: 16px;
         color: $text-primary;
         
         &.mat-mdc-chip-selected {
-          background-color: rgba($primary-color, 0.2);
-          color: color.adjust($primary-color, $lightness: 20%);
+          &.mat-primary {
+            background-color: rgba($available-color, 0.2);
+            color: color.adjust($available-color, $lightness: 20%);
+          }
+          
+          &.mat-warn {
+            background-color: rgba($danger-color, 0.2);
+            color: color.adjust($danger-color, $lightness: 20%);
+          }
         }
       }
     }
@@ -170,9 +182,9 @@ $radius-lg: 16px;
 // Error Container
 .error-container {
   padding: 32px;
-  background-color: rgba($warn-color, 0.1);
+  background-color: rgba($danger-color, 0.1);
   border-radius: $radius-md;
-  border-left: 4px solid $warn-color;
+  border-left: 4px solid $danger-color;
   margin-bottom: 24px;
   display: flex;
   align-items: center;
@@ -255,8 +267,8 @@ $radius-lg: 16px;
     }
     
     &.expired {
-      border-left: 4px solid $warn-color;
-      background: linear-gradient(145deg, color.adjust($card-background, $lightness: -2%), color.mix($card-background, $warn-color, 95%));
+      border-left: 4px solid $danger-color;
+      background: linear-gradient(145deg, color.adjust($card-background, $lightness: -2%), color.mix($card-background, $danger-color, 95%));
     }
     
     .tenant-header {
@@ -469,14 +481,14 @@ $radius-lg: 16px;
       }
       
       &.expired-row {
-        background-color: rgba($warn-color, 0.05);
+        background-color: rgba($danger-color, 0.05);
         
         &:hover {
-          background-color: rgba($warn-color, 0.1);
+          background-color: rgba($danger-color, 0.1);
         }
         
         td {
-          border-bottom-color: rgba($warn-color, 0.2);
+          border-bottom-color: rgba($danger-color, 0.2);
         }
       }
     }
@@ -518,7 +530,7 @@ $radius-lg: 16px;
           font-size: 0.75rem;
           padding: 4px 8px;
           border-radius: 12px;
-          background-color: rgba($warn-color, 0.2);
+          background-color: rgba($danger-color, 0.2);
           color: #e57373;
         }
       }
