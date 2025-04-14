@@ -1,7 +1,7 @@
 <div class="container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>{{getFormTitle()}}</mat-card-title>
+  <mat-card class="form-card">
+    <mat-card-header class="header">
+      <mat-card-title class="title">{{getFormTitle()}}</mat-card-title>
       <div class="header-actions">
         <button mat-icon-button (click)="cancel()" matTooltip="Torna alla lista">
           <mat-icon>arrow_back</mat-icon>
@@ -12,6 +12,7 @@
     <mat-card-content>
       <div *ngIf="isLoading" class="loading-container">
         <mat-spinner></mat-spinner>
+        <p class="loading-text">Caricamento in corso...</p>
       </div>
       
       <div *ngIf="errorMessage" class="error-message">
@@ -19,118 +20,329 @@
         <span>{{errorMessage}}</span>
       </div>
       
-      <form [formGroup]="leaseForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading && !errorMessage">
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Inquilino</mat-label>
-            <mat-select formControlName="tenantId">
-              <mat-option *ngFor="let tenant of tenants" [value]="tenant.id">
-                {{tenant.firstName}} {{tenant.lastName}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="leaseForm.get('tenantId')?.hasError('required')">
-              L'inquilino è obbligatorio
-            </mat-error>
-          </mat-form-field>
+      <div *ngIf="!isLoading && !errorMessage">
+        <mat-stepper linear #stepper>
+          <!-- Step 1: Parti contraenti -->
+          <mat-step [stepControl]="partiesFormGroup">
+            <form [formGroup]="partiesFormGroup">
+              <ng-template matStepLabel>Parti Contraenti</ng-template>
+              
+              <div class="step-content">
+                <div class="section-title">
+                  <mat-icon>person</mat-icon>
+                  <h3>Selezione Inquilino</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Inquilino</mat-label>
+                      <mat-select formControlName="tenantId">
+                        <mat-option *ngFor="let tenant of tenants" [value]="tenant.id">
+                          {{tenant.firstName}} {{tenant.lastName}}
+                        </mat-option>
+                      </mat-select>
+                      <mat-hint>Seleziona l'inquilino per questo contratto</mat-hint>
+                      <mat-error *ngIf="partiesFormGroup.get('tenantId')?.hasError('required')">
+                        L'inquilino è obbligatorio
+                      </mat-error>
+                    </mat-form-field>
+                    
+                    <div *ngIf="selectedTenant" class="tenant-preview">
+                      <div class="preview-row">
+                        <span class="preview-label">Nome Completo:</span>
+                        <span>{{selectedTenant.firstName}} {{selectedTenant.lastName}}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-label">Documento:</span>
+                        <span>{{selectedTenant.documentType}} {{selectedTenant.documentNumber}}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-label">Contatto:</span>
+                        <span>{{selectedTenant.email}} - {{selectedTenant.phone}}</span>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+                
+                <div class="section-title">
+                  <mat-icon>apartment</mat-icon>
+                  <h3>Selezione Immobile</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Appartamento</mat-label>
+                      <mat-select formControlName="apartmentId">
+                        <mat-option *ngFor="let apartment of apartments" [value]="apartment.id">
+                          {{apartment.name}}
+                        </mat-option>
+                      </mat-select>
+                      <mat-hint>Seleziona l'immobile oggetto della locazione</mat-hint>
+                      <mat-error *ngIf="partiesFormGroup.get('apartmentId')?.hasError('required')">
+                        L'appartamento è obbligatorio
+                      </mat-error>
+                    </mat-form-field>
+                    
+                    <div *ngIf="selectedApartment" class="apartment-preview">
+                      <div class="preview-row">
+                        <span class="preview-label">Indirizzo:</span>
+                        <span>{{selectedApartment.name}}</span>
+                      </div>
+                      <div class="preview-row">
+                        <span class="preview-label">Caratteristiche:</span>
+                        <span>{{selectedApartment.rooms}} vani, {{selectedApartment.bathrooms}} bagni, {{selectedApartment.squareMeters}}mq</span>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+              
+              <div class="stepper-buttons">
+                <button mat-button type="button" (click)="cancel()">Annulla</button>
+                <button mat-button matStepperNext color="primary">Avanti</button>
+              </div>
+            </form>
+          </mat-step>
           
-          <mat-form-field appearance="outline">
-            <mat-label>Appartamento</mat-label>
-            <mat-select formControlName="apartmentId">
-              <mat-option *ngFor="let apartment of apartments" [value]="apartment.id">
-                {{apartment.name}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="leaseForm.get('apartmentId')?.hasError('required')">
-              L'appartamento è obbligatorio
-            </mat-error>
-          </mat-form-field>
-        </div>
-        
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Data Inizio</mat-label>
-            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
-            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
-            <mat-datepicker #startPicker></mat-datepicker>
-            <mat-error *ngIf="leaseForm.get('startDate')?.hasError('required')">
-              La data di inizio è obbligatoria
-            </mat-error>
-          </mat-form-field>
+          <!-- Step 2: Durata e Canone -->
+          <mat-step [stepControl]="termsFormGroup">
+            <form [formGroup]="termsFormGroup">
+              <ng-template matStepLabel>Durata e Canone</ng-template>
+              
+              <div class="step-content">
+                <div class="section-title">
+                  <mat-icon>date_range</mat-icon>
+                  <h3>Durata del Contratto</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Data Inizio</mat-label>
+                        <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #startPicker></mat-datepicker>
+                        <mat-hint>Data di inizio del contratto</mat-hint>
+                        <mat-error *ngIf="termsFormGroup.get('startDate')?.hasError('required')">
+                          La data di inizio è obbligatoria
+                        </mat-error>
+                      </mat-form-field>
+                      
+                      <mat-form-field appearance="outline">
+                        <mat-label>Data Fine</mat-label>
+                        <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                        <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                        <mat-datepicker #endPicker></mat-datepicker>
+                        <mat-hint>Data di fine del contratto</mat-hint>
+                        <mat-error *ngIf="termsFormGroup.get('endDate')?.hasError('required')">
+                          La data di fine è obbligatoria
+                        </mat-error>
+                        <mat-error *ngIf="termsFormGroup.get('endDate')?.hasError('dateInvalid')">
+                          La data di fine deve essere successiva alla data di inizio
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+                
+                <div class="section-title">
+                  <mat-icon>euro</mat-icon>
+                  <h3>Condizioni Economiche</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <div class="form-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Canone Mensile (€)</mat-label>
+                        <input matInput type="number" formControlName="monthlyRent" min="0">
+                        <span matTextPrefix>€&nbsp;</span>
+                        <mat-hint>Importo mensile del canone</mat-hint>
+                        <mat-error *ngIf="termsFormGroup.get('monthlyRent')?.hasError('required')">
+                          Il canone mensile è obbligatorio
+                        </mat-error>
+                        <mat-error *ngIf="termsFormGroup.get('monthlyRent')?.hasError('min')">
+                          Il canone mensile deve essere maggiore di 0
+                        </mat-error>
+                      </mat-form-field>
+                      
+                      <mat-form-field appearance="outline">
+                        <mat-label>Deposito Cauzionale (€)</mat-label>
+                        <input matInput type="number" formControlName="securityDeposit" min="0">
+                        <span matTextPrefix>€&nbsp;</span>
+                        <mat-hint>Solitamente da 2 a 3 mensilità</mat-hint>
+                        <mat-error *ngIf="termsFormGroup.get('securityDeposit')?.hasError('required')">
+                          Il deposito cauzionale è obbligatorio
+                        </mat-error>
+                        <mat-error *ngIf="termsFormGroup.get('securityDeposit')?.hasError('min')">
+                          Il deposito cauzionale deve essere maggiore di 0
+                        </mat-error>
+                      </mat-form-field>
+                      
+                      <mat-form-field appearance="outline">
+                        <mat-label>Giorno Scadenza Pagamento</mat-label>
+                        <input matInput type="number" formControlName="paymentDueDay" min="1" max="31">
+                        <mat-hint>Giorno del mese in cui è dovuto il pagamento</mat-hint>
+                        <mat-error *ngIf="termsFormGroup.get('paymentDueDay')?.hasError('required')">
+                          Il giorno di scadenza è obbligatorio
+                        </mat-error>
+                        <mat-error *ngIf="termsFormGroup.get('paymentDueDay')?.hasError('min') || termsFormGroup.get('paymentDueDay')?.hasError('max')">
+                          Il giorno deve essere compreso tra 1 e 31
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+              
+              <div class="stepper-buttons">
+                <button mat-button matStepperPrevious>Indietro</button>
+                <button mat-button matStepperNext color="primary">Avanti</button>
+              </div>
+            </form>
+          </mat-step>
           
-          <mat-form-field appearance="outline">
-            <mat-label>Data Fine</mat-label>
-            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
-            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-            <mat-datepicker #endPicker></mat-datepicker>
-            <mat-error *ngIf="leaseForm.get('endDate')?.hasError('required')">
-              La data di fine è obbligatoria
-            </mat-error>
-          </mat-form-field>
-        </div>
-        
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Canone Mensile (€)</mat-label>
-            <input matInput type="number" formControlName="monthlyRent">
-            <span matTextPrefix>€&nbsp;</span>
-            <mat-error *ngIf="leaseForm.get('monthlyRent')?.hasError('required')">
-              Il canone mensile è obbligatorio
-            </mat-error>
-            <mat-error *ngIf="leaseForm.get('monthlyRent')?.hasError('min')">
-              Il canone mensile deve essere maggiore di 0
-            </mat-error>
-          </mat-form-field>
+          <!-- Step 3: Termini e Condizioni -->
+          <mat-step [stepControl]="conditionsFormGroup">
+            <form [formGroup]="conditionsFormGroup">
+              <ng-template matStepLabel>Termini e Condizioni</ng-template>
+              
+              <div class="step-content">
+                <div class="section-title">
+                  <mat-icon>gavel</mat-icon>
+                  <h3>Termini e Condizioni Contrattuali</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <div class="terms-templates">
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Template Contrattuale</mat-label>
+                        <mat-select (selectionChange)="onTemplateChange($event.value)">
+                          <mat-option value="4+4">Contratto 4+4 (L. 431/98, art. 2, comma 1)</mat-option>
+                          <mat-option value="3+2">Contratto 3+2 a canone concordato (L. 431/98, art. 2, comma 3)</mat-option>
+                          <mat-option value="transitorio">Contratto transitorio (L. 431/98, art. 5)</mat-option>
+                          <mat-option value="studenti">Contratto per studenti universitari</mat-option>
+                          <mat-option value="custom">Personalizzato</mat-option>
+                        </mat-select>
+                        <mat-hint>Seleziona un template di contratto secondo la normativa vigente</mat-hint>
+                      </mat-form-field>
+                      
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Termini e Condizioni</mat-label>
+                        <textarea matInput formControlName="termsAndConditions" rows="10"></textarea>
+                        <mat-hint>È possibile modificare il testo secondo le esigenze specifiche</mat-hint>
+                        <mat-error *ngIf="conditionsFormGroup.get('termsAndConditions')?.hasError('required')">
+                          I termini e condizioni sono obbligatori
+                        </mat-error>
+                      </mat-form-field>
+                    </div>
+                    
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Clausole Speciali (opzionale)</mat-label>
+                      <textarea matInput formControlName="specialClauses" rows="4" 
+                                placeholder="Es. Divieto di sublocazione, regole specifiche per animali domestici, etc."></textarea>
+                      <mat-hint>Inserisci eventuali clausole aggiuntive o specifiche per questo contratto</mat-hint>
+                    </mat-form-field>
+                    
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Note (opzionale)</mat-label>
+                      <textarea matInput formControlName="notes" rows="3" 
+                                placeholder="Inserisci eventuali note o promemoria relativi a questo contratto"></textarea>
+                      <mat-hint>Note ad uso interno, non verranno incluse nel contratto</mat-hint>
+                    </mat-form-field>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+              
+              <div class="stepper-buttons">
+                <button mat-button matStepperPrevious>Indietro</button>
+                <button mat-button matStepperNext color="primary">Avanti</button>
+              </div>
+            </form>
+          </mat-step>
           
-          <mat-form-field appearance="outline">
-            <mat-label>Deposito Cauzionale (€)</mat-label>
-            <input matInput type="number" formControlName="securityDeposit">
-            <span matTextPrefix>€&nbsp;</span>
-            <mat-error *ngIf="leaseForm.get('securityDeposit')?.hasError('required')">
-              Il deposito cauzionale è obbligatorio
-            </mat-error>
-            <mat-error *ngIf="leaseForm.get('securityDeposit')?.hasError('min')">
-              Il deposito cauzionale deve essere maggiore di 0
-            </mat-error>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline">
-            <mat-label>Giorno Scadenza Pagamento</mat-label>
-            <input matInput type="number" formControlName="paymentDueDay" min="1" max="31">
-            <mat-error *ngIf="leaseForm.get('paymentDueDay')?.hasError('required')">
-              Il giorno di scadenza è obbligatorio
-            </mat-error>
-            <mat-error *ngIf="leaseForm.get('paymentDueDay')?.hasError('min') || leaseForm.get('paymentDueDay')?.hasError('max')">
-              Il giorno deve essere compreso tra 1 e 31
-            </mat-error>
-          </mat-form-field>
-        </div>
-        
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Termini e Condizioni</mat-label>
-          <textarea matInput formControlName="termsAndConditions" rows="6"></textarea>
-          <mat-error *ngIf="leaseForm.get('termsAndConditions')?.hasError('required')">
-            I termini e condizioni sono obbligatori
-          </mat-error>
-        </mat-form-field>
-        
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Clausole Speciali (opzionale)</mat-label>
-          <textarea matInput formControlName="specialClauses" rows="4"></textarea>
-        </mat-form-field>
-        
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Note (opzionale)</mat-label>
-          <textarea matInput formControlName="notes" rows="3"></textarea>
-        </mat-form-field>
-        
-        <div class="form-actions">
-          <button mat-button type="button" (click)="cancel()">Annulla</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
-            <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
-            <span *ngIf="!isSubmitting">{{getSubmitButtonText()}}</span>
-          </button>
-        </div>
-      </form>
+          <!-- Step 4: Riepilogo e Conferma -->
+          <mat-step>
+            <ng-template matStepLabel>Riepilogo</ng-template>
+            
+            <div class="step-content">
+              <div class="section-title">
+                <mat-icon>summarize</mat-icon>
+                <h3>Riepilogo Contratto</h3>
+              </div>
+              
+              <mat-card class="inner-card summary-card">
+                <mat-card-content>
+                  <div class="summary-section">
+                    <h4>Parti Contraenti</h4>
+                    <div class="summary-row" *ngIf="selectedTenant">
+                      <span class="summary-label">Inquilino:</span>
+                      <span>{{selectedTenant.firstName}} {{selectedTenant.lastName}}</span>
+                    </div>
+                    <div class="summary-row" *ngIf="selectedApartment">
+                      <span class="summary-label">Immobile:</span>
+                      <span>{{selectedApartment.name}}</span>
+                    </div>
+                  </div>
+                  
+                  <mat-divider></mat-divider>
+                  
+                  <div class="summary-section">
+                    <h4>Durata e Canone</h4>
+                    <div class="summary-row" *ngIf="termsFormGroup.get('startDate')?.value">
+                      <span class="summary-label">Periodo:</span>
+                      <span>Dal {{termsFormGroup.get('startDate')?.value | date:'dd/MM/yyyy'}} 
+                            al {{termsFormGroup.get('endDate')?.value | date:'dd/MM/yyyy'}}</span>
+                    </div>
+                    <div class="summary-row" *ngIf="termsFormGroup.get('monthlyRent')?.value">
+                      <span class="summary-label">Canone Mensile:</span>
+                      <span>€ {{termsFormGroup.get('monthlyRent')?.value | number:'.2'}}</span>
+                    </div>
+                    <div class="summary-row" *ngIf="termsFormGroup.get('securityDeposit')?.value">
+                      <span class="summary-label">Deposito Cauzionale:</span>
+                      <span>€ {{termsFormGroup.get('securityDeposit')?.value | number:'.2'}}</span>
+                    </div>
+                    <div class="summary-row" *ngIf="termsFormGroup.get('paymentDueDay')?.value">
+                      <span class="summary-label">Scadenza Pagamento:</span>
+                      <span>Giorno {{termsFormGroup.get('paymentDueDay')?.value}} di ogni mese</span>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+              
+              <div class="contract-preview-info">
+                <mat-icon>info</mat-icon>
+                <span>Il contratto completo può essere generato e scaricato cliccando sul pulsante "Genera Contratto"</span>
+              </div>
+            </div>
+            
+            <div class="stepper-buttons final-buttons">
+              <button mat-button matStepperPrevious>Indietro</button>
+              <button mat-button (click)="stepper.reset()">Ricomincia</button>
+              <span class="spacer"></span>
+              <button mat-raised-button 
+                     [disabled]="!isFormValid()" 
+                     (click)="onSubmit()" 
+                     color="primary">
+                <mat-icon>save</mat-icon>
+                <span *ngIf="!isSubmitting">{{getSubmitButtonText()}}</span>
+                <mat-spinner diameter="20" *ngIf="isSubmitting"></mat-spinner>
+              </button>
+              <button mat-raised-button 
+                     [disabled]="!isFormValid()" 
+                     (click)="generateContract()" 
+                     color="accent">
+                <mat-icon>description</mat-icon>
+                Genera Contratto
+              </button>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
 
 // Material Imports
 import { MatButtonModule } from '@angular/material/button';
@@ -19,6 +20,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 
 // Services
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { ContractGeneratorService } from '../../../shared/services/contract-generator.service';
+import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
 
 // Models
 import { Lease, LeaseFormData } from '../../../shared/models/lease.model';
@@ -42,6 +45,7 @@ import { Apartment } from '../../../shared/models';
     MatProgressSpinnerModule,
     MatSelectModule,
     MatSnackBarModule,
+    MatStepperModule,
     MatTooltipModule,
     MatNativeDateModule
   ],
@@ -49,7 +53,13 @@ import { Apartment } from '../../../shared/models';
   styleUrls: ['./lease-form.component.scss']
 })
 export class LeaseFormComponent implements OnInit {
-  leaseForm!: FormGroup;
+  @ViewChild('stepper') stepper!: MatStepper;
+  
+  // Form groups for stepper
+  partiesFormGroup!: FormGroup;
+  termsFormGroup!: FormGroup;
+  conditionsFormGroup!: FormGroup;
+  
   isLoading = false;
   isSubmitting = false;
   isEditMode = false;
@@ -58,17 +68,21 @@ export class LeaseFormComponent implements OnInit {
   
   tenants: Tenant[] = [];
   apartments: Apartment[] = [];
+  selectedTenant: Tenant | null = null;
+  selectedApartment: Apartment | null = null;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private apiService: GenericApiService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private contractGenerator: ContractGeneratorService,
+    private contractTemplates: ContractTemplatesService
   ) {}
 
   ngOnInit(): void {
-    this.initForm();
+    this.initFormGroups();
     this.loadTenants();
     this.loadApartments();
     
@@ -79,39 +93,91 @@ export class LeaseFormComponent implements OnInit {
       this.leaseId = +id;
       this.loadLease(+id);
     }
+
+    // Aggiungi listener per i cambiamenti di tenant e apartment
+    this.partiesFormGroup.get('tenantId')?.valueChanges.subscribe(tenantId => {
+      this.selectedTenant = this.tenants.find(t => t.id === tenantId) || null;
+    });
+
+    this.partiesFormGroup.get('apartmentId')?.valueChanges.subscribe(apartmentId => {
+      this.selectedApartment = this.apartments.find(a => a.id === apartmentId) || null;
+    });
+    
+    // Date validation
+    this.termsFormGroup.get('endDate')?.valueChanges.subscribe(() => {
+      this.termsFormGroup.get('endDate')?.updateValueAndValidity();
+    });
+    
+    this.termsFormGroup.get('startDate')?.valueChanges.subscribe(() => {
+      this.termsFormGroup.get('endDate')?.updateValueAndValidity();
+    });
   }
 
-  initForm(): void {
-    this.leaseForm = this.fb.group({
+  initFormGroups(): void {
+    // Form group per step 1: Parti contraenti
+    this.partiesFormGroup = this.fb.group({
       tenantId: ['', Validators.required],
-      apartmentId: ['', Validators.required],
+      apartmentId: ['', Validators.required]
+    });
+    
+    // Form group per step 2: Durata e canone
+    this.termsFormGroup = this.fb.group({
       startDate: ['', Validators.required],
-      endDate: ['', Validators.required],
+      endDate: ['', [Validators.required, this.endDateValidator]],
       monthlyRent: ['', [Validators.required, Validators.min(0)]],
       securityDeposit: ['', [Validators.required, Validators.min(0)]],
       paymentDueDay: ['', [Validators.required, Validators.min(1), Validators.max(31)]],
+    });
+    
+    // Form group per step 3: Termini e condizioni
+    this.conditionsFormGroup = this.fb.group({
       termsAndConditions: ['', Validators.required],
       specialClauses: [''],
       notes: ['']
     });
+  }
+  
+  // Validatore per la data di fine che deve essere successiva alla data di inizio
+  endDateValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.parent) return null;
+    
+    const startDate = control.parent.get('startDate')?.value;
+    const endDate = control.value;
+    
+    if (!startDate || !endDate) return null;
+    
+    return new Date(endDate) <= new Date(startDate) 
+      ? { dateInvalid: true } 
+      : null;
   }
 
   loadLease(id: number): void {
     this.isLoading = true;
     this.apiService.getById<Lease>('leases', id).subscribe({
       next: (lease) => {
-        this.leaseForm.patchValue({
+        // Aggiorna i valori nei vari form group
+        this.partiesFormGroup.patchValue({
           tenantId: lease.tenantId,
-          apartmentId: lease.apartmentId,
+          apartmentId: lease.apartmentId
+        });
+        
+        this.termsFormGroup.patchValue({
           startDate: new Date(lease.startDate),
           endDate: new Date(lease.endDate),
           monthlyRent: lease.monthlyRent,
           securityDeposit: lease.securityDeposit,
-          paymentDueDay: lease.paymentDueDay,
+          paymentDueDay: lease.paymentDueDay
+        });
+        
+        this.conditionsFormGroup.patchValue({
           termsAndConditions: lease.termsAndConditions,
           specialClauses: lease.specialClauses || '',
           notes: lease.notes || ''
         });
+        
+        // Aggiorna anche selectedTenant e selectedApartment
+        this.selectedTenant = this.tenants.find(t => t.id === lease.tenantId) || null;
+        this.selectedApartment = this.apartments.find(a => a.id === lease.apartmentId) || null;
         this.isLoading = false;
       },
       error: (error) => {
@@ -126,9 +192,18 @@ export class LeaseFormComponent implements OnInit {
     this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
         this.tenants = tenants;
+        // Se siamo in modalità modifica, aggiorna selectedTenant
+        if (this.isEditMode && this.partiesFormGroup.get('tenantId')?.value) {
+          this.selectedTenant = this.tenants.find(t => t.id === this.partiesFormGroup.get('tenantId')?.value) || null;
+        }
       },
       error: (error) => {
         console.error('Errore durante il caricamento degli inquilini', error);
+        this.snackBar.open('Errore nel caricamento degli inquilini', 'Chiudi', {
+          duration: 3000,
+          horizontalPosition: 'end',
+          verticalPosition: 'top'
+        });
       }
     });
   }
@@ -137,20 +212,51 @@ export class LeaseFormComponent implements OnInit {
     this.apiService.getAll<Apartment>('apartments').subscribe({
       next: (apartments) => {
         this.apartments = apartments;
+        // Se siamo in modalità modifica, aggiorna selectedApartment
+        if (this.isEditMode && this.partiesFormGroup.get('apartmentId')?.value) {
+          this.selectedApartment = this.apartments.find(a => a.id === this.partiesFormGroup.get('apartmentId')?.value) || null;
+        }
       },
       error: (error) => {
         console.error('Errore durante il caricamento degli appartamenti', error);
+        this.snackBar.open('Errore nel caricamento degli appartamenti', 'Chiudi', {
+          duration: 3000,
+          horizontalPosition: 'end',
+          verticalPosition: 'top'
+        });
       }
     });
   }
 
+  // Gestisce il cambio di template per i termini e condizioni
+  onTemplateChange(templateType: string): void {
+    const template = this.contractTemplates.getTemplateByType(templateType);
+    if (template) {
+      this.conditionsFormGroup.get('termsAndConditions')?.setValue(template);
+    }
+  }
+
+  isFormValid(): boolean {
+    return this.partiesFormGroup.valid && this.termsFormGroup.valid && this.conditionsFormGroup.valid;
+  }
+
   onSubmit(): void {
-    if (this.leaseForm.invalid) {
-      this.markFormGroupTouched(this.leaseForm);
+    if (!this.isFormValid()) {
+      this.markFormGroupsTouched();
+      this.snackBar.open('Completa tutti i campi obbligatori', 'Chiudi', {
+        duration: 3000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
       return;
     }
 
-    const formData = this.leaseForm.value;
+    // Combina i dati dai diversi form group
+    const formData = {
+      ...this.partiesFormGroup.value,
+      ...this.termsFormGroup.value,
+      ...this.conditionsFormGroup.value
+    };
 
     // Formatta le date rimuovendo le informazioni orarie
     if (formData.startDate) {
@@ -212,6 +318,12 @@ export class LeaseFormComponent implements OnInit {
     }
   }
 
+  markFormGroupsTouched(): void {
+    this.markFormGroupTouched(this.partiesFormGroup);
+    this.markFormGroupTouched(this.termsFormGroup);
+    this.markFormGroupTouched(this.conditionsFormGroup);
+  }
+
   markFormGroupTouched(formGroup: FormGroup): void {
     Object.values(formGroup.controls).forEach(control => {
       control.markAsTouched();
@@ -231,5 +343,62 @@ export class LeaseFormComponent implements OnInit {
 
   getSubmitButtonText(): string {
     return this.isEditMode ? 'Aggiorna' : 'Crea';
+  }
+
+  generateContract(): void {
+    if (!this.isFormValid() || !this.selectedTenant || !this.selectedApartment) {
+      this.markFormGroupsTouched();
+      this.snackBar.open('Completa tutti i campi obbligatori prima di generare il contratto', 'Chiudi', {
+        duration: 3000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    // Combina i dati dai diversi form group
+    const formData = {
+      ...this.partiesFormGroup.value,
+      ...this.termsFormGroup.value,
+      ...this.conditionsFormGroup.value
+    };
+
+    // Crea l'oggetto Lease completo
+    const leaseData: Lease = {
+      ...formData,
+      id: this.leaseId || 0,
+      tenantId: this.selectedTenant.id,
+      apartmentId: this.selectedApartment.id,
+      isActive: true,
+      signingDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      depositPaid: false,
+      paymentFrequency: 'monthly',
+      renewalOption: false,
+      lateFee: 0,
+      terminationNotice: 30
+    };
+
+    try {
+      this.contractGenerator.generateRentalContract(
+        leaseData,
+        this.selectedTenant,
+        this.selectedApartment
+      );
+      
+      this.snackBar.open('Contratto generato con successo', 'Chiudi', {
+        duration: 3000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
+    } catch (error) {
+      console.error('Errore durante la generazione del contratto:', error);
+      this.snackBar.open('Si è verificato un errore durante la generazione del contratto', 'Chiudi', {
+        duration: 3000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
+    }
   }
 }
