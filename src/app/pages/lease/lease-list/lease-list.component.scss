@@ -331,8 +331,7 @@ $transition-speed: 0.25s;
       // Sezione informazioni principali
       .lease-info-container {
         display: flex;
-        flex-direction: column;
-        gap: 16px;
+        gap: 50px;
         
         .lease-info-section {
           .info-label {
@@ -683,7 +682,7 @@ $transition-speed: 0.25s;
   justify-content: space-between;
   align-items: center;
   background-color: $card-background;
-  padding: 8px 16px;
+  padding: 16px 24px;
   border-radius: $radius-md;
   box-shadow: $card-shadow;
   
@@ -692,28 +691,26 @@ $transition-speed: 0.25s;
     font-size: 0.9rem;
   }
   
-  ::ng-deep .mat-mdc-paginator {
-    background: transparent;
+  .pagination-buttons {
+    display: flex;
+    align-items: center;
     
-    .mat-mdc-paginator-container {
-      min-height: unset;
+    .page-number {
+      margin: 0 16px;
+      font-size: 0.95rem;
+      font-weight: 500;
     }
     
-    .mat-mdc-paginator-range-label, 
-    .mat-mdc-paginator-page-size-label {
-      color: $text-secondary;
-    }
-    
-    .mat-mdc-icon-button {
+    button {
       color: $text-primary;
       
       &:disabled {
         color: rgba(255, 255, 255, 0.3);
       }
-    }
-    
-    .mat-mdc-select-value-text {
-      color: $text-primary;
+      
+      &:not(:disabled):hover {
+        background-color: $hover-color;
+      }
     }
   }
 }

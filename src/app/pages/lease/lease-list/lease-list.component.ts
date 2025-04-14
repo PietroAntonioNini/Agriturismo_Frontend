@@ -67,8 +67,11 @@ export class LeaseListComponent implements OnInit {
   searchText = '';
   
   // Proprietà per la paginazione
-  paginationStart = 1;
-  paginationEnd = 0;
+  currentPage: number = 1;
+  pageSize: number = 8;
+  totalPages: number = 1;
+  paginationStart: number = 1;
+  paginationEnd: number = 0;
   
   // Filtri
   statusFilter = new FormControl('');
@@ -204,6 +207,13 @@ export class LeaseListComponent implements OnInit {
     this.activeFilters = [];
     this.dataSource.filter = '';
     this.updatePaginationLabels();
+  }
+
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.applyFilters();
+    }
   }
   
   clearSearch(): void {

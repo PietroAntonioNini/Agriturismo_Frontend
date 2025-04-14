@@ -27,17 +27,14 @@
         <mat-chip-listbox multiple>
           <mat-chip-option color="primary" value="active" (click)="toggleStatusFilter('active')" 
             [selected]="isFilterActive('active')">
-            <mat-icon>check_circle</mat-icon>
             Attivi
           </mat-chip-option>
           <mat-chip-option color="warn" value="inactive" (click)="toggleStatusFilter('inactive')"
             [selected]="isFilterActive('inactive')">
-            <mat-icon>cancel</mat-icon>
             Terminati
           </mat-chip-option>
           <mat-chip-option color="accent" value="expiring" (click)="toggleStatusFilter('expiring')"
             [selected]="isFilterActive('expiring')">
-            <mat-icon>schedule</mat-icon>
             In Scadenza
           </mat-chip-option>
         </mat-chip-listbox>
@@ -290,10 +287,13 @@
       <span>Visualizzazione {{paginationStart}} - {{paginationEnd}} di {{dataSource.data.length}} contratti</span>
     </div>
     <div class="pagination-buttons">
-      <mat-paginator [pageSizeOptions]="[5, 10, 25]" 
-                    showFirstLastButtons
-                    aria-label="Seleziona pagina di contratti">
-      </mat-paginator>
+      <button mat-icon-button [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">
+        <mat-icon>navigate_before</mat-icon>
+      </button>
+      <span class="page-number">{{currentPage}} / {{totalPages}}</span>
+      <button mat-icon-button [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">
+        <mat-icon>navigate_next</mat-icon>
+      </button>
     </div>
   </div>
 </div>
