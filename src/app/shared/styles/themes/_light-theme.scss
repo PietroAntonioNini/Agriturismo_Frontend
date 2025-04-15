@@ -1,0 +1,43 @@
+@import './variables';
+
+// Funzione helper per convertire hex a rgb
+@function hexToRGB($hex) {
+  @return red($hex), green($hex), blue($hex);
+}
+
+:root,
+:root[data-theme="light"],
+.light-theme {
+  // Applicazione dei colori in light mode
+  --app-background: #{$background-light};
+  --card-background: #{$background-card};
+  --text-color: #{$text-dark};
+  --text-muted: #{$text-muted};
+  --border-color: #{$border-light};
+  
+  // RGB values for rgba usage in CSS
+  --primary-color-rgb: #{hexToRGB($primary-color)};
+  --secondary-color-rgb: #{hexToRGB($secondary-color)};
+  
+  // Ombre per light mode
+  --shadow-light: #{$shadow-light};
+  --shadow-medium: #{$shadow-medium};
+  
+  // Colori primari e secondari
+  --primary-color: #{$primary-color};
+  --primary-dark: #{$primary-dark};
+  --secondary-color: #{$secondary-color};
+  --secondary-dark: #{$secondary-dark};
+  
+  // Gradienti
+  --primary-gradient: #{$primary-gradient};
+  
+  // Fix per problemi specifici con i componenti Angular Material
+  .mat-mdc-menu-content {
+    background-color: var(--card-background);
+  }
+  
+  .mat-badge-accent {
+    background-color: $secondary-color;
+  }
+} 

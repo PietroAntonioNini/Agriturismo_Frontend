@@ -1,15 +1,27 @@
-/* Importa i CSS precompilati di Angular Material */
+/* Importa i temi personalizzati */
+@import './app/shared/styles/themes/index.scss';
+
+/* Importa i CSS precompilati di Angular Material (sovrascriveremo alcuni stili) */
 @import "@angular/material/prebuilt-themes/indigo-pink.css";
 
 /* Stili globali */
 html, body { 
   height: 100%; 
   margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
 body { 
-  font-family: Roboto, "Helvetica Neue", sans-serif; 
-  background-color: #f5f5f5;
+  font-family: 'Inter', Roboto, "Helvetica Neue", sans-serif; 
+  background-color: var(--app-background);
+  color: var(--text-color);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 .app-container {
@@ -20,20 +32,57 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
+  overflow: hidden;
 }
 
 .mat-drawer-container {
   height: 100%;
+  background-color: var(--app-background) !important; // Sovrascrivi il colore di sfondo di Material
 }
 
-.main-content {
-  padding: 20px;
-  flex: 1;
+// Override personalizzati per Angular Material
+.mat-mdc-menu-panel {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-menu-item {
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-card {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-divider {
+  border-color: var(--border-color) !important;
+}
+
+// Modifica il colore di sfondo dei menu
+.mat-mdc-menu-content {
+  background-color: var(--card-background) !important;
+}
+
+// Stili per i badge
+.mat-badge-accent .mat-badge-content {
+  background-color: var(--secondary-color) !important;
+  color: white !important;
+}
+
+// Override per i bottoni
+.mat-mdc-raised-button.mat-primary {
+  background-color: var(--primary-color) !important;
 }
 
 //stili overlay documenti
 .document-preview-overlay {
-  z-index: 1000;
+  z-index: var(--z-index-modal);
 }
 
 .document-icon-container {
@@ -48,9 +97,9 @@ body {
     overflow: hidden;
     
     .mdc-dialog__surface {
-      background-color: transparent !important;
-      box-shadow: none !important;
-      border-radius: 8px;
+      background-color: var(--card-background) !important;
+      box-shadow: var(--shadow-medium) !important;
+      border-radius: var(--border-radius-md);
       overflow: hidden;
     }
   }

@@ -1,14 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { Observable, Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { User } from '../../models';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface NavItem {
   label: string;
   icon: string;
   route: string;
   roles?: ('admin' | 'manager' | 'staff')[];
+  badge?: number | string; // Numero notifiche o indicatore
 }
 
 @Component({
@@ -19,10 +23,12 @@ interface NavItem {
   imports: [
     CommonModule,
     RouterModule,
-    MatIconModule
+    MatIconModule,
+    MatTooltipModule
   ]
 })
-export class SidenavComponent implements OnInit {
+export class SidenavComponent implements OnInit, OnDestroy {
+  // Elementi di navigazione
   navItems: NavItem[] = [
     {
       label: 'Dashboard',
@@ -32,7 +38,8 @@ export class SidenavComponent implements OnInit {
     {
       label: 'Inquilini',
       icon: 'people',
-      route: '/tenant'
+      route: '/tenant',
+      badge: 3 // Esempio: 3 nuovi inquilini
     },
     {
       label: 'Appartamenti',
@@ -68,20 +75,46 @@ export class SidenavComponent implements OnInit {
     }
   ];
 
+  // Elementi di navigazione filtrati per ruolo
   filteredNavItems: NavItem[] = [];
+  
+  // Stato della sidebar (sempre espansa)
+  isExpanded = true;
+  
+  // Informazioni sull'utente
+  currentUser$: Observable<User | null>;
+  
+  // Informazioni app
+  appName = 'Agriturismo Manager';
+  appVersion = '1.0.0';
+  currentYear = new Date().getFullYear();
+  
+  private userSubscription: Subscription | null = null;
   
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) {
+    this.currentUser$ = this.authService.currentUser$;
+  }
 
   ngOnInit(): void {
     this.filterNavItems();
-    this.authService.currentUser$.subscribe(() => {
+    
+    this.userSubscription = this.authService.currentUser$.subscribe(() => {
       this.filterNavItems();
     });
   }
+  
+  ngOnDestroy(): void {
+    if (this.userSubscription) {
+      this.userSubscription.unsubscribe();
+    }
+  }
 
+  /**
+   * Filtra gli elementi del menu in base al ruolo dell'utente
+   */
   private filterNavItems(): void {
     this.filteredNavItems = this.navItems.filter(item => {
       if (!item.roles) {
@@ -93,7 +126,18 @@ export class SidenavComponent implements OnInit {
     });
   }
 
+  /**
+   * Naviga alla route specificata
+   */
   navigateTo(route: string): void {
     this.router.navigate([route]);
+  }
+  
+  /**
+   * Effettua il logout
+   */
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

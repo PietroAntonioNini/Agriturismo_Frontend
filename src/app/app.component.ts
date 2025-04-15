@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { MatSidenavModule, MatDrawerMode } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -39,11 +39,6 @@ export class AppComponent {
     ).subscribe((event: NavigationEnd) => {
       this.isAuthPage = event.url.includes('/auth');
     });
-  }
-
-  toggleSidenav(): void {
-    // This method can be kept for future use or removed
-    // It won't affect the sidenav anymore since we're using a fixed sidenav
   }
 
   showNavigation(): boolean {

@@ -1,0 +1,38 @@
+@import './variables';
+@import './light-theme';
+@import './dark-theme';
+
+// Stili condivisi tra i temi
+:root {
+  // Bordi arrotondati
+  --border-radius-sm: #{$border-radius-sm};
+  --border-radius-md: #{$border-radius-md};
+  --border-radius-lg: #{$border-radius-lg};
+  
+  // Spazi
+  --spacing-xs: #{$spacing-xs};
+  --spacing-sm: #{$spacing-sm};
+  --spacing-md: #{$spacing-md};
+  --spacing-lg: #{$spacing-lg};
+  --spacing-xl: #{$spacing-xl};
+  
+  // Dimensioni layout
+  --header-height: #{$header-height};
+  --sidenav-width-expanded: #{$sidenav-width-expanded};
+  
+  // Z-index
+  --z-index-dropdown: #{$z-index-dropdown};
+  --z-index-fixed: #{$z-index-fixed};
+  --z-index-modal: #{$z-index-modal};
+  
+  // Colori di stato
+  --error-color: #{$error-color};
+  --success-color: #{$success-color};
+  --warning-color: #{$warning-color};
+  --info-color: #{$info-color};
+  
+  // Transizioni
+  --transition-fast: #{$transition-fast};
+  --transition-normal: #{$transition-normal};
+  --transition-slow: #{$transition-slow};
+} 

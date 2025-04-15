@@ -1,12 +1,72 @@
-<div class="sidenav">
-  <div class="nav-items">
-    <div *ngFor="let item of filteredNavItems" 
-         class="nav-item" 
-         [routerLink]="item.route"
-         routerLinkActive="active-link"
-         (click)="navigateTo(item.route)">
-      <mat-icon>{{ item.icon }}</mat-icon>
-      <span class="item-label">{{ item.label }}</span>
+<nav class="app-sidenav">
+  <!-- Sezione di navigazione principale -->
+  <div class="nav-section">
+    <div class="nav-group">
+      <div class="nav-group-label">Principale</div>
+      
+      <div *ngFor="let item of filteredNavItems" 
+           class="nav-item" 
+           [routerLink]="item.route"
+           routerLinkActive="active-link"
+           (click)="navigateTo(item.route)">
+        
+        <div class="nav-item-icon">
+          <mat-icon>{{ item.icon }}</mat-icon>
+        </div>
+        
+        <div class="nav-item-label">
+          {{ item.label }}
+        </div>
+        
+        <div class="nav-item-badge" *ngIf="item.badge">
+          {{ item.badge }}
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sezione utente -->
+    <div class="nav-group" *ngIf="currentUser$ | async as user">
+      <div class="nav-group-label">Utente</div>
+      
+      <div class="nav-item" 
+           routerLink="/profile"
+           routerLinkActive="active-link">
+        <div class="nav-item-icon">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="nav-item-label">
+          Profilo
+        </div>
+      </div>
+      
+      <div class="nav-item" 
+           routerLink="/settings"
+           routerLinkActive="active-link">
+        <div class="nav-item-icon">
+          <mat-icon>settings</mat-icon>
+        </div>
+        <div class="nav-item-label">
+          Impostazioni
+        </div>
+      </div>
+      
+      <div class="nav-item" 
+           (click)="logout()">
+        <div class="nav-item-icon">
+          <mat-icon>exit_to_app</mat-icon>
+        </div>
+        <div class="nav-item-label">
+          Logout
+        </div>
+      </div>
     </div>
   </div>
-</div>
+  
+  <!-- Footer con informazioni -->
+  <div class="sidenav-footer">
+    <div class="app-info">
+      <div class="app-version">v{{ appVersion }}</div>
+      <div class="app-copyright">&copy; {{ currentYear }} {{ appName }}</div>
+    </div>
+  </div>
+</nav>

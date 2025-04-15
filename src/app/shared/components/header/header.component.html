@@ -1,33 +1,104 @@
-<mat-toolbar color="primary" class="header-toolbar">
-  <div class="logo-container">
-    <!-- <button mat-icon-button (click)="toggleSidenav.emit()" class="menu-button">
-      <mat-icon>menu</mat-icon>
-    </button> -->
-    <a routerLink="/dashboard" class="logo-link">
-      <span class="logo-text">Agriturismo Manager</span>
-      <span class="logo-copyright">&copy; {{ currentYear }} {{ appName }} v{{ version }}</span>
-    </a>
-  </div>
-
-  <div class="spacer"></div>
-
-  <div class="user-menu" *ngIf="(currentUser$ | async) as user">
-    <div [matMenuTriggerFor]="userMenu" class="user-initials">
-      {{ user.firstName[0] }}{{ user.lastName[0] }}
+<header class="app-header">
+  <div class="header-container">
+    <!-- Logo e titolo -->
+    <div class="header-brand">
+      <a routerLink="/dashboard" class="brand-link">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 5.5C16 5.5 14.5 4 12 4S8 5.5 8 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">{{ appName }}</span>
+          <span class="brand-version">v{{ version }}</span>
+        </div>
+      </a>
     </div>
-    <mat-menu #userMenu="matMenu">
-      <button mat-menu-item routerLink="/profile">
-        <mat-icon>person</mat-icon>
-        <span>Profilo</span>
+
+    <!-- Barra di ricerca (opzionale, può essere implementata in futuro) -->
+    <div class="header-search">
+      <div class="search-input-wrapper">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input type="text" placeholder="Cerca..." class="search-input" />
+      </div>
+    </div>
+
+    <!-- Menu e azioni rapide -->
+    <div class="header-actions">
+      <!-- Pulsante tema chiaro/scuro -->
+      <button class="action-button theme-toggle" (click)="toggleTheme()" matTooltip="Cambia tema">
+        <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
-      <button mat-menu-item *ngIf="isAdmin" routerLink="/admin">
-        <mat-icon>admin_panel_settings</mat-icon>
-        <span>Amministrazione</span>
-      </button>
-      <button mat-menu-item (click)="logout()">
-        <mat-icon>exit_to_app</mat-icon>
-        <span>Logout</span>
-      </button>
-    </mat-menu>
+
+      <!-- Notifiche -->
+      <div class="action-button notifications" [matMenuTriggerFor]="notificationsMenu">
+        <mat-icon [matBadge]="notificationsCount" [matBadgeHidden]="notificationsCount === 0">notifications</mat-icon>
+      </div>
+      <mat-menu #notificationsMenu="matMenu" class="notifications-menu">
+        <div class="notifications-header">
+          <h3>Notifiche</h3>
+          <button mat-button color="primary" *ngIf="notificationsCount > 0">Segna tutto come letto</button>
+        </div>
+        <div class="notifications-list" *ngIf="notificationsCount > 0">
+          <!-- Lista notifiche qui (da implementare) -->
+          <div class="notification-item">
+            <div class="notification-icon success">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+            <div class="notification-content">
+              <div class="notification-title">Nuovo contratto aggiunto</div>
+              <div class="notification-time">10 minuti fa</div>
+            </div>
+          </div>
+        </div>
+        <div class="notifications-empty" *ngIf="notificationsCount === 0">
+          <mat-icon>notifications_off</mat-icon>
+          <p>Nessuna notifica</p>
+        </div>
+      </mat-menu>
+
+      <!-- Profilo utente -->
+      <div class="user-profile" *ngIf="(currentUser$ | async) as user" [matMenuTriggerFor]="userMenu">
+        <div class="user-avatar">
+          {{ getUserInitials(user) }}
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+          <span class="user-role">{{ getUserRoleLabel(user.role) }}</span>
+        </div>
+        <mat-icon class="dropdown-icon">keyboard_arrow_down</mat-icon>
+      </div>
+      <mat-menu #userMenu="matMenu" class="user-menu">
+        <div class="menu-header">
+          <div class="menu-user-avatar">
+            {{ getUserInitials(currentUser) }}
+          </div>
+          <div>
+            <div class="menu-user-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</div>
+            <div class="menu-user-email">{{ currentUser?.email }}</div>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item routerLink="/profile">
+          <mat-icon>person</mat-icon>
+          <span>Il mio profilo</span>
+        </button>
+        <button mat-menu-item *ngIf="isAdmin" routerLink="/admin">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <span>Amministrazione</span>
+        </button>
+        <button mat-menu-item routerLink="/settings">
+          <mat-icon>settings</mat-icon>
+          <span>Impostazioni</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    </div>
   </div>
-</mat-toolbar>
+</header>

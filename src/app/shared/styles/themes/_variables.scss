@@ -1,0 +1,91 @@
+// Variabili colori di base
+$primary-color: #2D7D46;
+$primary-light: lighten($primary-color, 10%);
+$primary-dark: #1e5e34;
+$secondary-color: #f5a623;
+$secondary-light: lighten($secondary-color, 10%);
+$secondary-dark: darken($secondary-color, 10%);
+
+// Gradienti
+$primary-gradient: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);
+$secondary-gradient: linear-gradient(135deg, $secondary-color 0%, $secondary-dark 100%);
+
+// Colori di testo
+$text-dark: #1e293b;
+$text-muted: #64748b;
+$text-light: #f8fafc;
+
+// Colori di sfondo
+$background-light: #f8fafc;
+$background-card: #ffffff;
+$background-dark: #1d2023;
+$background-dark-elevated: #2d3035;
+
+// Colori di bordo
+$border-light: #e2e8f0;
+$border-dark: #383c42;
+
+// Colori di stato
+$error-color: #ef4444;
+$success-color: #10b981;
+$warning-color: #f59e0b;
+$info-color: #3b82f6;
+
+// Ombre
+$shadow-light: 0 4px 12px rgba(0, 0, 0, 0.1);
+$shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.15);
+$shadow-strong: 0 12px 32px rgba(0, 0, 0, 0.2);
+
+// Bordi arrotondati
+$border-radius-sm: 6px;
+$border-radius-md: 10px;
+$border-radius-lg: 16px;
+$border-radius-circle: 50%;
+
+// Spazi
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// Dimensioni layout
+$header-height: 64px;
+$sidenav-width-expanded: 240px;
+
+// Transizioni
+$transition-fast: 0.2s ease;
+$transition-normal: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// Z-index
+$z-index-dropdown: 1000;
+$z-index-fixed: 1030;
+$z-index-modal: 1050;
+$z-index-tooltip: 1070;
+
+// Dark mode mixin
+@mixin dark-mode {
+  @media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] & {
+      @content;
+    }
+  }
+  
+  :root[data-theme="dark"] & {
+    @content;
+  }
+}
+
+// Light mode mixin
+@mixin light-mode {
+  @media (prefers-color-scheme: light) {
+    :root[data-theme="auto"] & {
+      @content;
+    }
+  }
+  
+  :root[data-theme="light"] & {
+    @content;
+  }
+} 
