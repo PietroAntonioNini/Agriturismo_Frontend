@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../../shared/services/auth.service';
 import { finalize, Subject, takeUntil } from 'rxjs';
 import { Title } from '@angular/platform-browser';
+import { passwordMatchValidator, passwordValidator } from '../../../shared/validators/password.validator';
 
 @Component({
   selector: 'app-login',
@@ -15,11 +16,18 @@ import { Title } from '@angular/platform-browser';
 })
 export class LoginComponent implements OnInit, OnDestroy {
   loginForm: FormGroup;
+  registerForm: FormGroup;
   loading = false;
+  registrationLoading = false;
   submitted = false;
+  registrationSubmitted = false;
   error = '';
+  registrationError = '';
   returnUrl: string;
   showPassword = false;
+  showRegPassword = false;
+  isFlipped = false;
+  registrationStep = 1; // Primo step della registrazione
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -37,11 +45,23 @@ export class LoginComponent implements OnInit, OnDestroy {
       this.router.navigate(['/dashboard']);
     }
     
-    // Inizializza il form con validazione
+    // Inizializza il form di login con validazione
     this.loginForm = this.formBuilder.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
+    });
+    
+    // Inizializza il form di registrazione con validazione
+    this.registerForm = this.formBuilder.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      username: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, passwordValidator()]],
+      confirmPassword: ['', Validators.required]
+    }, {
+      validator: passwordMatchValidator('password', 'confirmPassword')
     });
     
     // Ottieni l'URL di ritorno dai parametri o usa '/dashboard' come predefinito
@@ -75,10 +95,13 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Getter per accedere facilmente ai controlli del form
+  // Getter per accedere facilmente ai controlli del form di login
   get f() { return this.loginForm.controls; }
+  
+  // Getter per accedere facilmente ai controlli del form di registrazione
+  get r() { return this.registerForm.controls; }
 
-  // Mostra/Nascondi password toggle
+  // Mostra/Nascondi password toggle per il login
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
     
@@ -87,6 +110,83 @@ export class LoginComponent implements OnInit, OnDestroy {
       const passwordInput = document.getElementById('password');
       if (passwordInput) {
         passwordInput.focus();
+      }
+    }, 100);
+  }
+  
+  // Mostra/Nascondi password toggle per la registrazione
+  toggleRegPasswordVisibility(): void {
+    this.showRegPassword = !this.showRegPassword;
+    
+    // Ripristina il focus sull'input della password
+    setTimeout(() => {
+      const passwordInput = document.getElementById('regPassword');
+      if (passwordInput) {
+        passwordInput.focus();
+      }
+    }, 100);
+  }
+  
+  // Gira la card per mostrare il form di registrazione o login
+  flipCard(): void {
+    this.isFlipped = !this.isFlipped;
+    
+    // Reset degli errori quando si cambia form
+    this.error = '';
+    this.registrationError = '';
+    
+    // Reset dello stato di submit
+    this.submitted = false;
+    this.registrationSubmitted = false;
+    
+    // Reset dello step di registrazione quando si torna al login
+    if (!this.isFlipped) {
+      this.registrationStep = 1;
+    }
+    
+    // Focus sul primo campo del form dopo la transizione
+    setTimeout(() => {
+      const firstInput = this.isFlipped 
+        ? document.getElementById('firstName')
+        : document.getElementById('username');
+      
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 500); // Attendi che la transizione finisca
+  }
+  
+  // Avanza al secondo step della registrazione
+  nextStep(): void {
+    // Valida solo i campi del primo step
+    this.registrationSubmitted = true;
+    
+    if (this.r['firstName'].invalid || this.r['lastName'].invalid || this.r['username'].invalid) {
+      return;
+    }
+    
+    this.registrationStep = 2;
+    this.registrationSubmitted = false;
+    
+    // Focus sul primo campo del secondo step
+    setTimeout(() => {
+      const emailInput = document.getElementById('email');
+      if (emailInput) {
+        emailInput.focus();
+      }
+    }, 100);
+  }
+  
+  // Torna al primo step della registrazione
+  previousStep(): void {
+    this.registrationStep = 1;
+    this.registrationSubmitted = false;
+    
+    // Focus sul primo campo
+    setTimeout(() => {
+      const firstNameInput = document.getElementById('firstName');
+      if (firstNameInput) {
+        firstNameInput.focus();
       }
     }, 100);
   }
@@ -157,6 +257,86 @@ export class LoginComponent implements OnInit, OnDestroy {
           setTimeout(() => {
             if (this.error) {
               this.error = '';
+            }
+          }, 5000);
+        }
+      });
+  }
+  
+  // Gestisce l'invio del form di registrazione
+  onRegisterSubmit(): void {
+    this.registrationSubmitted = true;
+    this.registrationError = '';
+
+    // Non procedere se il form non è valido
+    if (this.registerForm.invalid) {
+      // Aggiunge l'effetto shake al primo campo non valido
+      const invalidControls = this.registerForm.invalid ? Object.keys(this.registerForm.controls).filter(
+        key => this.registerForm.controls[key].invalid
+      ) : [];
+      
+      if (invalidControls.length > 0) {
+        const firstInvalidField = document.getElementById(invalidControls[0]);
+        if (firstInvalidField) {
+          firstInvalidField.focus();
+        }
+      }
+      return;
+    }
+
+    this.registrationLoading = true;
+    
+    const userData = {
+      firstName: this.r['firstName'].value,
+      lastName: this.r['lastName'].value,
+      username: this.r['username'].value,
+      email: this.r['email'].value,
+      password: this.r['password'].value,
+      role: 'staff', // Ruolo predefinito, può essere cambiato dall'admin
+      isActive: true
+    };
+
+    this.authService.register(userData)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.registrationLoading = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          // Registrazione completata, effettua il login automaticamente
+          this.authService.login(userData.username, userData.password)
+            .subscribe({
+              next: () => {
+                this.router.navigate(['/dashboard']);
+              },
+              error: error => {
+                // Registrazione completata ma login fallito, torna alla schermata di login
+                this.registrationError = 'Registrazione completata, ma login automatico fallito. Prova ad accedere manualmente.';
+                setTimeout(() => {
+                  this.flipCard(); // Torna alla schermata di login
+                  
+                  // Precompila il form di login con lo username appena registrato
+                  this.loginForm.patchValue({
+                    username: userData.username
+                  });
+                }, 3000);
+              }
+            });
+        },
+        error: error => {
+          // Gestisci errori di registrazione
+          if (error.status === 409) {
+            this.registrationError = 'Username o email già in uso';
+          } else {
+            this.registrationError = error.error?.detail || 'Errore durante la registrazione';
+          }
+          
+          // Rimuovi messaggio di errore dopo 5 secondi
+          setTimeout(() => {
+            if (this.registrationError) {
+              this.registrationError = '';
             }
           }, 5000);
         }

@@ -12,10 +12,6 @@ const routes: Routes = [
     loadComponent: () => import('../../pages/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
-    path: 'register',
-    loadComponent: () => import('../../pages/auth/register/register.component').then(m => m.RegisterComponent)
-  },
-  {
     path: 'change-password',
     loadComponent: () => import('../../pages/auth/change-password/change-password.component').then(m => m.ChangePasswordComponent)
   },

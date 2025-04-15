@@ -1,5 +1,7 @@
+@use "sass:color";
+
 // Variables
-$primary-color: #2d7d46;
+$primary-color: #2D7D46;
 $primary-hover: #1e5e34;
 $secondary-color: #f5a623;
 $text-primary: #1e293b;
@@ -63,32 +65,79 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
   min-height: 100vh;
   z-index: 10;
   position: relative;
+  padding: 2rem 0;
+  box-sizing: border-box;
 }
 
-// Card containing the login form
-.login-card {
+// Card container with flip effect
+.card-container {
   width: 100%;
   max-width: 400px;
-  margin: 0 auto;
+  min-height: 670px;
+  perspective: 1000px;
+  margin: 2rem auto;
+  z-index: 10;
+  position: relative;
+  
+  @media (max-width: 480px) {
+    margin: 1rem;
+  }
+  
+  &.flipped {
+    .card-front {
+      transform: rotateY(180deg);
+    }
+    
+    .card-back {
+      transform: rotateY(0);
+    }
+  }
+}
+
+// Card shared styles
+.login-card, .register-card {
+  width: 100%;
   padding: 2rem;
   background-color: $white;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  animation: fadeIn 0.8s ease-in-out;
-  z-index: 10;
+  transition: all 0.5s ease-in-out;
+  backface-visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform-style: preserve-3d;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
   
   @media (max-width: 480px) {
-    margin: 1rem;
     padding: 1.5rem;
   }
+}
+
+.register-card {
+  height: auto;
+  min-height: 600px;
+  overflow-y: auto;
+}
+
+// Login card (Front)
+.card-front {
+  z-index: 2;
+  transform: rotateY(0deg);
+}
+
+// Registration card (Back)
+.card-back {
+  transform: rotateY(-180deg);
 }
 
 // Main headline - now above form
 .main-headline {
   text-align: center;
   color: $white;
-  margin-bottom: 2rem;
   max-width: 600px;
   z-index: 10;
   
@@ -261,7 +310,7 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
 }
 
 // Logo and header section
-.login-header {
+.login-header, .card-header {
   text-align: center;
   margin-bottom: 1.5rem;
 }
@@ -312,6 +361,33 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
 // Form elements
 form {
   margin-bottom: 1rem;
+}
+
+// Form row (for two columns)
+.form-row {
+  display: flex;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 0;
+  }
+  
+  .form-group {
+    flex: 1;
+    margin-bottom: 0.8rem;
+    
+    .input-wrapper {
+      width: 100%;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 0.8rem 0.8rem 0.8rem 2.4rem;
+    }
+  }
 }
 
 .form-group {
@@ -375,7 +451,7 @@ label {
   background-color: $white;
   
   &::placeholder {
-    color: lighten($text-secondary, 15%);
+    color: color.adjust($text-secondary, $lightness: 15%);
   }
   
   &:focus {
@@ -596,7 +672,7 @@ label {
 }
 
 .alert-danger {
-  color: darken($error-color, 15%);
+  color: color.adjust($error-color, $lightness: -15%);
   background-color: rgba($error-color, 0.1);
   border-left: 4px solid $error-color;
 }
@@ -615,11 +691,10 @@ label {
   }
 }
 
-// Register option
-.register-option {
+// Register and login options
+.register-option, .login-option {
   text-align: center;
-  margin-top: 1.2rem;
-  padding-top: 1.2rem;
+  padding-top: 0.2rem;
   border-top: 1px solid $border-color;
   
   p {
@@ -627,17 +702,18 @@ label {
     font-size: 0.85rem;
     margin: 0;
   }
+}
+
+.register-link, .login-link {
+  color: $primary-color;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
   
-  .register-link {
-    color: $primary-color;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      color: $primary-hover;
-      text-decoration: underline;
-    }
+  &:hover {
+    color: $primary-hover;
+    text-decoration: underline;
   }
 }
 
@@ -646,11 +722,8 @@ label {
   text-align: center;
   width: 100%;
   padding: 0.8rem;
-  margin-top: 1rem;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  margin-top: 2rem;
+  position: relative;
   z-index: 20;
   
   p {
@@ -668,5 +741,83 @@ label {
       color: $text-secondary;
       text-shadow: none;
     }
+  }
+}
+
+// Step registration
+.registration-step {
+  display: none;
+  
+  &.active {
+    display: block;
+  }
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.step {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: $border-color;
+  color: $text-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  
+  &.active {
+    background-color: $primary-color;
+    color: $white;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.2);
+  }
+  
+  &.complete {
+    background-color: $success-color;
+    color: $white;
+  }
+}
+
+.step-connector {
+  height: 2px;
+  width: 70px;
+  background-color: $border-color;
+  margin: 0 0.5rem;
+  
+  &.complete {
+    background-color: $success-color;
+  }
+}
+
+.step-title {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: $text-primary;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  
+  .btn {
+    flex: 1;
+  }
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid $border-color;
+  color: $text-primary;
+  
+  &:hover:not(:disabled) {
+    background-color: $background-light;
+    border-color: $primary-color;
   }
 }
