@@ -2,6 +2,47 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.1.
 
+## Sistema di Autenticazione e Sicurezza
+
+Il progetto implementa un sistema completo di autenticazione e sicurezza con le seguenti caratteristiche:
+
+### Funzionalità implementate
+
+- **Autenticazione JWT** con refresh token
+- **Protezione CSRF** per operazioni POST/PUT/DELETE
+- **Gestione ruoli** (admin, manager, staff)
+- **Validazione avanzata password** con requisiti di sicurezza
+- **Protezione contro attacchi** (XSS, CSRF, Rate Limiting)
+- **Gestione automatica scadenza token**
+- **Logout automatico per inattività**
+- **Sanitizzazione input** per prevenzione XSS
+- **Recupero password** tramite email
+
+### Componenti di autenticazione
+
+- **Login** (`/auth/login`) - Accesso al sistema
+- **Registrazione** (`/auth/register`) - Creazione nuovo account
+- **Cambio password** (`/auth/change-password`) - Modifica password utente
+- **Recupero password** (`/auth/forgot-password`) - Richiesta di reset password via email
+
+### Implementazione tecnica
+
+- **AuthService**: Gestione token JWT, refresh token e profilo utente
+- **AuthGuard**: Protezione rotte in base a stato autenticazione e ruoli
+- **Interceptor HTTP**: Gestione automatica token, CSRF e refresh
+- **Rate Limiting**: Gestione errori 429 con backoff esponenziale
+- **Validatori**: Regole complesse per password e corrispondenza
+- **Recupero password**: Sistema sicuro di reset password tramite email verificata
+
+### Best Practices applicate
+
+- Memorizzazione sicura dei token
+- Validazione input lato client
+- Uso corretto di HttpOnly e Secure cookies
+- Gestione centralizzata errori di autenticazione
+- Protezione contro attacchi di forza bruta
+- Flusso di recupero password sicuro con verifica dell'identità
+
 ## Development server
 
 To start a local development server, run:

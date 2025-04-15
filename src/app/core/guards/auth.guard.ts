@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { CanActivate, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { AuthService } from '../../shared/services/auth.service';
 
 @Injectable({
@@ -15,6 +15,14 @@ export class AuthGuard implements CanActivate {
     state: RouterStateSnapshot
   ): boolean {
     if (this.authService.isLoggedIn()) {
+      // Verifica ruolo se richiesto
+      const requiredRole = route.data['role'];
+      if (requiredRole && !this.authService.hasRole(requiredRole)) {
+        // Reindirizza se non ha il ruolo richiesto
+        this.router.navigate(['/unauthorized']);
+        return false;
+      }
+      
       return true;
     }
     

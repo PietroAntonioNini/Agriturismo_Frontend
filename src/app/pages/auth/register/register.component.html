@@ -1,0 +1,116 @@
+<div class="register-container">
+  <div class="register-card">
+    <h2>Registrazione</h2>
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      <!-- Nome -->
+      <div class="form-group">
+        <label for="firstName">Nome</label>
+        <input
+          type="text"
+          id="firstName"
+          formControlName="firstName"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['firstName'].errors }"
+        />
+        <div *ngIf="submitted && f['firstName'].errors" class="invalid-feedback">
+          <div *ngIf="f['firstName'].errors['required']">Nome obbligatorio</div>
+        </div>
+      </div>
+      
+      <!-- Cognome -->
+      <div class="form-group">
+        <label for="lastName">Cognome</label>
+        <input
+          type="text"
+          id="lastName"
+          formControlName="lastName"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['lastName'].errors }"
+        />
+        <div *ngIf="submitted && f['lastName'].errors" class="invalid-feedback">
+          <div *ngIf="f['lastName'].errors['required']">Cognome obbligatorio</div>
+        </div>
+      </div>
+      
+      <!-- Username -->
+      <div class="form-group">
+        <label for="username">Nome utente</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['username'].errors }"
+        />
+        <div *ngIf="submitted && f['username'].errors" class="invalid-feedback">
+          <div *ngIf="f['username'].errors['required']">Nome utente obbligatorio</div>
+          <div *ngIf="f['username'].errors['minlength']">Nome utente deve essere di almeno 3 caratteri</div>
+        </div>
+      </div>
+      
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['email'].errors }"
+        />
+        <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+          <div *ngIf="f['email'].errors['required']">Email obbligatoria</div>
+          <div *ngIf="f['email'].errors['email']">Email non valida</div>
+        </div>
+      </div>
+      
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && f['password'].errors }"
+        />
+        <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+          <div *ngIf="f['password'].errors['required']">Password obbligatoria</div>
+          <div *ngIf="f['password'].errors['minLength']">La password deve essere di almeno 8 caratteri</div>
+          <div *ngIf="f['password'].errors['noUpperCase']">La password deve contenere almeno una lettera maiuscola</div>
+          <div *ngIf="f['password'].errors['noLowerCase']">La password deve contenere almeno una lettera minuscola</div>
+          <div *ngIf="f['password'].errors['noNumeric']">La password deve contenere almeno un numero</div>
+          <div *ngIf="f['password'].errors['noSpecialChar']">La password deve contenere almeno un carattere speciale</div>
+        </div>
+      </div>
+      
+      <!-- Conferma Password -->
+      <div class="form-group">
+        <label for="confirmPassword">Conferma Password</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && (f['confirmPassword'].errors || registerForm.errors?.['passwordMismatch']) }"
+        />
+        <div *ngIf="submitted && (f['confirmPassword'].errors || registerForm.errors?.['passwordMismatch'])" class="invalid-feedback">
+          <div *ngIf="f['confirmPassword'].errors?.['required']">Conferma password obbligatoria</div>
+          <div *ngIf="registerForm.errors?.['passwordMismatch']">Le password non corrispondono</div>
+        </div>
+      </div>
+      
+      <!-- Pulsanti -->
+      <div class="form-group">
+        <button [disabled]="loading" class="btn btn-primary">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+          Registrati
+        </button>
+        <a routerLink="/auth/login" class="btn btn-link">Hai già un account? Accedi</a>
+      </div>
+      
+      <!-- Messaggi di errore -->
+      <div *ngIf="error" class="alert alert-danger mt-3">{{error}}</div>
+    </form>
+  </div>
+</div> 
