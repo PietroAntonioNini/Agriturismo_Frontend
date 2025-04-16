@@ -1,25 +1,45 @@
 @use "sass:color";
 
-// Variables
-$primary-color: #3f51b5;
-$accent-color: #ff4081;
-$danger-color: #f44336;
-$available-color: #4caf50;
-$warning-color: #ffe924;
-$background-color: #121212;
-$card-background: #1d1d1d;
-$surface-color: #242424;
-$text-primary: rgba(255, 255, 255, 0.87);
-$text-secondary: rgba(255, 255, 255, 0.6);
-$border-color: rgba(255, 255, 255, 0.12);
-$hover-color: rgba(255, 255, 255, 0.1);
-$active-color: rgba(255, 255, 255, 0.05);
-$card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-$radius-sm: 8px;
-$radius-md: 12px;
-$radius-lg: 16px;
-$card-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-$transition-speed: 0.25s;
+// Variables with light/dark theme support
+$primary-color: var(--primary-color);
+$primary-dark: var(--primary-dark);
+$accent-color: var(--secondary-color);
+$danger-color: var(--error-color);
+$available-color: var(--success-color);
+$warning-color: var(--warning-color);
+$background-color: var(--app-background);
+$card-background: var(--card-background);
+$surface-color: var(--card-background);
+$text-primary: var(--text-color);
+$text-secondary: var(--text-muted);
+$border-color: var(--border-color);
+$hover-color: rgba(var(--primary-color-rgb), 0.1);
+$active-color: rgba(var(--primary-color-rgb), 0.15);
+$card-shadow: var(--shadow-medium);
+$radius-sm: var(--border-radius-sm);
+$radius-md: var(--border-radius-md);
+$radius-lg: var(--border-radius-lg);
+$transition-speed: var(--transition-normal);
+
+// Mixins per effetti di profondità
+@mixin card-raised {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+}
+
+@mixin section-separator {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, $border-color, transparent);
+  }
+}
 
 .tenant-management-container {
   padding: 24px;
@@ -66,15 +86,19 @@ $transition-speed: 0.25s;
     font-size: 1rem;
     border-radius: $radius-sm;
     font-weight: 500;
+    background-color: $primary-color !important;
+    color: white !important;
     
     mat-icon {
       margin-right: 8px;
+      color: white !important;
     }
     
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: $card-shadow;
       transition: all 0.2s ease;
+      background-color: $primary-dark !important;
     }
   }
 }
@@ -111,6 +135,42 @@ $transition-speed: 0.25s;
       ::ng-deep .mat-mdc-form-field-label {
         color: $text-secondary;
       }
+      
+      ::ng-deep .mat-mdc-input-element {
+        color: $text-primary !important;
+      }
+      
+      ::ng-deep .mat-mdc-input-element::placeholder {
+        color: $text-secondary !important;
+        opacity: 0.7;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-icon-prefix > .mat-icon {
+        color: $primary-color;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-icon-suffix > .mat-icon {
+        color: $text-secondary;
+      }
+      
+      // Override del colore del bordo in focus
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+        color: $primary-color !important;
+      }
+      
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+        border-color: $primary-color !important;
+      }
+      
+      ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-select-arrow {
+        color: $primary-color;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-ripple {
+        background-color: $primary-color !important;
+      }
     }
     
     .filter-chips {
@@ -123,17 +183,55 @@ $transition-speed: 0.25s;
       ::ng-deep .mat-mdc-chip {
         background-color: $surface-color;
         color: $text-primary;
+        border: 1px solid $border-color;
         
         &.mat-mdc-chip-selected {
           &.mat-primary {
-            background-color: rgba($available-color, 0.2);
-            color: color.adjust($available-color, $lightness: 20%);
+            background-color: rgba(var(--primary-color-rgb), 0.2);
+            color: $primary-color;
+            border-color: $primary-color;
+            
+            .mdc-evolution-chip__text-label,
+            .mdc-evolution-chip__checkmark {
+              color: $primary-color !important;
+            }
+            
+            .mdc-evolution-chip__checkmark-svg {
+              fill: $primary-color !important;
+            }
           }
           
           &.mat-warn {
-            background-color: rgba($danger-color, 0.2);
-            color: color.adjust($danger-color, $lightness: 20%);
+            background-color: rgba(255, 82, 82, 0.2);
+            color: #ff5252;
+            border-color: rgba(255, 82, 82, 0.6);
+            font-weight: 500;
+            
+            .mdc-evolution-chip__text-label,
+            .mdc-evolution-chip__checkmark {
+              color: #ff5252 !important;
+            }
+            
+            .mdc-evolution-chip__checkmark-svg {
+              fill: #ff5252 !important;
+            }
+            
+            // Stile specifico per light-mode
+            :root[data-theme="light"] & {
+              .mdc-evolution-chip__text-label,
+              .mdc-evolution-chip__checkmark {
+                color: #e53935 !important;
+              }
+              
+              .mdc-evolution-chip__checkmark-svg {
+                fill: #e53935 !important;
+              }
+            }
           }
+        }
+        
+        .mdc-evolution-chip__text-label {
+          color: $text-primary;
         }
       }
     }
@@ -141,15 +239,38 @@ $transition-speed: 0.25s;
   
   .view-options {
     display: flex;
-    gap: 8px;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    background-color: $surface-color;
+    padding: 6px;
+    border-radius: $radius-md;
+    border: 1px solid $border-color;
     
     button {
-      background-color: $surface-color;
+      background-color: transparent;
       color: $text-secondary;
+      border-radius: $radius-sm;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+      
+      mat-icon {
+        font-size: 18px;
+        width: 20px;
+        height: 20px;
+      }
       
       &.active {
-        background-color: rgba($primary-color, 0.2);
-        color: color.adjust($primary-color, $lightness: 20%);
+        background-color: rgba(var(--primary-color-rgb), 0.2);
+        color: $primary-color;
+        
+        mat-icon {
+          color: $primary-color;
+        }
       }
       
       &:hover {
@@ -162,7 +283,7 @@ $transition-speed: 0.25s;
 // Loading Container
 .loading-container {
   padding: 32px;
-  background-color: $surface-color;
+  background-color: $card-background;
   border-radius: $radius-md;
   box-shadow: $card-shadow;
   margin-bottom: 24px;
@@ -170,6 +291,10 @@ $transition-speed: 0.25s;
   
   mat-progress-bar {
     margin-bottom: 16px;
+    
+    ::ng-deep .mdc-linear-progress__bar-inner {
+      border-color: $primary-color !important;
+    }
   }
   
   .loading-text {
@@ -182,7 +307,7 @@ $transition-speed: 0.25s;
 // Error Container
 .error-container {
   padding: 32px;
-  background-color: rgba($danger-color, 0.1);
+  background-color: rgba(var(--error-color), 0.1);
   border-radius: $radius-md;
   border-left: 4px solid $danger-color;
   margin-bottom: 24px;
@@ -194,6 +319,7 @@ $transition-speed: 0.25s;
     height: 32px;
     width: 32px;
     margin-right: 24px;
+    color: $danger-color;
   }
   
   .error-details {
@@ -202,6 +328,7 @@ $transition-speed: 0.25s;
     h3 {
       margin: 0 0 8px;
       font-size: 1.2rem;
+      color: $text-primary;
     }
     
     p {
@@ -214,7 +341,7 @@ $transition-speed: 0.25s;
 // No Results
 .no-results-container {
   padding: 64px 32px;
-  background-color: $surface-color;
+  background-color: $card-background;
   border-radius: $radius-md;
   box-shadow: $card-shadow;
   text-align: center;
@@ -234,11 +361,30 @@ $transition-speed: 0.25s;
     h3 {
       font-size: 1.4rem;
       margin: 0 0 8px;
+      color: $text-primary;
     }
     
     p {
       color: $text-secondary;
       margin: 0 0 24px;
+    }
+    
+    button {
+      background-color: $primary-color !important;
+      color: white !important;
+      
+      mat-icon {
+        color: white !important;
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+        margin-right: 8px;
+        margin-bottom: 0;
+      }
+      
+      &:hover {
+        background-color: $primary-dark !important;
+      }
     }
   }
 }
@@ -251,7 +397,7 @@ $transition-speed: 0.25s;
   margin-bottom: 24px;
   
   .tenant-card {
-    background: linear-gradient(145deg, $card-background, color.adjust($card-background, $lightness: -5%));
+    background: $card-background;
     border-radius: $radius-md;
     overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.3s ease;
@@ -259,16 +405,16 @@ $transition-speed: 0.25s;
     position: relative;
     display: flex;
     flex-direction: column;
+    border: 1px solid $border-color;
     
     &:hover {
       cursor: pointer;
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      @include card-raised;
     }
     
     &.expired {
       border-left: 4px solid $danger-color;
-      background: linear-gradient(145deg, color.adjust($card-background, $lightness: -2%), color.mix($card-background, $danger-color, 95%));
+      background: linear-gradient(to right, rgba(var(--error-color), 0.05), transparent 15%);
     }
     
     .tenant-header {
@@ -277,26 +423,18 @@ $transition-speed: 0.25s;
       justify-content: space-between;
       align-items: center;
       position: relative;
-      
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 24px;
-        right: 24px;
-        height: 1px;
-        background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
-      }
+      @include section-separator;
+      background-color: rgba(var(--primary-color-rgb), 0.03);
       
       .tenant-avatar {
         width: 64px;
         height: 64px;
         border-radius: 50%;
-        background: linear-gradient(145deg, $primary-color, color.adjust($primary-color, $lightness: -15%));
+        background: linear-gradient(145deg, $primary-color, $primary-dark);
         display: flex;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         border: 2px solid rgba(255, 255, 255, 0.1);
         
         span {
@@ -315,7 +453,7 @@ $transition-speed: 0.25s;
         letter-spacing: 0.5px;
         display: flex;
         align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         
         &::before {
           content: '';
@@ -327,35 +465,43 @@ $transition-speed: 0.25s;
         }
         
         &.status-active {
-          background-color: rgba(76, 175, 80, 0.15);
-          color: #66bb6a;
-          border: 1px solid rgba(76, 175, 80, 0.3);
+          background-color: rgba(var(--success-color), 0.15);
+          color: $available-color;
+          border: 1px solid rgba(var(--success-color), 0.3);
           
           &::before {
-            background-color: #66bb6a;
-            box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+            background-color: $available-color;
+            box-shadow: 0 0 8px rgba(var(--success-color), 0.6);
           }
         }
         
         &.status-pending {
-          background-color: rgba(255, 193, 7, 0.15);
-          color: #ffd54f;
-          border: 1px solid rgba(255, 193, 7, 0.3);
+          background-color: rgba(var(--warning-color), 0.15);
+          color: $warning-color;
+          border: 1px solid rgba(var(--warning-color), 0.3);
           
           &::before {
-            background-color: #ffd54f;
-            box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+            background-color: $warning-color;
+            box-shadow: 0 0 8px rgba(var(--warning-color), 0.6);
           }
         }
         
         &.status-expired {
-          background-color: rgba(244, 67, 54, 0.15);
-          color: #e57373;
-          border: 1px solid rgba(244, 67, 54, 0.3);
+          background-color: rgba(var(--error-color), 0.2);
+          color: #ff5252;
+          font-weight: 600;
+          letter-spacing: 0.3px;
+          border: 1px solid rgba(255, 82, 82, 0.4);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          
+          // Stile specifico per light-mode
+          :root[data-theme="light"] & {
+            color: #e53935;
+          }
           
           &::before {
-            background-color: #e57373;
-            box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+            background-color: #ff5252;
+            box-shadow: 0 0 8px rgba(255, 82, 82, 0.7);
           }
         }
       }
@@ -375,6 +521,8 @@ $transition-speed: 0.25s;
       
       .tenant-contact {
         margin-bottom: 20px;
+        padding-bottom: 16px;
+        @include section-separator;
         
         .contact-item {
           display: flex;
@@ -390,7 +538,8 @@ $transition-speed: 0.25s;
             font-size: 16px;
             width: 16px;
             height: 16px;
-            color: color.adjust($primary-color, $lightness: 20%);
+            color: $primary-color;
+            margin-right: 12px;
           }
           
           span {
@@ -403,10 +552,11 @@ $transition-speed: 0.25s;
       
       .tenant-document {
         padding: 14px;
-        background-color: rgba(255, 255, 255, 0.03);
+        background-color: rgba(var(--primary-color-rgb), 0.05);
         border-radius: $radius-sm;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(var(--primary-color-rgb), 0.1);
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-top: 6px;
         
         .document-type {
           display: flex;
@@ -418,7 +568,7 @@ $transition-speed: 0.25s;
             height: 18px;
             width: 18px;
             margin-right: 10px;
-            color: color.adjust($primary-color, $lightness: 20%);
+            color: $primary-color;
           }
           
           span {
@@ -434,7 +584,7 @@ $transition-speed: 0.25s;
           font-size: 1.15rem;
           font-weight: 600;
           letter-spacing: 1px;
-          color: color.adjust($primary-color, $lightness: 25%);
+          color: $primary-color;
           font-family: 'Roboto Mono', monospace;
         }
       }
@@ -445,7 +595,42 @@ $transition-speed: 0.25s;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
-      background-color: rgba(0, 0, 0, 0.25);
+      background-color: rgba(var(--primary-color-rgb), 0.05);
+      border-top: 1px solid $border-color;
+      
+      button {
+        mat-icon {
+          transition: transform 0.2s ease;
+        }
+        
+        &:hover mat-icon {
+          transform: scale(1.15);
+        }
+        
+        &[color="primary"] {
+          color: $primary-color !important;
+          
+          mat-icon {
+            color: $primary-color !important;
+          }
+        }
+        
+        &[color="accent"] {
+          color: $warning-color !important;
+          
+          mat-icon {
+            color: $warning-color !important;
+          }
+        }
+        
+        &[color="warn"] {
+          color: $danger-color !important;
+          
+          mat-icon {
+            color: $danger-color !important;
+          }
+        }
+      }
     }
   }
 }
@@ -455,13 +640,14 @@ $transition-speed: 0.25s;
   overflow-x: auto;
   margin-bottom: 24px;
   border-radius: $radius-md;
+  box-shadow: $card-shadow;
   
   .tenants-table {
     width: 100%;
     background-color: $card-background;
     
     .mat-mdc-header-row {
-      background-color: rgba(0, 0, 0, 0.2);
+      background-color: rgba(var(--primary-color-rgb), 0.05);
       height: 56px;
       
       .mat-mdc-header-cell {
@@ -481,14 +667,14 @@ $transition-speed: 0.25s;
       }
       
       &.expired-row {
-        background-color: rgba($danger-color, 0.05);
+        background-color: rgba(var(--error-color), 0.05);
         
         &:hover {
-          background-color: rgba($danger-color, 0.1);
+          background-color: rgba(var(--error-color), 0.1);
         }
         
         td {
-          border-bottom-color: rgba($danger-color, 0.2);
+          border-bottom-color: rgba(var(--error-color), 0.2);
         }
       }
     }
@@ -523,6 +709,7 @@ $transition-speed: 0.25s;
         
         .tenant-fullname {
           font-weight: 500;
+          color: $text-primary;
         }
         
         .expired-badge {
@@ -530,8 +717,8 @@ $transition-speed: 0.25s;
           font-size: 0.75rem;
           padding: 4px 8px;
           border-radius: 12px;
-          background-color: rgba($danger-color, 0.2);
-          color: #e57373;
+          background-color: rgba(var(--error-color), 0.2);
+          color: $danger-color;
         }
       }
     }
@@ -549,7 +736,8 @@ $transition-speed: 0.25s;
             font-size: 16px;
             width: 16px;
             height: 16px;
-            color: color.adjust($primary-color, $lightness: 20%);
+            color: $primary-color;
+            margin-right: 8px;
           }
           
           span {
@@ -576,6 +764,7 @@ $transition-speed: 0.25s;
         .document-number {
           font-weight: 500;
           letter-spacing: 0.5px;
+          color: $primary-color;
         }
       }
     }
@@ -588,6 +777,40 @@ $transition-speed: 0.25s;
         display: flex;
         justify-content: flex-end;
         gap: 8px;
+        
+        button {
+          mat-icon {
+            transition: transform 0.2s ease;
+          }
+          
+          &:hover mat-icon {
+            transform: scale(1.15);
+          }
+          
+          &[color="primary"] {
+            color: $primary-color !important;
+            
+            mat-icon {
+              color: $primary-color !important;
+            }
+          }
+          
+          &[color="accent"] {
+            color: $warning-color !important;
+            
+            mat-icon {
+              color: $warning-color !important;
+            }
+          }
+          
+          &[color="warn"] {
+            color: $danger-color !important;
+            
+            mat-icon {
+              color: $danger-color !important;
+            }
+          }
+        }
       }
     }
   }
@@ -616,13 +839,23 @@ $transition-speed: 0.25s;
       margin: 0 16px;
       font-size: 0.95rem;
       font-weight: 500;
+      color: $text-primary;
     }
     
     button {
-      color: $text-primary;
+      color: $primary-color;
+      
+      mat-icon {
+        color: $primary-color;
+      }
       
       &:disabled {
-        color: rgba(255, 255, 255, 0.3);
+        color: $text-secondary;
+        opacity: 0.5;
+        
+        mat-icon {
+          color: $text-secondary;
+        }
       }
       
       &:not(:disabled):hover {

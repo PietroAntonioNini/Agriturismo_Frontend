@@ -104,3 +104,33 @@ body {
     }
   }
 }
+
+// Override drastico per le tabelle in dark mode
+html[data-theme="dark"] {
+  .mat-mdc-table {
+    .mat-mdc-row {
+      color: white !important;
+    }
+    
+    td.mat-mdc-cell {
+      color: white !important;
+    }
+    
+    th.mat-mdc-header-cell {
+      color: white !important;
+    }
+  }
+
+  // Forza il colore bianco su tutti i testi nelle tabelle
+  tr.mat-mdc-row, 
+  tr.mat-row,
+  .mat-mdc-cell,
+  .mat-cell {
+    color: white !important;
+  }
+  
+  // Sovrascrive qualsiasi variabile CSS interna di Material
+  --mat-table-row-item-label-text-color: white !important;
+  --mat-table-row-header-text-color: white !important;
+  --mat-table-row-item-container-text-color: white !important;
+}
