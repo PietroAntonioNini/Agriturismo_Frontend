@@ -24,11 +24,26 @@
       </mat-form-field>
       
       <div class="filter-chips">
-        <mat-chip-listbox aria-label="Filtri stato" [multiple]="true">
-          <mat-chip-option color="primary" value="available" (click)="toggleStatusFilter('available')">Disponibili</mat-chip-option>
-          <mat-chip-option color="warn" value="occupied" (click)="toggleStatusFilter('occupied')">Occupati</mat-chip-option>
-          <mat-chip-option color="accent" value="maintenance" (click)="toggleStatusFilter('maintenance')">In Manutenzione</mat-chip-option>
-        </mat-chip-listbox>
+        <div class="custom-button-group">
+          <button class="custom-toggle-button" 
+                  [class.active]="activeStatusFilters.includes('available')" 
+                  (click)="toggleStatusFilter('available')">
+            <span class="check-icon green">✓</span>
+            Disponibili
+          </button>
+          <button class="custom-toggle-button" 
+                  [class.active]="activeStatusFilters.includes('occupied')" 
+                  (click)="toggleStatusFilter('occupied')">
+            <span class="check-icon red">✓</span>
+            Occupati
+          </button>
+          <button class="custom-toggle-button" 
+                  [class.active]="activeStatusFilters.includes('maintenance')" 
+                  (click)="toggleStatusFilter('maintenance')">
+            <span class="check-icon yellow">✓</span>
+            In Manutenzione
+          </button>
+        </div>
       </div>
     </div>
     

@@ -22,10 +22,20 @@
       </mat-form-field>
       
       <div class="filter-chips">
-        <mat-chip-listbox #filterChips aria-label="Filtri" multiple>
-          <mat-chip-option color="primary" [value]="'with_lease'" (selectionChange)="updateFilters(filterChips)">Con contratto</mat-chip-option>
-          <mat-chip-option color="warn" [value]="'without_lease'" (selectionChange)="updateFilters(filterChips)">Senza contratto</mat-chip-option>
-        </mat-chip-listbox>
+        <div class="custom-button-group">
+          <button class="custom-toggle-button" 
+                  [class.active]="activeFilters.includes('with_lease')" 
+                  (click)="toggleFilter('with_lease')">
+            <span class="check-icon green">✓</span>
+            Con contratto
+          </button>
+          <button class="custom-toggle-button" 
+                  [class.active]="activeFilters.includes('without_lease')" 
+                  (click)="toggleFilter('without_lease')">
+            <span class="check-icon red">✓</span>
+            Senza contratto
+          </button>
+        </div>
       </div>
     </div>
     

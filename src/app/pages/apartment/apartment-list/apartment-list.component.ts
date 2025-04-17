@@ -14,7 +14,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatChipsModule } from '@angular/material/chips';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { Apartment } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
@@ -41,7 +41,7 @@ import { environment } from '../../../../environments/environment';
     MatSnackBarModule,
     MatTooltipModule,
     MatProgressBarModule,
-    MatChipsModule
+    MatButtonToggleModule
   ],
   templateUrl: './apartment-list.component.html',
   styleUrls: ['./apartment-list.component.scss']

@@ -226,6 +226,17 @@ export class TenantListComponent implements OnInit {
     this.applyFilter();
   }
 
+  // Nuovo metodo per gestire i pulsanti di filtro personalizzati
+  toggleFilter(filter: string): void {
+    const index = this.activeFilters.indexOf(filter);
+    if (index > -1) {
+      this.activeFilters.splice(index, 1);
+    } else {
+      this.activeFilters.push(filter);
+    }
+    this.applyFilter();
+  }
+
   // Controlla se il documento è scaduto
   isDocumentExpired(tenant: Tenant): boolean {
     if (!tenant.documentExpiry) return false;

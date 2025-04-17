@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { LeaseService } from '../../services/lease.service';
 import { User } from '../../models';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -38,8 +39,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
     {
       label: 'Inquilini',
       icon: 'people',
-      route: '/tenant',
-      badge: 3 // Esempio: 3 nuovi inquilini
+      route: '/tenant'
     },
     {
       label: 'Appartamenti',
@@ -50,6 +50,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
       label: 'Contratti',
       icon: 'description',
       route: '/lease'
+      // badge verrà aggiornato dinamicamente dal servizio
     },
     {
       label: 'Utenze',
@@ -90,9 +91,11 @@ export class SidenavComponent implements OnInit, OnDestroy {
   currentYear = new Date().getFullYear();
   
   private userSubscription: Subscription | null = null;
+  private expiringLeasesSubscription: Subscription | null = null;
   
   constructor(
     private authService: AuthService,
+    private leaseService: LeaseService,
     private router: Router
   ) {
     this.currentUser$ = this.authService.currentUser$;
@@ -100,6 +103,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.filterNavItems();
+    this.updateExpiringLeasesCount();
     
     this.userSubscription = this.authService.currentUser$.subscribe(() => {
       this.filterNavItems();
@@ -110,6 +114,28 @@ export class SidenavComponent implements OnInit, OnDestroy {
     if (this.userSubscription) {
       this.userSubscription.unsubscribe();
     }
+    
+    if (this.expiringLeasesSubscription) {
+      this.expiringLeasesSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Aggiorna il conteggio dei contratti in scadenza
+   */
+  private updateExpiringLeasesCount(): void {
+    this.expiringLeasesSubscription = this.leaseService.getExpiringLeasesCount().subscribe(count => {
+      // Trova l'elemento di navigazione "Contratti"
+      const leaseNavItem = this.navItems.find(item => item.route === '/lease');
+      if (leaseNavItem && count > 0) {
+        leaseNavItem.badge = count;
+      } else if (leaseNavItem) {
+        leaseNavItem.badge = undefined;
+      }
+      
+      // Aggiorna gli elementi filtrati
+      this.filterNavItems();
+    });
   }
 
   /**

@@ -1,4 +1,4 @@
-@use "sass:color";
+@use "sass:color";  
 
 // Variables with light/dark theme support
 $primary-color: var(--primary-color);
@@ -21,6 +21,31 @@ $radius-sm: var(--border-radius-sm);
 $radius-md: var(--border-radius-md);
 $radius-lg: var(--border-radius-lg);
 $transition-speed: var(--transition-normal);
+
+// Rimuovi le spunte nere dai button-toggle a livello globale
+:host ::ng-deep {
+  .mat-button-toggle-checked::after,
+  .mat-button-toggle-checked .mat-button-toggle-label-content::after,
+  .mat-button-toggle-checked .mat-icon,
+  .mat-button-toggle-appearance-standard .mat-button-toggle-checked .mat-button-toggle-label-content .mat-button-toggle-persistent-hint,
+  .mat-mdc-button-toggle-checked-indicator,
+  .mat-button-toggle .mdc-button__icon,
+  .mdc-button__icon,
+  .mdc-button-toggle__indicator,
+  .mdc-button-toggle__background,
+  .mat-button-toggle-checked .mdc-button-toggle-indicator {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+  }
+}
 
 // Mixins per effetti di profondità
 @mixin card-raised {
@@ -177,122 +202,91 @@ $transition-speed: var(--transition-normal);
     .filter-chips {
       margin-top: 8px;
       
-      ::ng-deep .mat-mdc-chip-set {
-        min-height: 40px;
+      .custom-button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
       }
       
-      ::ng-deep .mat-mdc-chip {
+      .custom-toggle-button {
+        display: flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 16px;
         background-color: $surface-color;
         color: $text-primary;
         border: 1px solid $border-color;
+        font-size: 0.9rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        cursor: pointer;
         
-        &.mat-mdc-chip-selected {
-          &.mat-primary {
+        &:hover {
+          background-color: $hover-color;
+        }
+        
+        .check-icon {
+          font-size: 16px;
+          font-weight: bold;
+          margin-right: 6px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          
+          &.green { color: $available-color; }
+          &.red { color: $occupied-color; }
+          &.yellow { color: #FFC107; }
+        }
+        
+        &.active {
+          .check-icon {
+            opacity: 1;
+          }
+          
+          // Stile quando disponibili è attivo
+          &:nth-child(1) {
             background-color: rgba(var(--primary-color-rgb), 0.2);
             color: $primary-color;
             border-color: $primary-color;
             
-            .mdc-evolution-chip__text-label,
-            .mdc-evolution-chip__checkmark {
-              color: $primary-color !important;
-            }
-            
-            .mdc-evolution-chip__checkmark-svg {
-              fill: $primary-color !important;
-            }
-            
-            // Dark mode - Aggiungere solo questo
+            // Dark mode
             :root[data-theme="dark"] &,
             html[data-theme="dark"] & {
               color: white;
-              
-              .mdc-evolution-chip__text-label,
-              .mdc-evolution-chip__checkmark {
-                color: white !important;
-              }
-              
-              .mdc-evolution-chip__checkmark-svg {
-                fill: white !important;
-              }
             }
           }
           
-          &.mat-warn {
+          // Stile quando occupati è attivo
+          &:nth-child(2) {
             background-color: rgba(255, 82, 82, 0.1);
             color: #ff5252;
             border-color: rgba(255, 82, 82, 0.6);
             font-weight: 500;
             
-            .mdc-evolution-chip__text-label,
-            .mdc-evolution-chip__checkmark {
-              color: #ff5252 !important;
-            }
-            
-            .mdc-evolution-chip__checkmark-svg {
-              fill: #ff5252 !important;
-            }
-            
             // Stile specifico per light-mode
             :root[data-theme="light"] & {
-              .mdc-evolution-chip__text-label,
-              .mdc-evolution-chip__checkmark {
-                color: #e53935 !important;
-              }
-              
-              .mdc-evolution-chip__checkmark-svg {
-                fill: #e53935 !important;
-              }
+              color: #e53935;
             }
             
-            // Dark mode - Aggiungere solo questo
+            // Dark mode
             :root[data-theme="dark"] &,
             html[data-theme="dark"] & {
-              color: #e53935 !important;
-              
-              .mdc-evolution-chip__text-label,
-              .mdc-evolution-chip__checkmark {
-                color: #e53935 !important;
-              }
-              
-              .mdc-evolution-chip__checkmark-svg {
-                fill: #e53935 !important;
-              }
+              color: #e53935;
             }
           }
           
-          &.mat-accent {
-            background-color: rgba(var(--warning-color), 0.2);
+          // Stile quando manutenzione è attivo
+          &:nth-child(3) {
+            background-color: rgba(#FFC107, 0.2);
             color: $maintenance-color;
-            border-color: rgba(var(--warning-color), 0.6);
+            border-color: rgba(#FFC107, 0.6);
             
-            .mdc-evolution-chip__text-label,
-            .mdc-evolution-chip__checkmark {
-              color: $maintenance-color !important;
-            }
-            
-            .mdc-evolution-chip__checkmark-svg {
-              fill: $maintenance-color !important;
-            }
-            
-            // Dark mode - Aggiungere solo questo
+            // Dark mode
             :root[data-theme="dark"] &,
             html[data-theme="dark"] & {
               color: white;
-              
-              .mdc-evolution-chip__text-label,
-              .mdc-evolution-chip__checkmark {
-                color: white !important;
-              }
-              
-              .mdc-evolution-chip__checkmark-svg {
-                fill: white !important;
-              }
             }
           }
-        }
-        
-        .mdc-evolution-chip__text-label {
-          color: $text-primary;
         }
       }
     }
@@ -543,14 +537,12 @@ $transition-speed: var(--transition-normal);
           
           &::before {
             background-color: $available-color;
-            box-shadow: 0 0 8px rgba(var(--success-color), 0.6);
           }
         }
         
         &.status-occupied {
           background-color: rgba(var(--error-color), 0.2);
           color: #ff5252;
-          font-weight: 600;
           letter-spacing: 0.3px;
           border: 2px solid #ff5252;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -568,7 +560,6 @@ $transition-speed: var(--transition-normal);
           
           &::before {
             background-color: #ff5252;
-            box-shadow: 0 0 8px rgba(255, 82, 82, 0.7);
           }
         }
         
@@ -591,7 +582,6 @@ $transition-speed: var(--transition-normal);
           
           &::before {
             background-color: $maintenance-color;
-            box-shadow: 0 0 8px rgba(var(--warning-color), 0.6);
           }
         }
       }
