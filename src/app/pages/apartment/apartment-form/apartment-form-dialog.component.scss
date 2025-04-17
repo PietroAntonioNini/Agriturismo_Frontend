@@ -1,3 +1,5 @@
+@import '../../../shared/styles/themes/_variables.scss';
+
 .dialog-container {
   display: flex;
   flex-direction: column;
@@ -6,18 +8,30 @@
 
 .close-button-dialog {
   position: absolute;
-  top: 10px;
-  right: 18px;
-  z-index: 1;
+  top: $spacing-sm;
+  right: $spacing-sm;
+  z-index: 10;
+  color: var(--text-color);
+  background: none !important;
+  transition: transform 0.1s linear;
 
-  ::ng-deep .mat-mdc-button-persistent-ripple {
-    display: none !important;
+  &:hover {
+    transform: scale(1.2);
   }
 
-  &:hover{
-    transform: scale(1.15);
-    transition: transform 0.06s linear;
-    cursor:pointer;
+  ::ng-deep {
+    .mdc-icon-button {
+      padding: 0;
+      width: auto;
+      height: auto;
+      --mdc-icon-button-state-layer-size: 0;
+    }
+
+    .mdc-icon-button__ripple,
+    .mat-mdc-focus-indicator,
+    .mat-ripple {
+      display: none !important;
+    }
   }
 }
 

@@ -265,17 +265,13 @@ export class TenantListComponent implements OnInit {
   // Azioni dell'interfaccia
   viewTenantDetails(tenantId: number): void {
     this.dialog.open(TenantDetailDialogComponent, {
-      data: { tenantId },
-      width: '800px',
-      maxHeight: '90vh'
+      data: { tenantId }
     });
   }
 
   editTenant(tenantId: number): void {
     const dialogRef = this.dialog.open(TenantFormComponent, {
-      data: { tenantId },
-      width: '800px',
-      maxHeight: '90vh'
+      data: { tenantId }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -286,10 +282,7 @@ export class TenantListComponent implements OnInit {
   }
 
   openTenantForm(): void {
-    const dialogRef = this.dialog.open(TenantFormComponent, {
-      width: '800px',
-      maxHeight: '90vh'
-    });
+    const dialogRef = this.dialog.open(TenantFormComponent);
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {

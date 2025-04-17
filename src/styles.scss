@@ -55,6 +55,11 @@ body {
   color: var(--text-color) !important;
 }
 
+// Forza il max-height anche sul contenitore del form
+.mat-mdc-dialog-container .mdc-dialog__surface .mat-mdc-dialog-content {
+  max-height: 90vh !important;
+}
+
 .mat-mdc-card {
   background-color: var(--card-background) !important;
   color: var(--text-color) !important;
