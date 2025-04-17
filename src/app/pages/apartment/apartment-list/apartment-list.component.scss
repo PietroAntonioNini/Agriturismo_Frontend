@@ -233,9 +233,9 @@ $transition-speed: var(--transition-normal);
           opacity: 0;
           transition: opacity 0.2s ease;
           
-          &.green { color: $available-color; }
-          &.red { color: $occupied-color; }
-          &.yellow { color: #FFC107; }
+          &.green { color: rgba(var(--success-color-rgb)); }
+          &.red { color: rgba(var(--error-color-rgb)); }
+          &.yellow { color: rgba(var(--warning-color-rgb)); }
         }
         
         &.active {
@@ -245,7 +245,7 @@ $transition-speed: var(--transition-normal);
           
           // Stile quando disponibili è attivo
           &:nth-child(1) {
-            background-color: rgba(var(--primary-color-rgb), 0.2);
+            background-color: rgba(var(--primary-color-rgb), 0.1);
             color: $primary-color;
             border-color: $primary-color;
             
@@ -258,28 +258,27 @@ $transition-speed: var(--transition-normal);
           
           // Stile quando occupati è attivo
           &:nth-child(2) {
-            background-color: rgba(255, 82, 82, 0.1);
-            color: #ff5252;
-            border-color: rgba(255, 82, 82, 0.6);
-            font-weight: 500;
+            background-color: rgba(var(--error-color-rgb), 0.1);
+            color: rgba(var(--error-color-rgb));
+            border-color: rgba(var(--error-color-rgb));
             
             // Stile specifico per light-mode
             :root[data-theme="light"] & {
-              color: #e53935;
+              color: rgba(var(--error-color-rgb));
             }
             
             // Dark mode
             :root[data-theme="dark"] &,
             html[data-theme="dark"] & {
-              color: #e53935;
+              color: rgba(var(--error-color-rgb));
             }
           }
           
           // Stile quando manutenzione è attivo
           &:nth-child(3) {
-            background-color: rgba(#FFC107, 0.2);
-            color: $maintenance-color;
-            border-color: rgba(#FFC107, 0.6);
+            background-color: rgba(var(--warning-color-rgb), 0.1);
+            color: rgba(var(--warning-color-rgb));
+            border-color: rgba(var(--warning-color-rgb));
             
             // Dark mode
             :root[data-theme="dark"] &,
@@ -541,10 +540,10 @@ $transition-speed: var(--transition-normal);
         }
         
         &.status-occupied {
-          background-color: rgba(var(--error-color), 0.2);
-          color: #ff5252;
+          background-color: rgba(var(--error-color-rgb), 0.1);
+          color: rgba(var(--error-color-rgb));
           letter-spacing: 0.3px;
-          border: 2px solid #ff5252;
+          border: 2px solid rgba(var(--error-color-rgb));
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           
           // Stile per dark mode

@@ -26,13 +26,13 @@
           <button class="custom-toggle-button" 
                   [class.active]="activeFilters.includes('with_lease')" 
                   (click)="toggleFilter('with_lease')">
-            <span class="check-icon green">✓</span>
+            <span class="check-icon green" *ngIf="activeFilters.includes('with_lease')">✓</span>
             Con contratto
           </button>
           <button class="custom-toggle-button" 
                   [class.active]="activeFilters.includes('without_lease')" 
                   (click)="toggleFilter('without_lease')">
-            <span class="check-icon red">✓</span>
+            <span class="check-icon red" *ngIf="activeFilters.includes('without_lease')">✓</span>
             Senza contratto
           </button>
         </div>
@@ -98,10 +98,13 @@
             <mat-icon>smartphone</mat-icon>
             <span>{{tenant.phone}}</span>
           </div>
+
+          @if (tenant.email) {
           <div class="contact-item">
             <mat-icon>email</mat-icon>
             <span>{{tenant.email}}</span>
           </div>
+          }
         </div>
         
         <div class="tenant-document">

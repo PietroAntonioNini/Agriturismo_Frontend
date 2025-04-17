@@ -24,22 +24,28 @@
       </mat-form-field>
       
       <div class="filter-chips">
-        <mat-chip-listbox multiple>
-          <mat-chip-option color="primary" value="active" (click)="toggleStatusFilter('active')" 
-            [selected]="isFilterActive('active')">
+        <div class="custom-button-group">
+          <button class="custom-toggle-button" 
+                  [class.active]="isFilterActive('active')"
+                  (click)="toggleStatusFilter('active')">
+            <span class="check-icon green" *ngIf="isFilterActive('active')">✓</span>
             Attivi
-          </mat-chip-option>
-          <mat-chip-option color="warn" value="inactive" (click)="toggleStatusFilter('inactive')"
-            [selected]="isFilterActive('inactive')">
+          </button>
+          <button class="custom-toggle-button" 
+                  [class.active]="isFilterActive('inactive')"
+                  (click)="toggleStatusFilter('inactive')">
+            <span class="check-icon red" *ngIf="isFilterActive('inactive')">✓</span>
             Terminati
-          </mat-chip-option>
-          <mat-chip-option color="accent" value="expiring" (click)="toggleStatusFilter('expiring')"
-            [selected]="isFilterActive('expiring')">
+          </button>
+          <button class="custom-toggle-button" 
+                  [class.active]="isFilterActive('expiring')"
+                  (click)="toggleStatusFilter('expiring')">
+            <span class="check-icon yellow" *ngIf="isFilterActive('expiring')">✓</span>
             In Scadenza
-          </mat-chip-option>
-        </mat-chip-listbox>
+          </button>
+        </div>
         
-        <button mat-button color="primary" (click)="resetFilters()" class="reset-filters">
+        <button class="custom-toggle-button reset-filters" (click)="resetFilters()">
           <mat-icon>filter_alt</mat-icon>
           Reset Filtri
         </button>
@@ -48,7 +54,7 @@
     
     <div class="view-options">
       <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
-        <mat-icon>dashboard</mat-icon>
+        <mat-icon>grid_view</mat-icon>
       </button>
       <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
         <mat-icon>view_list</mat-icon>

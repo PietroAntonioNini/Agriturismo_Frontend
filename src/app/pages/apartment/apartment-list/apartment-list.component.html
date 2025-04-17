@@ -28,19 +28,19 @@
           <button class="custom-toggle-button" 
                   [class.active]="activeStatusFilters.includes('available')" 
                   (click)="toggleStatusFilter('available')">
-            <span class="check-icon green">✓</span>
+            <span class="check-icon green" *ngIf="activeStatusFilters.includes('available')">✓</span>
             Disponibili
           </button>
           <button class="custom-toggle-button" 
                   [class.active]="activeStatusFilters.includes('occupied')" 
                   (click)="toggleStatusFilter('occupied')">
-            <span class="check-icon red">✓</span>
+            <span class="check-icon red" *ngIf="activeStatusFilters.includes('occupied')">✓</span>
             Occupati
           </button>
           <button class="custom-toggle-button" 
                   [class.active]="activeStatusFilters.includes('maintenance')" 
                   (click)="toggleStatusFilter('maintenance')">
-            <span class="check-icon yellow">✓</span>
+            <span class="check-icon yellow" *ngIf="activeStatusFilters.includes('maintenance')">✓</span>
             In Manutenzione
           </button>
         </div>

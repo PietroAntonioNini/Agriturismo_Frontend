@@ -2,6 +2,11 @@
 @import './light-theme';
 @import './dark-theme';
 
+// Funzione helper per convertire hex a rgb
+@function hexToRGB($hex) {
+  @return red($hex), green($hex), blue($hex);
+}
+
 // Stili condivisi tra i temi
 :root {
   // Bordi arrotondati
@@ -25,11 +30,17 @@
   --z-index-fixed: #{$z-index-fixed};
   --z-index-modal: #{$z-index-modal};
   
-  // Colori di stato
+  // Colori di stato (valori HEX)
   --error-color: #{$error-color};
   --success-color: #{$success-color};
   --warning-color: #{$warning-color};
   --info-color: #{$info-color};
+  
+  // Colori di stato (valori RGB)
+  --error-color-rgb: #{hexToRGB($error-color)};
+  --success-color-rgb: #{hexToRGB($success-color)};
+  --warning-color-rgb: #{hexToRGB($warning-color)};
+  --info-color-rgb: #{hexToRGB($info-color)};
   
   // Transizioni
   --transition-fast: #{$transition-fast};
