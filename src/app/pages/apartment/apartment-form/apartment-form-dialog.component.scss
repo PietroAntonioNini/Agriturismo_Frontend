@@ -1,4 +1,4 @@
-@import '../../../shared/styles/themes/_variables.scss';
+@use '../../../shared/styles/themes/variables' as vars;
 
 .dialog-container {
   display: flex;
@@ -8,8 +8,8 @@
 
 .close-button-dialog {
   position: absolute;
-  top: $spacing-sm;
-  right: $spacing-sm;
+  top: vars.$spacing-sm;
+  right: vars.$spacing-sm;
   z-index: 10;
   color: var(--text-color);
   background: none !important;

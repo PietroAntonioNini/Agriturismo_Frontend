@@ -1,0 +1,18 @@
+@use 'sass:color';
+
+// Funzione per convertire colori HEX a RGB
+@function hex-to-rgb($hex) {
+  @return color.channel($hex, "red", $space: rgb), 
+          color.channel($hex, "green", $space: rgb), 
+          color.channel($hex, "blue", $space: rgb);
+}
+
+// Funzione che sostituisce lighten()
+@function lighten-color($color, $amount) {
+  @return color.adjust($color, $lightness: $amount);
+}
+
+// Funzione che sostituisce darken()
+@function darken-color($color, $amount) {
+  @return color.adjust($color, $lightness: -$amount);
+} 

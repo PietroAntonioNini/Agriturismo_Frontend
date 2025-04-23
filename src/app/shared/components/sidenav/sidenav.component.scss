@@ -1,4 +1,4 @@
-@import '../../styles/themes/variables';
+@use '../../styles/themes/variables' as vars;
 
 .app-sidenav {
   position: fixed;
@@ -10,7 +10,7 @@
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  width: $sidenav-width-expanded;
+  width: vars.$sidenav-width-expanded;
   box-shadow: var(--shadow-light);
   overflow: hidden;
   height: calc(100vh - 64px);

@@ -1,5 +1,5 @@
 /* Importa i temi personalizzati */
-@import './app/shared/styles/themes/index.scss';
+@use './app/shared/styles/themes/index.scss' as themes;
 
 /* Importa i CSS precompilati di Angular Material (sovrascriveremo alcuni stili) */
 @import "@angular/material/prebuilt-themes/indigo-pink.css";

@@ -63,7 +63,7 @@ export class TenantListComponent implements OnInit {
   // Proprietà per la visualizzazione dati
   tenants: Tenant[] = [];
   filteredTenants: Tenant[] = [];
-  displayedColumns: string[] = ['avatar', 'name', 'contact', 'document', 'actions'];
+  displayedColumns: string[] = ['avatar', 'name', 'contact', 'document', 'lease', 'actions'];
   searchQuery: string = '';
   isLoading: boolean = true;
   errorMessage: string | null = null;

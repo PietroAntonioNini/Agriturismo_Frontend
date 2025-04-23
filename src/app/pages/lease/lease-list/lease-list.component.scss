@@ -473,7 +473,7 @@ $transition-speed: var(--transition-normal);
     background-color: $card-background;
     border-radius: $radius-md;
     overflow: hidden;
-    transition: transform $transition-speed ease, box-shadow $transition-speed ease;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
     box-shadow: $card-shadow;
     display: flex;
     flex-direction: column;
@@ -880,13 +880,13 @@ $transition-speed: var(--transition-normal);
           font-size: 0.9rem;
           
           &.start-date {
-            background-color: rgba(var(--success-color), 0.2);
+            background-color: rgba(var(--success-color-rgb), 0.2);
             color: $available-color;
             border: 1px solid $available-color;
           }
           
           &.end-date {
-            background-color: rgba(var(--error-color), 0.2);
+            background-color: rgba(var(--error-color-rgb), 0.2);
             color: $danger-color;
             border: 1px solid $danger-color;
           }
@@ -918,13 +918,13 @@ $transition-speed: var(--transition-normal);
       width: fit-content;
       
       &.status-active {
-        background-color: rgba(var(--success-color), 0.2);
+        background-color: rgba(var(--success-color-rgb), 0.2);
         color: $available-color;
         border: 1px solid $available-color;
       }
       
       &.status-inactive {
-        background-color: rgba(var(--error-color), 0.2);
+        background-color: rgba(var(--error-color-rgb), 0.2);
         color: $danger-color;
         border: 1px solid $danger-color;
       }

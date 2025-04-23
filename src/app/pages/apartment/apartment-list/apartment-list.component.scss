@@ -458,7 +458,7 @@ $transition-speed: var(--transition-normal);
     background-color: $card-background;
     border-radius: $radius-md;
     overflow: hidden;
-    transition: transform $transition-speed ease, box-shadow $transition-speed ease;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
     box-shadow: $card-shadow;
     display: flex;
     flex-direction: column;

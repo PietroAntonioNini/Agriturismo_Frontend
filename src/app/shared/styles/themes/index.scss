@@ -1,49 +1,47 @@
-@import './variables';
-@import './light-theme';
-@import './dark-theme';
-
-// Funzione helper per convertire hex a rgb
-@function hexToRGB($hex) {
-  @return red($hex), green($hex), blue($hex);
-}
+@use 'sass:color';
+@forward 'variables';
+@use 'variables' as vars;
+@use 'color-functions' as cf;
+@use 'light-theme';
+@use 'dark-theme';
 
 // Stili condivisi tra i temi
 :root {
   // Bordi arrotondati
-  --border-radius-sm: #{$border-radius-sm};
-  --border-radius-md: #{$border-radius-md};
-  --border-radius-lg: #{$border-radius-lg};
+  --border-radius-sm: #{vars.$border-radius-sm};
+  --border-radius-md: #{vars.$border-radius-md};
+  --border-radius-lg: #{vars.$border-radius-lg};
   
   // Spazi
-  --spacing-xs: #{$spacing-xs};
-  --spacing-sm: #{$spacing-sm};
-  --spacing-md: #{$spacing-md};
-  --spacing-lg: #{$spacing-lg};
-  --spacing-xl: #{$spacing-xl};
+  --spacing-xs: #{vars.$spacing-xs};
+  --spacing-sm: #{vars.$spacing-sm};
+  --spacing-md: #{vars.$spacing-md};
+  --spacing-lg: #{vars.$spacing-lg};
+  --spacing-xl: #{vars.$spacing-xl};
   
   // Dimensioni layout
-  --header-height: #{$header-height};
-  --sidenav-width-expanded: #{$sidenav-width-expanded};
+  --header-height: #{vars.$header-height};
+  --sidenav-width-expanded: #{vars.$sidenav-width-expanded};
   
   // Z-index
-  --z-index-dropdown: #{$z-index-dropdown};
-  --z-index-fixed: #{$z-index-fixed};
-  --z-index-modal: #{$z-index-modal};
+  --z-index-dropdown: #{vars.$z-index-dropdown};
+  --z-index-fixed: #{vars.$z-index-fixed};
+  --z-index-modal: #{vars.$z-index-modal};
   
   // Colori di stato (valori HEX)
-  --error-color: #{$error-color};
-  --success-color: #{$success-color};
-  --warning-color: #{$warning-color};
-  --info-color: #{$info-color};
+  --error-color: #{vars.$error-color};
+  --success-color: #{vars.$success-color};
+  --warning-color: #{vars.$warning-color};
+  --info-color: #{vars.$info-color};
   
   // Colori di stato (valori RGB)
-  --error-color-rgb: #{hexToRGB($error-color)};
-  --success-color-rgb: #{hexToRGB($success-color)};
-  --warning-color-rgb: #{hexToRGB($warning-color)};
-  --info-color-rgb: #{hexToRGB($info-color)};
+  --error-color-rgb: #{cf.hex-to-rgb(vars.$error-color)};
+  --success-color-rgb: #{cf.hex-to-rgb(vars.$success-color)};
+  --warning-color-rgb: #{cf.hex-to-rgb(vars.$warning-color)};
+  --info-color-rgb: #{cf.hex-to-rgb(vars.$info-color)};
   
   // Transizioni
-  --transition-fast: #{$transition-fast};
-  --transition-normal: #{$transition-normal};
-  --transition-slow: #{$transition-slow};
+  --transition-fast: #{vars.$transition-fast};
+  --transition-normal: #{vars.$transition-normal};
+  --transition-slow: #{vars.$transition-slow};
 } 

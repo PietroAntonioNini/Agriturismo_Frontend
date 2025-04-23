@@ -1,35 +1,32 @@
-@import './variables';
-
-// Funzione helper per convertire hex a rgb
-@function hexToRGB($hex) {
-  @return red($hex), green($hex), blue($hex);
-}
+@use 'sass:color';
+@use 'variables' as vars;
+@use 'color-functions' as cf;
 
 :root[data-theme="dark"],
 .dark-theme {
   // Applicazione dei colori in dark mode
-  --app-background: #{$background-dark};
-  --card-background: #{$background-dark-elevated};
-  --text-color: #{$text-light};
-  --text-muted: #{rgba($text-light, 0.7)};
-  --border-color: #{$border-dark};
+  --app-background: #{vars.$background-dark};
+  --card-background: #{vars.$background-dark-elevated};
+  --text-color: #{vars.$text-light};
+  --text-muted: #{rgba(vars.$text-light, 0.7)};
+  --border-color: #{vars.$border-dark};
   
   // RGB values for rgba usage in CSS
-  --primary-color-rgb: #{hexToRGB($primary-light)};
-  --secondary-color-rgb: #{hexToRGB($secondary-light)};
+  --primary-color-rgb: #{cf.hex-to-rgb(vars.$primary-light)};
+  --secondary-color-rgb: #{cf.hex-to-rgb(vars.$secondary-light)};
   
   // Ombre personalizzate per dark mode
   --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.5);
   
   // Mantieni i colori principali ma adatta la luminosità
-  --primary-color: #{$primary-light};
-  --primary-dark: #{$primary-color};
-  --secondary-color: #{$secondary-light};
-  --secondary-dark: #{$secondary-color};
+  --primary-color: #{vars.$primary-light};
+  --primary-dark: #{vars.$primary-color};
+  --secondary-color: #{vars.$secondary-light};
+  --secondary-dark: #{vars.$secondary-color};
   
   // Inverti i gradienti per ottenere un effetto migliore in dark mode
-  --primary-gradient: linear-gradient(135deg, #{$primary-light} 0%, #{$primary-color} 100%);
+  --primary-gradient: linear-gradient(135deg, #{vars.$primary-light} 0%, #{vars.$primary-color} 100%);
   
   // Fix per problemi specifici con i componenti Angular Material
   .mat-mdc-menu-content {

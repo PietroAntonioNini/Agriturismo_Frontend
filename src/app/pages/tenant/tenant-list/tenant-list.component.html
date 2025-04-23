@@ -80,7 +80,7 @@
 
   <!-- Grid View -->
   <div *ngIf="viewMode === 'grid' && filteredTenants.length > 0" class="tenants-grid">
-    <div *ngFor="let tenant of filteredTenants" class="tenant-card" [class.expired]="isDocumentExpired(tenant)">
+    <div *ngFor="let tenant of filteredTenants" class="tenant-card" [class.expired]="isDocumentExpired(tenant)" (click)="viewTenantDetails(tenant.id)">
       <div class="tenant-header">
         <div class="tenant-avatar">
           <span>{{getTenantInitials(tenant)}}</span>
@@ -161,12 +161,14 @@
           <div class="table-contact-info">
             <div class="table-contact-item">
               <mat-icon>phone</mat-icon>
-              <span>{{tenant.phone}}</span>
+              {{tenant.phone}}
             </div>
+            @if (tenant.email) {
             <div class="table-contact-item">
               <mat-icon>email</mat-icon>
-              <span>{{tenant.email}}</span>
+              {{tenant.email}}
             </div>
+            }
           </div>
         </td>
       </ng-container>
@@ -177,7 +179,17 @@
         <td mat-cell *matCellDef="let tenant" class="document-cell">
           <div class="document-info">
             <span class="document-type">{{tenant.documentType}}</span>
-            <span class="document-number text-uppercase">{{tenant.documentNumber}}</span>
+            <span class="document-number">{{tenant.documentNumber}}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Lease Column -->
+      <ng-container matColumnDef="lease">
+        <th mat-header-cell *matHeaderCellDef>Contratto</th>
+        <td mat-cell *matCellDef="let tenant">
+          <div class="tenant-status-badge" [class]="getTenantStatusClass(tenant)">
+            {{getTenantStatusLabel(tenant)}}  
           </div>
         </td>
       </ng-container>
@@ -187,13 +199,13 @@
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let tenant" class="actions-cell">
           <div class="table-actions">
-            <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" (click)="viewTenantDetails(tenant.id)">
+            <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" (click)="viewTenantDetails(tenant.id); $event.stopPropagation()">
               <mat-icon>visibility</mat-icon>
             </button>
-            <button mat-icon-button color="accent" matTooltip="Modifica" (click)="editTenant(tenant.id)">
+            <button mat-icon-button color="accent" matTooltip="Modifica" (click)="editTenant(tenant.id); $event.stopPropagation()">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" matTooltip="Elimina" (click)="deleteTenant(tenant)">
+            <button mat-icon-button color="warn" matTooltip="Elimina" (click)="deleteTenant(tenant); $event.stopPropagation()">
               <mat-icon>delete</mat-icon>
             </button>
           </div>
@@ -201,7 +213,10 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.expired-row]="isDocumentExpired(row)"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+          [class.expired-row]="isDocumentExpired(row)"
+          (click)="viewTenantDetails(row.id)"
+          class="clickable-row"></tr>
     </table>
   </div>
 

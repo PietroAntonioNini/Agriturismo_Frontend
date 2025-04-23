@@ -1,10 +1,13 @@
+@use 'sass:color';
+@use 'color-functions' as cf;
+
 // Variabili colori di base
 $primary-color: #2D7D46;
-$primary-light: lighten($primary-color, 10%);
+$primary-light: cf.lighten-color($primary-color, 10%);
 $primary-dark: #1e5e34;
 $secondary-color: #f5a623;
-$secondary-light: lighten($secondary-color, 10%);
-$secondary-dark: darken($secondary-color, 10%);
+$secondary-light: cf.lighten-color($secondary-color, 10%);
+$secondary-dark: cf.darken-color($secondary-color, 10%);
 
 // Gradienti
 $primary-gradient: linear-gradient(135deg, $primary-color 0%, $primary-dark 100%);

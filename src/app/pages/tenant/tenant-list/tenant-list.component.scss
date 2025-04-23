@@ -515,6 +515,7 @@ $transition-speed: var(--transition-normal);
           
           &::before {
             background-color: $available-color;
+            box-shadow: 0 0 0 2px rgba(var(--success-color-rgb), 0.2);
           }
         }
         
@@ -700,8 +701,16 @@ $transition-speed: var(--transition-normal);
     }
     
     .mat-mdc-row {
-      height: 72px;
+      height: 56px;
       transition: background-color 0.15s ease;
+      
+      .mat-mdc-cell {
+        padding: 0 8px;
+      }
+      
+      &.clickable-row {
+        cursor: pointer;
+      }
       
       &:hover {
         background-color: $hover-color;
@@ -721,7 +730,7 @@ $transition-speed: var(--transition-normal);
     }
     
     .avatar-cell {
-      width: 80px;
+      width: 100px;
       padding-left: 16px;
       
       .table-avatar {
@@ -742,7 +751,7 @@ $transition-speed: var(--transition-normal);
     }
     
     .name-cell {
-      width: 25%;
+      width: 20%;
       
       .tenant-name-container {
         display: flex;
@@ -765,32 +774,30 @@ $transition-speed: var(--transition-normal);
     }
     
     .contact-cell {
-      width: 30%;
+      width: 20%;
       
       .table-contact-info {
         .table-contact-item {
           display: flex;
           align-items: center;
-          margin-bottom: 4px;
+          gap: 4px;
+          margin-bottom: 2px;
           
           mat-icon {
             font-size: 16px;
             width: 16px;
             height: 16px;
-            color: $primary-color;
-            margin-right: 8px;
-          }
-          
-          span {
-            color: $text-secondary;
-            font-size: 0.9rem;
+            
+            &:first-child {
+              color: $primary-color;
+            }
           }
         }
       }
     }
     
     .document-cell {
-      width: 25%;
+      width: 20%;
       
       .document-info {
         display: flex;
@@ -810,6 +817,66 @@ $transition-speed: var(--transition-normal);
       }
     }
     
+    .tenant-status-badge {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      
+      &::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+      }
+      
+      &.status-active {
+        width: 130px;
+        background-color: rgba(var(--success-color-rgb), 0.1);
+        color: rgba(var(--success-color-rgb));
+        border: 2px solid rgba(var(--success-color-rgb));
+        
+        &::before {
+          background-color: $available-color;
+          box-shadow: 0 0 0 2px rgba(var(--success-color-rgb), 0.2);
+        }
+      }
+      
+      &.status-pending {
+        background-color: rgba(var(--warning-color-rgb), 0.1);
+        color: rgba(var(--warning-color-rgb));
+        border: 1px solid rgba(var(--warning-color-rgb), 0.3);
+        
+        &::before {
+          background-color: $warning-color;
+        }
+      }
+      
+      &.status-expired {
+        background-color: rgba(var(--error-color-rgb), 0.1);
+        color: rgba(var(--error-color-rgb));
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        border: 1px solid rgba(var(--error-color-rgb), 0.4);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        
+        // Stile specifico per light-mode
+        :root[data-theme="light"] & {
+          color: rgba(var(--error-color-rgb));
+        }
+        
+        &::before {
+          background-color: rgba(var(--error-color-rgb));
+        }
+      }
+    }
+    
     .actions-cell {
       width: 150px;
       padding-right: 16px;
@@ -820,36 +887,16 @@ $transition-speed: var(--transition-normal);
         gap: 8px;
         
         button {
-          mat-icon {
-            transition: transform 0.2s ease;
+          &[color="primary"] mat-icon {
+            color: $primary-color;
           }
           
-          &:hover mat-icon {
-            transform: scale(1.15);
+          &[color="accent"] mat-icon {
+            color: $warning-color;
           }
           
-          &[color="primary"] {
-            color: $primary-color !important;
-            
-            mat-icon {
-              color: $primary-color !important;
-            }
-          }
-          
-          &[color="accent"] {
-            color: $warning-color !important;
-            
-            mat-icon {
-              color: $warning-color !important;
-            }
-          }
-          
-          &[color="warn"] {
-            color: $danger-color !important;
-            
-            mat-icon {
-              color: $danger-color !important;
-            }
+          &[color="warn"] mat-icon {
+            color: $danger-color;
           }
         }
       }
