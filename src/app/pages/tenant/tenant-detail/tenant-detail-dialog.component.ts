@@ -233,11 +233,11 @@ export class TenantDetailDialogComponent implements OnInit {
     tooltipRef.show();
     
     // Mostra anche un feedback con snackbar
-    this.snackBar.open(`${text} copiato negli appunti`, 'Chiudi', {
-      duration: 2000,
-      horizontalPosition: 'center',
-      verticalPosition: 'bottom'
-    });
+    // this.snackBar.open(`${text.toUpperCase()} copiato negli appunti`, 'Chiudi', {
+    //   duration: 2000,
+    //   horizontalPosition: 'center',
+    //   verticalPosition: 'bottom'
+    // });
     
     // Ripristina il testo originale dopo un ritardo
     setTimeout(() => {
@@ -249,23 +249,41 @@ export class TenantDetailDialogComponent implements OnInit {
   getContractProgress(startDate: string | Date, endDate: string | Date): string {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const today = new Date();
+    const now = new Date();
+    
+    // Se il contratto non è ancora iniziato
+    if (now < start) {
+      return '0%';
+    }
+    
+    // Se il contratto è terminato
+    if (now > end) {
+      return '100%';
+    }
     
     const totalDuration = end.getTime() - start.getTime();
-    const elapsedDuration = today.getTime() - start.getTime();
+    const elapsedDuration = now.getTime() - start.getTime();
     
-    // Calcola la percentuale completata
-    let percentComplete = Math.round((elapsedDuration / totalDuration) * 100);
-    
-    // Assicurati che sia tra 0 e 100
-    percentComplete = Math.max(0, Math.min(100, percentComplete));
-    
-    return percentComplete + '%';
+    const progressPercentage = Math.round((elapsedDuration / totalDuration) * 100);
+    return `${progressPercentage}%`;
   }
   
   getContractProgressText(startDate: string | Date, endDate: string | Date): string {
-    const percentComplete = this.getContractProgress(startDate, endDate);
-    return percentComplete + ' completato';
+    const progressPercentage = parseInt(this.getContractProgress(startDate, endDate), 10);
+    
+    if (progressPercentage === 0) {
+      return 'Contratto non ancora iniziato';
+    } else if (progressPercentage === 100) {
+      return 'Contratto completato';
+    } else if (progressPercentage < 25) {
+      return `Completato ${progressPercentage}% - Fase iniziale`;
+    } else if (progressPercentage < 50) {
+      return `Completato ${progressPercentage}% - Primo periodo`;
+    } else if (progressPercentage < 75) {
+      return `Completato ${progressPercentage}% - Secondo periodo`;
+    } else {
+      return `Completato ${progressPercentage}% - Fase finale`;
+    }
   }
   
   getRemainingMonths(endDate: string | Date): number {

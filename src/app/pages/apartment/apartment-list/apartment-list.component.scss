@@ -72,6 +72,7 @@ $transition-speed: var(--transition-normal);
   max-width: 1800px;
   margin: 0 auto;
   color: $text-primary;
+  user-select: none;
 }
 
 // Header section
