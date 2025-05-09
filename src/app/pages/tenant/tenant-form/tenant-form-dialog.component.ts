@@ -402,8 +402,19 @@ export class TenantFormComponent implements OnInit {
   }
 
   private handleError(error: any, action: string): void {
-    console.error(`Errore durante la ${action} dell'inquilino`, error);
-    this.errorMessage = error.error?.message || `Si è verificato un errore durante la ${action} dell'inquilino.`;
+    console.error(`Errore durante ${action} dell'inquilino`, error);
     this.isLoading = false;
+    this.errorMessage = `Si è verificato un errore durante ${action} dell'inquilino.`;
+    this.snackBar.open(`Errore durante ${action} dell'inquilino`, 'Chiudi', {
+      duration: 5000,
+      panelClass: ['error-snackbar']
+    });
+  }
+
+  togglePreference(preference: 'email' | 'sms' | 'whatsapp'): void {
+    const control = this.tenantForm.get(`communicationPreferences.${preference}`);
+    if (control) {
+      control.setValue(!control.value);
+    }
   }
 }

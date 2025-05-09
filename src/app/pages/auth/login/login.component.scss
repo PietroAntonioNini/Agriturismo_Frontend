@@ -59,7 +59,7 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
 .login-panel {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
   min-height: 100vh;
@@ -67,12 +67,14 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
   position: relative;
   padding: 2rem 0;
   box-sizing: border-box;
+
+  .title-form {
+    margin-top: 200px;
+  }
 }
 
 // Card container with flip effect
 .card-container {
-  width: 100%;
-  max-width: 400px;
   min-height: 670px;
   perspective: 1000px;
   margin: 2rem auto;
@@ -96,8 +98,9 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
 
 // Card shared styles
 .login-card, .register-card {
-  width: 100%;
+  width: 520px;
   padding: 2rem;
+  margin: auto;
   background-color: $white;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);

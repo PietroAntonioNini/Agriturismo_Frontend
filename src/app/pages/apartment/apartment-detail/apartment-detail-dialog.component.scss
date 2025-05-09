@@ -22,6 +22,7 @@
   .mdc-dialog__surface {
     min-width: 800px !important;
     max-width: 90vw !important;
+    background-color: var(--card-background) !important;
   }
 }
 
@@ -55,7 +56,7 @@
 .apartment-name {
   font-size: 26px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
 }
 
 .apartment-price {
@@ -63,13 +64,14 @@
   align-items: center;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-color);
   gap: 2px;
 
   mat-icon {
     font-size: 20px;
     width: 20px;
     height: 20px;
+    color: var(--primary-color);
   }
 }
 
@@ -87,7 +89,7 @@
   width: 100%;
   height: 280px;
   border-radius: 8px;
-  background-color: #f5f5f5;
+  background-color: var(--app-background);
 }
 
 .carousel-inner {
@@ -170,20 +172,71 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #ccc;
+  background-color: rgba(var(--text-muted-rgb), 0.3);
   cursor: pointer;
   
   &.active {
-    background-color: #3f51b5;
+    background-color: var(--primary-color);
   }
   
   &:hover {
-    background-color: #aaa;
+    background-color: var(--text-muted);
   }
 }
 
 mat-tab-group {
   height: 530px;
+  
+  ::ng-deep {
+    .mat-mdc-tab .mdc-tab__text-label {
+      color: var(--text-color);
+    }
+    
+    .mat-mdc-tab-header {
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .mat-mdc-tab .mat-icon {
+      color: var(--text-muted);
+    }
+    
+    .mat-mdc-tab.mdc-tab--active .mat-icon,
+    .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      color: var(--primary-color);
+    }
+    
+    .mat-mdc-tab-header .mat-mdc-tab-header-pagination-chevron {
+      border-color: var(--text-color);
+    }
+    
+    .mat-mdc-tab-header .mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {
+      border-color: var(--text-muted);
+    }
+    
+    .mat-mdc-tab-group.mat-background-primary .mat-mdc-tab-header,
+    .mat-mdc-tab-group.mat-background-primary .mat-mdc-tab-links,
+    .mat-mdc-tab-nav-bar.mat-background-primary .mat-mdc-tab-header,
+    .mat-mdc-tab-nav-bar.mat-background-primary .mat-mdc-tab-links {
+      background-color: var(--primary-color);
+    }
+    
+    .mat-mdc-tab-body-content {
+      overflow: auto;
+      background-color: var(--card-background);
+    }
+    
+    .mat-mdc-tab-body-wrapper {
+      background-color: var(--card-background);
+    }
+    
+    .mat-mdc-tab-list .mat-mdc-tab-labels {
+      background-color: var(--card-background);
+    }
+    
+    .mat-mdc-tab .mdc-tab-indicator__content--underline {
+      border-color: var(--primary-color);
+    }
+  }
 }
 
 .tab-content {
@@ -200,14 +253,15 @@ mat-tab-group {
 .error-message {
   display: flex;
   align-items: center;
-  color: #f44336;
-  background-color: #ffebee;
+  color: var(--error-color);
+  background-color: rgba(var(--error-color-rgb), 0.1);
   padding: 16px;
   border-radius: 4px;
   margin: 16px;
 
   mat-icon {
     margin-right: 8px;
+    color: var(--error-color);
   }
 }
 
@@ -215,10 +269,14 @@ mat-tab-group {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #757575;
+  color: var(--text-muted);
   padding: 16px;
-  background-color: #f5f5f5;
+  background-color: var(--app-background);
   border-radius: 4px;
+  
+  mat-icon {
+    color: var(--text-muted);
+  }
 }
 
 /* REDESIGNED INFO TAB STYLES */
@@ -229,20 +287,20 @@ mat-tab-group {
 }
 
 .info-card {
-  background-color: #ffffff;
+  background-color: var(--card-background);
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-light);
   overflow: hidden;
   transition: box-shadow 0.3s ease;
   
   &:hover {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-medium);
   }
 }
 
 .info-header {
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
   position: relative;
   
   &::before {
@@ -252,14 +310,14 @@ mat-tab-group {
     left: 0;
     height: 100%;
     width: 4px;
-    background-color: #3f51b5;
+    background-color: var(--primary-color);
   }
   
   h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 500;
-    color: #333;
+    color: var(--text-color);
   }
 }
 
@@ -284,14 +342,14 @@ mat-tab-group {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background-color: rgba(63, 81, 181, 0.1);
+    background-color: rgba(var(--primary-color-rgb), 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 12px;
     
     mat-icon {
-      color: #3f51b5;
+      color: var(--primary-color);
       font-size: 24px;
       width: 24px;
       height: 24px;
@@ -300,7 +358,7 @@ mat-tab-group {
   
   .detail-content {
     .detail-label {
-      color: #757575;
+      color: var(--text-muted);
       font-size: 14px;
       margin-bottom: 4px;
     }
@@ -308,7 +366,7 @@ mat-tab-group {
     .detail-value {
       font-size: 18px;
       font-weight: 600;
-      color: #333;
+      color: var(--text-color);
     }
   }
 }
@@ -328,22 +386,22 @@ mat-tab-group {
   width: 110px;
   padding: 16px 0px;
   border-radius: 8px;
-  background-color: #f5f5f5;
+  background-color: var(--app-background);
   transition: all 0.2s ease;
   
   &.feature-active {
-    background-color: rgba(33, 150, 243, 0.1);
+    background-color: rgba(var(--primary-color-rgb), 0.1);
     
     .feature-icon {
-      background-color: rgba(33, 150, 243, 0.2);
+      background-color: rgba(var(--primary-color-rgb), 0.2);
       
       mat-icon {
-        color: #2196f3;
+        color: var(--primary-color);
       }
     }
     
     .feature-label {
-      color: #2196f3;
+      color: var(--primary-color);
     }
   }
   
@@ -351,14 +409,14 @@ mat-tab-group {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(var(--text-muted-rgb), 0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 10px;
     
     mat-icon {
-      color: #757575;
+      color: var(--text-muted);
       font-size: 20px;
       width: 20px;
       height: 20px;
@@ -367,57 +425,57 @@ mat-tab-group {
   
   .feature-label {
     font-size: 14px;
-    color: #757575;
+    color: var(--text-muted);
     font-weight: 500;
   }
 }
 
 /* Stili per lo stato come caratteristica */
 .feature-status-available {
-  background-color: rgba(76, 175, 80, 0.1) !important;
+  background-color: rgba(var(--success-color-rgb), 0.1) !important;
   
   .feature-icon {
-    background-color: rgba(76, 175, 80, 0.2) !important;
+    background-color: rgba(var(--success-color-rgb), 0.2) !important;
     
     mat-icon {
-      color: #4CAF50 !important;
+      color: var(--success-color) !important;
     }
   }
   
   .feature-label {
-    color: #4CAF50 !important;
+    color: var(--success-color) !important;
   }
 }
 
 .feature-status-occupied {
-  background-color: rgba(244, 67, 54, 0.1) !important;
+  background-color: rgba(var(--error-color-rgb), 0.1) !important;
   
   .feature-icon {
-    background-color: rgba(244, 67, 54, 0.2) !important;
+    background-color: rgba(var(--error-color-rgb), 0.2) !important;
     
     mat-icon {
-      color: #F44336 !important;
+      color: var(--error-color) !important;
     }
   }
   
   .feature-label {
-    color: #F44336 !important;
+    color: var(--error-color) !important;
   }
 }
 
 .feature-status-maintenance {
-  background-color: rgba(255, 152, 0, 0.1) !important;
+  background-color: rgba(var(--warning-color-rgb), 0.1) !important;
   
   .feature-icon {
-    background-color: rgba(255, 152, 0, 0.2) !important;
+    background-color: rgba(var(--warning-color-rgb), 0.2) !important;
     
     mat-icon {
-      color: #FF9800 !important;
+      color: var(--warning-color) !important;
     }
   }
   
   .feature-label {
-    color: #FF9800 !important;
+    color: var(--warning-color) !important;
   }
 }
 
@@ -433,16 +491,16 @@ mat-tab-group {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background-color: #f9f9f9;
+  background-color: var(--app-background);
   border-radius: 12px;
   padding: 16px 8px;
   transition: all 0.2s ease;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   
   &:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-    background-color: rgba(63, 81, 181, 0.05);
+    box-shadow: var(--shadow-light);
+    background-color: rgba(var(--primary-color-rgb), 0.05);
   }
   
   .amenity-icon {
@@ -452,11 +510,11 @@ mat-tab-group {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background-color: rgba(63, 81, 181, 0.1);
+    background-color: rgba(var(--primary-color-rgb), 0.1);
     margin-bottom: 12px;
     
     mat-icon {
-      color: #3f51b5;
+      color: var(--primary-color);
       font-size: 22px;
       width: 22px;
       height: 22px;
@@ -466,7 +524,7 @@ mat-tab-group {
   .amenity-label {
     font-size: 14px;
     font-weight: 500;
-    color: #555;
+    color: var(--text-color);
     white-space: normal;
     word-break: break-word;
   }
@@ -475,7 +533,7 @@ mat-tab-group {
 .description-container, .notes-container {
   padding: 20px;
   line-height: 1.6;
-  color: #555;
+  color: var(--text-color);
   
   p {
     margin: 0;
@@ -489,9 +547,9 @@ mat-tab-group {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background-color: white;
+  background-color: var(--card-background);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-light);
   margin-bottom: 16px;
   
   .tenant-info {
@@ -504,7 +562,7 @@ mat-tab-group {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: #3f51b5;
+    background-color: var(--primary-color);
     color: white;
     display: flex;
     justify-content: center;
@@ -522,6 +580,7 @@ mat-tab-group {
       margin: 0 0 8px 0;
       font-size: 16px;
       font-weight: 500;
+      color: var(--text-color);
     }
   }
   
@@ -535,12 +594,21 @@ mat-tab-group {
       align-items: center;
       gap: 4px;
       font-size: 14px;
-      color: #757575;
+      color: var(--text-muted);
       
       mat-icon {
         font-size: 16px;
         width: 16px;
         height: 16px;
+        color: var(--text-muted);
+      }
+    }
+  }
+  
+  .tenant-actions {
+    button {
+      mat-icon {
+        color: var(--primary-color);
       }
     }
   }
@@ -548,9 +616,9 @@ mat-tab-group {
 
 /* Stile per i contratti */
 .contract-card {
-  background-color: #ffffff;
+  background-color: var(--card-background);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-light);
   margin-bottom: 20px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
@@ -561,7 +629,7 @@ mat-tab-group {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
   position: relative;
   
   &::before {
@@ -571,7 +639,7 @@ mat-tab-group {
     left: 0;
     height: 100%;
     width: 4px;
-    background-color: #4CAF50;
+    background-color: var(--success-color);
   }
 }
 
@@ -584,11 +652,11 @@ mat-tab-group {
   font-weight: 500;
   
   &.active {
-    background-color: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
+    background-color: rgba(var(--success-color-rgb), 0.1);
+    color: var(--success-color);
     
     .status-dot {
-      background-color: #4CAF50;
+      background-color: var(--success-color);
     }
   }
   
@@ -605,15 +673,15 @@ mat-tab-group {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
   }
   
   .tenant-tag {
     display: inline-block;
     margin-top: 6px;
     font-size: 13px;
-    color: #666;
-    background-color: #f5f5f5;
+    color: var(--text-muted);
+    background-color: var(--app-background);
     padding: 4px 8px;
     border-radius: 4px;
   }
@@ -633,12 +701,12 @@ mat-tab-group {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #757575;
+    color: var(--text-muted);
     transition: background-color 0.2s ease;
     
     &:hover {
-      background-color: #f5f5f5;
-      color: #333;
+      background-color: var(--app-background);
+      color: var(--text-color);
     }
     
     mat-icon {
@@ -658,7 +726,7 @@ mat-tab-group {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  background-color: #f9f9f9;
+  background-color: var(--app-background);
   border-radius: 10px;
   padding: 20px;
 }
@@ -679,7 +747,7 @@ mat-tab-group {
       display: flex;
       align-items: center;
       gap: 6px;
-      color: #757575;
+      color: var(--text-muted);
       font-size: 14px;
       margin-bottom: 8px;
       
@@ -687,13 +755,14 @@ mat-tab-group {
         font-size: 16px;
         width: 16px;
         height: 16px;
+        color: var(--text-muted);
       }
     }
     
     .date-value {
       font-size: 18px;
       font-weight: 600;
-      color: #333;
+      color: var(--text-color);
     }
   }
 }
@@ -702,7 +771,7 @@ mat-tab-group {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px dashed #e0e0e0;
+  border-top: 1px dashed var(--border-color);
   padding-top: 20px;
   
   .detail-item {
@@ -713,7 +782,7 @@ mat-tab-group {
       display: flex;
       align-items: center;
       gap: 6px;
-      color: #757575;
+      color: var(--text-muted);
       font-size: 14px;
       margin-bottom: 8px;
       
@@ -721,18 +790,19 @@ mat-tab-group {
         font-size: 16px;
         width: 16px;
         height: 16px;
+        color: var(--text-muted);
       }
     }
     
     .detail-value {
       font-size: 22px;
       font-weight: 700;
-      color: #333;
+      color: var(--text-color);
       
       .detail-period {
         font-size: 14px;
         font-weight: 400;
-        color: #757575;
+        color: var(--text-muted);
         margin-left: 4px;
       }
     }
@@ -745,21 +815,21 @@ mat-tab-group {
     font-weight: 500;
     
     &.paid {
-      background-color: rgba(76, 175, 80, 0.1);
-      color: #4CAF50;
-      border: 1px solid rgba(76, 175, 80, 0.3);
+      background-color: rgba(var(--success-color-rgb), 0.1);
+      color: var(--success-color);
+      border: 1px solid rgba(var(--success-color-rgb), 0.3);
     }
     
     &.pending {
-      background-color: rgba(255, 193, 7, 0.1);
-      color: #FFC107;
-      border: 1px solid rgba(255, 193, 7, 0.3);
+      background-color: rgba(var(--warning-color-rgb), 0.1);
+      color: var(--warning-color);
+      border: 1px solid rgba(var(--warning-color-rgb), 0.3);
     }
     
     &.overdue {
-      background-color: rgba(244, 67, 54, 0.1);
-      color: #F44336;
-      border: 1px solid rgba(244, 67, 54, 0.3);
+      background-color: rgba(var(--error-color-rgb), 0.1);
+      color: var(--error-color);
+      border: 1px solid rgba(var(--error-color-rgb), 0.3);
     }
   }
 }
@@ -775,15 +845,22 @@ mat-tab-group {
   
   .progress-bar {
     height: 6px;
-    background-color: #f0f0f0;
+    background-color: var(--border-color);
     border-radius: 3px;
     overflow: hidden;
     
     .progress-fill {
       height: 100%;
-      background-color: #2196F3;
+      background-color: var(--primary-color);
       border-radius: 3px;
     }
+  }
+  
+  span {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
   }
 }
 
@@ -792,15 +869,15 @@ mat-tab-group {
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
-  background-color: #f9f9f9;
-  border-top: 1px solid #f0f0f0;
+  background-color: var(--app-background);
+  border-top: 1px solid var(--border-color);
   
   .view-details {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 8px 16px;
-    background-color: #3f51b5;
+    background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: 4px;
@@ -810,7 +887,7 @@ mat-tab-group {
     transition: background-color 0.2s ease;
     
     &:hover {
-      background-color: #303f9f;
+      background-color: var(--primary-dark);
     }
     
     mat-icon {
@@ -827,15 +904,15 @@ mat-tab-group {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: white;
-    color: #757575;
-    border: 1px solid #e0e0e0;
+    background-color: var(--card-background);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s ease;
     
     &:hover {
-      background-color: #f5f5f5;
-      color: #333;
+      background-color: var(--app-background);
+      color: var(--primary-color);
     }
     
     mat-icon {
