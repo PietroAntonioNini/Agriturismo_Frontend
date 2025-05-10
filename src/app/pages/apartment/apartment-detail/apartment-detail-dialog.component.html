@@ -261,7 +261,7 @@
                       <span class="status-dot"></span>
                       <span class="status-text">Attivo</span>
                     </div>
-                    <div class="contract-id">
+                    <div class="contract-id d-flex flex-column align-items-center">
                       <h3>Contratto #{{ lease.id }}</h3>
                       <span class="tenant-tag" *ngIf="getTenantName(lease.tenantId)">Inquilino: {{ getTenantName(lease.tenantId) }}</span>
                     </div>

@@ -1,0 +1,42 @@
+// Override per i tab di Angular Material
+.mat-mdc-tab-header {
+  --mdc-tab-indicator-active-indicator-color: var(--primary-color) !important;
+}
+
+.mat-mdc-tab-header .mat-mdc-tab-header-pagination-chevron {
+  border-color: var(--text-color);
+}
+
+.mat-mdc-tab .mdc-tab-indicator__content--underline {
+  border-color: var(--primary-color) !important;
+}
+
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label,
+.mat-mdc-tab.mdc-tab--active .mat-icon {
+  color: var(--primary-color) !important;
+}
+
+.mat-mdc-tab:not(.mdc-tab--active):hover .mdc-tab__text-label,
+.mat-mdc-tab:not(.mdc-tab--active):hover .mat-icon {
+  color: var(--primary-color) !important;
+  opacity: 0.8;
+}
+
+// Stili per gli stati hover e active
+.mat-mdc-tab:hover {
+  background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+}
+
+.mat-mdc-tab.mdc-tab--active {
+  background-color: rgba(var(--primary-color-rgb), 0.15) !important;
+}
+
+.mat-mdc-tab .mat-ripple-element {
+  background-color: transparent !important;
+}
+
+.mat-mdc-tab-ripple {
+  display: none !important;
+}
+
+//stili overlay documenti 

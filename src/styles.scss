@@ -2,7 +2,8 @@
 @use './app/shared/styles/themes/index.scss' as themes;
 
 /* Importa i CSS precompilati di Angular Material (sovrascriveremo alcuni stili) */
-@import "@angular/material/prebuilt-themes/indigo-pink.css";
+@import "@angular/material/prebuilt-themes/deeppurple-amber.css";
+/* Il tema deeppurple-amber è più compatibile con il verde rispetto a indigo-pink */
 
 /* Stili globali */
 html, body { 
@@ -83,6 +84,34 @@ body {
 // Override per i bottoni
 .mat-mdc-raised-button.mat-primary {
   background-color: var(--primary-color) !important;
+}
+
+// Override per i tab di Angular Material
+.mat-mdc-tab-header {
+  --mdc-tab-indicator-active-indicator-color: var(--primary-color) !important;
+}
+
+.mat-mdc-tab-header .mat-mdc-tab-header-pagination-chevron {
+  border-color: var(--text-color);
+}
+
+.mat-mdc-tab .mdc-tab-indicator__content--underline {
+  border-color: var(--primary-color) !important;
+}
+
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label,
+.mat-mdc-tab.mdc-tab--active .mat-icon {
+  color: var(--primary-color) !important;
+}
+
+.mat-mdc-tab:not(.mdc-tab--active):hover .mdc-tab__text-label,
+.mat-mdc-tab:not(.mdc-tab--active):hover .mat-icon {
+  color: var(--primary-color) !important;
+  opacity: 0.7;
+}
+
+.mat-mdc-tab:focus {
+  background-color: rgba(var(--primary-color-rgb), 0.12) !important;
 }
 
 //stili overlay documenti

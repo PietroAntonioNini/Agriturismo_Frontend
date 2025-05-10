@@ -30,6 +30,7 @@
   margin: 0;
   box-shadow: none;
   border: none;
+  user-select: none;
 
   mat-card-header {
     margin: auto;
@@ -200,9 +201,13 @@ mat-tab-group {
       color: var(--text-muted);
     }
     
-    .mat-mdc-tab.mdc-tab--active .mat-icon,
-    .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-      color: var(--primary-color);
+    .mat-mdc-tab.mdc-tab--active {
+      background-color: rgba(var(--primary-color-rgb), 0.15);
+      
+      .mat-icon,
+      .mdc-tab__text-label {
+        color: var(--primary-color);
+      }
     }
     
     .mat-mdc-tab-header .mat-mdc-tab-header-pagination-chevron {
@@ -235,6 +240,38 @@ mat-tab-group {
     
     .mat-mdc-tab .mdc-tab-indicator__content--underline {
       border-color: var(--primary-color);
+    }
+    
+    .mat-mdc-tab:hover {
+      background-color: rgba(var(--primary-color-rgb), 0.08);
+      
+      .mdc-tab__text-label {
+        color: var(--primary-color);
+        opacity: 0.8;
+      }
+      
+      .mat-icon {
+        color: var(--primary-color);
+        opacity: 0.8;
+      }
+    }
+    
+    .mdc-tab-indicator__content--underline {
+      border-color: var(--primary-color) !important;
+    }
+    
+    .mat-mdc-tab:not(.mdc-tab--active) .mdc-tab-indicator__content--underline {
+      border-color: transparent !important;
+    }
+    
+    .mat-mdc-tab.mat-mdc-focus-indicator:focus {
+      &::before {
+        background-color: transparent;
+      }
+    }
+    
+    .mat-mdc-tab-ripple {
+      display: none;
     }
   }
 }
@@ -713,6 +750,22 @@ mat-tab-group {
       font-size: 20px;
       width: 20px;
       height: 20px;
+    }
+    
+    &.edit:hover {
+      background-color: rgba(var(--primary-color-rgb), 0.1);
+      
+      mat-icon {
+        color: var(--primary-color);
+      }
+    }
+    
+    &.more:hover {
+      background-color: rgba(var(--primary-color-rgb), 0.1);
+
+      mat-icon {
+        color: var(--primary-color);
+      }
     }
   }
 }

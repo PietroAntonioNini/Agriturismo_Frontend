@@ -45,3 +45,39 @@
   --transition-normal: #{vars.$transition-normal};
   --transition-slow: #{vars.$transition-slow};
 } 
+
+// Stili globali per sovrascrivere componenti Angular Material
+.mat-mdc-tab-group {
+  .mat-mdc-tab {
+    &:not(.mdc-tab--active) {
+      &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.08);
+        
+        .mdc-tab__text-label, 
+        .mat-icon {
+          color: var(--primary-color);
+          opacity: 0.8;
+        }
+      }
+    }
+  
+    .mdc-tab-indicator__content--underline {
+      border-color: var(--primary-color) !important;
+    }
+  
+    &.mdc-tab--active {
+      background-color: rgba(var(--primary-color-rgb), 0.15);
+      
+      .mdc-tab__text-label, 
+      .mat-icon {
+        color: var(--primary-color);
+      }
+    }
+    
+    .mat-mdc-tab-ripple {
+      display: none;
+    }
+  }
+}
+
+// Altre regole globali possono essere aggiunte qui 
