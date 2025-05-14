@@ -138,7 +138,7 @@
 
 ::ng-deep {
   .mat-mdc-tab-group {
-    height: 530px;
+    height: 550px;
     
     .mat-mdc-tab-header {
       background-color: var(--card-background);
@@ -416,6 +416,7 @@
 .document-card {
   flex: 1;
   min-width: 280px;
+  max-width: 400px;
   background-color: var(--card-background);
   border-radius: 12px;
   overflow: hidden;
@@ -449,16 +450,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       line-height: 32px;
       cursor: pointer;
       border-radius: 50%;
       transition: background-color 0.2s ease, transform 0.2s ease;
       
       &:hover {
-        background-color: rgba(var(--primary-color-rgb), 0.1) !important;
-        transform: scale(1.1);
+        transform: scale(1.2);
       }
       
       mat-icon {
@@ -466,10 +466,6 @@
         font-size: 18px;
         width: 18px;
         height: 18px;
-        
-        &[matTooltip="Elimina"] {
-          color: var(--error-color);
-        }
       }
     }
   }
@@ -482,6 +478,22 @@
   flex-direction: column;
   justify-content: center;
   background-color: var(--card-background);
+}
+
+.image-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+}
+
+.image-loading-container span {
+  margin-top: 12px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.54);
 }
 
 .card-image-container {

@@ -94,32 +94,57 @@ export class TenantListComponent implements OnInit {
   loadTenants(): void {
     this.isLoading = true;
     this.errorMessage = null;
-
-    // Prima carica tutti gli inquilini
-    this.apiService.getAll<Tenant>('tenants').subscribe({
+  
+    // Aggiungi timestamp per evitare caching
+    const timestamp = new Date().getTime();
+    const nonce = Math.random().toString(36).substring(2, 15);
+    
+    // Carica tutti gli inquilini con parametro anti-cache
+    this.apiService.getAll<Tenant>('tenants', { _t: timestamp, n: nonce }).subscribe({
       next: (tenants) => {
-        // Per ogni inquilino, verifica se ha contratti attivi
-        const tenantPromises = tenants.map(tenant => 
-          this.apiService.getAll<any>('leases', { 
-            tenantId: tenant.id.toString(), 
-            status: 'active'
-          }).toPromise()
-          .then(leases => {
-            tenant.hasLease = leases && leases.length > 0;
-            return tenant;
-          })
-        );
-
-        // Quando tutti i controlli sono completati
-        Promise.all(tenantPromises).then(tenantsWithLeaseStatus => {
-          this.tenants = tenantsWithLeaseStatus;
-          this.applyFilter();
+        if (tenants && tenants.length > 0) {
+          // Ottimizzazione: utilizza Promise.all per le chiamate parallele
+          const promises = tenants.map(tenant => 
+            this.apiService.getAll<any>('leases', {
+              tenantId: tenant.id.toString(),
+              status: 'active',
+              _t: timestamp,
+              n: nonce
+            }).toPromise()
+            .then(leases => {
+              tenant.hasLease = leases && leases.length > 0;
+              return tenant;
+            })
+            .catch(() => {
+              // In caso di errore nella query dei contratti, lascia hasLease come falso
+              tenant.hasLease = false;
+              return tenant;
+            })
+          );
+  
+          Promise.all(promises)
+            .then(tenantsWithLeaseStatus => {
+              this.tenants = tenantsWithLeaseStatus;
+              this.applyFilter();
+              this.isLoading = false;
+            })
+            .catch(error => {
+              console.error('Errore durante l\'elaborazione dei contratti', error);
+              // Se c'è un errore con i contratti, mostra comunque i tenant
+              this.tenants = tenants;
+              this.applyFilter();
+              this.isLoading = false;
+            });
+        } else {
+          // Nessun tenant trovato
+          this.tenants = [];
+          this.filteredTenants = [];
           this.isLoading = false;
-        });
+        }
       },
       error: (error) => {
         console.error('Errore durante il caricamento degli inquilini', error);
-        this.errorMessage = 'Si è verificato un errore durante il caricamento degli inquilini. Riprova più tardi.';
+        this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
         this.isLoading = false;
       }
     });
@@ -135,9 +160,9 @@ export class TenantListComponent implements OnInit {
       filtered = filtered.filter(tenant => 
         tenant.firstName.toLowerCase().includes(query) ||
         tenant.lastName.toLowerCase().includes(query) ||
-        tenant.email.toLowerCase().includes(query) ||
-        tenant.phone.includes(query) ||
-        tenant.documentNumber.toLowerCase().includes(query)
+        tenant.email?.toLowerCase().includes(query) || // Aggiunto il controllo di null/undefined
+        tenant.phone?.includes(query) || // Aggiunto il controllo di null/undefined
+        tenant.documentNumber?.toLowerCase().includes(query) // Aggiunto il controllo di null/undefined
       );
     }
     
@@ -249,7 +274,7 @@ export class TenantListComponent implements OnInit {
 
   // Ottieni le iniziali dell'inquilino
   getTenantInitials(tenant: Tenant): string {
-    return `${tenant.firstName.charAt(0)}${tenant.lastName.charAt(0)}`.toUpperCase();
+    return `${tenant.firstName?.charAt(0) || ''}${tenant.lastName?.charAt(0) || ''}`.toUpperCase();
   }
 
   // Ottieni etichetta dello stato dell'inquilino
@@ -264,9 +289,13 @@ export class TenantListComponent implements OnInit {
 
   // Azioni dell'interfaccia
   viewTenantDetails(tenantId: number): void {
-    this.dialog.open(TenantDetailDialogComponent, {
-      data: { tenantId }
-    });
+    // Aggiungi un piccolo ritardo per evitare problemi di caching tra aperture consecutive
+    setTimeout(() => {
+      this.dialog.open(TenantDetailDialogComponent, {
+        data: { tenantId },
+        panelClass: 'tenant-detail-dialog'
+      });
+    }, 300);
   }
 
   editTenant(tenantId: number): void {
@@ -283,10 +312,17 @@ export class TenantListComponent implements OnInit {
 
   openTenantForm(): void {
     const dialogRef = this.dialog.open(TenantFormComponent);
-
+  
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
+        // Prima carica immediatamente per dare un feedback veloce
         this.loadTenants();
+        
+        // Imposta un timer per ricaricare i dati dopo un breve ritardo 
+        // per assicurare che le modifiche siano visibili
+        // setTimeout(() => {
+        //   this.loadTenants();
+        // }, 1000);
       }
     });
   }

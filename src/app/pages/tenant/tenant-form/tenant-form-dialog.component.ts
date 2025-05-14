@@ -14,9 +14,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
-import { TenantDetailDialogComponent } from '../tenant-detail/tenant-detail-dialog.component';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
+import { TenantListComponent } from '../tenant-list/tenant-list.component';
 
 @Component({
   selector: 'app-tenant-form',
@@ -36,7 +36,7 @@ import { Tenant } from '../../../shared/models';
     MatDividerModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    MatDialogModule
+    MatDialogModule,
   ],
   templateUrl: './tenant-form-dialog.component.html',
   styleUrls: ['./tenant-form-dialog.component.scss']
@@ -283,6 +283,7 @@ export class TenantFormComponent implements OnInit {
     }
   }
 
+  // Modificare il metodo onSubmit per gestire meglio le immagini
   onSubmit(): void {
     if (this.tenantForm.invalid) {
       // Mark fields as touched to show errors
@@ -292,7 +293,7 @@ export class TenantFormComponent implements OnInit {
       });
       return;
     }
-  
+
     this.isLoading = true;
     this.errorMessage = null;
     
@@ -316,13 +317,11 @@ export class TenantFormComponent implements OnInit {
       documentExpiryDate: formValues.documentExpiryDate,
       address: formValues.address || "",
       communicationPreferences: formValues.communicationPreferences,
-      notes: formValues.notes || "",
-      // Gestisci le immagini correttamente
-      documentFrontImage: this.frontImageFile ? undefined : (this.frontPreview ? this.currentTenant.documentFrontImage : undefined),
-      documentBackImage: this.backImageFile ? undefined : (this.backPreview ? this.currentTenant.documentBackImage : undefined)
+      notes: formValues.notes || ""
+      // Rimuoviamo i campi relativi ai documenti per evitare problemi
     };
     
-    // Prepara i file
+    // Prepara i file con nomi corretti come richiesto dal backend
     const files: File[] = [];
     
     if (this.frontImageFile) {
@@ -333,56 +332,34 @@ export class TenantFormComponent implements OnInit {
       files.push(this.backImageFile);
     }
     
-    if (this.isEditMode && this.tenantId) {
-      // Aggiorna inquilino esistente
-      this.apiService.update<Tenant>(
-        'tenants', 
-        this.tenantId, 
-        tenantToUpdate, 
-        files  // Passa sempre l'array, anche se vuoto
-      ).subscribe({
-        next: (updatedTenant) => {
-          this.isLoading = false;
-          this.snackBar.open('Inquilino aggiornato con successo', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-          
-          // Chiudi il dialog e passa i dati aggiornati
-          this.dialogRef.close({ success: true, tenant: updatedTenant });
-        },
-        error: (error) => {
-          console.error('Errore durante l\'aggiornamento dell\'inquilino', error);
-          this.errorMessage = 'Si è verificato un errore durante l\'aggiornamento dell\'inquilino.';
-          this.isLoading = false;
-        }
-      });
-    } else {
-      // Crea nuovo inquilino
-      this.apiService.create<Tenant>(
-        'tenants',
-        tenantToUpdate,
-        files
-      ).subscribe({
-        next: (createdTenant) => {
-          this.isLoading = false;
-          this.snackBar.open('Inquilino creato con successo', 'Chiudi', {
-            duration: 3000,
-            horizontalPosition: 'end',
-            verticalPosition: 'top'
-          });
-          
-          // Chiudi il dialog e passa i dati del nuovo tenant
-          this.dialogRef.close({ success: true, tenant: createdTenant });
-        },
-        error: (error) => {
-          console.error('Errore durante la creazione dell\'inquilino', error);
-          this.errorMessage = 'Si è verificato un errore durante la creazione dell\'inquilino.';
-          this.isLoading = false;
-        }
-      });
-    }
+    this.snackBar.open('Salvataggio in corso...', '', {
+      duration: 0,
+    });
+    
+    const saveObservable = this.isEditMode && this.tenantId 
+      ? this.apiService.update<Tenant>('tenants', this.tenantId, tenantToUpdate, files)
+      : this.apiService.create<Tenant>('tenants', tenantToUpdate, files);
+
+    saveObservable.subscribe({
+      next: (tenant) => {
+        this.isLoading = false;
+        this.snackBar.dismiss();
+        this.snackBar.open(
+          this.isEditMode ? 'Inquilino aggiornato con successo' : 'Inquilino creato con successo', 
+          'Chiudi', 
+          { duration: 3000 }
+        );
+        
+        // Chiudi il dialog e passa i dati aggiornati
+        this.dialogRef.close({ success: true, tenant: tenant });
+      },
+      error: (error) => {
+        console.error(`Errore durante ${this.isEditMode ? 'l\'aggiornamento' : 'la creazione'} dell'inquilino`, error);
+        this.isLoading = false;
+        this.snackBar.dismiss();
+        this.errorMessage = `Si è verificato un errore durante ${this.isEditMode ? 'l\'aggiornamento' : 'la creazione'} dell'inquilino.`;
+      }
+    });
   }
 
   // Metodo per chiudere il dialog

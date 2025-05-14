@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { UtilityReading, MonthlyUtilityData, ApartmentUtilityData } from '../models';
 
@@ -28,9 +28,31 @@ export class GenericApiService {
   }
 
   // GET: Elemento singolo per ID
-  getById<T>(entity: string, id: number | string): Observable<T> {
-    return this.http.get<T>(`${this.apiUrl(entity)}/${id}`);
+  getById<T>(entity: string, id: number | string, params?: any): Observable<T> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
+      });
+    }
+    
+    // Se non ci sono parametri, aggiungi un timestamp per evitare la cache
+    if (!params || Object.keys(params).length === 0) {
+      const timestamp = new Date().getTime();
+      httpParams = httpParams.set('_t', timestamp.toString());
+    }
+    
+    return this.http.get<T>(
+      `${this.apiUrl(entity)}/${id}`, 
+      { 
+        params: httpParams,
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      }
+    );
   }
+  
 
   // POST: Creazione elemento (anche con immagini opzionali)
   create<T>(entity: string, data: Partial<T>, files?: File[], fileFieldPrefix?: string): Observable<T> {
@@ -66,6 +88,17 @@ export class GenericApiService {
           formData.append('files', file);
         });
       }
+    } else if (entity === 'tenants') {
+      // Per i tenant, usiamo un formato specifico richiesto dal backend
+      formData.append('tenants', JSON.stringify(data));
+      
+      // Aggiungiamo i file con i nomi specifici richiesti dal backend
+      if (files && files.length > 0) {
+        files.forEach((file, index) => {
+          const fieldName = `document${index}`;
+          formData.append(fieldName, file);
+        });
+      }
     } else {
       formData.append(entity, JSON.stringify(data));
 
@@ -82,11 +115,11 @@ export class GenericApiService {
   update<T>(entity: string, id: number | string, data: Partial<T>, files?: File[]): Observable<T> {
     if (entity === 'tenants') {
         const formData = new FormData();
-        formData.append('tenant', JSON.stringify(data));
+        formData.append('tenants', JSON.stringify(data));
         
         if (files && files.length > 0) {
             files.forEach((file, index) => {
-                const fieldName = index === 0 ? 'documentFrontImage' : 'documentBackImage';
+                const fieldName = `document${index}`;
                 formData.append(fieldName, file);
             });
         }
@@ -141,16 +174,43 @@ export class GenericApiService {
     return this.http.delete<void>(`${this.apiUrl(entity)}/${id}`);
   }
 
-  // POST: Upload file (documenti, immagini, ecc.)
+  // Aggiornare il metodo uploadFile per aggiungere timestamp e gestione anti-cache
   uploadFile(entity: string, id: number | string, path: string, file: File): Observable<{ imageUrl: string }> {
     const formData = new FormData();
     formData.append('image', file);
-    return this.http.post<{ imageUrl: string }>(`${this.apiUrl(entity)}/${id}/${path}`, formData);
+    
+    // Aggiungi timestamp per evitare la cache
+    const timestamp = Date.now();
+    const url = `${this.apiUrl(entity)}/${id}/${path}?_=${timestamp}`;
+    
+    return this.http.post<{ imageUrl: string }>(
+      url, 
+      formData,
+      { headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } }
+    ).pipe(
+      catchError(error => {
+        console.error(`Errore durante l'upload del file per ${entity}/${id}/${path}`, error);
+        throw error;
+      })
+    );
   }
 
-  // DELETE: Eliminazione immagine/documento
+  // Aggiornare il metodo deleteFile per migliorare l'affidabilità
   deleteFile(entity: string, id: number | string, path: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl(entity)}/${id}/${path}`);
+    // Aggiungi timestamp per evitare la cache
+    const timestamp = Date.now();
+    const url = `${this.apiUrl(entity)}/${id}/${path}?_=${timestamp}`;
+    
+    return this.http.delete<void>(
+      url,
+      { headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } }
+    ).pipe(
+      tap(() => console.log(`File eliminato con successo: ${entity}/${id}/${path}`)),
+      catchError(error => {
+        console.error(`Errore durante l'eliminazione del file per ${entity}/${id}/${path}`, error);
+        throw error;
+      })
+    );
   }
 
   // PATCH: Aggiornamento parziale di un elemento

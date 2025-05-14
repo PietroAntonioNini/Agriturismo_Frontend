@@ -1,5 +1,5 @@
 import { environment } from '../../../../environments/environment';
-import { Component, OnInit, Inject, ViewChild, QueryList } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, QueryList, ChangeDetectorRef, NgZone, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -14,8 +14,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Tenant } from '../../../shared/models';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+import { ImageService } from '../../../shared/services/image.service';
+import { catchError, delay, map, Observable, of, retry, tap } from 'rxjs';
 
 // Componente per l'anteprima dell'immagine a schermo intero
 @Component({
@@ -75,7 +78,8 @@ export class ImagePreviewDialogComponent {
     MatTooltipModule
   ],
   templateUrl: './tenant-detail-dialog.component.html',
-  styleUrls: ['./tenant-detail-dialog.component.scss']
+  styleUrls: ['./tenant-detail-dialog.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TenantDetailDialogComponent implements OnInit {
   @ViewChild(MatTooltip) tooltips!: QueryList<MatTooltip>;
@@ -86,6 +90,15 @@ export class TenantDetailDialogComponent implements OnInit {
   errorMessage: string | null = null;
   environment = environment;
   documentsModified: boolean = false;
+  
+  // Proprietà per la gestione delle immagini
+  documentFrontImageSrc: string = '';
+  documentBackImageSrc: string = '';
+  documentLoadingFront: boolean = false;
+  documentLoadingBack: boolean = false;
+  
+  // Cache per gli URL delle immagini per evitare gli errori NG0100
+  private imageUrlCache: { [key: string]: string } = {};
   
   // Oggetto per gestire i testi dei tooltip per ogni elemento
   tooltipTexts: { [key: string]: string } = {
@@ -103,7 +116,11 @@ export class TenantDetailDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { tenantId: number },
     private snackBar: MatSnackBar,
     private confirmationService: ConfirmationDialogService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient,
+    private ngZone: NgZone,
+    private imageService: ImageService
   ) {}
 
   ngOnInit(): void {
@@ -112,39 +129,195 @@ export class TenantDetailDialogComponent implements OnInit {
     } else {
       this.errorMessage = 'ID inquilino non valido.';
       this.isLoading = false;
+      this.cdr.markForCheck();
     }
   }
 
-  loadTenantData(id: number): void {
+  loadTenantData(id: number, forceRefresh: boolean = false): void {
     this.isLoading = true;
     this.errorMessage = null;
+    this.documentLoadingFront = false;
+    this.documentLoadingBack = false;
+    
+    // Pulisci la cache se forceRefresh è true
+    if (forceRefresh) {
+      this.imageUrlCache = {};
+      this.documentFrontImageSrc = '';
+      this.documentBackImageSrc = '';
+    }
+    
+    this.cdr.markForCheck();
 
-    this.apiService.getById<Tenant>('tenants', id).subscribe({
+    // Aggiungi timestamp per evitare la cache del browser
+    const timestamp = new Date().getTime();
+    const params = { _t: timestamp.toString() };
+
+    this.apiService.getById<Tenant>('tenants', id, params).subscribe({
       next: (tenant) => {
         this.tenant = tenant;
+        
+        // Carica immediatamente le immagini
+        this.loadDocumentImages(tenant);
+        
         this.loadTenantLeases(id);
       },
       error: (error) => {
         console.error('Errore durante il caricamento dell\'inquilino', error);
         this.errorMessage = 'Si è verificato un errore durante il caricamento dei dati dell\'inquilino.';
         this.isLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadDocumentImages(tenant: Tenant): void {
+    // Carica l'immagine fronte se presente
+    if (tenant.documentFrontImage) {
+      this.documentLoadingFront = true;
+      this.cdr.markForCheck();
+      
+      this.imageService.preloadImage(tenant.documentFrontImage).pipe(
+        retry(3),
+        delay(300),
+        catchError(error => {
+          console.error('Errore caricamento immagine fronte:', error);
+          return of('assets/images/no-image.png');
+        })
+      ).subscribe({
+        next: (dataUrl) => {
+          this.documentFrontImageSrc = dataUrl;
+          this.documentLoadingFront = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.documentLoadingFront = false;
+          this.cdr.markForCheck();
+          
+          // Se il caricamento fallisce, riprova dopo un breve intervallo
+          setTimeout(() => {
+            if (tenant.documentFrontImage) {
+              this.retryLoadImage(tenant.documentFrontImage, 'front');
+            }
+          }, 500);
+        }
+      });
+    }
+    
+    // Carica l'immagine retro se presente
+    if (tenant.documentBackImage) {
+      this.documentLoadingBack = true;
+      this.cdr.markForCheck();
+      
+      this.imageService.preloadImage(tenant.documentBackImage).pipe(
+        retry(3),
+        delay(300),
+        catchError(error => {
+          console.error('Errore caricamento immagine retro:', error);
+          return of('assets/images/no-image.png');
+        })
+      ).subscribe({
+        next: (dataUrl) => {
+          this.documentBackImageSrc = dataUrl;
+          this.documentLoadingBack = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.documentLoadingBack = false;
+          this.cdr.markForCheck();
+          
+          // Se il caricamento fallisce, riprova dopo un breve intervallo
+          setTimeout(() => {
+            if (tenant.documentBackImage) {
+              this.retryLoadImage(tenant.documentBackImage, 'back');
+            }
+          }, 500);
+        }
+      });
+    }
+  }
+
+  // Metodo per ritentare il caricamento delle immagini
+  retryLoadImage(imagePath: string, type: 'front' | 'back', attempts: number = 3): void {
+    if (attempts <= 0) return;
+    
+    console.log(`Tentativo di ricaricamento immagine ${type}, tentativi rimanenti: ${attempts}`);
+    
+    // Ricontrolla lo stato dell'inquilino con timestamp anti-cache
+    const timestamp = new Date().getTime();
+    this.apiService.getById<Tenant>('tenants', this.tenant!.id, { _t: timestamp }).subscribe({
+      next: (tenant) => {
+        const path = type === 'front' ? tenant.documentFrontImage : tenant.documentBackImage;
+        
+        if (path) {
+          // Aggiorna il percorso dell'immagine se è cambiato
+          if (path !== imagePath) {
+            if (type === 'front') {
+              this.tenant!.documentFrontImage = path;
+            } else {
+              this.tenant!.documentBackImage = path;
+            }
+          }
+          
+          // Prova a caricare l'immagine con il nuovo percorso
+          this.imageService.preloadImage(path).pipe(
+            delay(300 * (4 - attempts)), // Aumenta il ritardo ad ogni tentativo
+            catchError(error => {
+              console.error(`Tentativo ${4 - attempts} fallito per ${type}:`, error);
+              if (attempts > 1) {
+                return of(null); // Continua con il prossimo tentativo
+              }
+              return of('assets/images/no-image.png'); // Ultimo tentativo, usa placeholder
+            })
+          ).subscribe({
+            next: (dataUrl) => {
+              if (!dataUrl) {
+                // Se dataUrl è null, ritenta
+                setTimeout(() => {
+                  this.retryLoadImage(path, type, attempts - 1);
+                }, 500);
+                return;
+              }
+              
+              if (type === 'front') {
+                this.documentFrontImageSrc = dataUrl;
+              } else {
+                this.documentBackImageSrc = dataUrl;
+              }
+              this.cdr.markForCheck();
+            }
+          });
+        }
+      },
+      error: () => {
+        // In caso di errore, ritenta con meno tentativi
+        if (attempts > 1) {
+          setTimeout(() => {
+            this.retryLoadImage(imagePath, type, attempts - 1);
+          }, 1000);
+        }
       }
     });
   }
 
   loadTenantLeases(tenantId: number): void {
+    // Aggiungi timestamp per evitare la cache
+    const timestamp = new Date().getTime();
+    
     this.apiService.getAll<any>('leases', { 
       tenantId: tenantId.toString(), 
-      status: 'active'
+      status: 'active',
+      _t: timestamp.toString()
     }).subscribe({
       next: (leases) => {
         this.activeLeases = leases;
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Errore durante il caricamento dei contratti', error);
         this.errorMessage = 'Errore nel caricamento dei contratti attivi';
         this.isLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -152,7 +325,6 @@ export class TenantDetailDialogComponent implements OnInit {
   deleteTenant(): void {
     if (!this.tenant) return;
 
-    // Usa il servizio di conferma invece di confirm()
     this.confirmationService.confirmDelete('l\'inquilino', `${this.tenant.firstName} ${this.tenant.lastName}`)
       .subscribe(confirmed => {
         if (confirmed) {
@@ -183,28 +355,57 @@ export class TenantDetailDialogComponent implements OnInit {
     return new Date(date).toLocaleDateString('it-IT');
   }
 
+  // Metodo migliorato per getImageUrl con timestamp e anti-caching più efficace
   getImageUrl(relativePath: string): string {
     // Se il percorso è vuoto o null, restituisci un'immagine placeholder
     if (!relativePath) {
-      return 'assets/images/no-image.png'; // immagine placeholder
+      return 'assets/images/no-image.png';
     }
     
-    // Se il percorso inizia già con http, restituiscilo come è
+    // Usa l'immagine in cache base64 se disponibile
+    if (relativePath === this.tenant?.documentFrontImage && this.documentFrontImageSrc) {
+      return this.documentFrontImageSrc;
+    }
+    
+    if (relativePath === this.tenant?.documentBackImage && this.documentBackImageSrc) {
+      return this.documentBackImageSrc;
+    }
+    
+    // Se l'URL è già stato generato per questo percorso, riutilizzalo
+    if (this.imageUrlCache[relativePath]) {
+      return this.imageUrlCache[relativePath];
+    }
+    
+    // Genera un nuovo URL con timestamp e memorizzalo nella cache
+    const timestamp = new Date().getTime();
+    const nonce = Math.random().toString(36).substring(2, 15); // Aggiunge un valore casuale
+    let url: string;
+    
     if (relativePath.startsWith('http')) {
-      return relativePath;
+      // Per URL esterni, appendi un parametro di query
+      const separator = relativePath.includes('?') ? '&' : '?';
+      url = `${relativePath}${separator}v=${timestamp}&n=${nonce}`;
+    } else {
+      // Per percorsi relativi, gestisci il prefisso correttamente
+      if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
+        relativePath = '/static' + relativePath;
+      }
+      
+      // Aggiungi timestamp come parametro di query
+      const separator = relativePath.includes('?') ? '&' : '?';
+      url = `${environment.apiUrl}${relativePath}${separator}v=${timestamp}&n=${nonce}`;
     }
     
-    // Assicurati che il percorso inizi con /static/
-    if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
-      relativePath = '/static' + relativePath;
-    }
+    // Salva nella cache
+    this.imageUrlCache[relativePath] = url;
     
-    // Altrimenti prependi il base URL dell'API
-    return `${environment.apiUrl}${relativePath}`;
+    return url;
   }
   
   downloadDocument(docType: 'front' | 'back', filename: string): void {
-    const downloadUrl = `${environment.apiUrl}/tenants/${this.tenant!.id}/documents/download/${docType}`;
+    const timestamp = new Date().getTime();
+    const nonce = Math.random().toString(36).substring(2, 15);
+    const downloadUrl = `${environment.apiUrl}/tenants/${this.tenant!.id}/documents/download/${docType}?_t=${timestamp}&n=${nonce}`;
     window.open(downloadUrl, '_blank');
   }
 
@@ -231,13 +432,6 @@ export class TenantDetailDialogComponent implements OnInit {
     
     // Forza la visualizzazione del tooltip
     tooltipRef.show();
-    
-    // Mostra anche un feedback con snackbar
-    // this.snackBar.open(`${text.toUpperCase()} copiato negli appunti`, 'Chiudi', {
-    //   duration: 2000,
-    //   horizontalPosition: 'center',
-    //   verticalPosition: 'bottom'
-    // });
     
     // Ripristina il testo originale dopo un ritardo
     setTimeout(() => {
@@ -299,7 +493,16 @@ export class TenantDetailDialogComponent implements OnInit {
 
   // Metodo per aprire un visualizzatore immagine più grande
   openImagePreview(imagePath: string): void {
-    const imageUrl = this.getImageUrl(imagePath);
+    let imageUrl = '';
+    
+    // Usa l'immagine in cache base64 se disponibile
+    if (imagePath === this.tenant?.documentFrontImage && this.documentFrontImageSrc) {
+      imageUrl = this.documentFrontImageSrc;
+    } else if (imagePath === this.tenant?.documentBackImage && this.documentBackImageSrc) {
+      imageUrl = this.documentBackImageSrc;
+    } else {
+      imageUrl = this.getImageUrl(imagePath);
+    }
     
     this.dialog.open(ImagePreviewDialogComponent, {
       width: '90%',
@@ -310,146 +513,421 @@ export class TenantDetailDialogComponent implements OnInit {
 
   // Metodo per caricare solo il fronte
   uploadFrontImage(): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (event: any) => {
-      const file = event.target.files[0];
-      if (file) {
-        this.uploadDocumentImage('front', file);
-      }
-    };
-    input.click();
+    this.ngZone.runOutsideAngular(() => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (event: any) => {
+        const file = event.target.files[0];
+        if (file) {
+          this.ngZone.run(() => {
+            this.uploadDocumentImage('front', file);
+          });
+        }
+      };
+      input.click();
+    });
   }
 
   // Metodo per caricare solo il retro
   uploadBackImage(): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (event: any) => {
-      const file = event.target.files[0];
-      if (file) {
-        this.uploadDocumentImage('back', file);
-      }
-    };
-    input.click();
+    this.ngZone.runOutsideAngular(() => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (event: any) => {
+        const file = event.target.files[0];
+        if (file) {
+          this.ngZone.run(() => {
+            this.uploadDocumentImage('back', file);
+          });
+        }
+      };
+      input.click();
+    });
   }
 
-  // Metodo per sostituire l'immagine fronte
+  // Metodo migliorato per sostituire l'immagine fronte
   replaceFrontImage(): void {
-    this.uploadFrontImage();
+    this.ngZone.runOutsideAngular(() => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      
+      input.onchange = (event: any) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        this.ngZone.run(() => {
+          this.isLoading = true;
+          this.cdr.markForCheck();
+          
+          // Visualizza un messaggio di caricamento
+          this.snackBar.open('Sostituzione immagine in corso...', '', {
+            duration: 0
+          });
+          
+          // Elimina prima il file esistente
+          this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/front')
+            .subscribe({
+              next: () => {
+                // Rimuovi la vecchia immagine dalla cache
+                if (this.tenant?.documentFrontImage) {
+                  delete this.imageUrlCache[this.tenant.documentFrontImage];
+                  this.documentFrontImageSrc = ''; // Pulisci anche la cache base64
+                }
+                
+                // Dopo l'eliminazione, carica la nuova immagine
+                setTimeout(() => {
+                  this.uploadDocumentImage('front', file);
+                  this.snackBar.dismiss();
+                }, 300);
+              },
+              error: (error) => {
+                console.error('Errore nella rimozione del file esistente:', error);
+                // Carica comunque la nuova immagine
+                setTimeout(() => {
+                  this.uploadDocumentImage('front', file);
+                  this.snackBar.dismiss();
+                }, 300);
+              }
+            });
+        });
+      };
+      
+      input.click();
+    });
   }
-
-  // Metodo per sostituire l'immagine retro
+  
+  // Metodo migliorato per sostituire l'immagine retro
   replaceBackImage(): void {
-    this.uploadBackImage();
+    this.ngZone.runOutsideAngular(() => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      
+      input.onchange = (event: any) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        this.ngZone.run(() => {
+          this.isLoading = true;
+          this.cdr.markForCheck();
+          
+          // Visualizza un messaggio di caricamento
+          this.snackBar.open('Sostituzione immagine in corso...', '', {
+            duration: 0
+          });
+          
+          // Elimina prima il file esistente
+          this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/back')
+            .subscribe({
+              next: () => {
+                // Rimuovi la vecchia immagine dalla cache
+                if (this.tenant?.documentBackImage) {
+                  delete this.imageUrlCache[this.tenant.documentBackImage];
+                  this.documentBackImageSrc = ''; // Pulisci anche la cache base64
+                }
+                
+                // Dopo l'eliminazione, carica la nuova immagine
+                setTimeout(() => {
+                  this.uploadDocumentImage('back', file);
+                  this.snackBar.dismiss();
+                }, 300);
+              },
+              error: (error) => {
+                console.error('Errore nella rimozione del file esistente:', error);
+                // Carica comunque la nuova immagine
+                setTimeout(() => {
+                  this.uploadDocumentImage('back', file);
+                  this.snackBar.dismiss();
+                }, 300);
+              }
+            });
+        });
+      };
+      
+      input.click();
+    });
   }
 
-  // Metodo per caricare un'immagine documento
+  // Metodo migliorato per caricare un'immagine documento
   uploadDocumentImage(type: 'front' | 'back', file: File): void {
     if (!this.tenant) return;
-
+  
     this.isLoading = true;
+    this.cdr.markForCheck();
     
-    // Crea un FormData per inviare il file
-    const formData = new FormData();
-    formData.append('file', file);
+    // Mostra il loader appropriato
+    if (type === 'front') {
+      this.documentLoadingFront = true;
+    } else {
+      this.documentLoadingBack = true;
+    }
     
-    // Aggiorna il nome del file con il tipo (fronte o retro)
-    const fileName = type === 'front' ? 'documentFrontImage' : 'documentBackImage';
-    formData.append('fieldName', fileName);
-    
-    // Chiama l'API per caricare il file
-    this.apiService.uploadFile('tenants', this.tenant.id, `documents/${type}`, file).subscribe({
-      next: (response) => {
-        // Aggiorna il modello locale con il nuovo URL dell'immagine
-        if (type === 'front') {
-          this.tenant!.documentFrontImage = response.imageUrl;
-        } else {
-          this.tenant!.documentBackImage = response.imageUrl;
-        }
+    // Usa NgZone per la gestione della preview
+    this.ngZone.runOutsideAngular(() => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imagePreview = event.target?.result as string;
         
-        this.snackBar.open(`Immagine ${type === 'front' ? 'fronte' : 'retro'} caricata con successo`, 'Chiudi', {
-          duration: 3000
+        // Ritorna nella zona Angular per aggiornare l'UI
+        this.ngZone.run(() => {
+          // Usa setTimeout per evitare gli errori NG0100
+          setTimeout(() => {
+            // Aggiorna l'anteprima con base64
+            if (type === 'front') {
+              this.documentFrontImageSrc = imagePreview;
+            } else {
+              this.documentBackImageSrc = imagePreview;
+            }
+            this.cdr.markForCheck();
+          }, 0);
         });
-        
-        // Ricarica i dati dell'inquilino per aggiornare l'interfaccia
-        this.documentsModified = true;
-        this.loadTenantData(this.tenant!.id);
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Crea il FormData per l'upload
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Parametri anti-cache più efficaci
+    const timestamp = Date.now().toString();
+    const nonce = Math.random().toString(36).substring(2, 15);
+    
+    // Esegui la chiamata API per caricare il file con timeout più lungo
+    this.http.post<{ imageUrl: string, success: boolean, timestamp: number }>(
+      `${environment.apiUrl}/tenants/${this.tenant.id}/documents/${type}`, 
+      formData,
+      { 
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0' },
+        params: { '_': timestamp, 'nonce': nonce } // Parametri anti-cache aggiuntivi
+      }
+    ).pipe(
+      retry({ count: 3, delay: 500 }) // Riprova 3 volte con 500ms di ritardo
+    ).subscribe({
+      next: (response) => {
+        // Aggiorna il modello locale con l'URL dell'immagine dal server
+        if (response && response.imageUrl) {
+          setTimeout(() => {
+            // Rimuovi i vecchi URL dalla cache
+            if (type === 'front' && this.tenant?.documentFrontImage) {
+              delete this.imageUrlCache[this.tenant.documentFrontImage];
+              this.tenant.documentFrontImage = response.imageUrl;
+            } else if (type === 'back' && this.tenant?.documentBackImage) {
+              delete this.imageUrlCache[this.tenant.documentBackImage];  
+              this.tenant.documentBackImage = response.imageUrl;
+            }
+            
+            this.snackBar.open(`Immagine ${type === 'front' ? 'fronte' : 'retro'} caricata con successo`, 'Chiudi', {
+              duration: 3000
+            });
+            
+            this.documentsModified = true;
+            if (type === 'front') {
+              this.documentLoadingFront = false;
+            } else {
+              this.documentLoadingBack = false;
+            }
+            
+            this.isLoading = false;
+            this.cdr.markForCheck();
+            
+            // Verifica che l'immagine sia stata salvata correttamente
+            this.verifyImageSaved(this.tenant!.id, type);
+          }, 300);
+        } else {
+          throw new Error('Risposta del server non valida');
+        }
       },
       error: (error) => {
-        console.error(`Errore durante il caricamento dell'immagine ${type}`, error);
-        this.snackBar.open(`Errore durante il caricamento dell'immagine: ${error.message || 'Errore sconosciuto'}`, 'Chiudi', {
+        console.error(`Errore durante il caricamento dell'immagine ${type}:`, error);
+        this.snackBar.open(`Errore durante il caricamento dell'immagine`, 'Chiudi', {
           duration: 3000
         });
+        
+        if (type === 'front') {
+          this.documentLoadingFront = false;
+          this.documentFrontImageSrc = '';
+        } else {
+          this.documentLoadingBack = false;
+          this.documentBackImageSrc = '';
+        }
+        
         this.isLoading = false;
+        this.cdr.markForCheck();
+        
+        // Ricarica i dati originali in caso di errore
+        setTimeout(() => {
+          this.loadTenantData(this.tenant!.id, true); // Forza refresh
+        }, 300);
       }
     });
   }
 
-  /// Metodo per eliminare l'immagine fronte
+  // Metodo migliorato per verificare che l'immagine sia stata salvata
+  verifyImageSaved(tenantId: number, type: 'front' | 'back'): void {
+    // Attendi un breve momento per assicurarti che il server abbia elaborato la richiesta
+    setTimeout(() => {
+      // Aggiungi timestamp per evitare cache
+      const timestamp = new Date().getTime();
+      const nonce = Math.random().toString(36).substring(2, 15);
+      
+      this.apiService.getById<Tenant>('tenants', tenantId, { _t: timestamp, n: nonce }).subscribe({
+        next: (tenant) => {
+          const imagePath = type === 'front' ? tenant.documentFrontImage : tenant.documentBackImage;
+          
+          if (!imagePath) {
+            console.warn(`Verifica fallita: L'immagine ${type} non risulta salvata nel database`);
+            this.snackBar.open(`Attenzione: L'immagine potrebbe non essere stata salvata correttamente`, 'Riprova', {
+              duration: 5000
+            }).onAction().subscribe(() => {
+              // Se l'utente clicca su "Riprova", ricarichiamo i dati del tenant con refresh forzato
+              this.loadTenantData(tenantId, true);
+            });
+          } else {
+            // Se l'immagine esiste, aggiorna il tenant locale e l'URL
+            if (type === 'front') {
+              this.tenant!.documentFrontImage = imagePath;
+              // Ricarica l'immagine
+              this.imageService.preloadImage(imagePath).subscribe(dataUrl => {
+                this.documentFrontImageSrc = dataUrl;
+                this.cdr.markForCheck();
+              });
+            } else {
+              this.tenant!.documentBackImage = imagePath;
+              // Ricarica l'immagine
+              this.imageService.preloadImage(imagePath).subscribe(dataUrl => {
+                this.documentBackImageSrc = dataUrl;
+                this.cdr.markForCheck();
+              });
+            }
+          }
+        },
+        error: (error) => {
+          console.error('Errore durante la verifica del salvataggio dell\'immagine:', error);
+        }
+      });
+    }, 500);
+  }
+
+  // Metodo migliorato per rimuovere l'immagine fronte
   removeFrontImage(): void {
     if (!this.tenant || !this.tenant.documentFrontImage) return;
     
     this.confirmationService.confirmDelete('l\'immagine fronte del documento', 'questo documento').subscribe(confirmed => {
       if (confirmed) {
         this.isLoading = true;
+        this.documentLoadingFront = true;
+        this.cdr.markForCheck();
+        
+        // Salva l'URL corrente prima dell'eliminazione
+        const currentUrl = this.tenant?.documentFrontImage;
+        
+        // Aggiorna immediatamente l'UI per feedback immediato
+        this.documentFrontImageSrc = '';
+        this.tenant!.documentFrontImage = '';
+        
+        // Rimuovi l'URL dalla cache
+        if (currentUrl) {
+          delete this.imageUrlCache[currentUrl];
+        }
+        
+        // Aggiungi parametri anti-cache
+        const timestamp = Date.now().toString();
+        const nonce = Math.random().toString(36).substring(2, 15);
         
         // Chiama l'API per eliminare il file
-        this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/front').subscribe({
-          next: () => {
-            // Aggiorna il modello locale
-            this.tenant!.documentFrontImage = '';
-            
+        this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/front').pipe(
+          retry({ count: 2, delay: 300 }) // Riprova 2 volte con 300ms di ritardo
+        ).subscribe({
+          next: (response) => {
             this.snackBar.open('Fronte del documento rimosso', 'Chiudi', { 
               duration: 3000 
             });
             
             this.documentsModified = true;
             this.isLoading = false;
+            this.documentLoadingFront = false;
+            this.cdr.markForCheck();
+            
+            // Ricarica il tenant per confermare l'eliminazione sul server con refresh forzato
+            setTimeout(() => this.loadTenantData(this.tenant!.id, true), 500);
           },
           error: (error) => {
             console.error('Errore nella rimozione del documento', error);
-            this.snackBar.open(`Errore nella rimozione del documento: ${error.message || 'Errore sconosciuto'}`, 'Chiudi', { 
+            this.snackBar.open(`Errore nella rimozione del documento`, 'Chiudi', { 
               duration: 3000 
             });
             
+            // Ricarica il tenant per assicurarsi che i dati siano coerenti con refresh forzato
+            this.loadTenantData(this.tenant!.id, true);
+            
             this.isLoading = false;
+            this.documentLoadingFront = false;
+            this.cdr.markForCheck();
           }
         });
       }
     });
   }
 
-  // Metodo per eliminare l'immagine retro
+  // Metodo migliorato per eliminare l'immagine retro
   removeBackImage(): void {
     if (!this.tenant || !this.tenant.documentBackImage) return;
     
     this.confirmationService.confirmDelete('l\'immagine retro del documento', 'questo documento').subscribe(confirmed => {
       if (confirmed) {
         this.isLoading = true;
+        this.documentLoadingBack = true;
+        this.cdr.markForCheck();
+        
+        // Salva l'URL corrente prima dell'eliminazione
+        const currentUrl = this.tenant?.documentBackImage;
+        
+        // Aggiorna immediatamente l'UI per feedback immediato
+        this.documentBackImageSrc = '';
+        this.tenant!.documentBackImage = '';
+        
+        // Rimuovi l'URL dalla cache
+        if (currentUrl) {
+          delete this.imageUrlCache[currentUrl];
+        }
+        
+        // Aggiungi parametri anti-cache
+        const timestamp = Date.now().toString();
+        const nonce = Math.random().toString(36).substring(2, 15);
         
         // Chiama l'API per eliminare il file
-        this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/back').subscribe({
-          next: () => {
-            // Aggiorna il modello locale
-            this.tenant!.documentBackImage = '';
-            
+        this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/back').pipe(
+          retry({ count: 2, delay: 300 }) // Riprova 2 volte con 300ms di ritardo
+        ).subscribe({
+          next: (response) => {
             this.snackBar.open('Retro del documento rimosso', 'Chiudi', { 
               duration: 3000 
             });
             
             this.documentsModified = true;
             this.isLoading = false;
+            this.documentLoadingBack = false;
+            this.cdr.markForCheck();
+            
+            // Ricarica il tenant per confermare l'eliminazione sul server con refresh forzato
+            setTimeout(() => this.loadTenantData(this.tenant!.id, true), 500);
           },
           error: (error) => {
             console.error('Errore nella rimozione del documento', error);
-            this.snackBar.open(`Errore nella rimozione del documento: ${error.message || 'Errore sconosciuto'}`, 'Chiudi', { 
+            this.snackBar.open(`Errore nella rimozione del documento`, 'Chiudi', { 
               duration: 3000 
             });
             
+            // Ricarica il tenant per assicurarsi che i dati siano coerenti con refresh forzato
+            this.loadTenantData(this.tenant!.id, true);
+            
             this.isLoading = false;
+            this.documentLoadingBack = false;
+            this.cdr.markForCheck();
           }
         });
       }
