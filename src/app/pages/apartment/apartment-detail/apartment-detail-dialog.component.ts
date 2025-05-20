@@ -226,19 +226,21 @@ export class ApartmentDetailDialogComponent implements OnInit {
       relativePath = '/static' + relativePath;
     }
     
-    // Altrimenti prependi il base URL dell'API
-    return `${environment.apiUrl}${relativePath}`;
+    // Aggiungi timestamp per prevenire la cache
+    const timestamp = new Date().getTime();
+    return `${environment.apiUrl}${relativePath}?t=${timestamp}`;
   }
 
   // Metodo per controllare se l'appartamento ha immagini valide
   hasValidImages(): boolean {
-    return Boolean(this.apartment?.images && this.apartment.images.length > 0);
+    return Boolean(this.apartment?.images && Array.isArray(this.apartment.images) && this.apartment.images.length > 0);
   }
 
   // Metodo per ottenere solo le immagini valide
   getValidImages(): string[] {
-    if (!this.apartment || !this.apartment.images) return [];
-    return this.apartment.images.filter(img => img && img !== '');
+    if (!this.apartment || !this.apartment.images || !Array.isArray(this.apartment.images)) return [];
+    return this.apartment.images.filter(img => 
+      img && img !== '' && !img.includes('undefined') && img.length > 5);
   }
 
   close(): void {

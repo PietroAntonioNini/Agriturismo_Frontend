@@ -196,7 +196,7 @@
           
           <!-- Gallery of uploaded images -->
           <div class="image-gallery" *ngIf="getImageCount() > 0">
-            <div *ngFor="let preview of imagePreviews; let i = index" class="image-card">
+            <div *ngFor="let preview of getFilteredPreviews(); let i = index" class="image-card">
               <div class="image-preview">
                 <img [src]="preview" alt="Immagine appartamento {{i+1}}">
                 <div class="image-actions">

@@ -352,18 +352,35 @@
     border-left: none !important;
   }
   
-  // Rimuovi il cursore
+  // FIX CURSORE SPECIFICO: assicura che il cursore sia visibile sempre
   input.mat-mdc-input-element,
-  textarea.mat-mdc-input-element {
-    caret-color: transparent !important;
+  textarea.mat-mdc-input-element,
+  .mat-mdc-form-field-input-control {
+    caret-color: var(--primary-color) !important;
+    cursor: text !important;
+  }
+
+  // Assicura che il cursore funzioni anche sui contenitori di input
+  .mat-mdc-text-field-wrapper,
+  .mat-mdc-form-field-flex,
+  .mat-mdc-form-field-infix {
+    cursor: text !important;
+  }
+
+  // FIX COLORE LABEL: sovrascrive specificamente i colori delle label di Angular Material
+  // Questa regola è specifica per ENTRAMBI light e dark mode
+  .mat-mdc-form-field-label,
+  .mat-mdc-floating-label,
+  .mat-form-field-label,
+  .mdc-floating-label,
+  .mat-label,
+  mat-label {
+    color: var(--primary-color) !important;
   }
 
   // Migliora contrasto dark mode
   [data-theme="dark"] {
     // Testi bianchi in dark mode
-    mat-label,
-    .mat-mdc-form-field-required-marker,
-    .mat-mdc-floating-label,
     .mat-mdc-input-element,
     .mat-mdc-textarea-element,
     .mat-mdc-select-value,
@@ -371,8 +388,6 @@
     .mat-mdc-select-arrow,
     .mat-mdc-select-min-line,
     .mat-mdc-option-text,
-    .mat-mdc-form-field-label,
-    .mdc-floating-label,
     .mat-mdc-form-field-required-marker,
     .mat-datepicker-toggle-default-icon,
     .mat-calendar-body-cell-content,
@@ -380,7 +395,6 @@
     .mat-calendar-table-header,
     .mat-calendar-period-button,
     .mat-option-text,
-    .mat-form-field-label,
     .mat-placeholder,
     .campo-obbligatorio,
     label {
@@ -410,41 +424,29 @@
       }
     }
     
-    // Increase text contrast in dark mode
-    .mat-mdc-input-element,
-    .mat-mdc-textarea-element {
-      color: white !important;
-    }
-    
     // Placeholder text more visible
     ::placeholder {
       color: rgba(255, 255, 255, 0.5) !important;
       opacity: 1;
     }
     
-    // Better contrast for labels in dark mode
-    .mat-mdc-form-field-label {
-      color: rgba(255, 255, 255, 0.9) !important;
-    }
-    
-    // Improve select component
-    .mat-mdc-select-value-text {
-      color: white !important;
-    }
-    
-    // Textarea
-    textarea.mat-mdc-input-element {
-      color: white !important;
-    }
-
-    // Campo obbligatorio text
-    .campo-obbligatorio {
-      color: white !important;
-    }
-
     // Colore rosso per gli indicatori di campo obbligatorio
     .mat-mdc-form-field-required-marker {
       color: var(--error-color) !important;
+    }
+  }
+
+  // Regole specifiche per light mode
+  [data-theme="light"], :root {
+    // Questa regola è specifica per light mode e sovrascrive qualsiasi tema di Material
+    .mat-mdc-form-field-label,
+    .mat-form-field-label,
+    .mat-mdc-floating-label,
+    .mdc-floating-label,
+    .mat-label,
+    mat-label,
+    .mat-mdc-form-field-required-marker {
+      color: var(--primary-color) !important;
     }
   }
 
@@ -477,11 +479,6 @@
     border-color: var(--border-color) !important;
   }
 
-  // Input label color
-  .mat-mdc-form-field-label {
-    color: var(--text-muted) !important;
-  }
-
   // Fix disabled input background in dark mode
   .mat-mdc-form-field-disabled .mat-mdc-text-field-wrapper {
     background-color: rgba(var(--text-muted-rgb), 0.05) !important;
@@ -494,6 +491,7 @@
   // Fix datepicker toggle button color
   .mat-datepicker-toggle {
     color: var(--primary-color) !important;
+    cursor: pointer !important;
 
     .mat-datepicker-toggle-default-icon {
       color: var(--primary-color) !important;
@@ -510,6 +508,7 @@
     
     .mat-mdc-option {
       color: var(--text-color) !important;
+      cursor: pointer !important;
       
       &.mat-selected:not(.mat-option-disabled) {
         color: var(--primary-color) !important;
@@ -623,6 +622,17 @@
     .mat-mdc-select-arrow {
       color: var(--primary-color) !important;
     }
+  }
+
+  // Assicura che selettori e dropdown abbiano il cursore pointer
+  mat-select,
+  .mat-select,
+  .mat-mdc-select,
+  .mat-select-trigger,
+  .mat-mdc-select-trigger,
+  .mat-select-arrow-wrapper,
+  .mat-mdc-select-arrow-wrapper {
+    cursor: pointer !important;
   }
 }
 

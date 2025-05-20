@@ -20,6 +20,7 @@ import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { environment } from '../../../../environments/environment';
 import { finalize } from 'rxjs/operators';
+import { ImageService } from '../../../shared/services/image.service';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Apartment } from '../../../shared/models';
@@ -94,7 +95,8 @@ export class ApartmentFormComponent implements OnInit {
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<ApartmentFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { apartmentId?: number }
+    @Inject(MAT_DIALOG_DATA) public data: { apartmentId?: number },
+    private imageService: ImageService
   ) {}
 
   ngOnInit(): void {
@@ -180,7 +182,15 @@ export class ApartmentFormComponent implements OnInit {
 
   // Image management methods for dynamic arrays
   getImageCount(): number {
-    return this.imagePreviews.length;
+    // Usa il metodo filtrato invece dell'array completo
+    return this.getFilteredPreviews().length;
+  }
+
+  // Nuovo metodo per filtrare le immagini non valide
+  getFilteredPreviews(): string[] {
+    // Filtra le immagini vuote o rotte
+    return this.imagePreviews.filter(preview => 
+      preview && preview !== '' && !preview.includes('undefined'));
   }
 
   onMultipleImagesSelected(event: any): void {
@@ -247,20 +257,20 @@ export class ApartmentFormComponent implements OnInit {
     }
   }
 
+  // In apartment-form-dialog.component.ts
   removeImage(index: number): void {
     this.isLoading = true;
     
     // If we're in edit mode with an existing apartment
     if (this.isEditMode && this.apartmentId) {
-      // Check if this is an existing image from the backend (stored in currentApartment.images)
+      // Check if this is an existing image from the backend
       if (this.currentApartment.images && index < this.currentApartment.images.length) {
         const imagePath = this.currentApartment.images[index];
         const fileName = imagePath.split('/').pop() || '';
         
         console.log(`Eliminazione immagine: ${fileName} da appartamento ${this.apartmentId}`);
         
-        // Immediately update local state to reflect deletion
-        // Create a copy of the array and remove the item
+        // Rimuovi l'immagine dagli array
         this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
         this.imagePreviews.splice(index, 1);
         
@@ -275,6 +285,16 @@ export class ApartmentFormComponent implements OnInit {
             next: () => {
               console.log(`Immagine ${fileName} eliminata con successo`);
               
+              // Pulisci la cache delle immagini
+              this.imageService.clearCache();
+              
+              // Rimuovi TUTTI gli elementi vuoti dagli array
+              this.currentApartment.images = this.currentApartment.images?.filter(img => img && img !== '') || [];
+              this.imagePreviews = this.imagePreviews?.filter(img => img && img !== '') || [];
+              
+              // Forza ricaricamento dati dal server
+              this.forceFreshReload();
+              
               this.snackBar.open('Immagine eliminata con successo', '', {
                 duration: 2000,
                 horizontalPosition: 'center',
@@ -284,7 +304,7 @@ export class ApartmentFormComponent implements OnInit {
             error: (error) => {
               console.error('Errore durante l\'eliminazione dell\'immagine', error);
               
-              // Since we already updated the UI, we need to reload on error to show correct state
+              // Ricarica in caso di errore
               this.forceFreshReload();
               
               this.snackBar.open('Errore nella rimozione dell\'immagine', '', {
@@ -295,7 +315,7 @@ export class ApartmentFormComponent implements OnInit {
             }
           });
       } else {
-        // This is a newly added image that's not yet on the backend
+        // This is a newly added image not yet on the backend
         this.imagePreviews.splice(index, 1);
         this.imageFiles.splice(index, 1);
         this.isLoading = false;
@@ -313,6 +333,11 @@ export class ApartmentFormComponent implements OnInit {
     if (this.apartmentId) {
       this.apiService.getById<Apartment>('apartments', this.apartmentId).subscribe({
         next: (apartment) => {
+          // Garantisci che images sia sempre un array
+          if (!apartment.images) {
+            apartment.images = [];
+          }
+          
           this.currentApartment = apartment;
           
           // Clear arrays and rebuild them
@@ -392,6 +417,10 @@ export class ApartmentFormComponent implements OnInit {
     };
 
     console.log('Submitting apartment with amenities:', this.selectedAmenities);
+
+     // Assicurati di inviare solo le immagini valide
+    const validImages = this.currentApartment.images ? 
+    this.currentApartment.images.filter(img => img && img !== '') : [];
     
     // Crea un oggetto che includa esplicitamente tutti i campi necessari
     const apartmentData = {
@@ -406,7 +435,8 @@ export class ApartmentFormComponent implements OnInit {
       monthlyRent: this.apartmentForm.value.monthlyRent,
       status: this.apartmentForm.value.status,
       notes: this.apartmentForm.value.notes,
-      amenities: this.selectedAmenities
+      amenities: this.selectedAmenities,
+      images: validImages
     };
 
     if (this.isEditMode && this.apartmentId) {
@@ -419,6 +449,10 @@ export class ApartmentFormComponent implements OnInit {
       ).subscribe({
         next: (updatedApartment) => {
           this.isLoading = false;
+
+          // Pulisci la cache delle immagini
+          this.imageService.clearCache();
+
           this.snackBar.open('Appartamento aggiornato con successo', 'Chiudi', {
             duration: 3000,
             horizontalPosition: 'end',
@@ -447,6 +481,10 @@ export class ApartmentFormComponent implements OnInit {
       ).subscribe({
         next: (apartment) => {
           this.isLoading = false;
+          
+          // Pulisci la cache delle immagini dopo il salvataggio
+          this.imageService.clearCache();
+          
           this.snackBar.open('Appartamento creato con successo', 'Chiudi', {
             duration: 3000,
             horizontalPosition: 'end',

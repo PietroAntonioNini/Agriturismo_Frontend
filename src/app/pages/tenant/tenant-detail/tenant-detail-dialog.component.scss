@@ -409,14 +409,15 @@
 
 .document-cards-container {
   display: flex;
+  justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
 }
 
 .document-card {
   flex: 1;
-  min-width: 280px;
-  max-width: 400px;
+  min-width: 300px;
+  max-width: 350px;
   background-color: var(--card-background);
   border-radius: 12px;
   overflow: hidden;
@@ -510,18 +511,6 @@
   &:hover {
     img {
       transform: scale(1.05);
-    }
-    
-    &::after {
-      content: 'Ingrandisci';
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      background-color: rgba(var(--primary-color-rgb), 0.8);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
     }
   }
   
