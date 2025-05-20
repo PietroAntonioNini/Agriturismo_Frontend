@@ -102,37 +102,61 @@
             </div>
             <div class="form-row document-upload-container">
               <div class="document-upload-card" [class.has-image]="frontPreview || (currentTenant.documentFrontImage && currentTenant.documentFrontImage !== '')" 
-                   (click)="!frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '') && fileInputFront.click()">
+                  (click)="!documentLoadingFront && !frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '') && fileInputFront.click()">
                 <div class="upload-preview" *ngIf="frontPreview || (currentTenant.documentFrontImage && currentTenant.documentFrontImage !== '')">
-                  <img [src]="frontPreview || getImageUrl(currentTenant.documentFrontImage)" alt="Fronte documento">
-                  <button mat-icon-button color="warn" (click)="removeFrontImage(); $event.stopPropagation()">
+                  <!-- Indicatore di caricamento -->
+                  <div *ngIf="documentLoadingFront" class="loading-container">
+                    <mat-spinner diameter="30"></mat-spinner>
+                  </div>
+                  <!-- Immagine del documento -->
+                  <img *ngIf="!documentLoadingFront" [src]="frontPreview || documentFrontImageSrc || getImageUrl(currentTenant.documentFrontImage)" alt="Fronte documento">
+                  <button mat-icon-button color="warn" (click)="removeFrontImage(); $event.stopPropagation()" *ngIf="!documentLoadingFront">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
+                
+                <!-- Indicatore di caricamento quando non c'è anteprima -->
+                <div *ngIf="documentLoadingFront && !frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '')" class="loading-container">
+                  <mat-spinner diameter="30"></mat-spinner>
+                  <span>Caricamento...</span>
+                </div>
+                
                 <input #fileInputFront type="file" hidden (change)="onFrontImageSelected($event)" accept="image/*">
-                @if (!frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '')) {
+                <ng-container *ngIf="!documentLoadingFront && !frontPreview && (!currentTenant.documentFrontImage || currentTenant.documentFrontImage === '')">
                   <button class="upload-button" mat-stroked-button type="button" (click)="fileInputFront.click(); $event.stopPropagation()">
                     <mat-icon>upload</mat-icon>
                     Carica Fronte
                   </button>
-                }
+                </ng-container>
               </div>
-            
+
               <div class="document-upload-card" [class.has-image]="backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '')" 
-                   (click)="!backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '') && fileInputBack.click()">
+                  (click)="!documentLoadingBack && !backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '') && fileInputBack.click()">
                 <div class="upload-preview" *ngIf="backPreview || (currentTenant.documentBackImage && currentTenant.documentBackImage !== '')">
-                  <img [src]="backPreview || getImageUrl(currentTenant.documentBackImage)" alt="Retro documento">
-                  <button mat-icon-button color="warn" (click)="removeBackImage(); $event.stopPropagation()">
+                  <!-- Indicatore di caricamento -->
+                  <div *ngIf="documentLoadingBack" class="loading-container">
+                    <mat-spinner diameter="30"></mat-spinner>
+                  </div>
+                  <!-- Immagine del documento -->
+                  <img *ngIf="!documentLoadingBack" [src]="backPreview || documentBackImageSrc || getImageUrl(currentTenant.documentBackImage)" alt="Retro documento">
+                  <button mat-icon-button color="warn" (click)="removeBackImage(); $event.stopPropagation()" *ngIf="!documentLoadingBack">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
+                
+                <!-- Indicatore di caricamento quando non c'è anteprima -->
+                <div *ngIf="documentLoadingBack && !backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '')" class="loading-container">
+                  <mat-spinner diameter="30"></mat-spinner>
+                  <span>Caricamento...</span>
+                </div>
+                
                 <input #fileInputBack type="file" hidden (change)="onBackImageSelected($event)" accept="image/*">
-                @if (!backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '')) {
+                <ng-container *ngIf="!documentLoadingBack && !backPreview && (!currentTenant.documentBackImage || currentTenant.documentBackImage === '')">
                   <button class="upload-button" mat-stroked-button type="button" (click)="fileInputBack.click(); $event.stopPropagation()">
                     <mat-icon>upload</mat-icon>
                     Carica Retro
                   </button>
-                }
+                </ng-container>
               </div>
             </div>
           </div>

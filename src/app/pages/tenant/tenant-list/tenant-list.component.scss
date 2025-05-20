@@ -860,10 +860,10 @@ $transition-speed: var(--transition-normal);
       }
       
       &.status-expired {
+        max-width: fit-content;
         background-color: rgba(var(--error-color-rgb), 0.1);
         color: rgba(var(--error-color-rgb));
         font-weight: 600;
-        letter-spacing: 0.3px;
         border: 1px solid rgba(var(--error-color-rgb), 0.4);
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         

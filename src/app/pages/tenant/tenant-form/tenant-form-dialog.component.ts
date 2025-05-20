@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -16,7 +16,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Tenant } from '../../../shared/models';
-import { TenantListComponent } from '../tenant-list/tenant-list.component';
+import { ImageService } from '../../../shared/services/image.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-tenant-form',
@@ -52,6 +54,10 @@ export class TenantFormComponent implements OnInit {
   backPreview: string | null = null;
   frontImageFile: File | null = null;
   backImageFile: File | null = null;
+  documentLoadingFront: boolean = false;
+  documentLoadingBack: boolean = false;
+  documentFrontImageSrc: string = '';
+  documentBackImageSrc: string = '';
   
   @ViewChild('fileInputFront') fileInputFront!: ElementRef;
   @ViewChild('fileInputBack') fileInputBack!: ElementRef;
@@ -72,7 +78,10 @@ export class TenantFormComponent implements OnInit {
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     public dialogRef: MatDialogRef<TenantFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { tenantId?: number }
+    @Inject(MAT_DIALOG_DATA) public data: { tenantId?: number },
+    private imageService: ImageService,
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -111,11 +120,15 @@ export class TenantFormComponent implements OnInit {
   loadTenantData(id: number): void {
     this.isLoading = true;
     this.errorMessage = null;
+    this.documentLoadingFront = false;
+    this.documentLoadingBack = false;
 
     this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.currentTenant = tenant;
         this.updateForm(tenant);
+        // Carica le immagini dopo l'aggiornamento del form
+        this.loadDocumentImages(tenant);
         this.isLoading = false;
       },
       error: (error) => {
@@ -124,6 +137,47 @@ export class TenantFormComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  // Carica le immagini dei documenti
+  loadDocumentImages(tenant: Tenant): void {
+    // Carica l'immagine fronte se presente
+    if (tenant.documentFrontImage && tenant.documentFrontImage !== '') {
+      this.documentLoadingFront = true;
+      
+      this.imageService.preloadImage(tenant.documentFrontImage).subscribe({
+        next: (dataUrl) => {
+          this.documentFrontImageSrc = dataUrl;
+          this.frontPreview = dataUrl; // Imposta anche frontPreview
+          this.documentLoadingFront = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Errore caricamento immagine fronte:', error);
+          this.documentLoadingFront = false;
+          this.cdr.markForCheck();
+        }
+      });
+    }
+    
+    // Carica l'immagine retro se presente
+    if (tenant.documentBackImage && tenant.documentBackImage !== '') {
+      this.documentLoadingBack = true;
+      
+      this.imageService.preloadImage(tenant.documentBackImage).subscribe({
+        next: (dataUrl) => {
+          this.documentBackImageSrc = dataUrl;
+          this.backPreview = dataUrl; // Imposta anche backPreview
+          this.documentLoadingBack = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Errore caricamento immagine retro:', error);
+          this.documentLoadingBack = false;
+          this.cdr.markForCheck();
+        }
+      });
+    }
   }
 
   updateForm(tenant: Tenant): void {
@@ -160,8 +214,25 @@ export class TenantFormComponent implements OnInit {
     if (!url || url === '') {
       return '';
     }
-    // Aggiungi un timestamp all'URL per evitare il caching
-    return `${url}?t=${new Date().getTime()}`;
+    
+    // Usa l'immagine in cache base64 se disponibile
+    if (url === this.currentTenant.documentFrontImage && this.documentFrontImageSrc) {
+      return this.documentFrontImageSrc;
+    }
+    
+    if (url === this.currentTenant.documentBackImage && this.documentBackImageSrc) {
+      return this.documentBackImageSrc;
+    }
+    
+    // Aggiungi timestamp per evitare il caching
+    const timestamp = new Date().getTime();
+    
+    // Gestisci il prefisso /static/ se necessario
+    if (!url.startsWith('/static/') && url.startsWith('/')) {
+      url = '/static' + url;
+    }
+    
+    return `${environment.apiUrl}${url}?t=${timestamp}`;
   }
 
   getFormControlError(controlName: string): string {
@@ -186,98 +257,338 @@ export class TenantFormComponent implements OnInit {
   }
 
   onFrontImageSelected(event: any): void {
-    // Verifica se ci sono file selezionati
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       console.log('File fronte selezionato:', file.name);
       
-      // Salva il file per l'upload
-      this.frontImageFile = file;
+      // Mostro un indicatore di caricamento
+      this.documentLoadingFront = true;
       
-      // Crea l'anteprima dell'immagine
+      // Crea subito l'anteprima dell'immagine per feedback immediato
       const reader = new FileReader();
       reader.onload = () => {
         console.log('Anteprima fronte generata');
         this.frontPreview = reader.result as string;
-        
-        // Forza l'aggiornamento della vista
-        setTimeout(() => {
-          // Questo aiuta a forzare l'aggiornamento dell'UI in alcuni casi
-        }, 0);
+        this.documentFrontImageSrc = reader.result as string;
+        this.cdr.markForCheck();
       };
       reader.readAsDataURL(file);
+      
+      // Ottieni l'ID del tenant
+      const tenantId = this.tenantId || (this.currentTenant?.id);
+      
+      if (tenantId) {
+        // Carica immediatamente l'immagine sul server
+        this.uploadFrontImage(file, tenantId);
+      } else {
+        // Se non abbiamo un ID (nuova creazione), salviamo solo il file per l'upload finale
+        this.frontImageFile = file;
+        this.documentLoadingFront = false;
+        this.cdr.markForCheck();
+      }
     } else {
       console.log('Nessun file fronte selezionato');
     }
   }
 
   onBackImageSelected(event: any): void {
-    // Verifica se ci sono file selezionati
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
       console.log('File retro selezionato:', file.name);
       
-      // Salva il file per l'upload
-      this.backImageFile = file;
+      // Mostro un indicatore di caricamento
+      this.documentLoadingBack = true;
       
-      // Crea l'anteprima dell'immagine
+      // Crea subito l'anteprima dell'immagine per feedback immediato
       const reader = new FileReader();
       reader.onload = () => {
         console.log('Anteprima retro generata');
         this.backPreview = reader.result as string;
-        
-        // Forza l'aggiornamento della vista
-        setTimeout(() => {
-          // Questo aiuta a forzare l'aggiornamento dell'UI in alcuni casi
-        }, 0);
+        this.documentBackImageSrc = reader.result as string;
+        this.cdr.markForCheck();
       };
       reader.readAsDataURL(file);
+      
+      // Ottieni l'ID del tenant
+      const tenantId = this.tenantId || (this.currentTenant?.id);
+      
+      if (tenantId) {
+        // Carica immediatamente l'immagine sul server
+        this.uploadBackImage(file, tenantId);
+      } else {
+        // Se non abbiamo un ID (nuova creazione), salviamo solo il file per l'upload finale
+        this.backImageFile = file;
+        this.documentLoadingBack = false;
+        this.cdr.markForCheck();
+      }
     } else {
       console.log('Nessun file retro selezionato');
     }
   }
 
+  // Metodo per caricare il fronte del documento
+  uploadFrontImage(file: File, tenantId: number): void {
+    this.isLoading = true;
+    this.documentLoadingFront = true;
+    this.cdr.markForCheck();
+    
+    console.log(`Caricamento fronte documento per l'inquilino ID: ${tenantId}`);
+    
+    // Creiamo un FormData da inviare al server
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Usa il servizio API per caricare il file
+    this.apiService.uploadFile('tenants', tenantId, 'documents/front', file).subscribe({
+      next: (response) => {
+        console.log('Documento fronte caricato con successo:', response);
+        
+        // Aggiorna l'inquilino con il nuovo URL dell'immagine
+        if (response.imageUrl) {
+          this.currentTenant.documentFrontImage = response.imageUrl;
+          
+          // Aggiorna l'UI con feedback
+          this.snackBar.open('Fronte del documento caricato', 'Chiudi', { duration: 3000 });
+          
+          // Assicuriamoci che sia tutto aggiornato correttamente
+          this.loadDocumentImages(this.currentTenant);
+        }
+        
+        // Nascondi l'indicatore di caricamento
+        this.isLoading = false;
+        this.documentLoadingFront = false;
+        
+        // Non serve più salvare il file per l'upload finale, è già stato caricato
+        this.frontImageFile = null;
+        
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Errore nel caricamento del documento fronte:', error);
+        
+        // Feedback all'utente
+        this.snackBar.open('Errore nel caricamento del documento', 'Chiudi', { duration: 3000 });
+        
+        // Nascondi l'indicatore di caricamento ma mantieni il file per l'upload successivo
+        this.isLoading = false;
+        this.documentLoadingFront = false;
+        this.frontImageFile = file;
+        
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Metodo per caricare il retro del documento
+  uploadBackImage(file: File, tenantId: number): void {
+    this.isLoading = true;
+    this.documentLoadingBack = true;
+    this.cdr.markForCheck();
+    
+    console.log(`Caricamento retro documento per l'inquilino ID: ${tenantId}`);
+    
+    // Creiamo un FormData da inviare al server
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // Usa il servizio API per caricare il file
+    this.apiService.uploadFile('tenants', tenantId, 'documents/back', file).subscribe({
+      next: (response) => {
+        console.log('Documento retro caricato con successo:', response);
+        
+        // Aggiorna l'inquilino con il nuovo URL dell'immagine
+        if (response.imageUrl) {
+          this.currentTenant.documentBackImage = response.imageUrl;
+          
+          // Aggiorna l'UI con feedback
+          this.snackBar.open('Retro del documento caricato', 'Chiudi', { duration: 3000 });
+          
+          // Assicuriamoci che sia tutto aggiornato correttamente
+          this.loadDocumentImages(this.currentTenant);
+        }
+        
+        // Nascondi l'indicatore di caricamento
+        this.isLoading = false;
+        this.documentLoadingBack = false;
+        
+        // Non serve più salvare il file per l'upload finale, è già stato caricato
+        this.backImageFile = null;
+        
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Errore nel caricamento del documento retro:', error);
+        
+        // Feedback all'utente
+        this.snackBar.open('Errore nel caricamento del documento', 'Chiudi', { duration: 3000 });
+        
+        // Nascondi l'indicatore di caricamento ma mantieni il file per l'upload successivo
+        this.isLoading = false;
+        this.documentLoadingBack = false;
+        this.backImageFile = file;
+        
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Rimuove l'immagine fronte
   removeFrontImage(): void {
+    console.log('removeFrontImage chiamato', {
+      'this.tenantId': this.tenantId,
+      'this.data': this.data,
+      'this.currentTenant': this.currentTenant
+    });
+
+    // Assicurati di avere sempre un ID valido
+    const tenantIdToUse = this.tenantId || (this.currentTenant?.id) || (this.data?.tenantId);
+    
+    if (!tenantIdToUse) {
+      console.error('Nessun ID tenant valido trovato!');
+      this.snackBar.open('Errore: ID inquilino non valido', 'Chiudi', { duration: 3000 });
+      return;
+    }
+
+    // Resetta le proprietà locali PRIMA di chiamare l'API
     this.frontPreview = null;
     this.frontImageFile = null;
+    this.documentFrontImageSrc = '';
     
     // Resetta anche l'input file
     if (this.fileInputFront) {
       this.fileInputFront.nativeElement.value = '';
     }
     
+    // Assegna subito l'immagine del documento a stringa vuota
+    // per feedback immediato all'utente anche se l'API fallisce
     if (this.currentTenant.documentFrontImage) {
-      this.apiService.deleteFile('tenants', this.tenantId!, 'documents/front').subscribe({
+      // Salva una copia dell'immagine originale prima di cancellarla (per sicurezza)
+      const originalImage = this.currentTenant.documentFrontImage;
+      
+      // Mostriamo immediatamente lo stato di caricamento
+      this.isLoading = true;
+      this.documentLoadingFront = true;
+      this.currentTenant.documentFrontImage = '';
+      this.cdr.markForCheck();
+      
+      console.log(`Eliminazione documento front dell'inquilino ID: ${tenantIdToUse}`);
+      
+      this.apiService.deleteFile('tenants', tenantIdToUse, 'documents/front').subscribe({
         next: () => {
-          this.currentTenant.documentFrontImage = '';
+          console.log('Documento fronte eliminato con successo');
+          
+          // Aggiorna l'UI immediatamente
           this.snackBar.open('Fronte del documento rimosso', 'Chiudi', { duration: 3000 });
+          
+          // Assicurati che l'immagine sia rimossa e l'input file sia vuoto
+          this.currentTenant.documentFrontImage = '';
+          this.frontPreview = null;
+          this.frontImageFile = null;
+          this.documentFrontImageSrc = '';
+          if (this.fileInputFront) {
+            this.fileInputFront.nativeElement.value = '';
+          }
+          
+          // Nascondi i loader
+          this.isLoading = false;
+          this.documentLoadingFront = false;
+          
+          // Forza l'aggiornamento della vista
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: (error) => {
           console.error('Errore nella rimozione del documento', error);
+          
+          // In caso di errore, ripristina l'immagine originale
+          this.currentTenant.documentFrontImage = originalImage;
+          
           this.snackBar.open('Errore nella rimozione del documento', 'Chiudi', { duration: 3000 });
+          this.isLoading = false;
+          this.documentLoadingFront = false;
+          this.cdr.markForCheck();
         }
       });
     }
   }
 
+  // Rimuove l'immagine retro
   removeBackImage(): void {
+    console.log('removeBackImage chiamato', {
+      'this.tenantId': this.tenantId,
+      'this.data': this.data,
+      'this.currentTenant': this.currentTenant
+    });
+
+    // Assicurati di avere sempre un ID valido
+    const tenantIdToUse = this.tenantId || (this.currentTenant?.id) || (this.data?.tenantId);
+    
+    if (!tenantIdToUse) {
+      console.error('Nessun ID tenant valido trovato!');
+      this.snackBar.open('Errore: ID inquilino non valido', 'Chiudi', { duration: 3000 });
+      return;
+    }
+
+    // Resetta le proprietà locali PRIMA di chiamare l'API
     this.backPreview = null;
     this.backImageFile = null;
+    this.documentBackImageSrc = '';
     
     // Resetta anche l'input file
     if (this.fileInputBack) {
       this.fileInputBack.nativeElement.value = '';
     }
     
+    // Assegna subito l'immagine del documento a stringa vuota
+    // per feedback immediato all'utente anche se l'API fallisce
     if (this.currentTenant.documentBackImage) {
-      this.apiService.deleteFile('tenants', this.tenantId!, 'documents/back').subscribe({
+      // Salva una copia dell'immagine originale prima di cancellarla (per sicurezza)
+      const originalImage = this.currentTenant.documentBackImage;
+      
+      // Mostriamo immediatamente lo stato di caricamento
+      this.isLoading = true;
+      this.documentLoadingBack = true;
+      this.currentTenant.documentBackImage = '';
+      this.cdr.markForCheck();
+      
+      console.log(`Eliminazione documento back dell'inquilino ID: ${tenantIdToUse}`);
+      
+      this.apiService.deleteFile('tenants', tenantIdToUse, 'documents/back').subscribe({
         next: () => {
-          this.currentTenant.documentBackImage = '';
+          console.log('Documento retro eliminato con successo');
+          
+          // Aggiorna l'UI immediatamente
           this.snackBar.open('Retro del documento rimosso', 'Chiudi', { duration: 3000 });
+          
+          // Assicurati che l'immagine sia rimossa e l'input file sia vuoto
+          this.currentTenant.documentBackImage = '';
+          this.backPreview = null;
+          this.backImageFile = null;
+          this.documentBackImageSrc = '';
+          if (this.fileInputBack) {
+            this.fileInputBack.nativeElement.value = '';
+          }
+          
+          // Nascondi i loader
+          this.isLoading = false;
+          this.documentLoadingBack = false;
+          
+          // Forza l'aggiornamento della vista
+          setTimeout(() => {
+            this.cdr.detectChanges();
+          }, 0);
         },
         error: (error) => {
           console.error('Errore nella rimozione del documento', error);
+          
+          // In caso di errore, ripristina l'immagine originale
+          this.currentTenant.documentBackImage = originalImage;
+          
           this.snackBar.open('Errore nella rimozione del documento', 'Chiudi', { duration: 3000 });
+          this.isLoading = false;
+          this.documentLoadingBack = false;
+          this.cdr.markForCheck();
         }
       });
     }
@@ -293,7 +604,7 @@ export class TenantFormComponent implements OnInit {
       });
       return;
     }
-
+  
     this.isLoading = true;
     this.errorMessage = null;
     
@@ -306,7 +617,7 @@ export class TenantFormComponent implements OnInit {
       formValues.documentExpiryDate = dateObj.toISOString().split('T')[0];
     }
     
-    // Crea un oggetto tenant con solo i campi necessari
+    // Crea un oggetto tenant con i campi necessari, includendo esplicitamente le immagini
     const tenantToUpdate = {
       firstName: formValues.firstName,
       lastName: formValues.lastName,
@@ -317,18 +628,24 @@ export class TenantFormComponent implements OnInit {
       documentExpiryDate: formValues.documentExpiryDate,
       address: formValues.address || "",
       communicationPreferences: formValues.communicationPreferences,
-      notes: formValues.notes || ""
-      // Rimuoviamo i campi relativi ai documenti per evitare problemi
+      notes: formValues.notes || "",
+      // Aggiungi esplicitamente gli URL delle immagini, anche se vuoti
+      documentFrontImage: this.currentTenant.documentFrontImage || "",
+      documentBackImage: this.currentTenant.documentBackImage || ""
     };
     
-    // Prepara i file con nomi corretti come richiesto dal backend
+    // Preparare i file solo se non sono già stati caricati
     const files: File[] = [];
     
-    if (this.frontImageFile) {
+    // Assicuriamoci che i file siano effettivamente da caricare
+    // Ma solo se non abbiamo già caricato le immagini sul server
+    if (this.frontImageFile && (!this.currentTenant.documentFrontImage || this.currentTenant.documentFrontImage === '')) {
+      console.log('Includendo nuova immagine fronte nell\'aggiornamento');
       files.push(this.frontImageFile);
     }
     
-    if (this.backImageFile) {
+    if (this.backImageFile && (!this.currentTenant.documentBackImage || this.currentTenant.documentBackImage === '')) {
+      console.log('Includendo nuova immagine retro nell\'aggiornamento');
       files.push(this.backImageFile);
     }
     
@@ -336,9 +653,36 @@ export class TenantFormComponent implements OnInit {
       duration: 0,
     });
     
-    const saveObservable = this.isEditMode && this.tenantId 
-      ? this.apiService.update<Tenant>('tenants', this.tenantId, tenantToUpdate, files)
-      : this.apiService.create<Tenant>('tenants', tenantToUpdate, files);
+    console.log('Aggiornamento inquilino con', {
+      'dati': tenantToUpdate,
+      'file': files.map(f => f.name),
+      'isEditMode': this.isEditMode,
+      'tenantId': this.tenantId,
+      'documentFrontImage': this.currentTenant.documentFrontImage ? 'presente' : 'assente',
+      'documentBackImage': this.currentTenant.documentBackImage ? 'presente' : 'assente'
+    });
+    
+    // Gestione più intelligente dell'endpoint da utilizzare
+    let saveObservable;
+    
+    if (this.isEditMode && this.tenantId) {
+      // Siamo in modalità modifica
+      if (files.length > 0) {
+        // Se ci sono file da caricare, usa il metodo di update normale con FormData
+        console.log('Usando endpoint with-images perché ci sono nuovi file da caricare');
+        saveObservable = this.apiService.update<Tenant>('tenants', this.tenantId, tenantToUpdate, files);
+      } else {
+        // Se non ci sono file, usa una chiamata HTTP PUT diretta all'endpoint standard senza /with-images
+        // Questo evita problemi con il FormData quando non ci sono file
+        console.log('Usando endpoint PUT standard perché non ci sono nuovi file da caricare');
+        const url = `${environment.apiUrl}/tenants/${this.tenantId}`;
+        saveObservable = this.http.put<Tenant>(url, tenantToUpdate);
+      }
+    } else {
+      // Siamo in modalità creazione
+      console.log('Modalità creazione: usando endpoint create standard');
+      saveObservable = this.apiService.create<Tenant>('tenants', tenantToUpdate, files);
+    }
 
     saveObservable.subscribe({
       next: (tenant) => {
@@ -350,6 +694,20 @@ export class TenantFormComponent implements OnInit {
           { duration: 3000 }
         );
         
+        // Aggiorna i dati dell'inquilino corrente
+        if (tenant) {
+          this.currentTenant = tenant;
+          
+          // Reset file references
+          this.frontImageFile = null;
+          this.backImageFile = null;
+          
+          // Ricarica le immagini fresche dal server per sicurezza
+          if (this.isEditMode) {
+            this.loadDocumentImages(tenant);
+          }
+        }
+        
         // Chiudi il dialog e passa i dati aggiornati
         this.dialogRef.close({ success: true, tenant: tenant });
       },
@@ -358,6 +716,10 @@ export class TenantFormComponent implements OnInit {
         this.isLoading = false;
         this.snackBar.dismiss();
         this.errorMessage = `Si è verificato un errore durante ${this.isEditMode ? 'l\'aggiornamento' : 'la creazione'} dell'inquilino.`;
+        this.snackBar.open(`Errore durante ${this.isEditMode ? 'l\'aggiornamento' : 'la creazione'} dell'inquilino`, 'Chiudi', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
