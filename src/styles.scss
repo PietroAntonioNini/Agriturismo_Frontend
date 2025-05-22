@@ -1,11 +1,11 @@
+/* ====== IMPORTS ====== */
 /* Importa i temi personalizzati */
 @use './app/shared/styles/themes/index.scss' as themes;
 
-/* Importa i CSS precompilati di Angular Material (sovrascriveremo alcuni stili) */
+/* Importa i CSS precompilati di Angular Material (verrà sovrascritto) */
 @import "@angular/material/prebuilt-themes/deeppurple-amber.css";
-/* Il tema deeppurple-amber è più compatibile con il verde rispetto a indigo-pink */
 
-/* Stili globali */
+/* ====== STILI GLOBALI ====== */
 html, body { 
   height: 100%; 
   margin: 0;
@@ -38,55 +38,218 @@ body {
 
 .mat-drawer-container {
   height: 100%;
-  background-color: var(--app-background) !important; // Sovrascrivi il colore di sfondo di Material
+  background-color: var(--app-background) !important;
 }
 
-// Override personalizzati per Angular Material
-.mat-mdc-menu-panel {
-  background-color: var(--card-background) !important;
-  color: var(--text-color) !important;
+/* ====== FIX PER INPUT E CURSORE ====== */
+/* Fix per il cursore e conversione colori a verde */
+input, 
+textarea, 
+.mat-mdc-input-element,
+.mat-mdc-textarea-element,
+[contenteditable] {
+  caret-color: var(--primary-color) !important;
 }
 
-.mat-mdc-menu-item {
-  color: var(--text-color) !important;
+/* Fix per rimuovere il bordo/padding sinistro negli input */
+.mat-mdc-text-field-wrapper {
+  padding-left: 0 !important;
 }
 
-.mat-mdc-dialog-container .mdc-dialog__surface {
-  background-color: var(--card-background) !important;
-  color: var(--text-color) !important;
+.mat-mdc-form-field-infix {
+  padding-left: 16px !important;
 }
 
-// Forza il max-height anche sul contenitore del form
-.mat-mdc-dialog-container .mdc-dialog__surface .mat-mdc-dialog-content {
-  max-height: 90vh !important;
+.mdc-floating-label {
+  left: 16px !important;
 }
 
-.mat-mdc-card {
-  background-color: var(--card-background) !important;
-  color: var(--text-color) !important;
+/* Fix per input prefix (€, m², ecc.) */
+.mat-mdc-form-field-text-prefix {
+  padding-left: 16px !important;
 }
 
-.mat-mdc-divider {
-  border-color: var(--border-color) !important;
+/* Fix per rimuovere il bordo sinistro degli input che causa la striscia verde */
+.mdc-notched-outline__notch {
+  border-left: none !important;
 }
 
-// Modifica il colore di sfondo dei menu
-.mat-mdc-menu-content {
-  background-color: var(--card-background) !important;
+/* ====== RIMOZIONE EFFETTI RIPPLE ====== */
+/* Rimozione globale degli effetti ripple */
+.mat-ripple-element,
+.mat-mdc-button-ripple,
+.mdc-checkbox__ripple,
+.mat-button-ripple,
+.mat-mdc-button-ripple-element,
+.mat-mdc-tab-ripple {
+  display: none !important;
 }
 
-// Stili per i badge
-.mat-badge-accent .mat-badge-content {
-  background-color: var(--secondary-color) !important;
-  color: white !important;
+/* ====== CHECKBOX E RADIO ====== */
+/* Checkbox - Fix allineamento e rimozione cerchio */
+.mat-mdc-checkbox {
+  margin: 0 !important;
+  
+  .mdc-form-field {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .mdc-checkbox {
+    .mdc-checkbox__background {
+      border-color: var(--primary-color) !important;
+    }
+    
+    .mdc-checkbox__ripple {
+      display: none !important;
+    }
+  }
+  
+  &.mat-mdc-checkbox-checked {
+    .mdc-checkbox__background {
+      background-color: var(--primary-color) !important;
+      border-color: var(--primary-color) !important;
+    }
+  }
 }
 
-// Override per i bottoni
-.mat-mdc-raised-button.mat-primary {
+/* Miglioramento allineamento dei checkbox */
+.mat-mdc-checkbox .mdc-checkbox {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.mat-mdc-checkbox-touch-target {
+  background-color: transparent !important;
+}
+
+.mdc-checkbox__native-control:enabled:checked ~ .mdc-checkbox__background {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Radio buttons */
+.mat-mdc-radio-button .mdc-radio__outer-circle {
+  border-color: var(--primary-color) !important;
+}
+
+.mat-mdc-radio-button .mdc-radio__native-control:checked + .mdc-radio__background .mdc-radio__inner-circle,
+.mdc-radio__native-control:checked + .mdc-radio__background .mdc-radio__inner-circle {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* ====== COMPONENTI ANGULAR MATERIAL ====== */
+/* Progress spinner e bar */
+.mat-mdc-progress-spinner .mdc-circular-progress__determinate-circle,
+.mat-mdc-progress-spinner .mdc-circular-progress__indeterminate-circle-graphic,
+.mat-spinner circle {
+  stroke: var(--primary-color) !important;
+}
+
+.mat-mdc-progress-bar .mdc-linear-progress__bar-inner {
+  border-color: var(--primary-color) !important;
   background-color: var(--primary-color) !important;
 }
 
-// Override per i tab di Angular Material
+/* ====== FORM FIELDS E INPUT ====== */
+
+/* Input enhancement per modalità chiara */
+.mat-mdc-text-field-wrapper {
+  background-color: rgba(0, 0, 0, 0.03) !important; /* Aumentato contrasto per vedere meglio il cursore */
+  
+  &:hover .mdc-notched-outline__leading,
+  &:hover .mdc-notched-outline__notch,
+  &:hover .mdc-notched-outline__trailing {
+    border-color: var(--primary-color) !important;
+    border-width: 1px !important;
+  }
+}
+
+/* Form fields con focus */
+.mat-mdc-form-field.mat-focused:not(.mat-form-field-invalid) {
+  .mat-mdc-form-field-focus-overlay {
+    background-color: rgba(var(--primary-color-rgb), 0.05) !important;
+  }
+  
+  .mat-mdc-floating-label,
+  .mdc-floating-label--float-above {
+    color: var(--primary-color) !important;
+  }
+  
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: var(--primary-color) !important;
+  }
+}
+
+/* Fix per assicurare che il cursore sia sempre visibile */
+input.mat-mdc-input-element,
+textarea.mat-mdc-input-element,
+input[matinput],
+textarea[matinput],
+.mat-mdc-form-field-input-control {
+  caret-color: var(--primary-color) !important;
+  -webkit-text-fill-color: var(--text-color) !important; /* Fix per WebKit */
+  color: var(--text-color) !important;
+  opacity: 1 !important;
+  cursor: text !important;
+}
+
+/* Assicura che il cursore funzioni anche sui contenitori di input */
+.mat-mdc-text-field-wrapper,
+.mat-mdc-form-field-flex,
+.mat-mdc-form-field-infix {
+  cursor: text !important;
+}
+
+/* Input text colore più scuro in light mode per migliorare la visibilità */
+input.mat-mdc-input-element,
+textarea.mat-mdc-input-element,
+.mat-mdc-form-field-input-control {
+  color: rgba(0, 0, 0, 0.9) !important; /* Colore di testo ancora più scuro per gli input */
+  
+  /* Fix per light mode come nei file component specifici */
+  caret-color: var(--primary-color) !important;
+  cursor: text !important;
+}
+
+/* Select e dropdown */
+.mat-mdc-select-value {
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-select-arrow-wrapper .mat-mdc-select-arrow {
+  color: var(--primary-color) !important;
+}
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+  .mdc-list-item__primary-text {
+    color: var(--primary-color) !important;
+  }
+  
+  &::before {
+    background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+  }
+}
+
+.mat-mdc-select-panel .mat-mdc-option.mat-selected:not(.mat-option-disabled) {
+  color: var(--primary-color) !important;
+}
+
+/* Bottoni */
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-fab.mat-primary,
+.mat-mdc-mini-fab.mat-primary {
+  --mdc-protected-button-container-color: var(--primary-color) !important;
+  --mdc-protected-button-label-text-color: white !important;
+  background-color: var(--primary-color) !important;
+}
+
+/* Tabs */
 .mat-mdc-tab-header {
   --mdc-tab-indicator-active-indicator-color: var(--primary-color) !important;
 }
@@ -110,11 +273,50 @@ body {
   opacity: 0.7;
 }
 
-.mat-mdc-tab:focus {
-  background-color: rgba(var(--primary-color-rgb), 0.12) !important;
+.mat-mdc-tab:hover:not(.mdc-tab--active) {
+  background-color: rgba(var(--primary-color-rgb), 0.08) !important;
 }
 
-//stili overlay documenti
+.mat-mdc-tab.mdc-tab--active {
+  background-color: rgba(var(--primary-color-rgb), 0.15) !important;
+}
+
+/* Contenitori e card */
+.mat-mdc-menu-panel,
+.mat-mdc-menu-content {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-menu-item {
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface .mat-mdc-dialog-content {
+  max-height: 90vh !important;
+}
+
+.mat-mdc-card {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+}
+
+.mat-mdc-divider {
+  border-color: var(--border-color) !important;
+}
+
+/* Badge */
+.mat-badge-accent .mat-badge-content {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+/* Overlay documenti */
 .document-preview-overlay {
   z-index: var(--z-index-modal);
 }
@@ -124,7 +326,7 @@ body {
   cursor: pointer;
 }
 
-// Stili per il pannello del dialogo di conferma
+/* Pannello dialogo di conferma */
 .confirmation-dialog-panel {
   .mat-mdc-dialog-container {
     padding: 0 !important;
@@ -139,8 +341,21 @@ body {
   }
 }
 
-// Override drastico per le tabelle in dark mode
+/* ====== TEMA DARK ====== */
 html[data-theme="dark"] {
+  /* Fix per input in dark mode */
+  .mat-mdc-text-field-wrapper {
+    background-color: transparent !important;
+  }
+  
+  /* Testo input chiaro in dark mode */
+  input.mat-mdc-input-element,
+  textarea.mat-mdc-input-element,
+  .mat-mdc-form-field-input-control {
+    color: white !important; /* Colore di testo chiaro negli input in dark mode */
+  }
+  
+  /* Tabelle */
   .mat-mdc-table {
     .mat-mdc-row {
       color: white !important;
@@ -155,7 +370,6 @@ html[data-theme="dark"] {
     }
   }
 
-  // Forza il colore bianco su tutti i testi nelle tabelle
   tr.mat-mdc-row, 
   tr.mat-row,
   .mat-mdc-cell,
@@ -163,8 +377,17 @@ html[data-theme="dark"] {
     color: white !important;
   }
   
-  // Sovrascrive qualsiasi variabile CSS interna di Material
   --mat-table-row-item-label-text-color: white !important;
   --mat-table-row-header-text-color: white !important;
   --mat-table-row-item-container-text-color: white !important;
+  
+  /* Checkbox dark mode */
+  .mat-mdc-checkbox .mdc-checkbox__background {
+    border-color: var(--primary-color) !important;
+  }
+  
+  &.mat-mdc-checkbox-checked .mdc-checkbox__background {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+  }
 }

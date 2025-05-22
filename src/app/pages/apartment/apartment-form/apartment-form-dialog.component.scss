@@ -81,6 +81,49 @@
   }
 }
 
+.checkbox-row {
+  // Le regole esistenti rimangono
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
+  
+  // Nuove regole per l'allineamento dei checkbox
+  mat-checkbox {
+    display: flex !important;
+    align-items: center !important;
+    
+    // Fix per l'allineamento interno di Angular Material
+    ::ng-deep {
+      .mdc-checkbox {
+        align-self: center;
+      }
+      
+      .mdc-form-field {
+        align-items: center !important;
+        display: flex !important;
+        
+        .mdc-form-field__label {
+          line-height: 1.2;
+          align-self: center;
+          margin-left: 16px !important;
+        }
+      }
+      
+      // Assicura che il checkbox e il testo siano sulla stessa linea
+      .mat-mdc-checkbox-layout {
+        align-items: center !important;
+        white-space: nowrap;
+      }
+      
+      // Fix per il posizionamento del checkbox stesso
+      .mdc-checkbox__background {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+  }
+}
+
 .measurements-row {
   display: flex;
   gap: 16px;
@@ -189,15 +232,20 @@ h3 {
   }
   
   &.selected {
-    background-color: rgba(63, 81, 181, 0.1);
-    border-color: rgba(63, 81, 181, 0.3);
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    border-color: var(--primary-color);
     
     .service-icon {
-      background-color: rgba(63, 81, 181, 0.2);
+      background-color: rgba(var(--primary-color-rgb), 0.15);
+      
+      mat-icon {
+        color: var(--primary-color) !important;
+      }
     }
     
     .service-name {
-      color: #3f51b5;
+      color: var(--primary-color);
+      font-weight: 500;
     }
   }
   
@@ -205,11 +253,11 @@ h3 {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #f5f5f5;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 8px;
+    background-color: #f5f5f5;
     
     mat-icon {
       color: #666;
@@ -223,26 +271,6 @@ h3 {
     font-size: 13px;
     text-align: center;
     color: #555;
-  }
-  
-  .service-check {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background-color: #3f51b5;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    mat-icon {
-      color: white;
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-    }
   }
 }
 
@@ -283,7 +311,7 @@ h3 {
     gap: 8px;
     
     mat-icon {
-      color: #3f51b5;
+      color: var(--primary-color);
       font-size: 18px;
       width: 18px;
       height: 18px;
@@ -319,8 +347,8 @@ h3 {
 }
 
 .image-upload-container.drag-active {
-  background-color: rgba(63, 81, 181, 0.1);
-  border: 2px dashed #3f51b5;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  border: 2px dashed var(--primary-color);
 }
 
 .image-upload-header {
@@ -426,4 +454,136 @@ h3 {
 
 .stato, .prezzo {
   max-width: 21%;
+}
+
+/* Fix per il tema dark */
+:root[data-theme="dark"] {
+  h3 {
+    color: rgba(255, 255, 255, 0.8);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .service-category h4, 
+  .custom-services h4 {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .service-toggle-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    
+    .service-name {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .service-icon {
+      background-color: rgba(255, 255, 255, 0.1);
+      
+      mat-icon {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+    
+    &.selected {
+      background-color: rgba(var(--primary-color-rgb), 0.2);
+      border-color: var(--primary-color);
+      
+      .service-icon {
+        background-color: rgba(var(--primary-color-rgb), 0.25);
+        
+        mat-icon {
+          color: var(--primary-color) !important;
+        }
+      }
+    }
+  }
+  
+  .selected-service-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    
+    span {
+      color: rgba(255, 255, 255, 0.8);
+    }
+  }
+  
+  .image-upload-container {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .counter-text {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .empty-gallery {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .empty-gallery p {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .empty-hint {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .empty-icon {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  .services-section {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Fix specifico per il cursore degli input */
+::ng-deep {
+  // Rimuove specificamente il bordo sinistro che causa la striscia verticale
+  .mdc-notched-outline__notch {
+    border-left: none !important;
+  }
+  
+  // FIX CURSORE SPECIFICO: assicura che il cursore sia visibile sempre
+  input.mat-mdc-input-element,
+  textarea.mat-mdc-input-element,
+  .mat-mdc-form-field-input-control {
+    caret-color: var(--primary-color) !important;
+    cursor: text !important;
+    color: var(--text-color) !important;
+    -webkit-text-fill-color: var(--text-color) !important;
+    opacity: 1 !important;
+  }
+
+  // Assicura che il cursore funzioni anche sui contenitori di input
+  .mat-mdc-text-field-wrapper,
+  .mat-mdc-form-field-flex,
+  .mat-mdc-form-field-infix {
+    cursor: text !important;
+  }
+  
+  // Fix per l'input background in light mode per migliorare la visibilità del cursore
+  .mat-mdc-text-field-wrapper {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+    
+    &:hover .mdc-notched-outline__leading,
+    &:hover .mdc-notched-outline__notch,
+    &:hover .mdc-notched-outline__trailing {
+      border-color: var(--primary-color) !important;
+      border-width: 1px !important;
+    }
+  }
+  
+  // Migliora ulteriormente la visibilità del cursore rendendo più scuro il background dell'input
+  input, textarea {
+    background-color: rgba(0, 0, 0, 0.01) !important;
+  }
+  
+  // Fix specifico per il colore dei placeholder
+  ::placeholder {
+    color: rgba(0, 0, 0, 0.5) !important;
+    opacity: 1 !important;
+  }
 }
