@@ -1,64 +1,327 @@
-<div class="container">
-  <mat-card class="utility-card">
-    <mat-card-header>
-      <mat-card-title class="page-title">
-        <div class="title-section">
-          <h1>Gestione Utenze</h1>
-          <div class="action-buttons">
-            <button mat-raised-button color="primary" (click)="openReadingForm()">
-              <mat-icon>add</mat-icon>
-              Nuova Lettura
-            </button>
-            <button mat-raised-button color="accent" (click)="openReadingHistory()">
-              <mat-icon>history</mat-icon>
-              Storico Letture
-            </button>
+<div class="utility-management-container">
+  <!-- Header Section -->
+  <div class="header-section">
+    <div class="title-area">
+      <h1>Gestione Utenze <span class="counter" *ngIf="apartments.length">{{apartments.length}}</span></h1>
+      <p class="subtitle">Monitora e gestisci i consumi di elettricità, acqua e gas</p>
+    </div>
+    
+    <div class="header-actions">
+      <button mat-flat-button color="primary" class="action-button" (click)="openReadingForm()">
+        <mat-icon>add</mat-icon>
+        Nuova Lettura
+      </button>
+      <button mat-stroked-button color="accent" class="action-button" (click)="openReadingHistory()">
+        <mat-icon>history</mat-icon>
+        Storico
+      </button>
+      <button mat-icon-button matTooltip="Esporta dati" (click)="exportData()">
+        <mat-icon>download</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <div class="loading-content">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Caricamento dati utenze in corso...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <div class="error-details">
+      <h3>Si è verificato un errore</h3>
+      <p>{{errorMessage}}</p>
+    </div>
+    <button mat-button color="primary" (click)="loadDashboardData()">Riprova</button>
+  </div>
+
+  <!-- Main Content -->
+  <div *ngIf="!isLoading && !errorMessage" class="main-content">
+    
+    <!-- Statistics Cards -->
+    <div class="statistics-section" *ngIf="utilityStatistics">
+      <div class="stats-grid">
+        <mat-card class="stat-card primary">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>home</mat-icon>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{utilityStatistics.totalApartments}}</span>
+              <span class="stat-label">Appartamenti</span>
+            </div>
           </div>
-        </div>
-      </mat-card-title>
-    </mat-card-header>
+        </mat-card>
 
-    <mat-card-content>
-      <!-- Loading spinner -->
-      <div *ngIf="isLoading" class="loading-container">
-        <mat-spinner diameter="40"></mat-spinner>
-        <p>Caricamento dati in corso...</p>
+        <mat-card class="stat-card electricity">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>bolt</mat-icon>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{utilityStatistics.totalConsumption.electricity | number:'1.0-1'}} kWh</span>
+              <span class="stat-label">Elettricità Totale</span>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card water">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>water_drop</mat-icon>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{utilityStatistics.totalConsumption.water | number:'1.0-1'}} m³</span>
+              <span class="stat-label">Acqua Totale</span>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card gas">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>local_fire_department</mat-icon>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">{{utilityStatistics.totalConsumption.gas | number:'1.0-1'}} m³</span>
+              <span class="stat-label">Gas Totale</span>
+            </div>
+          </div>
+        </mat-card>
+
+        <mat-card class="stat-card cost">
+          <div class="stat-content">
+            <div class="stat-icon">
+              <mat-icon>euro</mat-icon>
+            </div>
+            <div class="stat-details">
+              <span class="stat-value">€{{utilityStatistics.totalCosts.total | number:'1.2-2'}}</span>
+              <span class="stat-label">Costo Totale</span>
+            </div>
+          </div>
+        </mat-card>
       </div>
+    </div>
 
-      <!-- Messaggio di errore -->
-      <div *ngIf="errorMessage" class="error-message">
-        <mat-icon>error</mat-icon>
-        <span>{{ errorMessage }}</span>
-      </div>
+    <!-- Filters and Controls -->
+    <div class="controls-section">
+      <mat-card class="controls-card">
+        <div class="controls-content">
+          
+          <!-- Year Selector -->
+          <div class="control-group">
+            <mat-form-field appearance="outline">
+              <mat-label>Anno</mat-label>
+              <mat-select [value]="selectedYear" (selectionChange)="onYearChange($event.value)">
+                <mat-option *ngFor="let year of availableYears" [value]="year">
+                  {{year}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
 
-      <div *ngIf="!isLoading && !errorMessage" class="utility-content">
-        <!-- Selettore anno -->
-        <div class="year-selector">
-          <mat-form-field appearance="outline">
-            <mat-label>Anno</mat-label>
-            <mat-select [value]="selectedYear" (selectionChange)="onYearChange($event.value)">
-              <mat-option *ngFor="let year of [2022, 2023, 2024]" [value]="year">
-                {{ year }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+          <!-- Apartment Selector -->
+          <div class="control-group">
+            <mat-form-field appearance="outline">
+              <mat-label>Appartamento</mat-label>
+              <mat-select [value]="selectedApartmentId" (selectionChange)="onApartmentChange($event.value)">
+                <mat-option [value]="null">Tutti gli appartamenti</mat-option>
+                <mat-option *ngFor="let apartment of filteredApartments" [value]="apartment.id">
+                  {{apartment.name}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Search -->
+          <div class="control-group search-group">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Cerca appartamento</mat-label>
+              <mat-icon matPrefix>search</mat-icon>
+              <input matInput placeholder="Nome appartamento..." [(ngModel)]="searchQuery">
+              <button *ngIf="searchQuery" matSuffix mat-icon-button (click)="searchQuery = ''">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-form-field>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="control-group view-toggle">
+            <mat-chip-listbox aria-label="Tipo visualizzazione" [value]="selectedView" (change)="onViewChange($event.value)">
+              <mat-chip-option value="consumption">
+                <mat-icon>bar_chart</mat-icon>
+                Consumi
+              </mat-chip-option>
+              <mat-chip-option value="costs">
+                <mat-icon>euro</mat-icon>
+                Costi
+              </mat-chip-option>
+              <mat-chip-option value="comparison" *ngIf="selectedApartmentId === null">
+                <mat-icon>trending_up</mat-icon>
+                Andamento
+              </mat-chip-option>
+            </mat-chip-listbox>
+          </div>
+
         </div>
+      </mat-card>
+    </div>
 
-        <!-- Tabs per gli appartamenti -->
-        <mat-tab-group (selectedTabChange)="handleTabChange($event)">
-          <mat-tab label="Tutti">
-            <!-- Contenuto per la visualizzazione di tutti gli appartamenti -->
-          </mat-tab>
-          <mat-tab *ngFor="let apartment of apartments" [label]="apartment.name">
-            <!-- Contenuto per la visualizzazione di un singolo appartamento -->
-          </mat-tab>
-        </mat-tab-group>
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>
+            <div class="chart-header">
+              <div class="chart-title">
+                <mat-icon>{{selectedView === 'consumption' ? 'bar_chart' : selectedView === 'costs' ? 'euro' : 'trending_up'}}</mat-icon>
+                <span>
+                  {{selectedView === 'consumption' ? 'Consumi' : selectedView === 'costs' ? 'Costi' : 'Andamento'}}
+                  {{selectedApartmentId ? '' : 'per Appartamento'}}
+                </span>
+              </div>
+              <div class="chart-info" *ngIf="selectedApartmentId">
+                <mat-chip>{{getSelectedApartmentName()}}</mat-chip>
+              </div>
+            </div>
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas #chartCanvas></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-        <!-- Grafico -->
-        <div class="chart-container">
-          <canvas #chartCanvas></canvas>
-        </div>
+      <!-- Comparison Chart (only when viewing all apartments and comparison view) -->
+      <mat-card class="chart-card" *ngIf="selectedView === 'comparison' && selectedApartmentId === null">
+        <mat-card-header>
+          <mat-card-title>
+            <div class="chart-header">
+              <div class="chart-title">
+                <mat-icon>timeline</mat-icon>
+                <span>Andamento Mensile Costi Totali</span>
+              </div>
+            </div>
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas #comparisonChartCanvas></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Apartments Grid (quando visualizzazione tutti) -->
+    <div class="apartments-overview" *ngIf="selectedApartmentId === null && apartmentUtilityData.length > 0">
+      <mat-card class="overview-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>home</mat-icon>
+            <span>Riepilogo Appartamenti</span>
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="apartments-grid">
+            <div class="apartment-summary" *ngFor="let aptData of apartmentUtilityData" 
+                 (click)="onApartmentChange(aptData.apartmentId)" 
+                 [class.selectable]="true">
+              <div class="apartment-header">
+                <h4>{{aptData.apartmentName}}</h4>
+                <div class="apartment-total">€{{aptData.yearlyTotals.totalCost | number:'1.2-2'}}</div>
+              </div>
+              
+              <div class="utility-breakdown">
+                <div class="utility-item electricity">
+                  <mat-icon>bolt</mat-icon>
+                                     <div class="utility-details">
+                     <span class="utility-value">{{aptData.yearlyTotals.electricity | number:'1.0-1'}} kWh</span>
+                     <span class="utility-cost">€{{getElectricityCostForApartment(aptData) | number:'1.2-2'}}</span>
+                   </div>
+                 </div>
+                 
+                 <div class="utility-item water">
+                   <mat-icon>water_drop</mat-icon>
+                   <div class="utility-details">
+                     <span class="utility-value">{{aptData.yearlyTotals.water | number:'1.0-1'}} m³</span>
+                     <span class="utility-cost">€{{getWaterCostForApartment(aptData) | number:'1.2-2'}}</span>
+                   </div>
+                 </div>
+                 
+                 <div class="utility-item gas">
+                   <mat-icon>local_fire_department</mat-icon>
+                   <div class="utility-details">
+                     <span class="utility-value">{{aptData.yearlyTotals.gas | number:'1.0-1'}} m³</span>
+                     <span class="utility-cost">€{{getGasCostForApartment(aptData) | number:'1.2-2'}}</span>
+                   </div>
+                 </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Monthly Details (quando appartamento selezionato) -->
+    <div class="monthly-details" *ngIf="selectedApartmentId !== null">
+      <mat-card class="details-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>calendar_month</mat-icon>
+            <span>Dettaglio Mensile</span>
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+                     <div class="months-grid">
+             <div class="month-card" *ngFor="let monthData of getSelectedApartmentData()?.monthlyData || []">
+              <div class="month-header">
+                <h5>{{monthData.monthName}}</h5>
+                <div class="month-total">€{{monthData.totalCost | number:'1.2-2'}}</div>
+              </div>
+              
+              <div class="month-utilities">
+                <div class="month-utility electricity">
+                  <mat-icon>bolt</mat-icon>
+                  <span>{{monthData.electricity | number:'1.0-1'}} kWh</span>
+                  <span class="cost">€{{monthData.electricityCost | number:'1.2-2'}}</span>
+                </div>
+                
+                <div class="month-utility water">
+                  <mat-icon>water_drop</mat-icon>
+                  <span>{{monthData.water | number:'1.0-1'}} m³</span>
+                  <span class="cost">€{{monthData.waterCost | number:'1.2-2'}}</span>
+                </div>
+                
+                <div class="month-utility gas">
+                  <mat-icon>local_fire_department</mat-icon>
+                  <span>{{monthData.gas | number:'1.0-1'}} m³</span>
+                  <span class="cost">€{{monthData.gasCost | number:'1.2-2'}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="apartments.length === 0" class="empty-state">
+      <div class="empty-content">
+        <mat-icon>home_work</mat-icon>
+        <h3>Nessun appartamento trovato</h3>
+        <p>Aggiungi i tuoi appartamenti per iniziare a tracciare le utenze</p>
+        <button mat-flat-button color="primary" routerLink="/apartments">
+          <mat-icon>add_home</mat-icon>
+          Gestisci Appartamenti
+        </button>
       </div>
-    </mat-card-content>
-  </mat-card>
+    </div>
+
+  </div>
 </div>

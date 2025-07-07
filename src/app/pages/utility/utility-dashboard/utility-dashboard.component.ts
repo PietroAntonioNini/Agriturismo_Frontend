@@ -15,6 +15,11 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 
 Chart.register(...registerables);
@@ -26,13 +31,18 @@ Chart.register(...registerables);
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatTabsModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatProgressSpinnerModule
+    MatInputModule,
+    MatProgressSpinnerModule,
+    MatChipsModule,
+    MatProgressBarModule,
+    MatTooltipModule
   ]
 })
 export class UtilityDashboardComponent implements OnInit, AfterViewInit {
@@ -41,6 +51,8 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   apartments: Apartment[] = [];
   selectedApartmentId: number | null = null;
   selectedYear: number = new Date().getFullYear();
+  selectedView: 'consumption' | 'costs' | 'comparison' = 'consumption';
+  searchQuery: string = '';
   isLoading = true;
   errorMessage: string | null = null;
   chart: Chart | null = null;
@@ -48,6 +60,11 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   // Dati per i grafici
   allApartmentsData: MonthlyUtilityData[] = [];
   apartmentSpecificData: ApartmentUtilityData[] = [];
+  apartmentUtilityData: ApartmentUtilityData[] = [];
+  utilityStatistics: any = null;
+  
+  // Anni disponibili
+  availableYears: number[] = [];
   
   // Mesi dell'anno
   months = [
@@ -66,24 +83,30 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     private apiService: GenericApiService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-  ) { }
+  ) { 
+    // Genera anni disponibili (ultimi 5 anni + anno corrente + prossimo anno)
+    const currentYear = new Date().getFullYear();
+    for (let year = currentYear - 3; year <= currentYear + 1; year++) {
+      this.availableYears.push(year);
+    }
+  }
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadDashboardData();
   }
   
   ngAfterViewInit(): void {
     // Il grafico verrà inizializzato dopo il caricamento dei dati
   }
   
-  loadData(): void {
+  loadDashboardData(): void {
     this.isLoading = true;
     this.errorMessage = null;
     
     // Carica gli appartamenti e i dati delle utenze
     forkJoin({
       apartments: this.apiService.getAll<Apartment>('apartments'),
-      utilityData: this.apiService.getUtilityDataByYear<MonthlyUtilityData>(this.selectedYear)
+      utilityData: this.apiService.getMonthlyUtilityData(this.selectedYear)
     }).subscribe({
       next: (result) => {
         this.apartments = result.apartments;
@@ -107,26 +130,52 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     this.apartmentSpecificData = this.apartments.map(apartment => {
       const apartmentData = data.filter(item => item.apartmentId === apartment.id);
       
+      const monthlyData = this.months.map((_, index) => {
+        const monthData = apartmentData.find(item => item.month === index + 1) || {
+          month: index + 1,
+          electricity: 0,
+          water: 0,
+          gas: 0,
+          electricityCost: 0,
+          waterCost: 0,
+          gasCost: 0,
+          totalCost: 0
+        };
+        
+        return {
+          month: index + 1,
+          monthName: this.months[index],
+          electricity: monthData.electricity || 0,
+          water: monthData.water || 0,
+          gas: monthData.gas || 0,
+          electricityCost: monthData.electricityCost || 0,
+          waterCost: monthData.waterCost || 0,
+          gasCost: monthData.gasCost || 0,
+          totalCost: monthData.totalCost || 0
+        };
+      });
+
+      // Calcola i totali annuali
+      const yearlyTotals = monthlyData.reduce((totals, month) => ({
+        electricity: totals.electricity + month.electricity,
+        water: totals.water + month.water,
+        gas: totals.gas + month.gas,
+        totalCost: totals.totalCost + month.totalCost
+      }), { electricity: 0, water: 0, gas: 0, totalCost: 0 });
+      
       return {
         apartmentId: apartment.id!,
         apartmentName: apartment.name,
-        monthlyData: this.months.map((_, index) => {
-          const monthData = apartmentData.find(item => item.month === index + 1) || {
-            month: index + 1,
-            electricity: 0,
-            water: 0,
-            gas: 0
-          };
-          
-          return {
-            month: index + 1,
-            electricity: monthData.electricity || 0,
-            water: monthData.water || 0,
-            gas: monthData.gas || 0
-          };
-        })
+        monthlyData,
+        yearlyTotals
       };
     });
+
+    // Assegna anche a apartmentUtilityData per compatibilità con il template
+    this.apartmentUtilityData = this.apartmentSpecificData;
+
+    // Calcola le statistiche generali
+    this.calculateStatistics();
   }
   
   initializeChart(): void {
@@ -300,7 +349,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   
   onYearChange(year: number): void {
     this.selectedYear = year;
-    this.loadData();
+    this.loadDashboardData();
   }
   
   onApartmentTabChange(apartmentId: number | null): void {
@@ -324,7 +373,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           horizontalPosition: 'end',
           verticalPosition: 'top'
         });
-        this.loadData(); // Ricarica i dati per aggiornare il grafico
+        this.loadDashboardData(); // Ricarica i dati per aggiornare il grafico
       }
     });
   }
@@ -340,7 +389,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.loadData(); // Ricarica i dati se sono state apportate modifiche
+        this.loadDashboardData(); // Ricarica i dati se sono state apportate modifiche
       }
     });
   }
@@ -370,4 +419,83 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
         }
       }
     }
+
+  // Metodi mancanti richiesti dal template
+  getSelectedApartmentName(): string {
+    if (this.selectedApartmentId === null) {
+      return 'Tutti gli appartamenti';
+    }
+    const apartment = this.apartments.find(apt => apt.id === this.selectedApartmentId);
+    return apartment ? apartment.name : 'Appartamento non trovato';
+  }
+
+  onApartmentChange(apartmentId: number | null): void {
+    this.selectedApartmentId = apartmentId;
+    this.initializeChart();
+  }
+
+  getElectricityCostForApartment(aptData: ApartmentUtilityData): number {
+    return aptData.monthlyData.reduce((sum, month) => sum + month.electricityCost, 0);
+  }
+
+  getWaterCostForApartment(aptData: ApartmentUtilityData): number {
+    return aptData.monthlyData.reduce((sum, month) => sum + month.waterCost, 0);
+  }
+
+  getGasCostForApartment(aptData: ApartmentUtilityData): number {
+    return aptData.monthlyData.reduce((sum, month) => sum + month.gasCost, 0);
+  }
+
+  getSelectedApartmentData(): ApartmentUtilityData | undefined {
+    if (this.selectedApartmentId === null) {
+      return undefined;
+    }
+    return this.apartmentUtilityData.find(data => data.apartmentId === this.selectedApartmentId);
+  }
+
+  get filteredApartments(): Apartment[] {
+    if (!this.searchQuery.trim()) {
+      return this.apartments;
+    }
+    return this.apartments.filter(apartment => 
+      apartment.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+    );
+  }
+
+  onViewChange(view: 'consumption' | 'costs' | 'comparison'): void {
+    this.selectedView = view;
+    this.initializeChart();
+  }
+
+  calculateStatistics(): void {
+    if (this.apartmentUtilityData.length === 0) {
+      this.utilityStatistics = null;
+      return;
+    }
+    
+    const totalConsumption = this.apartmentUtilityData.reduce((totals, apt) => ({
+      electricity: totals.electricity + apt.yearlyTotals.electricity,
+      water: totals.water + apt.yearlyTotals.water,
+      gas: totals.gas + apt.yearlyTotals.gas
+    }), { electricity: 0, water: 0, gas: 0 });
+    
+    const totalCosts = this.apartmentUtilityData.reduce((costs, apt) => {
+      const aptElectricityCost = apt.monthlyData.reduce((sum, month) => sum + month.electricityCost, 0);
+      const aptWaterCost = apt.monthlyData.reduce((sum, month) => sum + month.waterCost, 0);
+      const aptGasCost = apt.monthlyData.reduce((sum, month) => sum + month.gasCost, 0);
+      
+      return {
+        electricity: costs.electricity + aptElectricityCost,
+        water: costs.water + aptWaterCost,
+        gas: costs.gas + aptGasCost,
+        total: costs.total + apt.yearlyTotals.totalCost
+      };
+    }, { electricity: 0, water: 0, gas: 0, total: 0 });
+    
+    this.utilityStatistics = {
+      totalApartments: this.apartments.length,
+      totalConsumption,
+      totalCosts
+    };
+  }
 }

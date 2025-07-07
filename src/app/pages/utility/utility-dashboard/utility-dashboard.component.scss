@@ -88,3 +88,703 @@
     padding: 16px 0;
   }
 }
+
+.utility-management-container {
+  padding: 24px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: calc(100vh - 64px);
+
+  // Header Section
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .title-area {
+      h1 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .counter {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+      }
+
+      .subtitle {
+        margin: 8px 0 0 0;
+        color: #666;
+        font-size: 1.1rem;
+        font-weight: 400;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      .action-button {
+        font-weight: 500;
+        
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+
+  // Loading and Error States
+  .loading-container {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin: 20px 0;
+
+    mat-progress-bar {
+      margin-bottom: 24px;
+    }
+
+    .loading-content {
+      p {
+        margin-top: 20px;
+        color: #666;
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid #e74c3c;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin: 20px 0;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+
+    .error-details {
+      margin-bottom: 20px;
+
+      h3 {
+        margin: 0 0 8px 0;
+        color: #e74c3c;
+      }
+
+      p {
+        margin: 0;
+        color: #666;
+      }
+    }
+  }
+
+  // Statistics Section
+  .statistics-section {
+    margin-bottom: 32px;
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+
+      .stat-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .stat-content {
+          display: flex;
+          align-items: center;
+          padding: 24px;
+          gap: 20px;
+
+          .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            mat-icon {
+              font-size: 32px;
+              width: 32px;
+              height: 32px;
+              color: white;
+            }
+          }
+
+          .stat-details {
+            flex: 1;
+
+            .stat-value {
+              display: block;
+              font-size: 1.8rem;
+              font-weight: 700;
+              color: #2c3e50;
+              line-height: 1.2;
+            }
+
+            .stat-label {
+              display: block;
+              font-size: 0.9rem;
+              color: #666;
+              font-weight: 500;
+              margin-top: 4px;
+            }
+          }
+        }
+
+        &.primary .stat-icon {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        &.electricity .stat-icon {
+          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+        }
+
+        &.water .stat-icon {
+          background: linear-gradient(135deg, #4ECDC4 0%, #6EE2DB 100%);
+        }
+
+        &.gas .stat-icon {
+          background: linear-gradient(135deg, #45B7D1 0%, #68C5E2 100%);
+        }
+
+        &.cost .stat-icon {
+          background: linear-gradient(135deg, #8B45BE 0%, #A665D8 100%);
+        }
+      }
+    }
+  }
+
+  // Controls Section
+  .controls-section {
+    margin-bottom: 32px;
+
+    .controls-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: none;
+
+      .controls-content {
+        padding: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: center;
+
+        .control-group {
+          &.search-group {
+            flex: 1;
+            min-width: 200px;
+          }
+
+          &.view-toggle {
+            mat-chip-listbox {
+              mat-chip-option {
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                
+                mat-icon {
+                  margin-right: 0;
+                  font-size: 18px;
+                  width: 18px;
+                  height: 18px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                }
+              }
+            }
+          }
+
+          mat-form-field {
+            min-width: 150px;
+
+            &.search-field {
+              min-width: 250px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Charts Section
+  .charts-section {
+    margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .chart-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: none;
+
+      mat-card-header {
+        padding: 24px 24px 0 24px;
+
+        .chart-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+
+          .chart-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            
+            mat-icon {
+              color: #667eea;
+            }
+
+            span {
+              font-size: 1.3rem;
+              font-weight: 600;
+              color: #2c3e50;
+            }
+          }
+
+          .chart-info {
+            mat-chip {
+              background: #f8f9fa;
+              color: #495057;
+              font-weight: 500;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+            }
+          }
+        }
+      }
+
+      mat-card-content {
+        padding: 24px;
+
+        .chart-container {
+          position: relative;
+          height: 400px;
+          width: 100%;
+
+          canvas {
+            max-width: 100%;
+            max-height: 100%;
+          }
+        }
+      }
+    }
+  }
+
+  // Apartments Overview
+  .apartments-overview {
+    margin-bottom: 32px;
+
+    .overview-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: none;
+
+      mat-card-header {
+        padding: 24px 24px 0 24px;
+
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #2c3e50;
+
+          mat-icon {
+            color: #667eea;
+          }
+        }
+      }
+
+      mat-card-content {
+        padding: 24px;
+
+        .apartments-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 20px;
+
+          .apartment-summary {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+
+            &:hover, &.selectable:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+              border-color: #667eea;
+            }
+
+            .apartment-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+
+              h4 {
+                margin: 0;
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: #2c3e50;
+              }
+
+              .apartment-total {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #8B45BE;
+                background: rgba(139, 69, 190, 0.1);
+                padding: 6px 12px;
+                border-radius: 8px;
+              }
+            }
+
+            .utility-breakdown {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+
+              .utility-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px;
+                background: white;
+                border-radius: 8px;
+
+                mat-icon {
+                  width: 24px;
+                  height: 24px;
+                  font-size: 24px;
+                }
+
+                .utility-details {
+                  flex: 1;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+
+                  .utility-value {
+                    font-weight: 600;
+                    color: #2c3e50;
+                  }
+
+                  .utility-cost {
+                    font-weight: 600;
+                    color: #8B45BE;
+                  }
+                }
+
+                &.electricity mat-icon {
+                  color: #FF6B6B;
+                }
+
+                &.water mat-icon {
+                  color: #4ECDC4;
+                }
+
+                &.gas mat-icon {
+                  color: #45B7D1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Monthly Details
+  .monthly-details {
+    margin-bottom: 32px;
+
+    .details-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: none;
+
+      mat-card-header {
+        padding: 24px 24px 0 24px;
+
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 1.3rem;
+          font-weight: 600;
+          color: #2c3e50;
+
+          mat-icon {
+            color: #667eea;
+          }
+        }
+      }
+
+      mat-card-content {
+        padding: 24px;
+
+        .months-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 16px;
+
+          .month-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            transition: transform 0.2s ease;
+
+            &:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+
+            .month-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 12px;
+              padding-bottom: 8px;
+              border-bottom: 1px solid #dee2e6;
+
+              h5 {
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 600;
+                color: #2c3e50;
+              }
+
+              .month-total {
+                font-weight: 700;
+                color: #8B45BE;
+                background: rgba(139, 69, 190, 0.1);
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 0.9rem;
+              }
+            }
+
+            .month-utilities {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+
+              .month-utility {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 0.9rem;
+
+                mat-icon {
+                  width: 18px;
+                  height: 18px;
+                  font-size: 18px;
+                  margin-right: 8px;
+                }
+
+                .cost {
+                  font-weight: 600;
+                  color: #666;
+                }
+
+                &.electricity mat-icon {
+                  color: #FF6B6B;
+                }
+
+                &.water mat-icon {
+                  color: #4ECDC4;
+                }
+
+                &.gas mat-icon {
+                  color: #45B7D1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Empty State
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+    .empty-content {
+      max-width: 400px;
+      margin: 0 auto;
+
+      mat-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: #bdc3c7;
+        margin-bottom: 24px;
+      }
+
+      h3 {
+        margin: 0 0 12px 0;
+        color: #2c3e50;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0 0 24px 0;
+        color: #666;
+        font-size: 1.1rem;
+        line-height: 1.5;
+      }
+
+      button {
+        font-weight: 500;
+        
+        mat-icon {
+          margin-right: 8px;
+          width: 20px;
+          height: 20px;
+          font-size: 20px;
+        }
+      }
+    }
+  }
+
+  // Responsive Design
+  @media (max-width: 768px) {
+    padding: 16px;
+
+    .header-section {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 20px;
+
+      .title-area {
+        text-align: center;
+
+        h1 {
+          font-size: 1.8rem;
+        }
+      }
+
+      .header-actions {
+        justify-content: center;
+      }
+    }
+
+    .statistics-section .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .controls-section .controls-card .controls-content {
+      flex-direction: column;
+      align-items: stretch;
+
+      .control-group {
+        width: 100%;
+
+        mat-form-field {
+          width: 100%;
+        }
+      }
+    }
+
+    .apartments-overview .overview-card mat-card-content .apartments-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .monthly-details .details-card mat-card-content .months-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+
+    .header-section .title-area h1 {
+      font-size: 1.6rem;
+    }
+
+    .charts-section .chart-card mat-card-content .chart-container {
+      height: 300px;
+    }
+  }
+
+  // Global chip alignment fix
+  ::ng-deep mat-chip {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    
+    mat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  ::ng-deep mat-chip-option {
+    .mdc-evolution-chip__text-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+}

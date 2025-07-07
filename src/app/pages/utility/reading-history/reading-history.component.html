@@ -1,104 +1,473 @@
-<h2 mat-dialog-title>Storico Letture Contatori</h2>
-
-<mat-dialog-content>
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner diameter="40"></mat-spinner>
-  </div>
-
-  <div *ngIf="errorMessage" class="error-message">
-    <mat-icon>error</mat-icon>
-    <span>{{ errorMessage }}</span>
-  </div>
-
-  <div *ngIf="!isLoading && !errorMessage">
-    <!-- Filtro -->
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Filtra</mat-label>
-      <input matInput (keyup)="applyFilter($event)" placeholder="Es. Elettricità">
-      <mat-icon matSuffix>search</mat-icon>
-    </mat-form-field>
-
-    <!-- Tabella delle letture -->
-    <div class="table-container">
-      <table mat-table [dataSource]="dataSource" matSort class="readings-table">
-        <!-- ID Column -->
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.id }} </td>
-        </ng-container>
-
-        <!-- Appartamento Column -->
-        <ng-container matColumnDef="apartmentName">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Appartamento </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.apartmentName }} </td>
-        </ng-container>
-
-        <!-- Tipo Column -->
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Tipo </th>
-          <td mat-cell *matCellDef="let reading"> {{ getUtilityTypeLabel(reading.type) }} </td>
-        </ng-container>
-
-        <!-- Data Column -->
-        <ng-container matColumnDef="readingDate">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Data </th>
-          <td mat-cell *matCellDef="let reading"> {{ formatDate(reading.readingDate) }} </td>
-        </ng-container>
-
-        <!-- Lettura Precedente Column -->
-        <ng-container matColumnDef="previousReading">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Lettura Prec. </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.previousReading }} </td>
-        </ng-container>
-
-        <!-- Lettura Attuale Column -->
-        <ng-container matColumnDef="currentReading">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Lettura Att. </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.currentReading }} </td>
-        </ng-container>
-
-        <!-- Consumo Column -->
-        <ng-container matColumnDef="consumption">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Consumo </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.consumption }} </td>
-        </ng-container>
-
-        <!-- Costo Unitario Column -->
-        <ng-container matColumnDef="unitCost">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Costo Unit. </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.unitCost | currency:'EUR' }} </td>
-        </ng-container>
-
-        <!-- Costo Totale Column -->
-        <ng-container matColumnDef="totalCost">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header> Costo Tot. </th>
-          <td mat-cell *matCellDef="let reading"> {{ reading.totalCost | currency:'EUR' }} </td>
-        </ng-container>
-
-        <!-- Actions Column -->
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef> Azioni </th>
-          <td mat-cell *matCellDef="let reading">
-            <button mat-icon-button color="warn" (click)="deleteReading(reading.id)" matTooltip="Elimina">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-        <!-- Row shown when there is no matching data. -->
-        <tr class="mat-row" *matNoDataRow>
-          <td class="mat-cell" colspan="10">Nessun dato trovato</td>
-        </tr>
-      </table>
-
-      <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" showFirstLastButtons></mat-paginator>
+<div class="reading-history-container">
+  
+  <!-- Header più pulito e minimale -->
+  <div class="history-header">
+    <div class="header-left">
+      <div class="header-title">
+        <mat-icon class="title-icon">analytics</mat-icon>
+        <div class="title-content">
+          <h1>Storico Letture Utility</h1>
+          <p class="subtitle" *ngIf="!isLoading && dataSource.data.length > 0">
+            {{dataSource.data.length}} {{dataSource.data.length === 1 ? 'lettura trovata' : 'letture trovate'}}
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button mat-stroked-button [matMenuTriggerFor]="viewMenu" class="view-toggle-btn">
+        <mat-icon>{{viewMode === 'table' ? 'table_view' : 'dashboard'}}</mat-icon>
+        <span>{{viewMode === 'table' ? 'Vista Tabella' : 'Vista Raggruppata'}}</span>
+        <mat-icon>keyboard_arrow_down</mat-icon>
+      </button>
+      
+      <button mat-stroked-button (click)="exportData()" 
+              [disabled]="dataSource.data.length === 0" 
+              matTooltip="Esporta in Excel">
+        <mat-icon>file_download</mat-icon>
+        <span>Esporta</span>
+      </button>
+      
+      <button mat-icon-button (click)="onClose()" matTooltip="Chiudi" class="close-btn">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
   </div>
-</mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button (click)="onClose()">Chiudi</button>
-</mat-dialog-actions>
+  <!-- Menu Vista migliorato -->
+  <mat-menu #viewMenu="matMenu" class="view-menu">
+    <button mat-menu-item (click)="viewMode = 'table'; toggleViewMode()" 
+            [class.active]="viewMode === 'table'">
+      <mat-icon>table_view</mat-icon>
+      <span>Vista Tabella</span>
+      <mat-icon *ngIf="viewMode === 'table'" class="check-icon">check</mat-icon>
+    </button>
+    <button mat-menu-item (click)="viewMode = 'grouped'; toggleViewMode()"
+            [class.active]="viewMode === 'grouped'">
+      <mat-icon>dashboard</mat-icon>
+      <span>Vista Raggruppata</span>
+      <mat-icon *ngIf="viewMode === 'grouped'" class="check-icon">check</mat-icon>
+    </button>
+  </mat-menu>
+
+  <!-- Sezione Filtri riprogettata -->
+  <mat-card class="filters-section" elevation="2">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filtri di Ricerca
+      </mat-card-title>
+      <div class="filters-header-actions">
+        <mat-chip-listbox *ngIf="getActiveFiltersCount() > 0" class="active-filters">
+          <mat-chip-option class="filter-count-chip">
+            {{getActiveFiltersCount()}} filtri attivi
+          </mat-chip-option>
+        </mat-chip-listbox>
+        <button mat-button color="primary" (click)="clearFilters()" 
+                [disabled]="getActiveFiltersCount() === 0">
+          <mat-icon>clear_all</mat-icon>
+          Pulisci Filtri
+        </button>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        
+        <!-- Prima riga filtri -->
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field search-field">
+            <mat-label>Ricerca generale</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput placeholder="Cerca per appartamento, note, etc..." 
+                   formControlName="search">
+            <button *ngIf="filterForm.get('search')?.value" matSuffix mat-icon-button 
+                    (click)="filterForm.patchValue({search: ''})" matTooltip="Cancella ricerca">
+              <mat-icon>clear</mat-icon>
+            </button>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Appartamento</mat-label>
+            <mat-icon matPrefix>apartment</mat-icon>
+            <mat-select formControlName="apartmentId">
+              <mat-option [value]="">Tutti gli appartamenti</mat-option>
+              <mat-option *ngFor="let apartment of data.apartments" [value]="apartment.id">
+                {{apartment.name}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Tipo Utenza</mat-label>
+            <mat-icon matPrefix>category</mat-icon>
+            <mat-select formControlName="utilityType">
+              <mat-option [value]="">Tutte le utenze</mat-option>
+              <mat-option *ngFor="let type of utilityTypes" [value]="type.type">
+                <div class="utility-option">
+                  <mat-icon [style.color]="type.color">{{type.icon}}</mat-icon>
+                  <span>{{type.label}}</span>
+                </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+        <!-- Seconda riga filtri -->
+        <div class="filter-row">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Data inizio</mat-label>
+            <mat-icon matPrefix>event</mat-icon>
+            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+            <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+            <mat-datepicker #startPicker></mat-datepicker>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Data fine</mat-label>
+            <mat-icon matPrefix>event</mat-icon>
+            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+            <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+            <mat-datepicker #endPicker></mat-datepicker>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Stato Pagamento</mat-label>
+            <mat-icon matPrefix>payments</mat-icon>
+            <mat-select formControlName="isPaid">
+              <mat-option [value]="">Tutti gli stati</mat-option>
+              <mat-option [value]="true">
+                <div class="payment-option">
+                  <mat-icon color="primary">check_circle</mat-icon>
+                  <span>Pagato</span>
+                </div>
+              </mat-option>
+              <mat-option [value]="false">
+                <div class="payment-option">
+                  <mat-icon color="warn">schedule</mat-icon>
+                  <span>Non Pagato</span>
+                </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Stati dell'applicazione -->
+  
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="state-container loading-state">
+    <div class="state-content">
+      <mat-spinner diameter="48"></mat-spinner>
+      <h3>Caricamento in corso</h3>
+      <p>Recupero delle letture utility dal server...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage && !isLoading" class="state-container error-state">
+    <div class="state-content">
+      <mat-icon class="state-icon error-icon">error_outline</mat-icon>
+      <h3>Errore di caricamento</h3>
+      <p>{{errorMessage}}</p>
+      <button mat-raised-button color="primary" (click)="loadReadings()" class="retry-btn">
+        <mat-icon>refresh</mat-icon>
+        Riprova
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && !errorMessage && dataSource.data.length === 0" class="state-container empty-state">
+    <div class="state-content">
+      <mat-icon class="state-icon empty-icon">inbox</mat-icon>
+      <h3>Nessuna lettura trovata</h3>
+      <p *ngIf="getActiveFiltersCount() > 0">Prova a modificare i filtri di ricerca per trovare più risultati.</p>
+      <p *ngIf="getActiveFiltersCount() === 0">Non sono ancora state inserite letture nel sistema.</p>
+      <div class="empty-actions">
+        <button *ngIf="getActiveFiltersCount() > 0" mat-raised-button color="primary" (click)="clearFilters()">
+          <mat-icon>clear_all</mat-icon>
+          Rimuovi Filtri
+        </button>
+        <button mat-stroked-button (click)="onClose()">
+          <mat-icon>close</mat-icon>
+          Chiudi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista Tabella riprogettata -->
+  <div *ngIf="!isLoading && !errorMessage && dataSource.data.length > 0 && viewMode === 'table'" 
+       class="content-section table-section">
+    
+    <mat-card class="table-card" elevation="1">
+      <mat-card-header class="table-header">
+        <mat-card-title>
+          <mat-icon>table_view</mat-icon>
+          Dettaglio Letture
+        </mat-card-title>
+        <div class="table-actions">
+          <mat-form-field appearance="outline" class="page-size-field">
+            <mat-label>Righe per pagina</mat-label>
+            <mat-select [value]="paginator?.pageSize || 10" 
+                        (selectionChange)="paginator.pageSize = $event.value; paginator.firstPage()">
+              <mat-option [value]="5">5</mat-option>
+              <mat-option [value]="10">10</mat-option>
+              <mat-option [value]="25">25</mat-option>
+              <mat-option [value]="50">50</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-card-header>
+      
+      <mat-card-content class="table-content">
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" matSort class="modern-table">
+            
+            <!-- Apartment Column -->
+            <ng-container matColumnDef="apartmentName">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="apartment-header">
+                <div class="header-content">
+                  <mat-icon>apartment</mat-icon>
+                  <span>Appartamento</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="apartment-cell">
+                <div class="cell-content">
+                  <mat-icon class="cell-icon">home</mat-icon>
+                  <span class="cell-text">{{reading.apartmentName}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Utility Type Column -->
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="utility-header">
+                <div class="header-content">
+                  <mat-icon>category</mat-icon>
+                  <span>Utenza</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="utility-cell">
+                <div class="utility-badge" [style.background-color]="getUtilityTypeConfig(reading.type).color + '20'">
+                  <mat-icon [style.color]="getUtilityTypeConfig(reading.type).color" class="utility-icon">
+                    {{getUtilityTypeConfig(reading.type).icon}}
+                  </mat-icon>
+                  <span class="utility-label">{{getUtilityTypeConfig(reading.type).label}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Reading Date Column -->
+            <ng-container matColumnDef="readingDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="date-header">
+                <div class="header-content">
+                  <mat-icon>event</mat-icon>
+                  <span>Data Lettura</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="date-cell">
+                <div class="date-content">
+                  <span class="date-value">{{formatDate(reading.readingDate)}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Current Reading Column -->
+            <ng-container matColumnDef="currentReading">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="reading-header">
+                <div class="header-content">
+                  <mat-icon>speed</mat-icon>
+                  <span>Lettura</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="reading-cell">
+                <div class="reading-content">
+                  <span class="reading-value">{{reading.currentReading | number:'1.0-2'}}</span>
+                  <span class="reading-unit">{{getUtilityTypeConfig(reading.type).unit}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Consumption Column -->
+            <ng-container matColumnDef="consumption">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="consumption-header">
+                <div class="header-content">
+                  <mat-icon>trending_up</mat-icon>
+                  <span>Consumo</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="consumption-cell">
+                <div class="consumption-content">
+                  <span class="consumption-value" 
+                        [class.high-consumption]="reading.consumption > 200">
+                    {{reading.consumption | number:'1.0-2'}}
+                  </span>
+                  <span class="consumption-unit">{{getUtilityTypeConfig(reading.type).unit}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Total Cost Column -->
+            <ng-container matColumnDef="totalCost">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="cost-header">
+                <div class="header-content">
+                  <mat-icon>euro</mat-icon>
+                  <span>Costo</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="cost-cell">
+                <div class="cost-content">
+                  <span class="cost-value">{{formatCurrency(reading.totalCost)}}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Payment Status Column -->
+            <ng-container matColumnDef="isPaid">
+              <th mat-header-cell *matHeaderCellDef class="payment-header">
+                <div class="header-content">
+                  <mat-icon>payments</mat-icon>
+                  <span>Pagamento</span>
+                </div>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="payment-cell">
+                <mat-chip-option class="payment-chip" 
+                               [class.paid]="reading.isPaid" 
+                               [class.unpaid]="!reading.isPaid"
+                               (click)="togglePaymentStatus(reading)">
+                  <mat-icon>{{reading.isPaid ? 'check_circle' : 'schedule'}}</mat-icon>
+                  <span>{{reading.isPaid ? 'Pagato' : 'In Attesa'}}</span>
+                </mat-chip-option>
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="actions-header">
+                <span>Azioni</span>
+              </th>
+              <td mat-cell *matCellDef="let reading" class="actions-cell">
+                <div class="actions-content">
+                  <button mat-icon-button (click)="editReading(reading)" 
+                          matTooltip="Modifica lettura" class="edit-btn">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="deleteReading(reading)" 
+                          matTooltip="Elimina lettura" class="delete-btn">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="table-row"></tr>
+          </table>
+        </div>
+        
+        <!-- Paginator -->
+        <mat-paginator #paginator
+                       [pageSizeOptions]="[5, 10, 25, 50]"
+                       [pageSize]="10"
+                       showFirstLastButtons
+                       class="custom-paginator">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Vista Raggruppata -->
+  <div *ngIf="!isLoading && !errorMessage && dataSource.data.length > 0 && viewMode === 'grouped'" 
+       class="content-section grouped-section">
+    
+    <div class="grouped-header">
+      <h3>
+        <mat-icon>dashboard</mat-icon>
+        Vista per Appartamento
+      </h3>
+      <p>{{groupedData.length}} {{groupedData.length === 1 ? 'appartamento' : 'appartamenti'}} con letture</p>
+    </div>
+    
+    <div class="apartments-grid">
+      <mat-card *ngFor="let group of groupedData" class="apartment-card" elevation="2">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>apartment</mat-icon>
+            {{group.apartment}}
+          </mat-card-title>
+          <mat-card-subtitle>
+            {{group.readings.length}} {{group.readings.length === 1 ? 'lettura' : 'letture'}}
+          </mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <!-- Riassunto consumi -->
+          <div class="consumption-summary">
+            <div class="summary-item" *ngIf="group.totals.electricity.consumption > 0">
+              <mat-icon color="primary">bolt</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Elettricità</span>
+                <span class="summary-value">{{group.totals.electricity.consumption | number:'1.0-2'}} kWh</span>
+                <span class="summary-cost">{{formatCurrency(group.totals.electricity.cost)}}</span>
+              </div>
+            </div>
+            
+            <div class="summary-item" *ngIf="group.totals.water.consumption > 0">
+              <mat-icon style="color: #2196F3">water_drop</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Acqua</span>
+                <span class="summary-value">{{group.totals.water.consumption | number:'1.0-2'}} m³</span>
+                <span class="summary-cost">{{formatCurrency(group.totals.water.cost)}}</span>
+              </div>
+            </div>
+            
+            <div class="summary-item" *ngIf="group.totals.gas.consumption > 0">
+              <mat-icon style="color: #FF5722">local_fire_department</mat-icon>
+              <div class="summary-details">
+                <span class="summary-label">Gas</span>
+                <span class="summary-value">{{group.totals.gas.consumption | number:'1.0-2'}} m³</span>
+                <span class="summary-cost">{{formatCurrency(group.totals.gas.cost)}}</span>
+              </div>
+            </div>
+            
+            <div class="total-cost">
+              <strong>Totale: {{formatCurrency(group.totals.total)}}</strong>
+            </div>
+          </div>
+          
+          <!-- Lista letture recenti -->
+          <div class="recent-readings">
+            <h4>Ultime Letture</h4>
+            <div class="readings-list">
+              <div *ngFor="let reading of group.readings.slice(0, 3)" class="reading-item">
+                <div class="reading-info">
+                  <mat-icon [style.color]="getUtilityTypeConfig(reading.type).color">
+                    {{getUtilityTypeConfig(reading.type).icon}}
+                  </mat-icon>
+                  <span class="reading-date">{{formatDate(reading.readingDate)}}</span>
+                  <span class="reading-consumption">{{reading.consumption | number:'1.0-2'}} {{getUtilityTypeConfig(reading.type).unit}}</span>
+                </div>
+                <mat-chip-option class="reading-status" 
+                               [class.paid]="reading.isPaid" 
+                               [class.unpaid]="!reading.isPaid">
+                  {{reading.isPaid ? 'Pagato' : 'In Attesa'}}
+                </mat-chip-option>
+              </div>
+            </div>
+            
+            <button *ngIf="group.readings.length > 3" mat-button color="primary" 
+                    (click)="viewMode = 'table'; filterForm.patchValue({apartmentId: group.apartmentId}); toggleViewMode()">
+              Vedi tutte le {{group.readings.length}} letture
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+</div>

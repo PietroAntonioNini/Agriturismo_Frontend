@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { UtilityReading, MonthlyUtilityData, ApartmentUtilityData } from '../models';
+import { UtilityReading, UtilityReadingCreate, MonthlyUtilityData, ApartmentUtilityData, LastReading, UtilityStatistics, UtilityTypeConfig } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class GenericApiService {
@@ -319,77 +319,7 @@ export class GenericApiService {
     });
   }
 
-  // === METODI AGGIUNTIVI MIGRATI DA UTILITYSERVICE ===
-
-  // Ottiene tutte le letture delle utilities
-  getAllReadings<T>(params?: { [key: string]: any }): Observable<T[]> {
-    return this.getAll<T>('utilities', params).pipe(
-      catchError(error => {
-        console.error('Errore durante il recupero delle letture', error);
-        return of([]);
-      })
-    );
-  }
-
-  // Crea una nuova lettura utility
-  createReading<T>(reading: Partial<T>): Observable<T | null> {
-    return this.create<T>('utilities', reading).pipe(
-      catchError(error => {
-        console.error('Errore durante la creazione della lettura', error);
-        return of(null);
-      })
-    );
-  }
-
-  // Aggiorna una lettura utility
-  updateReading<T>(id: number, reading: Partial<T>): Observable<T | null> {
-    return this.update<T>('utilities', id, reading).pipe(
-      catchError(error => {
-        console.error(`Errore durante l'aggiornamento della lettura con ID ${id}`, error);
-        return of(null);
-      })
-    );
-  }
-
-  // Elimina una lettura utility
-  deleteReading(id: number): Observable<boolean> {
-    return this.delete('utilities', id).pipe(
-      map(() => true),
-      catchError(error => {
-        console.error(`Errore durante l'eliminazione della lettura con ID ${id}`, error);
-        return of(false);
-      })
-    );
-  }
-
-  // Ottiene i dati delle utility per un anno specifico
-  getUtilityDataByYear<T>(year: number): Observable<T[]> {
-    return this.getAll<T>('utilities', { year: year.toString() }).pipe(
-      catchError(error => {
-        console.error(`Errore durante il recupero dei dati per l'anno ${year}`, error);
-        return of([]);
-      })
-    );
-  }
-
-  // Ottiene l'ultima lettura per un appartamento e un tipo di utility
-  getLastReading<T>(apartmentId: number, type: string): Observable<T | null> {
-    const params = {
-      apartmentId: apartmentId.toString(),
-      type: type,
-      _sort: 'readingDate',
-      _order: 'desc',
-      _limit: '1'
-    };
-      
-    return this.getAll<T>('utilities', params).pipe(
-      map((readings: T[]) => readings.length > 0 ? readings[0] : null),
-      catchError(error => {
-        console.error(`Errore durante il recupero dell'ultima lettura per l'appartamento ${apartmentId}`, error);
-        return of(null);
-      })
-    );
-  }
+  // === METODI UTILITY READINGS (CENTRALIZZATI) ===
 
   // Calcola il costo totale di una lettura
   calculateUtilityTotalCost(reading: any): number {
@@ -447,27 +377,38 @@ export class GenericApiService {
       let electricity = 0;
       let water = 0;
       let gas = 0;
+      let electricityCost = 0;
+      let waterCost = 0;
+      let gasCost = 0;
       
       apartmentReadings.forEach(reading => {
         // Check for specific consumption properties first, then fall back to type-based logic
         if (reading.electricityConsumption) {
           electricity += reading.electricityConsumption;
+          electricityCost += reading.electricityCost || 0;
         } else if (reading.type === 'electricity') {
           electricity += reading.consumption;
+          electricityCost += reading.totalCost || 0;
         }
         
         if (reading.waterConsumption) {
           water += reading.waterConsumption;
+          waterCost += reading.waterCost || 0;
         } else if (reading.type === 'water') {
           water += reading.consumption;
+          waterCost += reading.totalCost || 0;
         }
         
         if (reading.gasConsumption) {
           gas += reading.gasConsumption;
+          gasCost += reading.gasCost || 0;
         } else if (reading.type === 'gas') {
           gas += reading.consumption;
+          gasCost += reading.totalCost || 0;
         }
       });
+      
+      const totalCost = electricityCost + waterCost + gasCost;
       
       // Aggiungi i dati al risultato
       result.push({
@@ -477,7 +418,11 @@ export class GenericApiService {
         apartmentName: `Appartamento ${apartmentId}`, // Questo verrebbe sostituito con il nome reale
         electricity,
         water,
-        gas
+        gas,
+        electricityCost,
+        waterCost,
+        gasCost,
+        totalCost
       });
     });
     
@@ -496,6 +441,12 @@ export class GenericApiService {
       apartmentMap.get(item.apartmentId)?.push(item);
     });
     
+    // Array dei nomi dei mesi
+    const monthNames = [
+      'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+      'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
+    ];
+    
     // Formatta i dati per ogni appartamento
     const result: ApartmentUtilityData[] = [];
     
@@ -503,18 +454,237 @@ export class GenericApiService {
       // Ordina i dati per mese
       monthlyData.sort((a, b) => a.month - b.month);
       
+      // Calcola i totali annuali
+      const yearlyTotals = {
+        electricity: monthlyData.reduce((sum, item) => sum + item.electricity, 0),
+        water: monthlyData.reduce((sum, item) => sum + item.water, 0),
+        gas: monthlyData.reduce((sum, item) => sum + item.gas, 0),
+        totalCost: monthlyData.reduce((sum, item) => sum + item.totalCost, 0)
+      };
+      
       result.push({
         apartmentId,
         apartmentName: monthlyData[0]?.apartmentName || `Appartamento ${apartmentId}`,
         monthlyData: monthlyData.map(item => ({
           month: item.month,
+          monthName: monthNames[item.month - 1],
           electricity: item.electricity,
           water: item.water,
-          gas: item.gas
-        }))
+          gas: item.gas,
+          electricityCost: item.electricityCost,
+          waterCost: item.waterCost,
+          gasCost: item.gasCost,
+          totalCost: item.totalCost
+        })),
+        yearlyTotals
       });
     });
     
     return result;
+  }
+
+  // === METODI SPECIFICI PER UTILITY READINGS ===
+
+  // Ottiene i tipi di utility configurati dal backend
+  getUtilityTypes(): Observable<UtilityTypeConfig[]> {
+    return this.http.get<UtilityTypeConfig[]>(`${this.apiUrl('utilities')}/types`).pipe(
+      catchError(error => {
+        console.error('Errore durante il recupero dei tipi utility dal backend', error);
+        // Fallback ai tipi predefiniti in caso di errore
+        return of([
+          {
+            type: 'electricity' as const,
+            label: 'Elettricità',
+            unit: 'kWh',
+            icon: 'bolt',
+            color: '#FF6B6B',
+            defaultCost: 0.25
+          },
+          {
+            type: 'water' as const,
+            label: 'Acqua',
+            unit: 'm³',
+            icon: 'water_drop',
+            color: '#4ECDC4',
+            defaultCost: 1.50
+          },
+          {
+            type: 'gas' as const,
+            label: 'Gas',
+            unit: 'm³',
+            icon: 'local_fire_department',
+            color: '#45B7D1',
+            defaultCost: 0.80
+          }
+        ] as UtilityTypeConfig[]);
+      })
+    );
+  }
+
+  // Ottiene tutte le letture delle utilities
+  getAllUtilityReadings(params?: { [key: string]: any }): Observable<UtilityReading[]> {
+    return this.getAll<UtilityReading>('utilities', params).pipe(
+      catchError(error => {
+        console.error('Errore durante il recupero delle letture utility', error);
+        return of([]);
+      })
+    );
+  }
+
+  // Crea una nuova lettura utility
+  createUtilityReading(reading: Partial<UtilityReading>): Observable<UtilityReading | null> {
+    return this.create<UtilityReading>('utilities', reading).pipe(
+      catchError(error => {
+        console.error('Errore durante la creazione della lettura utility', error);
+        return of(null);
+      })
+    );
+  }
+
+  // Aggiorna una lettura utility
+  updateUtilityReading(id: number, reading: Partial<UtilityReading>): Observable<UtilityReading | null> {
+    return this.update<UtilityReading>('utilities', id, reading).pipe(
+      catchError(error => {
+        console.error(`Errore durante l'aggiornamento della lettura utility con ID ${id}`, error);
+        return of(null);
+      })
+    );
+  }
+
+  // Elimina una lettura utility
+  deleteUtilityReading(id: number): Observable<boolean> {
+    return this.delete('utilities', id).pipe(
+      map(() => true),
+      catchError(error => {
+        console.error(`Errore durante l'eliminazione della lettura utility con ID ${id}`, error);
+        return of(false);
+      })
+    );
+  }
+
+  // Ottiene l'ultima lettura per un appartamento e tipo di utenza (restituisce LastReading)
+  getLastUtilityReading(apartmentId: number, type: string): Observable<LastReading | null> {
+    const params = {
+      apartmentId: apartmentId.toString(),
+      type: type,
+      _sort: 'readingDate',
+      _order: 'desc',
+      _limit: '1'
+    };
+    
+    return this.getAll<UtilityReading>('utilities', params).pipe(
+      map((readings: UtilityReading[]) => {
+        if (readings.length > 0) {
+          const reading = readings[0];
+          return {
+            apartmentId: reading.apartmentId,
+            type: reading.type,
+            lastReading: reading.currentReading,
+            lastReadingDate: reading.readingDate,
+            hasHistory: true
+          } as LastReading;
+        } else {
+          // Nessuna lettura precedente - prima lettura
+          return {
+            apartmentId: apartmentId,
+            type: type as 'electricity' | 'water' | 'gas',
+            lastReading: 0,
+            lastReadingDate: new Date(),
+            hasHistory: false
+          } as LastReading;
+        }
+      }),
+      catchError(error => {
+        console.error(`Errore durante il recupero dell'ultima lettura per l'appartamento ${apartmentId}`, error);
+        // In caso di errore, restituisce come prima lettura
+        return of({
+          apartmentId: apartmentId,
+          type: type as 'electricity' | 'water' | 'gas',
+          lastReading: 0,
+          lastReadingDate: new Date(),
+          hasHistory: false
+        } as LastReading);
+      })
+    );
+  }
+
+  // Toggle stato pagamento di una lettura
+  toggleUtilityPaymentStatus(id: number, isPaid: boolean): Observable<UtilityReading | null> {
+    const updateData = { 
+      isPaid: isPaid,
+      paidDate: isPaid ? new Date() : undefined
+    };
+    
+    return this.patch<UtilityReading>('utilities', id, updateData).pipe(
+      catchError(error => {
+        console.error(`Errore durante l'aggiornamento dello stato pagamento per ID ${id}`, error);
+        return of(null);
+      })
+    );
+  }
+
+  // Ottiene letture per appartamento e anno
+  getUtilityReadingsByApartmentAndYear(apartmentId: number, year: number): Observable<UtilityReading[]> {
+    const params = {
+      apartmentId: apartmentId.toString(),
+      year: year.toString()
+    };
+    
+    return this.getAll<UtilityReading>('utilities', params).pipe(
+      catchError(error => {
+        console.error(`Errore durante il recupero delle letture per appartamento ${apartmentId} anno ${year}`, error);
+        return of([]);
+      })
+    );
+  }
+
+  // Ottiene statistiche utility per la dashboard
+  getUtilityStatistics(year: number): Observable<UtilityStatistics | null> {
+    return this.http.get<UtilityStatistics>(`${this.apiUrl('utilities')}/statistics/overview?year=${year}`).pipe(
+      catchError(error => {
+        console.error(`Errore durante il recupero delle statistiche utility per l'anno ${year}`, error);
+        return of(null);
+      })
+    );
+  }
+
+  // Ottiene dati mensili per appartamenti (per grafici)
+  getMonthlyUtilityData(year: number): Observable<MonthlyUtilityData[]> {
+    return this.http.get<MonthlyUtilityData[]>(`${this.apiUrl('utilities')}/statistics/${year}`).pipe(
+      catchError(error => {
+        console.error(`Errore durante il recupero dei dati mensili per l'anno ${year}`, error);
+        return of([]);
+      })
+    );
+  }
+
+  // Ottiene dati consumo per appartamento specifico
+  getApartmentUtilityData(apartmentId: number, year: number): Observable<ApartmentUtilityData | null> {
+    return this.http.get<ApartmentUtilityData>(`${this.apiUrl('utilities')}/apartment/${apartmentId}/consumption/${year}`).pipe(
+      catchError(error => {
+        console.error(`Errore durante il recupero dei dati per appartamento ${apartmentId} anno ${year}`, error);
+        return of(null);
+      })
+    );
+  }
+
+  // Crea una nuova lettura utility con payload specifico per il backend
+  createUtilityReadingWithCorrectFormat(reading: UtilityReadingCreate): Observable<UtilityReading | null> {
+    return this.http.post<UtilityReading>(`${this.apiUrl('utilities')}`, reading).pipe(
+      catchError(error => {
+        console.error('Errore durante la creazione della lettura utility', error);
+        return of(null);
+      })
+    );
+  }
+
+  // Aggiorna una lettura utility con payload specifico per il backend
+  updateUtilityReadingWithCorrectFormat(id: number, reading: UtilityReadingCreate): Observable<UtilityReading | null> {
+    return this.http.put<UtilityReading>(`${this.apiUrl('utilities')}/${id}`, reading).pipe(
+      catchError(error => {
+        console.error(`Errore durante l'aggiornamento della lettura utility con ID ${id}`, error);
+        return of(null);
+      })
+    );
   }
 }
