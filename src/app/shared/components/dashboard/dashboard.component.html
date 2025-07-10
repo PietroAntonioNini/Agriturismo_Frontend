@@ -1,141 +1,401 @@
 <div class="dashboard-container">
-  <h1 class="dashboard-title">Dashboard</h1>
-
-  <div *ngIf="isLoading" class="loading-container">
-    <mat-spinner diameter="40"></mat-spinner>
-    <p>Caricamento dati in corso...</p>
-  </div>
-
-  <div *ngIf="hasError" class="error-container">
-    <mat-icon color="warn">error</mat-icon>
-    <p>{{ errorMessage }}</p>
-    <button mat-raised-button color="primary" (click)="loadDashboardData()">Riprova</button>
-  </div>
-
-  <div *ngIf="!isLoading && !hasError" class="dashboard-content">
-    <!-- Statistiche principali -->
-    <div class="stats-grid">
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>people</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ totalTenants }}</h2>
-            <p class="stats-label">Inquilini</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>apartment</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ totalApartments }}</h2>
-            <p class="stats-label">Appartamenti</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>home</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ occupiedApartments }}</h2>
-            <p class="stats-label">Occupati</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>home_work</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ availableApartments }}</h2>
-            <p class="stats-label">Disponibili</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Contratti e fatture -->
-    <div class="stats-grid">
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>description</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ activeLeases }}</h2>
-            <p class="stats-label">Contratti attivi</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>alarm</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ expiringLeases }}</h2>
-            <p class="stats-label">Contratti in scadenza</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon">
-            <mat-icon>receipt</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ unpaidInvoices }}</h2>
-            <p class="stats-label">Fatture non pagate</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="stats-card">
-        <mat-card-content>
-          <div class="stats-icon warning-icon">
-            <mat-icon>warning</mat-icon>
-          </div>
-          <div class="stats-info">
-            <h2 class="stats-value">{{ overdueInvoices }}</h2>
-            <p class="stats-label">Fatture scadute</p>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Azioni rapide -->
-    <div class="quick-actions">
-      <h2>Azioni rapide</h2>
-      <div class="actions-grid">
-        <button mat-raised-button color="primary" routerLink="/tenant/new">
-          <mat-icon>person_add</mat-icon>
-          Nuovo inquilino
-        </button>
-        <button mat-raised-button color="primary" routerLink="/apartment/new">
-          <mat-icon>add_home</mat-icon>
-          Nuovo appartamento
-        </button>
-        <button mat-raised-button color="primary" routerLink="/lease/new">
-          <mat-icon>note_add</mat-icon>
-          Nuovo contratto
-        </button>
-        <button mat-raised-button color="primary" routerLink="/billing/generate">
-          <mat-icon>receipt_long</mat-icon>
-          Genera fatture
+  <!-- Header della dashboard -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <h1 class="dashboard-title">
+        <mat-icon>dashboard</mat-icon>
+        Dashboard Agriturismo
+      </h1>
+      <div class="header-actions">
+        <div class="last-update">
+          <span class="update-text">Ultimo aggiornamento: {{ formatDate(lastUpdate) }}</span>
+        </div>
+        <button mat-icon-button 
+                matTooltip="Aggiorna dati" 
+                (click)="refreshData()"
+                [disabled]="isLoading">
+          <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- Loader principale -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p class="loading-text">Caricamento dashboard in corso...</p>
+  </div>
+
+  <!-- Messaggio di errore -->
+  <div *ngIf="hasError" class="error-container">
+    <mat-icon class="error-icon">error_outline</mat-icon>
+    <h3>Ops! Qualcosa è andato storto</h3>
+    <p class="error-message">{{ errorMessage }}</p>
+    <button mat-raised-button 
+            color="primary" 
+            (click)="refreshData()"
+            class="retry-button">
+      <mat-icon>refresh</mat-icon>
+      Riprova
+    </button>
+  </div>
+
+  <!-- Contenuto principale della dashboard -->
+  <div *ngIf="!isLoading && !hasError" class="dashboard-content">
+    
+    <!-- Sezione statistiche principali -->
+    <div class="stats-section">
+      <h2 class="section-title">Panoramica</h2>
+      <div class="stats-grid">
+        
+        <!-- Occupazione -->
+        <mat-card class="stat-card occupancy-card">
+          <mat-card-content>
+            <div class="stat-header">
+              <mat-icon class="stat-icon">home</mat-icon>
+              <span class="stat-label">Occupazione</span>
+            </div>
+            <div class="stat-value">
+              <span class="big-number">{{ occupancyRate }}%</span>
+              <span class="stat-subtitle">{{ occupiedApartments }}/{{ totalApartments }} appartamenti</span>
+            </div>
+            <mat-progress-bar 
+              mode="determinate" 
+              [value]="occupancyRate"
+              class="progress-bar">
+            </mat-progress-bar>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Ricavi mensili -->
+        <mat-card class="stat-card revenue-card">
+          <mat-card-content>
+            <div class="stat-header">
+              <mat-icon class="stat-icon">euro_symbol</mat-icon>
+              <span class="stat-label">Ricavi del mese</span>
+            </div>
+            <div class="stat-value">
+              <span class="big-number">€{{ monthlyRevenue.toLocaleString() }}</span>
+              <span class="stat-subtitle">Totale: €{{ totalRevenue.toLocaleString() }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Inquilini attivi -->
+        <mat-card class="stat-card tenants-card">
+          <mat-card-content>
+            <div class="stat-header">
+              <mat-icon class="stat-icon">people</mat-icon>
+              <span class="stat-label">Inquilini</span>
+            </div>
+            <div class="stat-value">
+              <span class="big-number">{{ totalTenants }}</span>
+              <span class="stat-subtitle">{{ activeLeases }} contratti attivi</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Meteo -->
+        <mat-card class="stat-card weather-card">
+          <mat-card-content>
+                      <div class="stat-header">
+            <mat-icon class="stat-icon weather-icon">{{ weather.icon }}</mat-icon>
+            <span class="stat-label">Meteo</span>
+          </div>
+          <div class="stat-value">
+            <span class="big-number">{{ weather.temperature }}°C</span>
+            <span class="stat-subtitle">{{ weather.condition }}</span>
+          </div>
+          <div class="weather-details">
+            <span class="weather-detail">
+              <mat-icon>opacity</mat-icon>
+              {{ weather.humidity }}%
+            </span>
+            <span class="weather-detail">
+              <mat-icon>air</mat-icon>
+              {{ weather.windSpeed }} km/h
+            </span>
+          </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+
+    <!-- Sezione alert e notifiche -->
+    <div class="alerts-section" *ngIf="expiringLeases > 0 || overdueInvoices > 0 || utilityAlerts > 0">
+      <h2 class="section-title">Attenzione richiesta</h2>
+      <div class="alerts-grid">
+        
+        <!-- Contratti in scadenza -->
+        <mat-card class="alert-card warning-card" *ngIf="expiringLeases > 0">
+          <mat-card-content>
+            <div class="alert-content">
+              <mat-icon class="alert-icon">schedule</mat-icon>
+              <div class="alert-text">
+                <h3>Contratti in scadenza</h3>
+                <p>{{ expiringLeases }} contratti scadono nei prossimi 30 giorni</p>
+              </div>
+              <button mat-button 
+                      color="warn" 
+                      (click)="navigateTo('/leases')"
+                      class="alert-action">
+                Visualizza
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Fatture scadute -->
+        <mat-card class="alert-card error-card" *ngIf="overdueInvoices > 0">
+          <mat-card-content>
+            <div class="alert-content">
+              <mat-icon class="alert-icon">error</mat-icon>
+              <div class="alert-text">
+                <h3>Fatture scadute</h3>
+                <p>{{ overdueInvoices }} fatture sono scadute</p>
+              </div>
+              <button mat-button 
+                      color="warn" 
+                      (click)="navigateTo('/invoices')"
+                      class="alert-action">
+                Gestisci
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Alert utenze -->
+        <mat-card class="alert-card info-card" *ngIf="utilityAlerts > 0">
+          <mat-card-content>
+            <div class="alert-content">
+              <mat-icon class="alert-icon">warning</mat-icon>
+              <div class="alert-text">
+                <h3>Letture utenze</h3>
+                <p>{{ utilityAlerts }} appartamenti senza letture</p>
+              </div>
+              <button mat-button 
+                      color="primary" 
+                      (click)="navigateTo('/utility')"
+                      class="alert-action">
+                Controlla
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+
+    <!-- Sezione principale con grafici e tabelle -->
+    <div class="main-content">
+      
+      <!-- Colonna sinistra: Grafici -->
+      <div class="left-column">
+        
+        <!-- Grafico occupazione -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>donut_large</mat-icon>
+              Stato Appartamenti
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas #occupancyChart></canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Grafico ricavi -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>trending_up</mat-icon>
+              Andamento Ricavi
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas #revenueChart></canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Grafico utenze -->
+        <mat-card class="chart-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>electrical_services</mat-icon>
+              Consumo Utenze
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="chart-container">
+              <canvas #utilityChart></canvas>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+
+      <!-- Colonna destra: Azioni rapide e attività -->
+      <div class="right-column">
+        
+        <!-- Azioni rapide -->
+        <mat-card class="quick-actions-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>flash_on</mat-icon>
+              Azioni Rapide
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="quick-actions-grid">
+              <button mat-raised-button 
+                      color="primary" 
+                      (click)="navigateTo('/tenants/new')"
+                      class="quick-action-btn">
+                <mat-icon>person_add</mat-icon>
+                Nuovo Inquilino
+              </button>
+              <button mat-raised-button 
+                      color="primary" 
+                      (click)="navigateTo('/apartments/new')"
+                      class="quick-action-btn">
+                <mat-icon>add_home</mat-icon>
+                Nuovo Appartamento
+              </button>
+              <button mat-raised-button 
+                      color="primary" 
+                      (click)="navigateTo('/leases/new')"
+                      class="quick-action-btn">
+                <mat-icon>note_add</mat-icon>
+                Nuovo Contratto
+              </button>
+              <button mat-raised-button 
+                      color="primary" 
+                      (click)="navigateTo('/utility/reading-form')"
+                      class="quick-action-btn">
+                <mat-icon>add_chart</mat-icon>
+                Lettura Utenze
+              </button>
+              <button mat-raised-button 
+                      color="accent" 
+                      (click)="navigateTo('/invoices/generate')"
+                      class="quick-action-btn">
+                <mat-icon>receipt_long</mat-icon>
+                Genera Fatture
+              </button>
+              <button mat-raised-button 
+                      color="accent" 
+                      (click)="navigateTo('/reports')"
+                      class="quick-action-btn">
+                <mat-icon>analytics</mat-icon>
+                Report
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Attività recenti -->
+        <mat-card class="recent-activities-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>history</mat-icon>
+              Attività Recenti
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="activities-list" *ngIf="recentActivities.length > 0; else noActivities">
+              <div class="activity-item" 
+                   *ngFor="let activity of recentActivities; trackBy: trackByActivityId">
+                <div class="activity-icon" 
+                     [style.background-color]="activity.color + '20'">
+                  <mat-icon [style.color]="activity.color">{{ activity.icon }}</mat-icon>
+                </div>
+                <div class="activity-content">
+                  <h4 class="activity-title">{{ activity.title }}</h4>
+                  <p class="activity-subtitle">{{ activity.subtitle }}</p>
+                  <span class="activity-timestamp">{{ formatDate(activity.timestamp) }}</span>
+                </div>
+              </div>
+            </div>
+            <ng-template #noActivities>
+              <div class="no-activities">
+                <mat-icon class="no-data-icon">inbox</mat-icon>
+                <p>Nessuna attività recente</p>
+              </div>
+            </ng-template>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+
+    <!-- Sezione appartamenti -->
+    <div class="apartments-section">
+      <h2 class="section-title">Stato Appartamenti</h2>
+      <div class="apartments-grid">
+        <mat-card class="apartment-card" 
+                  *ngFor="let apartment of getApartmentStatuses(); trackBy: trackByApartmentId"
+                  [class]="apartment.status + '-apartment'">
+          <mat-card-content>
+            <div class="apartment-header">
+              <div class="apartment-info">
+                <h3 class="apartment-name">{{ apartment.name }}</h3>
+                <mat-chip class="status-chip" 
+                         [style.background-color]="getApartmentStatusColor(apartment.status) + '20'"
+                         [style.color]="getApartmentStatusColor(apartment.status)">
+                  <mat-icon>{{ getApartmentStatusIcon(apartment.status) }}</mat-icon>
+                  {{ apartment.status | titlecase }}
+                </mat-chip>
+              </div>
+              <button mat-icon-button 
+                      [matMenuTriggerFor]="apartmentMenu"
+                      class="apartment-menu-btn">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #apartmentMenu="matMenu">
+                <button mat-menu-item (click)="navigateTo('/apartments/' + apartment.id)">
+                  <mat-icon>visibility</mat-icon>
+                  Visualizza
+                </button>
+                <button mat-menu-item (click)="navigateTo('/apartments/' + apartment.id + '/edit')">
+                  <mat-icon>edit</mat-icon>
+                  Modifica
+                </button>
+                <button mat-menu-item (click)="navigateTo('/leases/new?apartment=' + apartment.id)">
+                  <mat-icon>note_add</mat-icon>
+                  Nuovo Contratto
+                </button>
+              </mat-menu>
+            </div>
+            
+            <div class="apartment-details" *ngIf="apartment.status === 'occupied'">
+              <div class="detail-item">
+                <mat-icon class="detail-icon">person</mat-icon>
+                <span class="detail-text">{{ apartment.tenant }}</span>
+              </div>
+              <div class="detail-item" *ngIf="apartment.checkIn">
+                <mat-icon class="detail-icon">login</mat-icon>
+                <span class="detail-text">{{ apartment.checkIn | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="detail-item" *ngIf="apartment.checkOut">
+                <mat-icon class="detail-icon">logout</mat-icon>
+                <span class="detail-text">{{ apartment.checkOut | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+            
+            <div class="apartment-revenue" *ngIf="apartment.revenue && apartment.revenue > 0">
+              <mat-icon class="revenue-icon">monetization_on</mat-icon>
+              <span class="revenue-text">€{{ apartment.revenue.toLocaleString() }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
   </div>
 </div>

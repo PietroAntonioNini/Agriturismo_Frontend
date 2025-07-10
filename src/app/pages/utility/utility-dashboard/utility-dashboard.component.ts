@@ -4,7 +4,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Chart, registerables } from 'chart.js';
 import { forkJoin } from 'rxjs';
 
-import { Apartment, MonthlyUtilityData, ApartmentUtilityData } from '../../../shared/models';
+import { Apartment, MonthlyUtilityData, ApartmentUtilityData, UtilityStatistics } from '../../../shared/models';
 import { ReadingFormComponent } from '../reading-form/reading-form.component';
 import { ReadingHistoryComponent } from '../reading-history/reading-history.component';
 import { CommonModule } from '@angular/common';
@@ -61,7 +61,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   allApartmentsData: MonthlyUtilityData[] = [];
   apartmentSpecificData: ApartmentUtilityData[] = [];
   apartmentUtilityData: ApartmentUtilityData[] = [];
-  utilityStatistics: any = null;
+  utilityStatistics: UtilityStatistics | null = null;
   
   // Anni disponibili
   availableYears: number[] = [];
@@ -89,6 +89,9 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     for (let year = currentYear - 3; year <= currentYear + 1; year++) {
       this.availableYears.push(year);
     }
+    
+    // Inizializza utilityStatistics con valori predefiniti
+    this.initializeUtilityStatistics();
   }
 
   ngOnInit(): void {
@@ -96,7 +99,35 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   }
   
   ngAfterViewInit(): void {
-    // Il grafico verrà inizializzato dopo il caricamento dei dati
+    // Assicurati che il canvas sia pronto dopo la vista, poi inizializza il grafico se ci sono dati
+    setTimeout(() => {
+      if (!this.isLoading && this.chartCanvas) {
+        this.initializeChart();
+      }
+    }, 100);
+  }
+  
+  private initializeUtilityStatistics(): void {
+    this.utilityStatistics = {
+      totalApartments: 0,
+      totalConsumption: {
+        electricity: 0,
+        water: 0,
+        gas: 0
+      },
+      totalCosts: {
+        electricity: 0,
+        water: 0,
+        gas: 0,
+        total: 0
+      },
+      averageConsumption: {
+        electricity: 0,
+        water: 0,
+        gas: 0
+      },
+      monthlyTrend: []
+    };
   }
   
   loadDashboardData(): void {
@@ -109,10 +140,14 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       utilityData: this.apiService.getMonthlyUtilityData(this.selectedYear)
     }).subscribe({
       next: (result) => {
-        this.apartments = result.apartments;
-        this.processUtilityData(result.utilityData);
+        this.apartments = result.apartments || [];
+        this.processUtilityData(result.utilityData || []);
         this.isLoading = false;
-        this.initializeChart();
+        
+        // Usa setTimeout per assicurarsi che il DOM sia aggiornato
+        setTimeout(() => {
+          this.initializeChart();
+        }, 50);
       },
       error: (error) => {
         console.error('Errore durante il caricamento dei dati', error);
@@ -124,15 +159,26 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   
   processUtilityData(data: MonthlyUtilityData[]): void {
     // Elabora i dati per il grafico
-    this.allApartmentsData = data;
+    this.allApartmentsData = data || [];
+    
+    // Assicurati che gli appartamenti siano definiti
+    if (!this.apartments || this.apartments.length === 0) {
+      this.apartmentSpecificData = [];
+      this.apartmentUtilityData = [];
+      this.calculateStatistics();
+      return;
+    }
     
     // Organizza i dati per appartamento
     this.apartmentSpecificData = this.apartments.map(apartment => {
-      const apartmentData = data.filter(item => item.apartmentId === apartment.id);
+      const apartmentData = this.allApartmentsData.filter(item => item.apartmentId === apartment.id);
       
       const monthlyData = this.months.map((_, index) => {
         const monthData = apartmentData.find(item => item.month === index + 1) || {
           month: index + 1,
+          year: this.selectedYear,
+          apartmentId: apartment.id!,
+          apartmentName: apartment.name,
           electricity: 0,
           water: 0,
           gas: 0,
@@ -165,7 +211,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       
       return {
         apartmentId: apartment.id!,
-        apartmentName: apartment.name,
+        apartmentName: apartment.name || 'N/A',
         monthlyData,
         yearlyTotals
       };
@@ -181,10 +227,29 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   initializeChart(): void {
     if (this.chart) {
       this.chart.destroy();
+      this.chart = null;
     }
     
-    const ctx = this.chartCanvas.nativeElement.getContext('2d');
-    if (!ctx) return;
+    if (!this.chartCanvas || !this.chartCanvas.nativeElement) {
+      console.warn('Canvas non disponibile per il grafico');
+      return;
+    }
+    
+    const canvas = this.chartCanvas.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.warn('Context 2D non disponibile');
+      return;
+    }
+    
+    // Verifica che il canvas abbia dimensioni valide
+    if (canvas.clientWidth === 0 || canvas.clientHeight === 0) {
+      console.warn('Canvas non ha dimensioni valide, retry in 100ms');
+      setTimeout(() => {
+        this.initializeChart();
+      }, 100);
+      return;
+    }
     
     if (this.selectedApartmentId === null) {
       // Visualizza il grafico per tutti gli appartamenti
@@ -196,51 +261,130 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   }
   
   createAllApartmentsChart(ctx: CanvasRenderingContext2D): void {
-    const labels = this.apartments.map(apt => apt.name);
+    if (!this.apartments || this.apartments.length === 0) {
+      console.log('Nessun appartamento disponibile per il grafico');
+      return;
+    }
     
-    // Calcola i consumi totali per ogni appartamento
-    const electricityData = this.apartments.map(apt => {
-      const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-      return aptData ? aptData.monthlyData.reduce((sum, month) => sum + month.electricity, 0) : 0;
-    });
+    const labels = this.apartments.map(apt => apt.name || 'N/A');
+    let datasets: any[] = [];
+    let chartTitle = '';
+    let yAxisTitle = '';
     
-    const waterData = this.apartments.map(apt => {
-      const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-      return aptData ? aptData.monthlyData.reduce((sum, month) => sum + month.water, 0) : 0;
-    });
-    
-    const gasData = this.apartments.map(apt => {
-      const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-      return aptData ? aptData.monthlyData.reduce((sum, month) => sum + month.gas, 0) : 0;
-    });
+    if (this.selectedView === 'consumption') {
+      // Grafico dei consumi
+      const electricityData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.electricity || 0), 0) : 0;
+      });
+      
+      const waterData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.water || 0), 0) : 0;
+      });
+      
+      const gasData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.gas || 0), 0) : 0;
+      });
+      
+      datasets = [
+        {
+          label: 'Elettricità (kWh)',
+          data: electricityData,
+          backgroundColor: this.chartColors.electricity,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Acqua (m³)',
+          data: waterData,
+          backgroundColor: this.chartColors.water,
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Gas (m³)',
+          data: gasData,
+          backgroundColor: this.chartColors.gas,
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1
+        }
+      ];
+      
+      chartTitle = `Consumi Utenze per Appartamento - ${this.selectedYear}`;
+      yAxisTitle = 'Consumo';
+      
+    } else if (this.selectedView === 'costs') {
+      // Grafico dei costi
+      const electricityCostData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.electricityCost || 0), 0) : 0;
+      });
+      
+      const waterCostData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.waterCost || 0), 0) : 0;
+      });
+      
+      const gasCostData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.gasCost || 0), 0) : 0;
+      });
+      
+      datasets = [
+        {
+          label: 'Elettricità (€)',
+          data: electricityCostData,
+          backgroundColor: this.chartColors.electricity,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Acqua (€)',
+          data: waterCostData,
+          backgroundColor: this.chartColors.water,
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Gas (€)',
+          data: gasCostData,
+          backgroundColor: this.chartColors.gas,
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1
+        }
+      ];
+      
+      chartTitle = `Costi Utenze per Appartamento - ${this.selectedYear}`;
+      yAxisTitle = 'Costo (€)';
+      
+    } else if (this.selectedView === 'comparison') {
+      // Grafico di confronto totale
+      const totalCostData = this.apartments.map(apt => {
+        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.yearlyTotals.totalCost : 0;
+      });
+      
+      datasets = [
+        {
+          label: 'Costo Totale (€)',
+          data: totalCostData,
+          backgroundColor: 'rgba(156, 39, 176, 0.7)',
+          borderColor: 'rgba(156, 39, 176, 1)',
+          borderWidth: 1
+        }
+      ];
+      
+      chartTitle = `Confronto Costi Totali - ${this.selectedYear}`;
+      yAxisTitle = 'Costo Totale (€)';
+    }
     
     this.chart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: labels,
-        datasets: [
-          {
-            label: 'Elettricità',
-            data: electricityData,
-            backgroundColor: this.chartColors.electricity,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1
-          },
-          {
-            label: 'Acqua',
-            data: waterData,
-            backgroundColor: this.chartColors.water,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-          },
-          {
-            label: 'Gas',
-            data: gasData,
-            backgroundColor: this.chartColors.gas,
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 1
-          }
-        ]
+        datasets: datasets
       },
       options: {
         responsive: true,
@@ -250,7 +394,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Consumo Totale'
+              text: yAxisTitle
             }
           },
           x: {
@@ -263,7 +407,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
         plugins: {
           title: {
             display: true,
-            text: `Consumi Utenze per Appartamento - ${this.selectedYear}`
+            text: chartTitle
           },
           tooltip: {
             mode: 'index',
@@ -279,40 +423,111 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       data.apartmentId === this.selectedApartmentId
     );
     
-    if (!apartmentData) return;
+    if (!apartmentData || !apartmentData.monthlyData) {
+      console.log('Nessun dato disponibile per l\'appartamento selezionato');
+      return;
+    }
     
     const labels = this.months;
-    const electricityData = apartmentData.monthlyData.map(month => month.electricity);
-    const waterData = apartmentData.monthlyData.map(month => month.water);
-    const gasData = apartmentData.monthlyData.map(month => month.gas);
+    let datasets: any[] = [];
+    let chartTitle = '';
+    let yAxisTitle = '';
+    
+    if (this.selectedView === 'consumption') {
+      // Grafico dei consumi mensili
+      const electricityData = apartmentData.monthlyData.map(month => month.electricity || 0);
+      const waterData = apartmentData.monthlyData.map(month => month.water || 0);
+      const gasData = apartmentData.monthlyData.map(month => month.gas || 0);
+      
+      datasets = [
+        {
+          label: 'Elettricità (kWh)',
+          data: electricityData,
+          backgroundColor: this.chartColors.electricity,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Acqua (m³)',
+          data: waterData,
+          backgroundColor: this.chartColors.water,
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Gas (m³)',
+          data: gasData,
+          backgroundColor: this.chartColors.gas,
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1
+        }
+      ];
+      
+      chartTitle = `Consumi Mensili - ${apartmentData.apartmentName} (${this.selectedYear})`;
+      yAxisTitle = 'Consumo';
+      
+    } else if (this.selectedView === 'costs') {
+      // Grafico dei costi mensili
+      const electricityCostData = apartmentData.monthlyData.map(month => month.electricityCost || 0);
+      const waterCostData = apartmentData.monthlyData.map(month => month.waterCost || 0);
+      const gasCostData = apartmentData.monthlyData.map(month => month.gasCost || 0);
+      
+      datasets = [
+        {
+          label: 'Elettricità (€)',
+          data: electricityCostData,
+          backgroundColor: this.chartColors.electricity,
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Acqua (€)',
+          data: waterCostData,
+          backgroundColor: this.chartColors.water,
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Gas (€)',
+          data: gasCostData,
+          backgroundColor: this.chartColors.gas,
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1
+        }
+      ];
+      
+      chartTitle = `Costi Mensili - ${apartmentData.apartmentName} (${this.selectedYear})`;
+      yAxisTitle = 'Costo (€)';
+      
+    } else if (this.selectedView === 'comparison') {
+      // Grafico di confronto totale mensile
+      const totalCostData = apartmentData.monthlyData.map(month => month.totalCost || 0);
+      
+      datasets = [
+        {
+          label: 'Costo Totale (€)',
+          data: totalCostData,
+          backgroundColor: 'rgba(156, 39, 176, 0.7)',
+          borderColor: 'rgba(156, 39, 176, 1)',
+          borderWidth: 1
+        }
+      ];
+      
+      chartTitle = `Andamento Costi Totali - ${apartmentData.apartmentName} (${this.selectedYear})`;
+      yAxisTitle = 'Costo Totale (€)';
+    }
+    
+    console.log('Dati per il grafico appartamento:', {
+      apartmentData: apartmentData.apartmentName,
+      datasets,
+      selectedView: this.selectedView
+    });
     
     this.chart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: labels,
-        datasets: [
-          {
-            label: 'Elettricità',
-            data: electricityData,
-            backgroundColor: this.chartColors.electricity,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1
-          },
-          {
-            label: 'Acqua',
-            data: waterData,
-            backgroundColor: this.chartColors.water,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-          },
-          {
-            label: 'Gas',
-            data: gasData,
-            backgroundColor: this.chartColors.gas,
-            borderColor: 'rgba(255, 206, 86, 1)',
-            borderWidth: 1
-          }
-        ]
+        datasets: datasets
       },
       options: {
         indexAxis: 'y', // Barre orizzontali
@@ -323,7 +538,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
             beginAtZero: true,
             title: {
               display: true,
-              text: 'Consumo'
+              text: yAxisTitle
             }
           },
           y: {
@@ -336,7 +551,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
         plugins: {
           title: {
             display: true,
-            text: `Consumi Mensili - ${apartmentData.apartmentName} (${this.selectedYear})`
+            text: chartTitle
           },
           tooltip: {
             mode: 'index',
@@ -345,6 +560,8 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
         }
       }
     });
+    
+    console.log('Grafico appartamento creato:', this.chart);
   }
   
   onYearChange(year: number): void {
@@ -425,51 +642,70 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     if (this.selectedApartmentId === null) {
       return 'Tutti gli appartamenti';
     }
+    if (!this.apartments || this.apartments.length === 0) {
+      return 'Nessun appartamento';
+    }
     const apartment = this.apartments.find(apt => apt.id === this.selectedApartmentId);
-    return apartment ? apartment.name : 'Appartamento non trovato';
+    return apartment?.name || 'Appartamento non trovato';
   }
 
   onApartmentChange(apartmentId: number | null): void {
     this.selectedApartmentId = apartmentId;
-    this.initializeChart();
+    setTimeout(() => {
+      this.initializeChart();
+    }, 50);
   }
 
   getElectricityCostForApartment(aptData: ApartmentUtilityData): number {
-    return aptData.monthlyData.reduce((sum, month) => sum + month.electricityCost, 0);
+    if (!aptData || !aptData.monthlyData) {
+      return 0;
+    }
+    return aptData.monthlyData.reduce((sum, month) => sum + (month.electricityCost || 0), 0);
   }
 
   getWaterCostForApartment(aptData: ApartmentUtilityData): number {
-    return aptData.monthlyData.reduce((sum, month) => sum + month.waterCost, 0);
+    if (!aptData || !aptData.monthlyData) {
+      return 0;
+    }
+    return aptData.monthlyData.reduce((sum, month) => sum + (month.waterCost || 0), 0);
   }
 
   getGasCostForApartment(aptData: ApartmentUtilityData): number {
-    return aptData.monthlyData.reduce((sum, month) => sum + month.gasCost, 0);
+    if (!aptData || !aptData.monthlyData) {
+      return 0;
+    }
+    return aptData.monthlyData.reduce((sum, month) => sum + (month.gasCost || 0), 0);
   }
 
   getSelectedApartmentData(): ApartmentUtilityData | undefined {
-    if (this.selectedApartmentId === null) {
+    if (this.selectedApartmentId === null || this.apartmentUtilityData.length === 0) {
       return undefined;
     }
     return this.apartmentUtilityData.find(data => data.apartmentId === this.selectedApartmentId);
   }
 
   get filteredApartments(): Apartment[] {
-    if (!this.searchQuery.trim()) {
+    if (!this.apartments || this.apartments.length === 0) {
+      return [];
+    }
+    if (!this.searchQuery || !this.searchQuery.trim()) {
       return this.apartments;
     }
     return this.apartments.filter(apartment => 
-      apartment.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      apartment.name && apartment.name.toLowerCase().includes(this.searchQuery.toLowerCase())
     );
   }
 
   onViewChange(view: 'consumption' | 'costs' | 'comparison'): void {
     this.selectedView = view;
-    this.initializeChart();
+    setTimeout(() => {
+      this.initializeChart();
+    }, 50);
   }
 
   calculateStatistics(): void {
     if (this.apartmentUtilityData.length === 0) {
-      this.utilityStatistics = null;
+      this.initializeUtilityStatistics();
       return;
     }
     
@@ -492,10 +728,39 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       };
     }, { electricity: 0, water: 0, gas: 0, total: 0 });
     
+    // Calcola le medie per appartamento
+    const totalApartments = this.apartments.length;
+    const averageConsumption = {
+      electricity: totalApartments > 0 ? totalConsumption.electricity / totalApartments : 0,
+      water: totalApartments > 0 ? totalConsumption.water / totalApartments : 0,
+      gas: totalApartments > 0 ? totalConsumption.gas / totalApartments : 0
+    };
+    
+    // Calcola il trend mensile
+    const monthlyTrend = this.months.map((monthName, index) => {
+      const monthData = this.apartmentUtilityData.reduce((monthTotals, apt) => {
+        const monthInfo = apt.monthlyData.find(m => m.month === index + 1);
+        if (monthInfo) {
+          monthTotals.totalConsumption += monthInfo.electricity + monthInfo.water + monthInfo.gas;
+          monthTotals.totalCost += monthInfo.totalCost;
+        }
+        return monthTotals;
+      }, { totalConsumption: 0, totalCost: 0 });
+      
+      return {
+        month: index + 1,
+        monthName,
+        totalConsumption: monthData.totalConsumption,
+        totalCost: monthData.totalCost
+      };
+    });
+    
     this.utilityStatistics = {
-      totalApartments: this.apartments.length,
+      totalApartments,
       totalConsumption,
-      totalCosts
+      totalCosts,
+      averageConsumption,
+      monthlyTrend
     };
   }
 }
