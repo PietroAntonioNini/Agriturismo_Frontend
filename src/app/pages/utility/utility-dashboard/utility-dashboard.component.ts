@@ -130,14 +130,17 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     };
   }
   
-  loadDashboardData(): void {
+  loadDashboardData(forceRefresh: boolean = false): void {
     this.isLoading = true;
     this.errorMessage = null;
     
+    // Aggiunge timestamp per evitare cache quando forza il refresh
+    const apartmentParams = forceRefresh ? { _t: new Date().getTime() } : undefined;
+    
     // Carica gli appartamenti e i dati delle utenze
     forkJoin({
-      apartments: this.apiService.getAll<Apartment>('apartments'),
-      utilityData: this.apiService.getMonthlyUtilityData(this.selectedYear)
+      apartments: this.apiService.getAll<Apartment>('apartments', apartmentParams),
+      utilityData: this.apiService.getMonthlyUtilityData(this.selectedYear, forceRefresh)
     }).subscribe({
       next: (result) => {
         this.apartments = result.apartments || [];
@@ -566,7 +569,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   
   onYearChange(year: number): void {
     this.selectedYear = year;
-    this.loadDashboardData();
+    this.loadDashboardData(true); // Forza il refresh quando cambia anno
   }
   
   onApartmentTabChange(apartmentId: number | null): void {
@@ -590,7 +593,8 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           horizontalPosition: 'end',
           verticalPosition: 'top'
         });
-        this.loadDashboardData(); // Ricarica i dati per aggiornare il grafico
+        // Utilizza il metodo di refresh intelligente
+        this.refreshDataAfterSave();
       }
     });
   }
@@ -606,7 +610,8 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        this.loadDashboardData(); // Ricarica i dati se sono state apportate modifiche
+        // Utilizza il metodo di refresh intelligente
+        this.refreshDataAfterSave();
       }
     });
   }
@@ -762,5 +767,16 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       averageConsumption,
       monthlyTrend
     };
+  }
+
+  /**
+   * Refresh intelligente dei dati dopo il salvataggio
+   * Un solo refresh con delay ottimizzato per prestazioni migliori
+   */
+  private refreshDataAfterSave(): void {
+    // Un singolo refresh con delay sufficiente per il backend
+    setTimeout(() => {
+      this.loadDashboardData(true);
+    }, 800); // Delay ottimizzato: abbastanza per il backend, non troppo per l'utente
   }
 }

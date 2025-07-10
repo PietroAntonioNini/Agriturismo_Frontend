@@ -15,11 +15,23 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { RouterModule } from '@angular/router';
 
 // Models e Services
 import { Apartment, Invoice, Lease, Tenant, UtilityReading } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+
+// Dialog Components
+import { ApartmentFormComponent } from '../../../pages/apartment/apartment-form/apartment-form-dialog.component';
+import { ApartmentDetailDialogComponent } from '../../../pages/apartment/apartment-detail/apartment-detail-dialog.component';
+import { TenantFormComponent } from '../../../pages/tenant/tenant-form/tenant-form-dialog.component';
+import { TenantDetailDialogComponent } from '../../../pages/tenant/tenant-detail/tenant-detail-dialog.component';
+import { LeaseFormComponent } from '../../../pages/lease/lease-form/lease-form.component';
 
 // Registra Chart.js
 Chart.register(...registerables);
@@ -41,6 +53,10 @@ Chart.register(...registerables);
     MatTooltipModule,
     MatMenuModule,
     MatDividerModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
     RouterModule
   ]
 })
@@ -98,7 +114,10 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(
     private apiService: GenericApiService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private confirmationService: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
@@ -404,9 +423,14 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    * Inizializza tutti i grafici
    */
   private initializeCharts(): void {
-    this.createOccupancyChart();
-    this.createRevenueChart();
-    this.createUtilityChart();
+    // Distruggi prima i grafici esistenti se ci sono
+    this.destroyCharts();
+    
+    setTimeout(() => {
+      this.createOccupancyChart();
+      this.createRevenueChart();
+      this.createUtilityChart();
+    }, 100);
   }
 
   /**
@@ -646,5 +670,206 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
   trackByApartmentId(index: number, apartment: any): number {
     return apartment.id;
+  }
+
+  // ===================== AZIONI DIALOG =====================
+
+  /**
+   * Apre dialog dettagli appartamento
+   */
+  openApartmentDetails(apartmentId: number): void {
+    const dialogRef = this.dialog.open(ApartmentDetailDialogComponent, {
+      data: { apartmentId },
+      width: '800px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        if (result.deleted) {
+          this.loadDashboardData();
+        } else if (result.edit) {
+          this.openApartmentForm(result.apartmentId);
+        }
+      }
+    });
+  }
+
+  /**
+   * Apre dialog form appartamento (crea/modifica)
+   */
+  openApartmentForm(apartmentId?: number): void {
+    const dialogRef = this.dialog.open(ApartmentFormComponent, {
+      data: { apartmentId },
+      width: '900px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this.loadDashboardData();
+        
+        if (result.apartment && !result.skipDetailView) {
+          setTimeout(() => {
+            this.openApartmentDetails(result.apartment.id);
+          }, 300);
+        }
+      }
+    });
+  }
+
+  /**
+   * Elimina appartamento
+   */
+  deleteApartment(apartment: Apartment): void {
+    this.confirmationService.confirmDelete('l\'appartamento', apartment.name)
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.apiService.delete('apartments', apartment.id).subscribe({
+            next: () => {
+              this.loadDashboardData();
+              this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione dell\'appartamento', error);
+              this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'appartamento', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            }
+          });
+        }
+      });
+  }
+
+  /**
+   * Elimina appartamento per ID
+   */
+  deleteApartmentById(apartmentId: number): void {
+    const apartment = this.apartments.find(a => a.id === apartmentId);
+    if (apartment) {
+      this.deleteApartment(apartment);
+    }
+  }
+
+  /**
+   * Apre dialog dettagli inquilino
+   */
+  viewTenantDetails(tenantId: number): void {
+    setTimeout(() => {
+      this.dialog.open(TenantDetailDialogComponent, {
+        data: { tenantId },
+        panelClass: 'tenant-detail-dialog'
+      });
+    }, 300);
+  }
+
+  /**
+   * Apre dialog form inquilino (crea/modifica)
+   */
+  openTenantForm(tenantId?: number): void {
+    const dialogRef = this.dialog.open(TenantFormComponent, {
+      data: { tenantId }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  /**
+   * Elimina inquilino
+   */
+  deleteTenant(tenant: Tenant): void {
+    this.confirmationService.confirmDelete('l\'inquilino', `${tenant.firstName} ${tenant.lastName}`)
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.apiService.delete('tenants', tenant.id).subscribe({
+            next: () => {
+              this.loadDashboardData();
+              this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione dell\'inquilino', error);
+              this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'inquilino', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            }
+          });
+        }
+      });
+  }
+
+  /**
+   * Apre dialog form contratto
+   */
+  openLeaseForm(leaseId?: number): void {
+    const dialogRef = this.dialog.open(LeaseFormComponent, {
+      data: { leaseId },
+      width: '900px',
+      maxHeight: '90vh'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  /**
+   * Elimina contratto
+   */
+  deleteLease(lease: Lease): void {
+    this.confirmationService.confirmDelete('il contratto', `Contratto #${lease.id}`)
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.apiService.delete('leases', lease.id).subscribe({
+            next: () => {
+              this.loadDashboardData();
+              this.snackBar.open('Contratto eliminato con successo', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            },
+            error: (error) => {
+              console.error('Errore durante l\'eliminazione del contratto', error);
+              this.snackBar.open('Si è verificato un errore durante l\'eliminazione del contratto', 'Chiudi', {
+                duration: 3000,
+                horizontalPosition: 'end',
+                verticalPosition: 'top'
+              });
+            }
+          });
+        }
+      });
+  }
+
+  /**
+   * Naviga verso la pagina utility per aggiungere letture
+   */
+  openUtilityForm(): void {
+    this.router.navigate(['/utility/reading-form']);
+  }
+
+  /**
+   * Naviga verso la pagina utility dashboard
+   */
+  openUtilityDashboard(): void {
+    this.router.navigate(['/utility/dashboard']);
   }
 }

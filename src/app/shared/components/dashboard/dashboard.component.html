@@ -255,28 +255,28 @@
             <div class="quick-actions-grid">
               <button mat-raised-button 
                       color="primary" 
-                      (click)="navigateTo('/tenants/new')"
+                      (click)="openTenantForm()"
                       class="quick-action-btn">
                 <mat-icon>person_add</mat-icon>
                 Nuovo Inquilino
               </button>
               <button mat-raised-button 
                       color="primary" 
-                      (click)="navigateTo('/apartments/new')"
+                      (click)="openApartmentForm()"
                       class="quick-action-btn">
                 <mat-icon>add_home</mat-icon>
                 Nuovo Appartamento
               </button>
               <button mat-raised-button 
                       color="primary" 
-                      (click)="navigateTo('/leases/new')"
+                      (click)="openLeaseForm()"
                       class="quick-action-btn">
                 <mat-icon>note_add</mat-icon>
                 Nuovo Contratto
               </button>
               <button mat-raised-button 
                       color="primary" 
-                      (click)="navigateTo('/utility/reading-form')"
+                      (click)="openUtilityForm()"
                       class="quick-action-btn">
                 <mat-icon>add_chart</mat-icon>
                 Lettura Utenze
@@ -284,7 +284,9 @@
               <button mat-raised-button 
                       color="accent" 
                       (click)="navigateTo('/invoices/generate')"
-                      class="quick-action-btn">
+                      class="quick-action-btn"
+                      disabled
+                      matTooltip="Disponibile quando le fatture saranno implementate">
                 <mat-icon>receipt_long</mat-icon>
                 Genera Fatture
               </button>
@@ -358,17 +360,23 @@
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #apartmentMenu="matMenu">
-                <button mat-menu-item (click)="navigateTo('/apartments/' + apartment.id)">
+                <button mat-menu-item (click)="openApartmentDetails(apartment.id)">
                   <mat-icon>visibility</mat-icon>
                   Visualizza
                 </button>
-                <button mat-menu-item (click)="navigateTo('/apartments/' + apartment.id + '/edit')">
+                <button mat-menu-item (click)="openApartmentForm(apartment.id)">
                   <mat-icon>edit</mat-icon>
                   Modifica
                 </button>
-                <button mat-menu-item (click)="navigateTo('/leases/new?apartment=' + apartment.id)">
+                <button mat-menu-item (click)="openLeaseForm()">
                   <mat-icon>note_add</mat-icon>
                   Nuovo Contratto
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item (click)="deleteApartmentById(apartment.id)" 
+                        class="delete-menu-item">
+                  <mat-icon>delete</mat-icon>
+                  Elimina
                 </button>
               </mat-menu>
             </div>

@@ -278,7 +278,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     }
     
     this.calculatedConsumption = Math.max(0, currentReading - previousReading);
-    this.calculatedCost = this.calculatedConsumption * unitCost;
+    this.calculatedCost = Math.round((this.calculatedConsumption * unitCost) * 100) / 100;
     
     // Aggiorna validazione per lettura corrente
     this.updateCurrentReadingValidation();
@@ -356,6 +356,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     };
 
     console.log('Sending payload to backend:', readingData);
+    console.log('Utility type:', readingData.type);
+    console.log('Form value:', formValue);
 
     const apiCall = this.data.editingReading 
       ? this.apiService.updateUtilityReadingWithCorrectFormat(this.data.editingReading.id!, readingData)
@@ -363,6 +365,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
 
     apiCall.subscribe({
       next: (result) => {
+        console.log('Backend response:', result);
         if (result) {
           this.isLoading = false;
           this.showSuccessSnackBar(
@@ -378,6 +381,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Errore durante il salvataggio della lettura:', error);
+        console.error('Error details:', error.error);
+        console.error('Error status:', error.status);
         
         // Gestione dettagliata degli errori
         if (error.status === 422) {

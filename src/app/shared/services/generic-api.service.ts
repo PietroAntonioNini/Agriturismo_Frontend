@@ -649,8 +649,18 @@ export class GenericApiService {
   }
 
   // Ottiene dati mensili per appartamenti (per grafici)
-  getMonthlyUtilityData(year: number): Observable<MonthlyUtilityData[]> {
-    return this.http.get<MonthlyUtilityData[]>(`${this.apiUrl('utilities')}/statistics/${year}`).pipe(
+  getMonthlyUtilityData(year: number, forceRefresh: boolean = false): Observable<MonthlyUtilityData[]> {
+    let url = `${this.apiUrl('utilities')}/statistics/${year}`;
+    
+    // Aggiunge timestamp per forzare il refresh ed evitare cache
+    if (forceRefresh) {
+      const timestamp = new Date().getTime();
+      url += `?_refresh=${timestamp}`;
+    }
+    
+    return this.http.get<MonthlyUtilityData[]>(url, {
+      headers: forceRefresh ? { 'Cache-Control': 'no-cache, no-store, must-revalidate' } : {}
+    }).pipe(
       catchError(error => {
         console.error(`Errore durante il recupero dei dati mensili per l'anno ${year}`, error);
         return of([]);
