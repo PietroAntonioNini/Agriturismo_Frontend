@@ -601,10 +601,10 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   
   openReadingHistory(): void {
     const dialogRef = this.dialog.open(ReadingHistoryComponent, {
-      width: '900px',
+      panelClass: 'reading-history-modal',
       data: {
         apartments: this.apartments,
-        selectedApartmentId: this.selectedApartmentId
+        selectedApartmentId: null
       }
     });
     

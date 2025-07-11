@@ -199,33 +199,36 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       next: (lastReading: LastReading | null) => {
         this.lastReading = lastReading;
         
-        // Se c'è una lettura precedente, suggerisce un valore incrementale
-        if (this.lastReading && this.lastReading.hasHistory && this.lastReading.lastReading > 0) {
-          const utilityConfig = this.getUtilityTypeConfig(type);
-          let suggestedIncrement = 50; // Incremento base
-          
-          // Incrementi diversi per tipo di utenza
-          switch (type) {
-            case 'electricity':
-              suggestedIncrement = Math.floor(Math.random() * 100) + 50; // 50-150 kWh
-              break;
-            case 'water':
-              suggestedIncrement = Math.floor(Math.random() * 15) + 5; // 5-20 m³
-              break;
-            case 'gas':
-              suggestedIncrement = Math.floor(Math.random() * 20) + 10; // 10-30 m³
-              break;
+        // SOLO per nuove letture, suggerisce un valore incrementale
+        // NON sovrascrivere il valore quando siamo in modalità modifica
+        if (!this.data.editingReading) {
+          if (this.lastReading && this.lastReading.hasHistory && this.lastReading.lastReading > 0) {
+            const utilityConfig = this.getUtilityTypeConfig(type);
+            let suggestedIncrement = 50; // Incremento base
+            
+            // Incrementi diversi per tipo di utenza
+            switch (type) {
+              case 'electricity':
+                suggestedIncrement = Math.floor(Math.random() * 100) + 50; // 50-150 kWh
+                break;
+              case 'water':
+                suggestedIncrement = Math.floor(Math.random() * 15) + 5; // 5-20 m³
+                break;
+              case 'gas':
+                suggestedIncrement = Math.floor(Math.random() * 20) + 10; // 10-30 m³
+                break;
+            }
+            
+            const suggestedReading = (this.lastReading?.lastReading || 0) + suggestedIncrement;
+            this.readingForm.patchValue({
+              currentReading: suggestedReading
+            });
+          } else {
+            // Prima lettura - imposta 0 come valore iniziale
+            this.readingForm.patchValue({
+              currentReading: 0
+            });
           }
-          
-          const suggestedReading = (this.lastReading?.lastReading || 0) + suggestedIncrement;
-          this.readingForm.patchValue({
-            currentReading: suggestedReading
-          });
-        } else {
-          // Prima lettura - imposta 0 come valore iniziale
-          this.readingForm.patchValue({
-            currentReading: 0
-          });
         }
         
         this.isLoadingLastReading = false;
@@ -243,9 +246,13 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
           hasHistory: false
         };
         
-        this.readingForm.patchValue({
-          currentReading: 0
-        });
+        // Solo per nuove letture, imposta 0 come valore iniziale
+        // NON sovrascrivere il valore quando siamo in modalità modifica
+        if (!this.data.editingReading) {
+          this.readingForm.patchValue({
+            currentReading: 0
+          });
+        }
         
         this.isLoadingLastReading = false;
         this.calculateConsumptionAndCost();
@@ -373,7 +380,32 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
               ? 'Lettura aggiornata con successo' 
               : 'Lettura salvata con successo'
           );
-          this.dialogRef.close(true);
+          
+          // Se siamo in modalità modifica, restituisci la lettura aggiornata per l'aggiornamento istantaneo
+          if (this.data.editingReading) {
+            const updatedReading: UtilityReading = {
+              ...this.data.editingReading, // Mantieni ID e altri campi non modificabili
+              apartmentId: Number(formValue.apartmentId),
+              type: formValue.type,
+              readingDate: new Date(formValue.readingDate),
+              previousReading: Number(previousReading),
+              currentReading: Number(formValue.currentReading),
+              consumption: Number(this.calculatedConsumption),
+              unitCost: Number(formValue.unitCost),
+              totalCost: Number(this.calculatedCost),
+              notes: formValue.notes || '',
+              // isPaid rimane invariato in una modifica
+              paidDate: this.data.editingReading.paidDate
+            };
+            
+            this.dialogRef.close({ 
+              success: true, 
+              updatedReading: updatedReading 
+            });
+          } else {
+            // Per nuove letture, restituisci solo il successo
+            this.dialogRef.close(true);
+          }
         } else {
           this.errorMessage = 'Errore nella risposta del server';
           this.isLoading = false;

@@ -1,21 +1,16 @@
-// === VARIABILI E COLORI ===
-:root {
-  --primary-color: #1976d2;
-  --accent-color: #ff4081;
-  --success-color: #4caf50;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
-  --surface-color: #ffffff;
-  --background-color: #fafafa;
-  --text-primary: #212121;
-  --text-secondary: #757575;
-  --divider-color: #e0e0e0;
-  --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
-  --shadow-medium: 0 4px 8px rgba(0,0,0,0.15);
-  --border-radius: 8px;
-  --transition-fast: 0.2s ease;
-  --transition-medium: 0.3s ease;
-}
+// === VARIABILI LOCALI DEL COMPONENTE ===
+$modal-max-width: 1600px;
+$modal-padding: 1.5rem;
+$table-row-height: 60px;
+$table-max-rows: 5;
+
+// === BREAKPOINT RESPONSIVI ===
+$breakpoint-4k: 2560px;      // 4K e monitor grandi
+$breakpoint-2k: 1920px;      // 2K standard  
+$breakpoint-full-hd: 1600px; // Full HD
+$breakpoint-laptop: 1366px;  // Laptop standard
+$breakpoint-tablet: 1024px;  // Tablet landscape
+$breakpoint-mobile: 768px;   // Mobile e tablet portrait
 
 // === CONTAINER PRINCIPALE ===
 .reading-history-container {
@@ -24,17 +19,16 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 1.5rem;
+  padding: $modal-padding;
   box-sizing: border-box;
-  overflow: hidden;
 
-  @media (max-width: 768px) {
+  @media (max-width: #{$breakpoint-mobile}) {
     padding: 1rem;
     gap: 1rem;
   }
 }
 
-// === HEADER ===
+// === HEADER MODALE ===
 .history-header {
   display: flex;
   justify-content: space-between;
@@ -96,6 +90,7 @@
 
     .close-btn {
       color: var(--text-secondary);
+      transition: all var(--transition-fast);
       
       &:hover {
         color: var(--error-color);
@@ -104,16 +99,7 @@
     }
   }
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-
-    .header-actions {
-      width: 100%;
-      justify-content: center;
-    }
-  }
+  // Il responsive per l'header è ora gestito nelle sezioni specifiche sopra
 }
 
 // === MENU VISTA ===
@@ -174,10 +160,7 @@
       gap: 1rem;
       margin-bottom: 1rem;
 
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-        gap: 0.75rem;
-      }
+      // Il responsive per i filtri è ora gestito nelle sezioni specifiche
 
       .filter-field {
         width: 100%;
@@ -186,6 +169,7 @@
           grid-column: 1;
         }
 
+        // Nascondi le label di errore per risparmiare spazio
         .mat-mdc-form-field-subscript-wrapper {
           display: none;
         }
@@ -270,10 +254,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; // Per permettere lo scroll nei figli
+  min-height: 0;
+  overflow: hidden;
 }
 
-// === VISTA TABELLA ===
+// === VISTA TABELLA OTTIMIZZATA ===
 .table-section {
   .table-card {
     flex: 1;
@@ -282,6 +267,7 @@
     background: var(--surface-color);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
+    max-height: calc(#{$table-row-height} * #{$table-max-rows + 1} + 120px); // +1 per header, +120px per padding e paginator
 
     .table-header {
       padding: 1.5rem 1.5rem 0 1.5rem;
@@ -300,14 +286,9 @@
         }
       }
 
+      // Rimuovi completamente la sezione delle azioni (page size selector)
       .table-actions {
-        .page-size-field {
-          width: 140px;
-          
-          .mat-mdc-form-field-subscript-wrapper {
-            display: none;
-          }
-        }
+        display: none;
       }
     }
 
@@ -316,21 +297,26 @@
       padding: 0;
       display: flex;
       flex-direction: column;
-      min-height: 0;
+      overflow: hidden;
 
-      .table-wrapper {
+              .table-wrapper {
         flex: 1;
-        overflow: auto;
-        min-height: 0;
+        overflow-y: auto;
+        overflow-x: auto;
+        max-height: calc(#{$table-row-height} * #{$table-max-rows + 1}); // Esattamente 5 righe dati + 1 header = 6 righe totali
 
         .modern-table {
           width: 100%;
           background: var(--surface-color);
 
-          // Header styles
+          // Header della tabella
           .mat-mdc-header-row {
             background-color: #f8f9fa;
             border-bottom: 2px solid var(--divider-color);
+            height: $table-row-height;
+            position: sticky;
+            top: 0;
+            z-index: 10;
 
             .mat-mdc-header-cell {
               border-bottom: none;
@@ -341,6 +327,7 @@
               .header-content {
                 display: flex;
                 align-items: center;
+                justify-content: center !important;
                 gap: 0.5rem;
 
                 mat-icon {
@@ -351,8 +338,9 @@
             }
           }
 
-          // Row styles
+          // Righe della tabella
           .table-row {
+            height: $table-row-height;
             transition: background-color var(--transition-fast);
             cursor: pointer;
 
@@ -367,11 +355,12 @@
             }
           }
 
-          // Cell-specific styles
+          // Stili specifici per celle
           .apartment-cell {
             .cell-content {
               display: flex;
               align-items: center;
+              justify-content: center;
               gap: 0.5rem;
 
               .cell-icon {
@@ -390,64 +379,53 @@
             .utility-badge {
               display: inline-flex;
               align-items: center;
+              justify-content: center;
               gap: 0.5rem;
               padding: 0.375rem 0.75rem;
               border-radius: 1rem;
               font-size: 0.875rem;
               font-weight: 500;
-
-              .utility-icon {
-                font-size: 1rem;
-              }
             }
           }
 
           .date-cell {
-            .date-content {
-              .date-value {
-                font-weight: 500;
-                color: var(--text-primary);
-              }
-            }
-          }
-
-          .reading-cell {
-            .reading-content {
+            .date-value {
               display: flex;
-              flex-direction: column;
-              gap: 0.125rem;
-
-              .reading-value {
-                font-weight: 600;
-                color: var(--text-primary);
-                font-size: 1rem;
-              }
-
-              .reading-unit {
-                font-size: 0.75rem;
-                color: var(--text-secondary);
-                text-transform: uppercase;
-                font-weight: 500;
-              }
+              align-items: center;
+              justify-content: center;
+              font-weight: 500;
+              color: var(--text-primary);
             }
           }
 
+          .reading-cell,
           .consumption-cell {
+            .reading-content,
             .consumption-content {
               display: flex;
-              flex-direction: column;
-              gap: 0.125rem;
+              align-items: center;
+              justify-content: center;
+              gap: 0.425rem;
 
+              .reading-value,
               .consumption-value {
                 font-weight: 600;
-                color: var(--success-color);
                 font-size: 1rem;
+              }
+
+              .reading-value {
+                color: var(--text-primary);
+              }
+
+              .consumption-value {
+                color: var(--success-color);
 
                 &.high-consumption {
                   color: var(--warning-color);
                 }
               }
 
+              .reading-unit,
               .consumption-unit {
                 font-size: 0.75rem;
                 color: var(--text-secondary);
@@ -459,11 +437,15 @@
 
           .cost-cell {
             .cost-content {
-              .cost-value {
-                font-weight: 600;
-                color: var(--text-primary);
-                font-size: 1rem;
-              }
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+
+            .cost-value {
+              font-weight: 600;
+              color: var(--text-primary);
+              font-size: 1rem;
             }
           }
 
@@ -484,7 +466,7 @@
               }
 
               &.unpaid {
-                background-color: rgba(255, 152, 0, 0.1);
+                background-color: rgba(255, 153, 0, 0.199);
                 color: var(--warning-color);
                 
                 &:hover {
@@ -493,7 +475,7 @@
               }
 
               mat-icon {
-                font-size: 1rem;
+                font-size: 1.2rem;
               }
             }
           }
@@ -523,10 +505,44 @@
         }
       }
 
+      // Paginator personalizzato responsive
       .custom-paginator {
         border-top: 1px solid var(--divider-color);
         background-color: #f8f9fa;
         padding: 0.5rem 1rem;
+        min-height: 56px;
+        
+        // Nascondi il selettore di righe per pagina
+        ::ng-deep {
+          .mat-mdc-paginator-page-size {
+            display: none !important;
+          }
+
+          // Centra i controlli di navigazione
+          .mat-mdc-paginator-container {
+            justify-content: center !important;
+          }
+
+          .mat-mdc-paginator-range-actions {
+            margin-left: 0 !important;
+          }
+          
+          // Responsive del paginatore
+          @media (max-width: #{$breakpoint-mobile}) {
+            .mat-mdc-paginator-range-label {
+              font-size: 0.8rem;
+            }
+            
+            .mat-mdc-icon-button {
+              width: 36px;
+              height: 36px;
+              
+              mat-icon {
+                font-size: 1.2rem;
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -564,6 +580,7 @@
     gap: 1.5rem;
     overflow-y: auto;
     padding: 0.5rem;
+    flex: 1;
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
@@ -735,46 +752,350 @@
   }
 }
 
-// === RESPONSIVE ===
-@media (max-width: 1024px) {
-  .reading-history-container {
-    padding: 1rem;
-  }
-
-  .apartments-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .reading-history-container {
-    padding: 0.75rem;
-    gap: 1rem;
-  }
-
-  .table-wrapper {
-    .modern-table {
-      font-size: 0.875rem;
-
-      .mat-mdc-header-cell,
-      .mat-mdc-cell {
-        padding: 0.75rem 0.5rem;
+// === STILI MODALE RESPONSIVE ===
+::ng-deep .reading-history-modal {
+  .mat-mdc-dialog-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    .mdc-dialog__surface {
+      border-radius: 12px;
+      overflow: hidden;
+      margin: auto;
+      position: relative;
+      
+      // Rimuovi padding del dialogo per utilizzare tutto lo spazio
+      .mat-mdc-dialog-content {
+        padding: 0;
+        max-height: 100%;
+        overflow: hidden;
+      }
+      
+      // === DEFAULT (4K+ e schermi molto grandi) ===
+      max-width: 1400px;
+      width: 70vw;
+      height: 80vh;
+      max-height: 900px;
+      
+      // === 2K DISPLAYS (2560px+) ===
+      @media (min-width: #{$breakpoint-4k}) {
+        max-width: 1500px;
+        width: 65vw;
+        height: 75vh;
+        max-height: 1000px;
+      }
+      
+      // === FULL HD (1920px - 2559px) ===
+      @media (max-width: #{$breakpoint-4k - 1px}) and (min-width: #{$breakpoint-2k}) {
+        max-width: 1300px;
+        width: 75vw;
+        height: 82vh;
+        max-height: 850px;
+      }
+      
+      // === LAPTOP GRANDE (1600px - 1919px) ===
+      @media (max-width: #{$breakpoint-2k - 1px}) and (min-width: #{$breakpoint-full-hd}) {
+        max-width: 1200px;
+        width: 85vw;
+        height: 85vh;
+        max-height: 800px;
+      }
+      
+      // === LAPTOP STANDARD (1366px - 1599px) ===
+      @media (max-width: #{$breakpoint-full-hd - 1px}) and (min-width: #{$breakpoint-laptop}) {
+        max-width: 1100px;
+        width: 90vw;
+        height: 88vh;
+        max-height: 750px;
+      }
+      
+      // === TABLET LANDSCAPE (1024px - 1365px) ===
+      @media (max-width: #{$breakpoint-laptop - 1px}) and (min-width: #{$breakpoint-tablet}) {
+        max-width: 950px;
+        width: 95vw;
+        height: 90vh;
+        max-height: 700px;
+      }
+      
+      // === TABLET PORTRAIT E MOBILE GRANDE (768px - 1023px) ===
+      @media (max-width: #{$breakpoint-tablet - 1px}) and (min-width: #{$breakpoint-mobile}) {
+        max-width: 100vw;
+        width: 98vw;
+        height: 92vh;
+        max-height: none;
+        border-radius: 8px;
+      }
+      
+      // === MOBILE (< 768px) ===
+      @media (max-width: #{$breakpoint-mobile - 1px}) {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100vw;
+        max-height: 100vh;
+        border-radius: 0;
       }
     }
   }
+}
 
+// === LAYOUT RESPONSIVE COMPLETO ===
+
+// === SCHERMI MOLTO GRANDI (4K+, 2560px+) ===
+@media (min-width: #{$breakpoint-4k}) {
+  .reading-history-container {
+    padding: 2rem;
+    gap: 2rem;
+    font-size: 1.1rem; // Leggermente più grande per leggibilità su schermi grandi
+  }
+  
+  .history-header {
+    padding: 2rem 2.5rem;
+    
+    .title-content h1 {
+      font-size: 2rem;
+    }
+  }
+  
+  .table-wrapper .modern-table {
+    font-size: 1rem;
+    
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 1.25rem 1rem;
+    }
+  }
+}
+
+// === FULL HD (1920px - 2559px) ===
+@media (max-width: #{$breakpoint-4k - 1px}) and (min-width: #{$breakpoint-2k}) {
+  .reading-history-container {
+    padding: 1.75rem;
+    gap: 1.75rem;
+  }
+  
+  .history-header {
+    padding: 1.75rem 2rem;
+  }
+}
+
+// === LAPTOP GRANDE (1600px - 1919px) ===
+@media (max-width: #{$breakpoint-2k - 1px}) and (min-width: #{$breakpoint-full-hd}) {
+  .reading-history-container {
+    padding: 1.5rem;
+    gap: 1.5rem;
+  }
+}
+
+// === LAPTOP STANDARD (1366px - 1599px) ===
+@media (max-width: #{$breakpoint-full-hd - 1px}) and (min-width: #{$breakpoint-laptop}) {
+  .reading-history-container {
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+  
+  .history-header {
+    padding: 1.25rem 1.5rem;
+    
+    .title-content h1 {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// === TABLET LANDSCAPE (1024px - 1365px) ===
+@media (max-width: #{$breakpoint-laptop - 1px}) and (min-width: #{$breakpoint-tablet}) {
+  .reading-history-container {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .apartments-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  .table-wrapper .modern-table {
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 0.875rem 0.75rem;
+    }
+  }
+}
+
+// === TABLET PORTRAIT (768px - 1023px) ===
+@media (max-width: #{$breakpoint-tablet - 1px}) and (min-width: #{$breakpoint-mobile}) {
+  .reading-history-container {
+    padding: 0.875rem;
+    gap: 1rem;
+  }
+  
+  .history-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    
+    .header-actions {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
+  .filters-form .filter-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .table-wrapper .modern-table {
+    font-size: 0.875rem;
+    
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 0.75rem 0.5rem;
+    }
+    
+    // Ottimizza il layout per tablet
+    .apartment-header,
+    .apartment-cell {
+      min-width: 120px;
+    }
+    
+    .utility-header,
+    .utility-cell {
+      min-width: 100px;
+    }
+    
+    .actions-header,
+    .actions-cell {
+      min-width: 80px;
+    }
+  }
+  
   .apartments-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+}
 
+// === MOBILE (< 768px) ===
+@media (max-width: #{$breakpoint-mobile - 1px}) {
+  .reading-history-container {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .history-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    
+    .title-content h1 {
+      font-size: 1.25rem;
+    }
+    
+    .header-actions {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  }
+  
+  .filters-form .filter-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .table-wrapper {
+    // Abilita scroll orizzontale su mobile
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    
+    .modern-table {
+      font-size: 0.8rem;
+      min-width: 700px; // Forza larghezza minima per scroll orizzontale
+      
+      .mat-mdc-header-cell,
+      .mat-mdc-cell {
+        padding: 0.5rem 0.25rem;
+        
+        // Testo più compatto su mobile
+        &.apartment-cell,
+        &.apartment-header {
+          min-width: 100px;
+        }
+        
+        &.utility-cell,
+        &.utility-header {
+          min-width: 80px;
+        }
+        
+        &.date-cell,
+        &.date-header {
+          min-width: 90px;
+        }
+        
+        &.reading-cell,
+        &.reading-header,
+        &.consumption-cell,
+        &.consumption-header {
+          min-width: 80px;
+        }
+        
+        &.cost-cell,
+        &.cost-header {
+          min-width: 70px;
+        }
+        
+        &.payment-cell,
+        &.payment-header {
+          min-width: 90px;
+        }
+        
+        &.actions-cell,
+        &.actions-header {
+          min-width: 70px;
+        }
+      }
+      
+      // Layout più compatto per mobile
+      .utility-badge {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+      }
+      
+      .payment-chip {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.7rem !important;
+      }
+      
+      .actions-content {
+        gap: 0.25rem !important;
+        
+        button {
+          width: 32px !important;
+          height: 32px !important;
+          
+          mat-icon {
+            font-size: 1rem !important;
+          }
+        }
+      }
+    }
+  }
+  
+  .apartments-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    
     .apartment-card {
       .summary-details {
         grid-template-columns: 1fr auto;
-
+        
         .summary-value {
           grid-column: 2;
         }
-
+        
         .summary-cost {
           grid-column: 1 / -1;
           text-align: center;
@@ -803,23 +1124,22 @@
   animation: fadeIn 0.5s ease-out;
 }
 
-// === UTILITY CLASSES ===
-.text-center {
-  text-align: center;
-}
+// === STAMPA ===
+@media print {
+  .header-actions,
+  .filters-section,
+  .custom-paginator,
+  .actions-cell {
+    display: none !important;
+  }
 
-.text-muted {
-  color: var(--text-secondary);
-}
+  .reading-history-container {
+    background: white;
+    padding: 0;
+  }
 
-.mb-0 {
-  margin-bottom: 0 !important;
-}
-
-.mb-1 {
-  margin-bottom: 0.5rem !important;
-}
-
-.mb-2 {
-  margin-bottom: 1rem !important;
+  .table-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
 }

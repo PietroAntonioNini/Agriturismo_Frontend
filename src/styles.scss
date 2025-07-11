@@ -391,3 +391,19 @@ html[data-theme="dark"] {
     border-color: var(--primary-color) !important;
   }
 }
+
+/* ====== FIX PER ALLINEAMENTO CHIP CON ICONE ====== */
+/* Fix globale per allineare icona e testo nei chip Material Design */
+.mdc-evolution-chip__text-label.mat-mdc-chip-action-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Assicura che le icone nei chip siano allineate */
+.mdc-evolution-chip__text-label.mat-mdc-chip-action-label mat-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-right: 4px !important;
+}

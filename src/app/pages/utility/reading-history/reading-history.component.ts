@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, Inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort, MatSortModule } from '@angular/material/sort';
@@ -73,7 +73,7 @@ interface ReadingGroupedData {
     MatMenuModule
   ]
 })
-export class ReadingHistoryComponent implements OnInit, OnDestroy {
+export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
   @ViewChild(MatSort) sort!: MatSort;
@@ -126,6 +126,13 @@ export class ReadingHistoryComponent implements OnInit, OnDestroy {
     this.loadUtilityTypes();
     this.setupFilterSubscriptions();
     this.loadReadings();
+  }
+
+  ngAfterViewInit(): void {
+    // Configura il paginatore e il sort dopo che la vista è stata inizializzata
+    if (this.dataSource.data.length > 0) {
+      this.updateDataSourceConfig();
+    }
   }
   
   ngOnDestroy(): void {
@@ -204,6 +211,11 @@ export class ReadingHistoryComponent implements OnInit, OnDestroy {
     
     this.updateGroupedData();
     this.applyFilters();
+    
+    // Assicurati che il paginatore sia configurato dopo il caricamento iniziale
+    setTimeout(() => {
+      this.updateDataSourceConfig();
+    }, 100);
   }
   
   updateGroupedData(): void {
@@ -293,14 +305,22 @@ export class ReadingHistoryComponent implements OnInit, OnDestroy {
     }
     
     this.dataSource.data = filteredReadings;
-    this.updateDataSourceConfig();
+    
+    // Forza l'aggiornamento del paginatore dopo il cambio dati
+    setTimeout(() => {
+      this.updateDataSourceConfig();
+    }, 0);
   }
   
   updateDataSourceConfig(): void {
+    // Configura il sort
     if (this.sort) {
       this.dataSource.sort = this.sort;
     }
+    
+    // Configura il paginatore con pageSize fisso a 5
     if (this.paginator) {
+      this.paginator.pageSize = 5;
       this.dataSource.paginator = this.paginator;
       this.paginator.firstPage();
     }
@@ -330,9 +350,29 @@ export class ReadingHistoryComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.showSuccessSnackBar('Lettura aggiornata con successo');
+      if (result && result.updatedReading) {
+        // Aggiornamento ISTANTANEO dell'array locale - NO chiamata server
+        const updatedReading = result.updatedReading;
+        
+        // Trova e aggiorna l'elemento nell'array principale
+        const readingIndex = this.allReadings.findIndex(r => r.id === reading.id);
+        if (readingIndex !== -1) {
+          // Mantieni il nome dell'appartamento
+          this.allReadings[readingIndex] = {
+            ...updatedReading,
+            apartmentName: reading.apartmentName
+          };
+          
+          // Aggiorna immediatamente la vista
+          this.updateGroupedData();
+          this.applyFilters();
+          
+          this.showSuccessSnackBar('Lettura aggiornata con successo');
+        }
+      } else if (result === true) {
+        // Fallback: se il form non restituisce la lettura aggiornata, ricarica dal server
         this.loadReadings();
+        this.showSuccessSnackBar('Lettura aggiornata con successo');
       }
     });
   }

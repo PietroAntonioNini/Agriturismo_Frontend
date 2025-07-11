@@ -39,7 +39,7 @@
             {{isFirstReading() ? 'Prima lettura' : 'Ultima lettura'}}
           </div>
           <div class="info-value" *ngIf="!isFirstReading()">
-            {{lastReading.lastReading | number:'1.0-2'}} {{getSelectedUtilityConfig()?.unit}}
+            {{lastReading.lastReading | number:'1.0-3'}} {{getSelectedUtilityConfig()?.unit}}
           </div>
           <div class="info-date" *ngIf="!isFirstReading()">
             {{lastReading.lastReadingDate | date:'dd/MM/yyyy'}}
@@ -54,7 +54,7 @@
       <div class="calculation-preview" *ngIf="canCalculateConsumption()">
         <div class="calculation-row">
           <span class="calc-label">Consumo:</span>
-          <span class="calc-value">{{calculatedConsumption | number:'1.0-2'}} {{getSelectedUtilityConfig()?.unit}}</span>
+          <span class="calc-value">{{calculatedConsumption | number:'1.0-3'}} {{getSelectedUtilityConfig()?.unit}}</span>
         </div>
         <div class="calculation-row">
           <span class="calc-label">Costo:</span>
@@ -173,7 +173,7 @@
                    min="0" step="0.01">
             <mat-error>{{getFormControlError('currentReading')}}</mat-error>
             <mat-hint *ngIf="lastReading && !isFirstReading()">
-              Ultima lettura: {{lastReading.lastReading | number:'1.0-2'}} {{getSelectedUtilityConfig()?.unit}}
+              Ultima lettura: {{lastReading.lastReading | number:'1.0-3'}} {{getSelectedUtilityConfig()?.unit}}
             </mat-hint>
           </mat-form-field>
           

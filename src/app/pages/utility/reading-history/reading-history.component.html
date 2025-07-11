@@ -1,6 +1,6 @@
 <div class="reading-history-container">
   
-  <!-- Header più pulito e minimale -->
+  <!-- Header pulito e minimale -->
   <div class="history-header">
     <div class="header-left">
       <div class="header-title">
@@ -50,7 +50,7 @@
     </button>
   </mat-menu>
 
-  <!-- Sezione Filtri riprogettata -->
+  <!-- Sezione Filtri -->
   <mat-card class="filters-section" elevation="2">
     <mat-card-header>
       <mat-card-title>
@@ -200,7 +200,7 @@
     </div>
   </div>
 
-  <!-- Vista Tabella riprogettata -->
+  <!-- Vista Tabella ottimizzata per 5 elementi -->
   <div *ngIf="!isLoading && !errorMessage && dataSource.data.length > 0 && viewMode === 'table'" 
        class="content-section table-section">
     
@@ -210,18 +210,7 @@
           <mat-icon>table_view</mat-icon>
           Dettaglio Letture
         </mat-card-title>
-        <div class="table-actions">
-          <mat-form-field appearance="outline" class="page-size-field">
-            <mat-label>Righe per pagina</mat-label>
-            <mat-select [value]="paginator?.pageSize || 10" 
-                        (selectionChange)="paginator.pageSize = $event.value; paginator.firstPage()">
-              <mat-option [value]="5">5</mat-option>
-              <mat-option [value]="10">10</mat-option>
-              <mat-option [value]="25">25</mat-option>
-              <mat-option [value]="50">50</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
+        <!-- Rimossa la sezione table-actions con page size selector -->
       </mat-card-header>
       
       <mat-card-content class="table-content">
@@ -287,7 +276,7 @@
               </th>
               <td mat-cell *matCellDef="let reading" class="reading-cell">
                 <div class="reading-content">
-                  <span class="reading-value">{{reading.currentReading | number:'1.0-2'}}</span>
+                  <span class="reading-value">{{reading.currentReading | number:'1.0-3'}}</span>
                   <span class="reading-unit">{{getUtilityTypeConfig(reading.type).unit}}</span>
                 </div>
               </td>
@@ -305,7 +294,7 @@
                 <div class="consumption-content">
                   <span class="consumption-value" 
                         [class.high-consumption]="reading.consumption > 200">
-                    {{reading.consumption | number:'1.0-2'}}
+                    {{reading.consumption | number:'1.0-3'}}
                   </span>
                   <span class="consumption-unit">{{getUtilityTypeConfig(reading.type).unit}}</span>
                 </div>
@@ -370,10 +359,10 @@
           </table>
         </div>
         
-        <!-- Paginator -->
+        <!-- Paginator con solo navigazione (massimo 5 elementi per pagina) -->
         <mat-paginator #paginator
-                       [pageSizeOptions]="[5, 10, 25, 50]"
-                       [pageSize]="10"
+                       [pageSize]="5"
+                       [hidePageSize]="true"
                        showFirstLastButtons
                        class="custom-paginator">
         </mat-paginator>
@@ -412,7 +401,7 @@
               <mat-icon color="primary">bolt</mat-icon>
               <div class="summary-details">
                 <span class="summary-label">Elettricità</span>
-                <span class="summary-value">{{group.totals.electricity.consumption | number:'1.0-2'}} kWh</span>
+                <span class="summary-value">{{group.totals.electricity.consumption | number:'1.0-3'}} kWh</span>
                 <span class="summary-cost">{{formatCurrency(group.totals.electricity.cost)}}</span>
               </div>
             </div>
@@ -421,7 +410,7 @@
               <mat-icon style="color: #2196F3">water_drop</mat-icon>
               <div class="summary-details">
                 <span class="summary-label">Acqua</span>
-                <span class="summary-value">{{group.totals.water.consumption | number:'1.0-2'}} m³</span>
+                <span class="summary-value">{{group.totals.water.consumption | number:'1.0-3'}} m³</span>
                 <span class="summary-cost">{{formatCurrency(group.totals.water.cost)}}</span>
               </div>
             </div>
@@ -430,7 +419,7 @@
               <mat-icon style="color: #FF5722">local_fire_department</mat-icon>
               <div class="summary-details">
                 <span class="summary-label">Gas</span>
-                <span class="summary-value">{{group.totals.gas.consumption | number:'1.0-2'}} m³</span>
+                <span class="summary-value">{{group.totals.gas.consumption | number:'1.0-3'}} m³</span>
                 <span class="summary-cost">{{formatCurrency(group.totals.gas.cost)}}</span>
               </div>
             </div>
@@ -450,7 +439,7 @@
                     {{getUtilityTypeConfig(reading.type).icon}}
                   </mat-icon>
                   <span class="reading-date">{{formatDate(reading.readingDate)}}</span>
-                  <span class="reading-consumption">{{reading.consumption | number:'1.0-2'}} {{getUtilityTypeConfig(reading.type).unit}}</span>
+                  <span class="reading-consumption">{{reading.consumption | number:'1.0-3'}} {{getUtilityTypeConfig(reading.type).unit}}</span>
                 </div>
                 <mat-chip-option class="reading-status" 
                                [class.paid]="reading.isPaid" 
