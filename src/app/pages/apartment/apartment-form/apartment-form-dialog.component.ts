@@ -70,6 +70,8 @@ export class ApartmentFormComponent implements OnInit {
   currentApartment: Apartment = {} as Apartment;
   imageFiles: File[] = [];
   imagePreviews: string[] = [];
+  // Cache per le immagini nuove già convertite in base64
+  private newImagePreviews: string[] = [];
 
   // Lista di servizi comuni con le loro icone
   commonServices: CommonService[] = [
@@ -143,6 +145,7 @@ export class ApartmentFormComponent implements OnInit {
         // Clear existing arrays
         this.imageFiles = [];
         this.imagePreviews = [];
+        this.newImagePreviews = [];
         
         // Carica le anteprime delle immagini se disponibili
         if (apartment.images && apartment.images.length > 0) {
@@ -157,7 +160,6 @@ export class ApartmentFormComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Errore durante il caricamento dei dati dell\'appartamento', error);
         this.errorMessage = 'Si è verificato un errore durante il caricamento dei dati dell\'appartamento.';
         this.isLoading = false;
       }
@@ -189,8 +191,10 @@ export class ApartmentFormComponent implements OnInit {
   // Nuovo metodo per filtrare le immagini non valide
   getFilteredPreviews(): string[] {
     // Filtra le immagini vuote o rotte
-    return this.imagePreviews.filter(preview => 
+    const filtered = this.imagePreviews.filter(preview => 
       preview && preview !== '' && !preview.includes('undefined'));
+    
+    return filtered;
   }
 
   onMultipleImagesSelected(event: any): void {
@@ -215,10 +219,12 @@ export class ApartmentFormComponent implements OnInit {
       // Add the file to our array
       this.imageFiles.push(file);
       
-      // Create a preview
+      // Create a preview and cache it
       const reader = new FileReader();
       reader.onload = () => {
-        this.imagePreviews.push(reader.result as string);
+        const base64 = reader.result as string;
+        this.newImagePreviews.push(base64);
+        this.imagePreviews.push(base64);
       };
       reader.readAsDataURL(file);
     });
@@ -257,43 +263,25 @@ export class ApartmentFormComponent implements OnInit {
     }
   }
 
-  // In apartment-form-dialog.component.ts
+  // Metodo per eliminare immagini
   removeImage(index: number): void {
     this.isLoading = true;
     
-    // If we're in edit mode with an existing apartment
     if (this.isEditMode && this.apartmentId) {
-      // Check if this is an existing image from the backend
-      if (this.currentApartment.images && index < this.currentApartment.images.length) {
-        const imagePath = this.currentApartment.images[index];
+      const originalImagesCount = this.currentApartment.images?.length || 0;
+      
+      if (index < originalImagesCount) {
+        // Elimina immagine esistente dal backend
+        const imagePath = this.currentApartment.images![index];
         const fileName = imagePath.split('/').pop() || '';
         
-        console.log(`Eliminazione immagine: ${fileName} da appartamento ${this.apartmentId}`);
-        
-        // Rimuovi l'immagine dagli array
-        this.currentApartment.images = this.currentApartment.images.filter((_, i) => i !== index);
-        this.imagePreviews.splice(index, 1);
-        
-        // Call API to delete the file from backend
         this.apiService.deleteFile('apartments', this.apartmentId, `images/${fileName}`)
-          .pipe(
-            finalize(() => {
-              this.isLoading = false;
-            })
-          )
+          .pipe(finalize(() => this.isLoading = false))
           .subscribe({
             next: () => {
-              console.log(`Immagine ${fileName} eliminata con successo`);
-              
-              // Pulisci la cache delle immagini
-              this.imageService.clearCache();
-              
-              // Rimuovi TUTTI gli elementi vuoti dagli array
-              this.currentApartment.images = this.currentApartment.images?.filter(img => img && img !== '') || [];
-              this.imagePreviews = this.imagePreviews?.filter(img => img && img !== '') || [];
-              
-              // Forza ricaricamento dati dal server
-              this.forceFreshReload();
+              // Rimuovi dall'array e ricostruisci le preview
+              this.currentApartment.images!.splice(index, 1);
+              this.rebuildImagePreviews();
               
               this.snackBar.open('Immagine eliminata con successo', '', {
                 duration: 2000,
@@ -302,11 +290,6 @@ export class ApartmentFormComponent implements OnInit {
               });
             },
             error: (error) => {
-              console.error('Errore durante l\'eliminazione dell\'immagine', error);
-              
-              // Ricarica in caso di errore
-              this.forceFreshReload();
-              
               this.snackBar.open('Errore nella rimozione dell\'immagine', '', {
                 duration: 2000,
                 horizontalPosition: 'center',
@@ -315,49 +298,64 @@ export class ApartmentFormComponent implements OnInit {
             }
           });
       } else {
-        // This is a newly added image not yet on the backend
-        this.imagePreviews.splice(index, 1);
-        this.imageFiles.splice(index, 1);
+        // Elimina immagine nuova (solo frontend)
+        const newImageIndex = index - originalImagesCount;
+        
+        if (newImageIndex >= 0 && newImageIndex < this.imageFiles.length) {
+          this.imageFiles.splice(newImageIndex, 1);
+          if (newImageIndex < this.newImagePreviews.length) {
+            this.newImagePreviews.splice(newImageIndex, 1);
+          }
+        }
+        
+        this.rebuildImagePreviews();
         this.isLoading = false;
+        
+        this.snackBar.open('Immagine rimossa', '', {
+          duration: 2000,
+          horizontalPosition: 'center',
+          verticalPosition: 'bottom'
+        });
       }
     } else {
-      // For a new apartment that hasn't been saved yet
-      this.imagePreviews.splice(index, 1);
-      this.imageFiles.splice(index, 1);
-      this.isLoading = false;
-    }
-  }
-
-  // Force a reload without the invalid third parameter
-  private forceFreshReload(): void {
-    if (this.apartmentId) {
-      this.apiService.getById<Apartment>('apartments', this.apartmentId).subscribe({
-        next: (apartment) => {
-          // Garantisci che images sia sempre un array
-          if (!apartment.images) {
-            apartment.images = [];
-          }
-          
-          this.currentApartment = apartment;
-          
-          // Clear arrays and rebuild them
-          this.imagePreviews = [];
-          this.imageFiles = [];
-          
-          if (apartment.images && apartment.images.length > 0) {
-            apartment.images.forEach((imageUrl) => {
-              // Add timestamp to URL for cache busting
-              const fullUrl = this.getImageUrl(imageUrl);
-              this.imagePreviews.push(fullUrl);
-            });
-          }
-        },
-        error: (error) => {
-          console.error('Errore durante il caricamento dei dati aggiornati', error);
+      // Nuovo appartamento - elimina solo dal frontend
+      if (index < this.imageFiles.length) {
+        this.imageFiles.splice(index, 1);
+        if (index < this.newImagePreviews.length) {
+          this.newImagePreviews.splice(index, 1);
         }
+      }
+      
+      this.rebuildImagePreviews();
+      this.isLoading = false;
+      
+      this.snackBar.open('Immagine rimossa', '', {
+        duration: 2000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
       });
     }
   }
+  
+  // Metodo per ricostruire completamente l'array imagePreviews
+  private rebuildImagePreviews(): void {
+    this.imagePreviews = [];
+    
+    // Aggiungi le immagini esistenti dal backend
+    if (this.currentApartment.images && this.currentApartment.images.length > 0) {
+      this.currentApartment.images.forEach((imageUrl) => {
+        const fullUrl = this.getImageUrl(imageUrl);
+        this.imagePreviews.push(fullUrl);
+      });
+    }
+    
+    // Aggiungi le nuove immagini dal cache
+    this.newImagePreviews.forEach((base64) => {
+      this.imagePreviews.push(base64);
+    });
+  }
+
+
 
   getImageUrl(url: string | undefined): string {
     if (!url || url === '') {
@@ -366,7 +364,7 @@ export class ApartmentFormComponent implements OnInit {
     
     // If path already starts with http, return as is
     if (url.startsWith('http')) {
-      return `${url}?t=${new Date().getTime()}`;
+      return url;
     }
     
     // Make sure path starts with /static/
@@ -374,9 +372,9 @@ export class ApartmentFormComponent implements OnInit {
       url = '/static' + url;
     }
     
-    // Prepend API URL and add timestamp to prevent caching
+    // Il backend gestisce automaticamente la sincronizzazione
     const apiUrl = environment.apiUrl;
-    return `${apiUrl}${url}?t=${new Date().getTime()}`;
+    return `${apiUrl}${url}`;
   }
 
   addAmenity(event: MatChipInputEvent): void {
@@ -416,7 +414,7 @@ export class ApartmentFormComponent implements OnInit {
       amenities: this.selectedAmenities
     };
 
-    console.log('Submitting apartment with amenities:', this.selectedAmenities);
+
 
      // Assicurati di inviare solo le immagini valide
     const validImages = this.currentApartment.images ? 
@@ -450,9 +448,6 @@ export class ApartmentFormComponent implements OnInit {
         next: (updatedApartment) => {
           this.isLoading = false;
 
-          // Pulisci la cache delle immagini
-          this.imageService.clearCache();
-
           this.snackBar.open('Appartamento aggiornato con successo', 'Chiudi', {
             duration: 3000,
             horizontalPosition: 'end',
@@ -467,7 +462,6 @@ export class ApartmentFormComponent implements OnInit {
           });
         },
         error: (error) => {
-          console.error('Errore durante l\'aggiornamento dell\'appartamento', error);
           this.errorMessage = 'Si è verificato un errore durante l\'aggiornamento dell\'appartamento.';
           this.isLoading = false;
         }
@@ -481,9 +475,6 @@ export class ApartmentFormComponent implements OnInit {
       ).subscribe({
         next: (apartment) => {
           this.isLoading = false;
-          
-          // Pulisci la cache delle immagini dopo il salvataggio
-          this.imageService.clearCache();
           
           this.snackBar.open('Appartamento creato con successo', 'Chiudi', {
             duration: 3000,
@@ -499,7 +490,6 @@ export class ApartmentFormComponent implements OnInit {
           });
         },
         error: (error) => {
-          console.error('Errore durante la creazione dell\'appartamento', error);
           this.errorMessage = 'Si è verificato un errore durante la creazione dell\'appartamento.';
           this.isLoading = false;
         }

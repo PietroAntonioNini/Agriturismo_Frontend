@@ -50,11 +50,11 @@
         <div *ngIf="hasValidImages()" class="image-carousel">
           <div class="carousel-container">
             <div class="carousel-inner" #carouselInner>
-              <div *ngFor="let image of getValidImages(); let i = index" 
+              <div *ngFor="let imageUrl of getValidImages(); let i = index" 
                    class="carousel-item"
                    [class.active]="i === currentImageIndex">
-                <img [src]="getImageUrl(image)" [alt]="apartment.name" class="carousel-image"
-                    (click)="openImagePreview(image)">
+                <img [src]="imageUrl" [alt]="apartment.name" class="carousel-image"
+                    (click)="openImagePreview(imageUrl)">
               </div>
             </div>
             <button *ngIf="getValidImages().length > 1" class="carousel-control prev" (click)="scrollCarousel(-1)">
@@ -65,7 +65,7 @@
             </button>
           </div>
           <div *ngIf="getValidImages().length > 1" class="carousel-dots">
-            <span *ngFor="let image of getValidImages(); let i = index" 
+            <span *ngFor="let imageUrl of getValidImages(); let i = index" 
                   class="carousel-dot" 
                   [class.active]="currentImageIndex === i"
                   (click)="navigateToImage(i)">

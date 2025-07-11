@@ -97,6 +97,8 @@ export class ApartmentDetailDialogComponent implements OnInit {
   activeTenant: Tenant | null = null;
   hasActiveTenant = false;
   
+
+  
   // Oggetto per gestire i testi dei tooltip
   tooltipTexts: { [key: string]: string } = {
     'name': 'Copia',
@@ -132,7 +134,6 @@ export class ApartmentDetailDialogComponent implements OnInit {
         this.loadActiveLeases(id);
       },
       error: (error) => {
-        console.error('Errore durante il caricamento dell\'appartamento', error);
         this.errorMessage = 'Si è verificato un errore durante il caricamento dei dati dell\'appartamento.';
         this.isLoading = false;
       }
@@ -155,7 +156,6 @@ export class ApartmentDetailDialogComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Errore durante il caricamento dei contratti', error);
         this.errorMessage = 'Errore nel caricamento dei contratti attivi';
         this.isLoading = false;
       }
@@ -171,7 +171,6 @@ export class ApartmentDetailDialogComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Errore durante il caricamento dell\'inquilino', error);
         this.isLoading = false;
       }
     });
@@ -193,7 +192,6 @@ export class ApartmentDetailDialogComponent implements OnInit {
               this.dialogRef.close({ deleted: true });
             },
             error: (error) => {
-              console.error('Errore durante l\'eliminazione dell\'appartamento', error);
               this.snackBar.open('Si è verificato un errore durante l\'eliminazione dell\'appartamento', 'Chiudi', {
                 duration: 3000,
                 horizontalPosition: 'end',
@@ -226,21 +224,19 @@ export class ApartmentDetailDialogComponent implements OnInit {
       relativePath = '/static' + relativePath;
     }
     
-    // Aggiungi timestamp per prevenire la cache
-    const timestamp = new Date().getTime();
-    return `${environment.apiUrl}${relativePath}?t=${timestamp}`;
+    // Non serve più timestamp - il backend gestisce automaticamente la sincronizzazione
+    return `${environment.apiUrl}${relativePath}`;
   }
 
   // Metodo per controllare se l'appartamento ha immagini valide
   hasValidImages(): boolean {
-    return Boolean(this.apartment?.images && Array.isArray(this.apartment.images) && this.apartment.images.length > 0);
+    return Boolean(this.apartment?.images && this.apartment.images.length > 0);
   }
 
   // Metodo per ottenere solo le immagini valide
   getValidImages(): string[] {
-    if (!this.apartment || !this.apartment.images || !Array.isArray(this.apartment.images)) return [];
-    return this.apartment.images.filter(img => 
-      img && img !== '' && !img.includes('undefined') && img.length > 5);
+    if (!this.apartment?.images) return [];
+    return this.apartment.images.filter(img => img && img !== '' && !img.includes('undefined'));
   }
 
   close(): void {
@@ -349,9 +345,7 @@ export class ApartmentDetailDialogComponent implements OnInit {
   }
 
   // Metodo per aprire un visualizzatore immagine più grande
-  openImagePreview(imagePath: string): void {
-    const imageUrl = this.getImageUrl(imagePath);
-    
+  openImagePreview(imageUrl: string): void {
     this.dialog.open(ImagePreviewDialogComponent, {
       width: '90%',
       maxWidth: '1200px',
