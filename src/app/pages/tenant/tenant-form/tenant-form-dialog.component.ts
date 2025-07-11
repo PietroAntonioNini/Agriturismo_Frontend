@@ -215,24 +215,18 @@ export class TenantFormComponent implements OnInit {
       return '';
     }
     
-    // Usa l'immagine in cache base64 se disponibile
-    if (url === this.currentTenant.documentFrontImage && this.documentFrontImageSrc) {
-      return this.documentFrontImageSrc;
+    // Se il percorso inizia già con http, restituiscilo come è
+    if (url.startsWith('http')) {
+      return url;
     }
-    
-    if (url === this.currentTenant.documentBackImage && this.documentBackImageSrc) {
-      return this.documentBackImageSrc;
-    }
-    
-    // Aggiungi timestamp per evitare il caching
-    const timestamp = new Date().getTime();
     
     // Gestisci il prefisso /static/ se necessario
     if (!url.startsWith('/static/') && url.startsWith('/')) {
       url = '/static' + url;
     }
     
-    return `${environment.apiUrl}${url}?t=${timestamp}`;
+    // Il backend gestisce automaticamente la sincronizzazione
+    return `${environment.apiUrl}${url}`;
   }
 
   getFormControlError(controlName: string): string {
@@ -259,7 +253,7 @@ export class TenantFormComponent implements OnInit {
   onFrontImageSelected(event: any): void {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-      console.log('File fronte selezionato:', file.name);
+
       
       // Mostro un indicatore di caricamento
       this.documentLoadingFront = true;
@@ -267,7 +261,6 @@ export class TenantFormComponent implements OnInit {
       // Crea subito l'anteprima dell'immagine per feedback immediato
       const reader = new FileReader();
       reader.onload = () => {
-        console.log('Anteprima fronte generata');
         this.frontPreview = reader.result as string;
         this.documentFrontImageSrc = reader.result as string;
         this.cdr.markForCheck();
@@ -286,15 +279,13 @@ export class TenantFormComponent implements OnInit {
         this.documentLoadingFront = false;
         this.cdr.markForCheck();
       }
-    } else {
-      console.log('Nessun file fronte selezionato');
     }
   }
 
   onBackImageSelected(event: any): void {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
-      console.log('File retro selezionato:', file.name);
+
       
       // Mostro un indicatore di caricamento
       this.documentLoadingBack = true;
@@ -302,7 +293,6 @@ export class TenantFormComponent implements OnInit {
       // Crea subito l'anteprima dell'immagine per feedback immediato
       const reader = new FileReader();
       reader.onload = () => {
-        console.log('Anteprima retro generata');
         this.backPreview = reader.result as string;
         this.documentBackImageSrc = reader.result as string;
         this.cdr.markForCheck();
@@ -321,8 +311,6 @@ export class TenantFormComponent implements OnInit {
         this.documentLoadingBack = false;
         this.cdr.markForCheck();
       }
-    } else {
-      console.log('Nessun file retro selezionato');
     }
   }
 
@@ -332,7 +320,7 @@ export class TenantFormComponent implements OnInit {
     this.documentLoadingFront = true;
     this.cdr.markForCheck();
     
-    console.log(`Caricamento fronte documento per l'inquilino ID: ${tenantId}`);
+
     
     // Creiamo un FormData da inviare al server
     const formData = new FormData();
@@ -341,8 +329,6 @@ export class TenantFormComponent implements OnInit {
     // Usa il servizio API per caricare il file
     this.apiService.uploadFile('tenants', tenantId, 'documents/front', file).subscribe({
       next: (response) => {
-        console.log('Documento fronte caricato con successo:', response);
-        
         // Aggiorna l'inquilino con il nuovo URL dell'immagine
         if (response.imageUrl) {
           this.currentTenant.documentFrontImage = response.imageUrl;
@@ -385,7 +371,7 @@ export class TenantFormComponent implements OnInit {
     this.documentLoadingBack = true;
     this.cdr.markForCheck();
     
-    console.log(`Caricamento retro documento per l'inquilino ID: ${tenantId}`);
+
     
     // Creiamo un FormData da inviare al server
     const formData = new FormData();
@@ -394,8 +380,6 @@ export class TenantFormComponent implements OnInit {
     // Usa il servizio API per caricare il file
     this.apiService.uploadFile('tenants', tenantId, 'documents/back', file).subscribe({
       next: (response) => {
-        console.log('Documento retro caricato con successo:', response);
-        
         // Aggiorna l'inquilino con il nuovo URL dell'immagine
         if (response.imageUrl) {
           this.currentTenant.documentBackImage = response.imageUrl;

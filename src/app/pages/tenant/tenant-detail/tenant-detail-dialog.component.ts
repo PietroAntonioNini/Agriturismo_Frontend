@@ -97,8 +97,7 @@ export class TenantDetailDialogComponent implements OnInit {
   documentLoadingFront: boolean = false;
   documentLoadingBack: boolean = false;
   
-  // Cache per gli URL delle immagini per evitare gli errori NG0100
-  private imageUrlCache: { [key: string]: string } = {};
+
   
   // Oggetto per gestire i testi dei tooltip per ogni elemento
   tooltipTexts: { [key: string]: string } = {
@@ -133,36 +132,22 @@ export class TenantDetailDialogComponent implements OnInit {
     }
   }
 
-  loadTenantData(id: number, forceRefresh: boolean = false): void {
+  loadTenantData(id: number): void {
     this.isLoading = true;
     this.errorMessage = null;
     this.documentLoadingFront = false;
     this.documentLoadingBack = false;
     
-    // Pulisci la cache se forceRefresh è true
-    if (forceRefresh) {
-      this.imageUrlCache = {};
-      this.documentFrontImageSrc = '';
-      this.documentBackImageSrc = '';
-    }
-    
     this.cdr.markForCheck();
 
-    // Aggiungi timestamp per evitare la cache del browser
-    const timestamp = new Date().getTime();
-    const params = { _t: timestamp.toString() };
-
-    this.apiService.getById<Tenant>('tenants', id, params).subscribe({
+    // Il backend gestisce automaticamente la sincronizzazione
+    this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.tenant = tenant;
-        
-        // Carica immediatamente le immagini
         this.loadDocumentImages(tenant);
-        
         this.loadTenantLeases(id);
       },
       error: (error) => {
-        console.error('Errore durante il caricamento dell\'inquilino', error);
         this.errorMessage = 'Si è verificato un errore durante il caricamento dei dati dell\'inquilino.';
         this.isLoading = false;
         this.cdr.markForCheck();
@@ -171,69 +156,10 @@ export class TenantDetailDialogComponent implements OnInit {
   }
 
   loadDocumentImages(tenant: Tenant): void {
-    // Carica l'immagine fronte se presente
-    if (tenant.documentFrontImage) {
-      this.documentLoadingFront = true;
-      this.cdr.markForCheck();
-      
-      this.imageService.preloadImage(tenant.documentFrontImage).pipe(
-        retry(3),
-        delay(300),
-        catchError(error => {
-          console.error('Errore caricamento immagine fronte:', error);
-          return of('assets/images/no-image.png');
-        })
-      ).subscribe({
-        next: (dataUrl) => {
-          this.documentFrontImageSrc = dataUrl;
-          this.documentLoadingFront = false;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.documentLoadingFront = false;
-          this.cdr.markForCheck();
-          
-          // Se il caricamento fallisce, riprova dopo un breve intervallo
-          setTimeout(() => {
-            if (tenant.documentFrontImage) {
-              this.retryLoadImage(tenant.documentFrontImage, 'front');
-            }
-          }, 500);
-        }
-      });
-    }
-    
-    // Carica l'immagine retro se presente
-    if (tenant.documentBackImage) {
-      this.documentLoadingBack = true;
-      this.cdr.markForCheck();
-      
-      this.imageService.preloadImage(tenant.documentBackImage).pipe(
-        retry(3),
-        delay(300),
-        catchError(error => {
-          console.error('Errore caricamento immagine retro:', error);
-          return of('assets/images/no-image.png');
-        })
-      ).subscribe({
-        next: (dataUrl) => {
-          this.documentBackImageSrc = dataUrl;
-          this.documentLoadingBack = false;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.documentLoadingBack = false;
-          this.cdr.markForCheck();
-          
-          // Se il caricamento fallisce, riprova dopo un breve intervallo
-          setTimeout(() => {
-            if (tenant.documentBackImage) {
-              this.retryLoadImage(tenant.documentBackImage, 'back');
-            }
-          }, 500);
-        }
-      });
-    }
+    // Il backend garantisce che solo immagini esistenti sono nel database
+    this.documentFrontImageSrc = tenant.documentFrontImage ? this.getImageUrl(tenant.documentFrontImage) : '';
+    this.documentBackImageSrc = tenant.documentBackImage ? this.getImageUrl(tenant.documentBackImage) : '';
+    this.cdr.markForCheck();
   }
 
   // Metodo per ritentare il caricamento delle immagini
@@ -355,51 +281,24 @@ export class TenantDetailDialogComponent implements OnInit {
     return new Date(date).toLocaleDateString('it-IT');
   }
 
-  // Metodo migliorato per getImageUrl con timestamp e anti-caching più efficace
   getImageUrl(relativePath: string): string {
     // Se il percorso è vuoto o null, restituisci un'immagine placeholder
     if (!relativePath) {
       return 'assets/images/no-image.png';
     }
     
-    // Usa l'immagine in cache base64 se disponibile
-    if (relativePath === this.tenant?.documentFrontImage && this.documentFrontImageSrc) {
-      return this.documentFrontImageSrc;
-    }
-    
-    if (relativePath === this.tenant?.documentBackImage && this.documentBackImageSrc) {
-      return this.documentBackImageSrc;
-    }
-    
-    // Se l'URL è già stato generato per questo percorso, riutilizzalo
-    if (this.imageUrlCache[relativePath]) {
-      return this.imageUrlCache[relativePath];
-    }
-    
-    // Genera un nuovo URL con timestamp e memorizzalo nella cache
-    const timestamp = new Date().getTime();
-    const nonce = Math.random().toString(36).substring(2, 15); // Aggiunge un valore casuale
-    let url: string;
-    
+    // Se il percorso inizia già con http, restituiscilo come è
     if (relativePath.startsWith('http')) {
-      // Per URL esterni, appendi un parametro di query
-      const separator = relativePath.includes('?') ? '&' : '?';
-      url = `${relativePath}${separator}v=${timestamp}&n=${nonce}`;
-    } else {
-      // Per percorsi relativi, gestisci il prefisso correttamente
-      if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
-        relativePath = '/static' + relativePath;
-      }
-      
-      // Aggiungi timestamp come parametro di query
-      const separator = relativePath.includes('?') ? '&' : '?';
-      url = `${environment.apiUrl}${relativePath}${separator}v=${timestamp}&n=${nonce}`;
+      return relativePath;
     }
     
-    // Salva nella cache
-    this.imageUrlCache[relativePath] = url;
+    // Assicurati che il percorso inizi con /static/
+    if (!relativePath.startsWith('/static/') && relativePath.startsWith('/')) {
+      relativePath = '/static' + relativePath;
+    }
     
-    return url;
+    // Il backend gestisce automaticamente la sincronizzazione
+    return `${environment.apiUrl}${relativePath}`;
   }
   
   downloadDocument(docType: 'front' | 'back', filename: string): void {
@@ -571,11 +470,8 @@ export class TenantDetailDialogComponent implements OnInit {
           this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/front')
             .subscribe({
               next: () => {
-                // Rimuovi la vecchia immagine dalla cache
-                if (this.tenant?.documentFrontImage) {
-                  delete this.imageUrlCache[this.tenant.documentFrontImage];
-                  this.documentFrontImageSrc = ''; // Pulisci anche la cache base64
-                }
+                // Pulisci l'immagine precedente
+                this.documentFrontImageSrc = '';
                 
                 // Dopo l'eliminazione, carica la nuova immagine
                 setTimeout(() => {
@@ -623,11 +519,8 @@ export class TenantDetailDialogComponent implements OnInit {
           this.apiService.deleteFile('tenants', this.tenant!.id, 'documents/back')
             .subscribe({
               next: () => {
-                // Rimuovi la vecchia immagine dalla cache
-                if (this.tenant?.documentBackImage) {
-                  delete this.imageUrlCache[this.tenant.documentBackImage];
-                  this.documentBackImageSrc = ''; // Pulisci anche la cache base64
-                }
+                // Pulisci l'immagine precedente
+                this.documentBackImageSrc = '';
                 
                 // Dopo l'eliminazione, carica la nuova immagine
                 setTimeout(() => {
@@ -711,12 +604,10 @@ export class TenantDetailDialogComponent implements OnInit {
         // Aggiorna il modello locale con l'URL dell'immagine dal server
         if (response && response.imageUrl) {
           setTimeout(() => {
-            // Rimuovi i vecchi URL dalla cache
-            if (type === 'front' && this.tenant?.documentFrontImage) {
-              delete this.imageUrlCache[this.tenant.documentFrontImage];
+            // Aggiorna l'URL dell'immagine nel tenant
+            if (type === 'front' && this.tenant) {
               this.tenant.documentFrontImage = response.imageUrl;
-            } else if (type === 'back' && this.tenant?.documentBackImage) {
-              delete this.imageUrlCache[this.tenant.documentBackImage];  
+            } else if (type === 'back' && this.tenant) {
               this.tenant.documentBackImage = response.imageUrl;
             }
             
@@ -760,7 +651,7 @@ export class TenantDetailDialogComponent implements OnInit {
         
         // Ricarica i dati originali in caso di errore
         setTimeout(() => {
-          this.loadTenantData(this.tenant!.id, true); // Forza refresh
+          this.loadTenantData(this.tenant!.id);
         }, 300);
       }
     });
@@ -783,8 +674,8 @@ export class TenantDetailDialogComponent implements OnInit {
             this.snackBar.open(`Attenzione: L'immagine potrebbe non essere stata salvata correttamente`, 'Riprova', {
               duration: 5000
             }).onAction().subscribe(() => {
-              // Se l'utente clicca su "Riprova", ricarichiamo i dati del tenant con refresh forzato
-              this.loadTenantData(tenantId, true);
+              // Se l'utente clicca su "Riprova", ricarichiamo i dati del tenant
+              this.loadTenantData(tenantId);
             });
           } else {
             // Se l'immagine esiste, aggiorna il tenant locale e l'URL
@@ -829,11 +720,6 @@ export class TenantDetailDialogComponent implements OnInit {
         this.documentFrontImageSrc = '';
         this.tenant!.documentFrontImage = '';
         
-        // Rimuovi l'URL dalla cache
-        if (currentUrl) {
-          delete this.imageUrlCache[currentUrl];
-        }
-        
         // Aggiungi parametri anti-cache
         const timestamp = Date.now().toString();
         const nonce = Math.random().toString(36).substring(2, 15);
@@ -852,8 +738,8 @@ export class TenantDetailDialogComponent implements OnInit {
             this.documentLoadingFront = false;
             this.cdr.markForCheck();
             
-            // Ricarica il tenant per confermare l'eliminazione sul server con refresh forzato
-            setTimeout(() => this.loadTenantData(this.tenant!.id, true), 500);
+            // Ricarica il tenant per confermare l'eliminazione sul server
+            setTimeout(() => this.loadTenantData(this.tenant!.id), 500);
           },
           error: (error) => {
             console.error('Errore nella rimozione del documento', error);
@@ -861,8 +747,8 @@ export class TenantDetailDialogComponent implements OnInit {
               duration: 3000 
             });
             
-            // Ricarica il tenant per assicurarsi che i dati siano coerenti con refresh forzato
-            this.loadTenantData(this.tenant!.id, true);
+            // Ricarica il tenant per assicurarsi che i dati siano coerenti
+            this.loadTenantData(this.tenant!.id);
             
             this.isLoading = false;
             this.documentLoadingFront = false;
@@ -890,11 +776,6 @@ export class TenantDetailDialogComponent implements OnInit {
         this.documentBackImageSrc = '';
         this.tenant!.documentBackImage = '';
         
-        // Rimuovi l'URL dalla cache
-        if (currentUrl) {
-          delete this.imageUrlCache[currentUrl];
-        }
-        
         // Aggiungi parametri anti-cache
         const timestamp = Date.now().toString();
         const nonce = Math.random().toString(36).substring(2, 15);
@@ -913,8 +794,8 @@ export class TenantDetailDialogComponent implements OnInit {
             this.documentLoadingBack = false;
             this.cdr.markForCheck();
             
-            // Ricarica il tenant per confermare l'eliminazione sul server con refresh forzato
-            setTimeout(() => this.loadTenantData(this.tenant!.id, true), 500);
+            // Ricarica il tenant per confermare l'eliminazione sul server
+            setTimeout(() => this.loadTenantData(this.tenant!.id), 500);
           },
           error: (error) => {
             console.error('Errore nella rimozione del documento', error);
@@ -922,8 +803,8 @@ export class TenantDetailDialogComponent implements OnInit {
               duration: 3000 
             });
             
-            // Ricarica il tenant per assicurarsi che i dati siano coerenti con refresh forzato
-            this.loadTenantData(this.tenant!.id, true);
+            // Ricarica il tenant per assicurarsi che i dati siano coerenti
+            this.loadTenantData(this.tenant!.id);
             
             this.isLoading = false;
             this.documentLoadingBack = false;

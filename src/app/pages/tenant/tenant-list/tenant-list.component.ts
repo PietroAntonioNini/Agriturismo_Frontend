@@ -95,21 +95,15 @@ export class TenantListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
   
-    // Aggiungi timestamp per evitare caching
-    const timestamp = new Date().getTime();
-    const nonce = Math.random().toString(36).substring(2, 15);
-    
-    // Carica tutti gli inquilini con parametro anti-cache
-    this.apiService.getAll<Tenant>('tenants', { _t: timestamp, n: nonce }).subscribe({
+    // Il backend gestisce automaticamente la sincronizzazione
+    this.apiService.getAll<Tenant>('tenants').subscribe({
       next: (tenants) => {
         if (tenants && tenants.length > 0) {
           // Ottimizzazione: utilizza Promise.all per le chiamate parallele
           const promises = tenants.map(tenant => 
             this.apiService.getAll<any>('leases', {
               tenantId: tenant.id.toString(),
-              status: 'active',
-              _t: timestamp,
-              n: nonce
+              status: 'active'
             }).toPromise()
             .then(leases => {
               tenant.hasLease = leases && leases.length > 0;
