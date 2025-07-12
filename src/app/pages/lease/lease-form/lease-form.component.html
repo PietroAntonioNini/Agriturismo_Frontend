@@ -36,32 +36,48 @@
                 <mat-card class="inner-card">
                   <mat-card-content>
                     <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>Inquilino</mat-label>
-                      <mat-select formControlName="tenantId">
-                        <mat-option *ngFor="let tenant of tenants" [value]="tenant.id">
-                          {{tenant.firstName}} {{tenant.lastName}}
+                      <mat-label>Cerca Inquilino</mat-label>
+                      <input type="text"
+                             placeholder="Digita per cercare..."
+                             matInput
+                             formControlName="tenant"
+                             [matAutocomplete]="autoTenant">
+                      <mat-autocomplete #autoTenant="matAutocomplete" [displayWith]="displayTenant">
+                        <mat-option *ngFor="let tenant of filteredTenants | async" [value]="tenant">
+                          <div class="option-display">
+                            <mat-icon>person</mat-icon>
+                            <span>{{tenant.firstName}} {{tenant.lastName}}</span>
+                          </div>
                         </mat-option>
-                      </mat-select>
-                      <mat-hint>Seleziona l'inquilino per questo contratto</mat-hint>
-                      <mat-error *ngIf="partiesFormGroup.get('tenantId')?.hasError('required')">
+                      </mat-autocomplete>
+                      <mat-hint>Inizia a digitare il nome o cognome dell'inquilino</mat-hint>
+                      <mat-error *ngIf="partiesFormGroup.get('tenant')?.hasError('required')">
                         L'inquilino è obbligatorio
                       </mat-error>
                     </mat-form-field>
                     
-                    <div *ngIf="selectedTenant" class="tenant-preview">
-                      <div class="preview-row">
-                        <span class="preview-label">Nome Completo:</span>
-                        <span>{{selectedTenant.firstName}} {{selectedTenant.lastName}}</span>
-                      </div>
-                      <div class="preview-row">
-                        <span class="preview-label">Documento:</span>
-                        <span>{{selectedTenant.documentType}} {{selectedTenant.documentNumber}}</span>
-                      </div>
-                      <div class="preview-row">
-                        <span class="preview-label">Contatto:</span>
-                        <span>{{selectedTenant.email}} - {{selectedTenant.phone}}</span>
-                      </div>
-                    </div>
+                    <mat-card *ngIf="selectedTenant" class="selection-card tenant-card" @fadeInOut>
+                      <mat-card-header>
+                        <mat-icon mat-card-avatar>account_circle</mat-icon>
+                        <mat-card-title>{{selectedTenant.firstName}} {{selectedTenant.lastName}}</mat-card-title>
+                        <mat-card-subtitle>Dettagli Inquilino Selezionato</mat-card-subtitle>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <div class="detail-row">
+                          <mat-icon>badge</mat-icon>
+                          <span>{{selectedTenant.documentType}}</span><span class="ms-2 text-uppercase">{{selectedTenant.documentNumber}}</span>
+                        </div>
+                        <div *ngIf="selectedTenant.email" class="detail-row">
+                          <mat-icon>email</mat-icon>
+                          <span>{{selectedTenant.email}}</span>
+                        </div>
+                        <div class="detail-row">
+                          <mat-icon>phone</mat-icon>
+                          <span>{{selectedTenant.phone}}</span>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+
                   </mat-card-content>
                 </mat-card>
                 
@@ -73,28 +89,48 @@
                 <mat-card class="inner-card">
                   <mat-card-content>
                     <mat-form-field appearance="outline" class="full-width">
-                      <mat-label>Appartamento</mat-label>
-                      <mat-select formControlName="apartmentId">
-                        <mat-option *ngFor="let apartment of apartments" [value]="apartment.id">
-                          {{apartment.name}}
+                      <mat-label>Cerca Appartamento</mat-label>
+                       <input type="text"
+                             placeholder="Digita per cercare..."
+                             matInput
+                             formControlName="apartment"
+                             [matAutocomplete]="autoApartment">
+                      <mat-autocomplete #autoApartment="matAutocomplete" [displayWith]="displayApartment">
+                        <mat-option *ngFor="let apartment of filteredApartments | async" [value]="apartment">
+                           <div class="option-display">
+                            <mat-icon>home_work</mat-icon>
+                            <span>{{apartment.name}}</span>
+                          </div>
                         </mat-option>
-                      </mat-select>
-                      <mat-hint>Seleziona l'immobile oggetto della locazione</mat-hint>
-                      <mat-error *ngIf="partiesFormGroup.get('apartmentId')?.hasError('required')">
+                      </mat-autocomplete>
+                      <mat-hint>Inizia a digitare il nome dell'appartamento</mat-hint>
+                      <mat-error *ngIf="partiesFormGroup.get('apartment')?.hasError('required')">
                         L'appartamento è obbligatorio
                       </mat-error>
                     </mat-form-field>
                     
-                    <div *ngIf="selectedApartment" class="apartment-preview">
-                      <div class="preview-row">
-                        <span class="preview-label">Indirizzo:</span>
-                        <span>{{selectedApartment.name}}</span>
-                      </div>
-                      <div class="preview-row">
-                        <span class="preview-label">Caratteristiche:</span>
-                        <span>{{selectedApartment.rooms}} vani, {{selectedApartment.bathrooms}} bagni, {{selectedApartment.squareMeters}}mq</span>
-                      </div>
-                    </div>
+                     <mat-card *ngIf="selectedApartment" class="selection-card apartment-card" @fadeInOut>
+                      <mat-card-header>
+                        <mat-icon mat-card-avatar>location_city</mat-icon>
+                        <mat-card-title>{{selectedApartment.name}}</mat-card-title>
+                        <mat-card-subtitle>Dettagli Immobile Selezionato</mat-card-subtitle>
+                      </mat-card-header>
+                      <mat-card-content>
+                        <div class="detail-row">
+                          <mat-icon>straighten</mat-icon>
+                          <span>{{selectedApartment.squareMeters}} m²</span>
+                        </div>
+                        <div class="detail-row">
+                          <mat-icon>meeting_room</mat-icon>
+                          <span>{{selectedApartment.rooms}} stanze</span>
+                        </div>
+                        <div class="detail-row">
+                          <mat-icon>bathtub</mat-icon>
+                          <span class="me-1">{{selectedApartment.bathrooms}}</span> <span *ngIf="selectedApartment.bathrooms > 1">bagni</span><span *ngIf="selectedApartment.bathrooms === 1">bagno</span>
+                        </div>
+                      </mat-card-content>
+                    </mat-card>
+
                   </mat-card-content>
                 </mat-card>
               </div>
@@ -119,7 +155,7 @@
                 
                 <mat-card class="inner-card">
                   <mat-card-content>
-                    <div class="form-row">
+                    <div class="form-grid date-grid">
                       <mat-form-field appearance="outline">
                         <mat-label>Data Inizio</mat-label>
                         <input matInput [matDatepicker]="startPicker" formControlName="startDate">
@@ -155,42 +191,42 @@
                 
                 <mat-card class="inner-card">
                   <mat-card-content>
-                    <div class="form-row">
-                      <mat-form-field appearance="outline">
-                        <mat-label>Canone Mensile (€)</mat-label>
-                        <input matInput type="number" formControlName="monthlyRent" min="0">
+                    <div class="form-grid">
+                      <mat-form-field appearance="outline" class="full-width-field">
+                        <mat-label>Canone Mensile</mat-label>
+                        <input matInput type="number" formControlName="monthlyRent" min="0" placeholder="Es. 500">
                         <span matTextPrefix>€&nbsp;</span>
-                        <mat-hint>Importo mensile del canone</mat-hint>
+                        <mat-hint>Importo mensile del canone di locazione</mat-hint>
                         <mat-error *ngIf="termsFormGroup.get('monthlyRent')?.hasError('required')">
                           Il canone mensile è obbligatorio
                         </mat-error>
                         <mat-error *ngIf="termsFormGroup.get('monthlyRent')?.hasError('min')">
-                          Il canone mensile deve essere maggiore di 0
+                          Il canone deve essere un valore positivo
                         </mat-error>
                       </mat-form-field>
                       
-                      <mat-form-field appearance="outline">
-                        <mat-label>Deposito Cauzionale (€)</mat-label>
-                        <input matInput type="number" formControlName="securityDeposit" min="0">
+                      <mat-form-field appearance="outline" class="full-width-field">
+                        <mat-label>Deposito Cauzionale</mat-label>
+                        <input matInput type="number" formControlName="securityDeposit" min="0" placeholder="Es. 1000">
                         <span matTextPrefix>€&nbsp;</span>
-                        <mat-hint>Solitamente da 2 a 3 mensilità</mat-hint>
+                        <mat-hint>Generalmente pari a 2 o 3 mensilità</mat-hint>
                         <mat-error *ngIf="termsFormGroup.get('securityDeposit')?.hasError('required')">
                           Il deposito cauzionale è obbligatorio
                         </mat-error>
-                        <mat-error *ngIf="termsFormGroup.get('securityDeposit')?.hasError('min')">
-                          Il deposito cauzionale deve essere maggiore di 0
+                         <mat-error *ngIf="termsFormGroup.get('securityDeposit')?.hasError('min')">
+                          Il deposito deve essere un valore positivo
                         </mat-error>
                       </mat-form-field>
                       
-                      <mat-form-field appearance="outline">
-                        <mat-label>Giorno Scadenza Pagamento</mat-label>
-                        <input matInput type="number" formControlName="paymentDueDay" min="1" max="31">
-                        <mat-hint>Giorno del mese in cui è dovuto il pagamento</mat-hint>
+                      <mat-form-field appearance="outline" class="short-field">
+                        <mat-label>Giorno Scadenza</mat-label>
+                        <input matInput type="number" formControlName="paymentDueDay" min="1" max="31" placeholder="Es. 5">
+                        <mat-hint>Giorno del mese per il pagamento</mat-hint>
                         <mat-error *ngIf="termsFormGroup.get('paymentDueDay')?.hasError('required')">
-                          Il giorno di scadenza è obbligatorio
+                          Obbligatorio
                         </mat-error>
                         <mat-error *ngIf="termsFormGroup.get('paymentDueDay')?.hasError('min') || termsFormGroup.get('paymentDueDay')?.hasError('max')">
-                          Il giorno deve essere compreso tra 1 e 31
+                          Giorno non valido
                         </mat-error>
                       </mat-form-field>
                     </div>

@@ -407,3 +407,107 @@ html[data-theme="dark"] {
   justify-content: center !important;
   margin-right: 4px !important;
 }
+
+/* ====== OVERRIDE COMPLETO PER ELIMINARE TUTTI I VIOLA ====== */
+/* DATEPICKER - FORZA TUTTO AL VERDE PRIMARIO */
+.mat-datepicker-toggle .mat-icon-button,
+.mat-datepicker-toggle-default-icon,
+.mat-form-field-suffix .mat-datepicker-toggle,
+.mat-form-field-suffix .mat-datepicker-toggle .mat-icon {
+  color: #2D7D46 !important;
+}
+
+/* CALENDARIO - HEADER VERDE */
+.mat-calendar-header {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+.mat-calendar-previous-button,
+.mat-calendar-next-button,
+.mat-calendar-period-button {
+  color: #2D7D46 !important;
+}
+
+/* CALENDARIO - DATA SELEZIONATA VERDE */
+.mat-calendar-body-cell.mat-calendar-body-selected .mat-calendar-body-cell-content {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+/* CALENDARIO - DATA DI OGGI VERDE BORDO (NON VIOLA!) */
+.mat-calendar-body-cell.mat-calendar-body-today:not(.mat-calendar-body-selected) .mat-calendar-body-cell-content {
+  border: 1px solid #2D7D46 !important;
+  color: #2D7D46 !important;
+  background-color: transparent !important;
+}
+
+/* CALENDARIO - DATA DI OGGI SELEZIONATA VERDE PIENO */
+.mat-calendar-body-cell.mat-calendar-body-today.mat-calendar-body-selected .mat-calendar-body-cell-content {
+  background-color: #2D7D46 !important;
+  color: white !important;
+  border: 1px solid #2D7D46 !important;
+}
+
+/* CALENDARIO - HOVER VERDE */
+.mat-calendar-body-cell:hover:not(.mat-calendar-body-selected) .mat-calendar-body-cell-content {
+  background-color: rgba(45, 125, 70, 0.1) !important;
+}
+
+/* STEPPER - ICONE CERCHI VERDI */
+.mat-step-icon {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+.mat-step-icon-selected {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+.mat-step-icon-state-done {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+.mat-horizontal-stepper-header .mat-step-icon {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+/* BOTTONI PRIMARI - VERDE */
+.mat-mdc-button.mat-primary {
+  color: #2D7D46 !important;
+}
+
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-primary {
+  background-color: #2D7D46 !important;
+  color: white !important;
+}
+
+/* OVERRIDE ASSOLUTO PER TUTTI I VIOLA DI ANGULAR MATERIAL */
+/* Sovrascrive il tema deeppurple-amber */
+.mat-accent,
+.mat-primary {
+  --mdc-protected-button-container-color: #2D7D46 !important;
+  --mdc-protected-button-label-text-color: white !important;
+  --mdc-filled-button-container-color: #2D7D46 !important;
+  --mdc-filled-button-label-text-color: white !important;
+}
+
+/* OVERRIDE CSS VARIABLES DI ANGULAR MATERIAL */
+:root {
+  --mdc-theme-primary: #2D7D46 !important;
+  --mdc-theme-on-primary: white !important;
+  --mat-datepicker-calendar-date-selected-state-background-color: #2D7D46 !important;
+  --mat-datepicker-calendar-date-today-outline-color: #2D7D46 !important;
+  --mat-datepicker-calendar-date-today-selected-state-background-color: #2D7D46 !important;
+  --mat-datepicker-toggle-icon-color: #2D7D46 !important;
+  --mat-stepper-header-icon-foreground-color: white !important;
+  --mat-stepper-header-icon-background-color: #2D7D46 !important;
+  --mat-stepper-header-selected-state-icon-background-color: #2D7D46 !important;
+  --mat-stepper-header-selected-state-icon-foreground-color: white !important;
+  --mat-stepper-header-done-state-icon-background-color: #2D7D46 !important;
+  --mat-stepper-header-done-state-icon-foreground-color: white !important;
+}
