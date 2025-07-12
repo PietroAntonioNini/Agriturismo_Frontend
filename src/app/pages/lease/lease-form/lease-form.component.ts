@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, Inject, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepper, MatStepperModule } from '@angular/material/stepper';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 // Material Imports
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_FORMATS, DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 
 // Services
 import { GenericApiService } from '../../../shared/services/generic-api.service';
@@ -27,6 +28,19 @@ import { ContractTemplatesService } from '../../../shared/services/contract-temp
 import { Lease, LeaseFormData } from '../../../shared/models/lease.model';
 import { Tenant } from '../../../shared/models';
 import { Apartment } from '../../../shared/models';
+
+// Configurazione formato date italiano
+const MY_DATE_FORMATS = {
+  parse: {
+    dateInput: 'DD/MM/YYYY',
+  },
+  display: {
+    dateInput: 'DD/MM/YYYY',
+    monthYearLabel: 'MMM YYYY',
+    dateA11yLabel: 'LL',
+    monthYearA11yLabel: 'MMMM YYYY',
+  },
+};
 
 @Component({
   selector: 'app-lease-form',
@@ -49,6 +63,10 @@ import { Apartment } from '../../../shared/models';
     MatTooltipModule,
     MatNativeDateModule
   ],
+  providers: [
+    { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
+    { provide: MAT_DATE_LOCALE, useValue: 'it-IT' }
+  ],
   templateUrl: './lease-form.component.html',
   styleUrls: ['./lease-form.component.scss']
 })
@@ -66,6 +84,9 @@ export class LeaseFormComponent implements OnInit {
   leaseId: number | null = null;
   errorMessage: string | null = null;
   
+  // Proprietà per gestire dialog vs pagina normale
+  isDialogMode = false;
+  
   tenants: Tenant[] = [];
   apartments: Apartment[] = [];
   selectedTenant: Tenant | null = null;
@@ -78,8 +99,23 @@ export class LeaseFormComponent implements OnInit {
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
     private contractGenerator: ContractGeneratorService,
-    private contractTemplates: ContractTemplatesService
-  ) {}
+    private contractTemplates: ContractTemplatesService,
+    private dateAdapter: DateAdapter<Date>,
+    @Optional() @Inject(MAT_DIALOG_DATA) public dialogData: any,
+    @Optional() public dialogRef: MatDialogRef<LeaseFormComponent>
+  ) {
+    // Configura il locale italiano per i datepicker
+    this.dateAdapter.setLocale('it-IT');
+    
+    // Determina se siamo in modalità dialog
+    this.isDialogMode = !!this.dialogRef;
+    
+    // Se siamo in modalità dialog e abbiamo dati, configura l'edit mode
+    if (this.isDialogMode && this.dialogData?.leaseId) {
+      this.isEditMode = true;
+      this.leaseId = this.dialogData.leaseId;
+    }
+  }
 
   ngOnInit(): void {
     this.initFormGroups();
@@ -87,11 +123,16 @@ export class LeaseFormComponent implements OnInit {
     this.loadApartments();
     
     // Controlla se siamo in modalità modifica
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
+    // Può essere sia dalla rotta che dai dati del dialog
+    const routeId = this.route.snapshot.paramMap.get('id');
+    const dialogLeaseId = this.dialogData?.leaseId;
+    
+    if (routeId || dialogLeaseId) {
       this.isEditMode = true;
-      this.leaseId = +id;
-      this.loadLease(+id);
+      this.leaseId = dialogLeaseId || +routeId!;
+      if (this.leaseId) {
+        this.loadLease(this.leaseId);
+      }
     }
 
     // Aggiungi listener per i cambiamenti di tenant e apartment
@@ -149,6 +190,14 @@ export class LeaseFormComponent implements OnInit {
     return new Date(endDate) <= new Date(startDate) 
       ? { dateInvalid: true } 
       : null;
+  }
+
+  // Funzione helper per formattare le date senza problemi di timezone
+  private formatDateForServer(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   loadLease(id: number): void {
@@ -258,19 +307,13 @@ export class LeaseFormComponent implements OnInit {
       ...this.conditionsFormGroup.value
     };
 
-    // Formatta le date rimuovendo le informazioni orarie
-    if (formData.startDate) {
-      // Se è un oggetto Date, lo convertiamo in formato YYYY-MM-DD
-      if (formData.startDate instanceof Date) {
-        formData.startDate = formData.startDate.toISOString().split('T')[0];
-      }
+    // Formatta le date rimuovendo le informazioni orarie - correzione timezone
+    if (formData.startDate && formData.startDate instanceof Date) {
+      formData.startDate = this.formatDateForServer(formData.startDate);
     }
     
-    if (formData.endDate) {
-      // Se è un oggetto Date, lo convertiamo in formato YYYY-MM-DD
-      if (formData.endDate instanceof Date) {
-        formData.endDate = formData.endDate.toISOString().split('T')[0];
-      }
+    if (formData.endDate && formData.endDate instanceof Date) {
+      formData.endDate = this.formatDateForServer(formData.endDate);
     }
 
     this.isSubmitting = true;
@@ -283,7 +326,14 @@ export class LeaseFormComponent implements OnInit {
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/lease/list']);
+          
+          if (this.isDialogMode && this.dialogRef) {
+            // Se siamo in modalità dialog, chiudi il dialog con successo
+            this.dialogRef.close({ success: true });
+          } else {
+            // Se siamo in modalità pagina normale, naviga alla lista
+            this.router.navigate(['/lease/list']);
+          }
         },
         error: (error) => {
           console.error('Errore durante l\'aggiornamento del contratto', error);
@@ -303,7 +353,14 @@ export class LeaseFormComponent implements OnInit {
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/lease/list']);
+          
+          if (this.isDialogMode && this.dialogRef) {
+            // Se siamo in modalità dialog, chiudi il dialog con successo
+            this.dialogRef.close({ success: true });
+          } else {
+            // Se siamo in modalità pagina normale, naviga alla lista
+            this.router.navigate(['/lease/list']);
+          }
         },
         error: (error) => {
           console.error('Errore durante la creazione del contratto', error);
@@ -334,7 +391,13 @@ export class LeaseFormComponent implements OnInit {
   }
 
   cancel(): void {
-    this.router.navigate(['/lease/list']);
+    if (this.isDialogMode && this.dialogRef) {
+      // Se siamo in modalità dialog, chiudi il dialog
+      this.dialogRef.close();
+    } else {
+      // Se siamo in modalità pagina normale, naviga alla lista
+      this.router.navigate(['/lease/list']);
+    }
   }
 
   getFormTitle(): string {

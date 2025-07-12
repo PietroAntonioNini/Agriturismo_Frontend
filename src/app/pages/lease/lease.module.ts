@@ -28,6 +28,7 @@ const routes: Routes = [
       { path: 'list', loadComponent: () => import('./lease-list/lease-list.component').then(c => c.LeaseListComponent) },
       { path: 'detail/:id', loadComponent: () => import('./lease-detail/lease-detail.component').then(c => c.LeaseDetailComponent) },
       { path: 'new', loadComponent: () => import('./lease-form/lease-form.component').then(c => c.LeaseFormComponent) },
+      { path: 'edit/:id', loadComponent: () => import('./lease-form/lease-form.component').then(c => c.LeaseFormComponent) },
     ]
   }
 ];
