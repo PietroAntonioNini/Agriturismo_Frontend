@@ -110,7 +110,7 @@
     <!-- Info e azioni -->
     <div class="actions-section" *ngIf="!isReadOnly">
       <div class="completion-status">
-        <mat-icon [color]="areAllReadingsComplete() ? 'primary' : 'warn'">
+        <mat-icon [style.color]="areAllReadingsComplete() ? '#2D7D46' : null" [color]="!areAllReadingsComplete() ? 'warn' : null">
           {{ areAllReadingsComplete() ? 'check_circle' : 'warning' }}
         </mat-icon>
         <span>

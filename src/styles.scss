@@ -51,27 +51,9 @@ textarea,
   caret-color: var(--primary-color) !important;
 }
 
-/* Fix per rimuovere il bordo/padding sinistro negli input */
-.mat-mdc-text-field-wrapper {
-  padding-left: 0 !important;
-}
-
-.mat-mdc-form-field-infix {
-  padding-left: 16px !important;
-}
-
-.mdc-floating-label {
-  left: 16px !important;
-}
-
 /* Fix per input prefix (€, m², ecc.) */
 .mat-mdc-form-field-text-prefix {
   padding-left: 16px !important;
-}
-
-/* Fix per rimuovere il bordo sinistro degli input che causa la striscia verde */
-.mdc-notched-outline__notch {
-  border-left: none !important;
 }
 
 /* ====== RIMOZIONE EFFETTI RIPPLE ====== */

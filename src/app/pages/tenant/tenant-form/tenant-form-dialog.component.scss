@@ -347,10 +347,6 @@
 }
 
 ::ng-deep {
-  // Rimuove specificamente il bordo sinistro che causa la striscia verticale
-  .mdc-notched-outline__notch {
-    border-left: none !important;
-  }
   
   // FIX CURSORE SPECIFICO: assicura che il cursore sia visibile sempre
   input.mat-mdc-input-element,
@@ -416,11 +412,6 @@
       &:hover .mdc-notched-outline__trailing {
         border-color: var(--primary-color) !important;
         border-width: 1px !important;
-      }
-      
-      // Assicurati di rimuovere definitivamente il bordo sinistro in dark mode
-      .mdc-notched-outline__notch {
-        border-left: none !important;
       }
     }
     
