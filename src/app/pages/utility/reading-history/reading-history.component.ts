@@ -123,9 +123,8 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   ngOnInit(): void {
-    this.loadUtilityTypes();
     this.setupFilterSubscriptions();
-    this.loadReadings();
+    this.loadUtilityTypes();
   }
 
   ngAfterViewInit(): void {
@@ -147,13 +146,50 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       takeUntil(this.destroy$)
     ).subscribe({
       next: (types) => {
-        this.utilityTypes = types;
+        this.utilityTypes = types || [];
         this.isLoadingUtilityTypes = false;
+
+        
+        // Carica le letture dopo aver caricato i tipi di utenza
+        this.loadReadings();
       },
       error: (error) => {
         console.error('Errore nel caricamento dei tipi utility:', error);
         this.isLoadingUtilityTypes = false;
-        this.snackBar.open('Errore nel caricamento dei tipi di utility', 'Chiudi', { duration: 3000 });
+        
+        // Inizializza con i tipi predefiniti in caso di errore
+        this.utilityTypes = [
+          {
+            type: 'electricity',
+            label: 'Elettricità',
+            unit: 'kWh',
+            icon: 'bolt',
+            color: '#FF6B6B',
+            defaultCost: 0.25
+          },
+          {
+            type: 'water',
+            label: 'Acqua',
+            unit: 'm³',
+            icon: 'water_drop',
+            color: '#4ECDC4',
+            defaultCost: 1.50
+          },
+          {
+            type: 'gas',
+            label: 'Gas',
+            unit: 'm³',
+            icon: 'local_fire_department',
+            color: '#45B7D1',
+            defaultCost: 0.80
+          }
+        ];
+        
+        // Mostra un messaggio meno invasivo
+        this.showInfoSnackBar('Utilizzando configurazione predefinita per i tipi di utenza');
+        
+        // Carica le letture anche in caso di errore (con fallback)
+        this.loadReadings();
       }
     });
   }
@@ -328,12 +364,26 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   
   clearFilters(): void {
     this.filterForm.reset({
-      apartmentId: this.data.selectedApartmentId
+      search: '',
+      apartmentId: this.data.selectedApartmentId,
+      utilityType: '',
+      startDate: '',
+      endDate: '',
+      isPaid: ''
     });
   }
   
   toggleViewMode(): void {
     this.viewMode = this.viewMode === 'table' ? 'grouped' : 'table';
+  }
+  
+  setViewMode(mode: 'table' | 'grouped'): void {
+    this.viewMode = mode;
+    
+    // Se passiamo alla vista raggruppata, aggiorna i dati
+    if (mode === 'grouped') {
+      this.updateGroupedData();
+    }
   }
   
   editReading(reading: ReadingWithApartmentName): void {
@@ -451,7 +501,42 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
   
   getUtilityTypeConfig(type: string): UtilityTypeConfig {
-    return this.utilityTypes.find(ut => ut.type === type) || this.utilityTypes[0];
+    // Fallback predefinito per i tipi di utenza
+    const defaultConfigs: { [key: string]: UtilityTypeConfig } = {
+      'electricity': {
+        type: 'electricity',
+        label: 'Elettricità',
+        unit: 'kWh',
+        icon: 'bolt',
+        color: '#FF6B6B',
+        defaultCost: 0.25
+      },
+      'water': {
+        type: 'water',
+        label: 'Acqua',
+        unit: 'm³',
+        icon: 'water_drop',
+        color: '#4ECDC4',
+        defaultCost: 1.50
+      },
+      'gas': {
+        type: 'gas',
+        label: 'Gas',
+        unit: 'm³',
+        icon: 'local_fire_department',
+        color: '#45B7D1',
+        defaultCost: 0.80
+      }
+    };
+
+    // Prova prima dall'array caricato dal backend
+    const loadedConfig = this.utilityTypes.find(ut => ut.type === type);
+    if (loadedConfig) {
+      return loadedConfig;
+    }
+
+    // Se non trova o l'array è vuoto, usa il fallback predefinito
+    return defaultConfigs[type] || defaultConfigs['electricity'];
   }
   
   getFilteredApartments(): Apartment[] {
@@ -467,12 +552,12 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     const filters = this.filterForm.value;
     let count = 0;
     
-    if (filters.search) count++;
+    if (filters.search && filters.search.trim() !== '') count++;
     if (filters.apartmentId && filters.apartmentId !== this.data.selectedApartmentId) count++;
-    if (filters.utilityType) count++;
-    if (filters.startDate) count++;
-    if (filters.endDate) count++;
-    if (filters.isPaid !== '') count++;
+    if (filters.utilityType && filters.utilityType !== '') count++;
+    if (filters.startDate && filters.startDate !== '') count++;
+    if (filters.endDate && filters.endDate !== '') count++;
+    if (filters.isPaid !== '' && filters.isPaid !== null && filters.isPaid !== undefined) count++;
     
     return count;
   }

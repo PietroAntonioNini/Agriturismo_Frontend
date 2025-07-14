@@ -36,13 +36,13 @@
 
   <!-- Menu Vista migliorato -->
   <mat-menu #viewMenu="matMenu" class="view-menu">
-    <button mat-menu-item (click)="viewMode = 'table'; toggleViewMode()" 
+    <button mat-menu-item (click)="setViewMode('table')" 
             [class.active]="viewMode === 'table'">
       <mat-icon>table_view</mat-icon>
       <span>Vista Tabella</span>
       <mat-icon *ngIf="viewMode === 'table'" class="check-icon">check</mat-icon>
     </button>
-    <button mat-menu-item (click)="viewMode = 'grouped'; toggleViewMode()"
+    <button mat-menu-item (click)="setViewMode('grouped')"
             [class.active]="viewMode === 'grouped'">
       <mat-icon>dashboard</mat-icon>
       <span>Vista Raggruppata</span>
@@ -53,18 +53,17 @@
   <!-- Sezione Filtri -->
   <mat-card class="filters-section" elevation="2">
     <mat-card-header>
-      <mat-card-title>
+      <mat-card-title class="mb-4">
         <mat-icon>filter_list</mat-icon>
         Filtri di Ricerca
       </mat-card-title>
-      <div class="filters-header-actions">
-        <mat-chip-listbox *ngIf="getActiveFiltersCount() > 0" class="active-filters">
+      <div *ngIf="getActiveFiltersCount() > 0" class="filters-header-actions ms-4">
+        <mat-chip-listbox class="active-filters">
           <mat-chip-option class="filter-count-chip">
             {{getActiveFiltersCount()}} filtri attivi
           </mat-chip-option>
         </mat-chip-listbox>
-        <button mat-button color="primary" (click)="clearFilters()" 
-                [disabled]="getActiveFiltersCount() === 0">
+        <button mat-button color="primary" (click)="clearFilters()">
           <mat-icon>clear_all</mat-icon>
           Pulisci Filtri
         </button>
@@ -109,6 +108,14 @@
                   <span>{{type.label}}</span>
                 </div>
               </mat-option>
+              <mat-select-trigger>
+                <div *ngIf="filterForm.get('utilityType')?.value" class="selected-utility">
+                  <mat-icon [style.color]="getUtilityTypeConfig(filterForm.get('utilityType')?.value).color">
+                    {{getUtilityTypeConfig(filterForm.get('utilityType')?.value).icon}}
+                  </mat-icon>
+                  <span>{{getUtilityTypeConfig(filterForm.get('utilityType')?.value).label}}</span>
+                </div>
+              </mat-select-trigger>
             </mat-select>
           </mat-form-field>
         </div>
@@ -148,6 +155,14 @@
                   <span>Non Pagato</span>
                 </div>
               </mat-option>
+              <mat-select-trigger>
+                <div *ngIf="filterForm.get('isPaid')?.value !== ''" class="selected-payment">
+                  <mat-icon [color]="filterForm.get('isPaid')?.value ? 'primary' : 'warn'">
+                    {{filterForm.get('isPaid')?.value ? 'check_circle' : 'schedule'}}
+                  </mat-icon>
+                  <span>{{filterForm.get('isPaid')?.value ? 'Pagato' : 'Non Pagato'}}</span>
+                </div>
+              </mat-select-trigger>
             </mat-select>
           </mat-form-field>
         </div>
@@ -450,7 +465,7 @@
             </div>
             
             <button *ngIf="group.readings.length > 3" mat-button color="primary" 
-                    (click)="viewMode = 'table'; filterForm.patchValue({apartmentId: group.apartmentId}); toggleViewMode()">
+                    (click)="setViewMode('table'); filterForm.patchValue({apartmentId: group.apartmentId})">
               Vedi tutte le {{group.readings.length}} letture
             </button>
           </div>

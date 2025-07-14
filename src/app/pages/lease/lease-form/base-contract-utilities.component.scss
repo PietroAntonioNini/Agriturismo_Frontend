@@ -1,0 +1,324 @@
+.base-contract-utilities-container {
+  padding: 20px;
+  
+  .section-header {
+    margin-bottom: 24px;
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        color: #1976d2;
+      }
+      
+      h3 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 500;
+        color: #333;
+      }
+    }
+    
+    .section-subtitle {
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 14px;
+      }
+    }
+  }
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    gap: 16px;
+    
+    p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+  }
+  
+  .error-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: #ffebee;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    
+    p {
+      margin: 0;
+      color: #c62828;
+      flex-grow: 1;
+    }
+    
+    button {
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  .utilities-card {
+    margin-bottom: 24px;
+    
+    mat-card-header {
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+    
+    .utilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 16px;
+    }
+    
+    .utility-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      background-color: #fafafa;
+      
+      .utility-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        
+        .utility-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+        }
+        
+        .utility-info {
+          h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+          }
+          
+          .utility-unit {
+            font-size: 12px;
+            color: #666;
+            background-color: #e8e8e8;
+            padding: 2px 8px;
+            border-radius: 12px;
+          }
+        }
+      }
+      
+      .utility-content {
+        position: relative;
+        
+        .last-reading-info {
+          background-color: #f3f9ff;
+          border: 1px solid #bbdefb;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 16px;
+          
+          .info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            
+            &:last-child {
+              margin-bottom: 0;
+            }
+            
+            .info-icon {
+              font-size: 14px;
+              width: 14px;
+              height: 14px;
+              color: #1976d2;
+            }
+            
+            .info-label {
+              font-size: 12px;
+              color: #666;
+              min-width: 80px;
+            }
+            
+            .info-value {
+              font-size: 12px;
+              color: #333;
+              font-weight: 500;
+            }
+          }
+        }
+        
+        .first-reading-info {
+          background-color: #fff3e0;
+          border: 1px solid #ffcc02;
+          border-radius: 6px;
+          padding: 12px;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          
+          .info-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+            color: #ff9800;
+          }
+          
+          span {
+            font-size: 12px;
+            color: #e65100;
+            font-weight: 500;
+          }
+        }
+        
+        .utility-input {
+          width: 100%;
+          
+          mat-icon[matPrefix] {
+            margin-right: 8px;
+          }
+        }
+        
+        .utility-loading {
+          position: absolute;
+          top: 50%;
+          right: 16px;
+          transform: translateY(-50%);
+        }
+      }
+    }
+  }
+  
+  .description-card {
+    margin-bottom: 24px;
+    
+    mat-card-header {
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+    
+    .description-grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      
+      .full-width {
+        width: 100%;
+      }
+    }
+  }
+  
+  .actions-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    
+    .completion-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      span {
+        font-size: 14px;
+        font-weight: 500;
+      }
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      
+      button {
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .base-contract-utilities-container {
+    padding: 16px;
+    
+    .utilities-card {
+      .utilities-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .actions-section {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+      
+      .action-buttons {
+        justify-content: center;
+      }
+    }
+  }
+} 

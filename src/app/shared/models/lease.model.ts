@@ -15,6 +15,31 @@ export interface Lease {
     updatedAt: Date;
     documents?: LeaseDocument[];
     paymentHistory?: LeasePayment[];
+    // Campi per il contratto base
+    initialUtilityReadings?: {
+        electricity?: number;
+        water?: number;
+        gas?: number;
+    };
+    propertyDescription?: string;
+    propertyCondition?: string;
+    boilerCondition?: string;
+}
+
+// Interfaccia per il contratto base con letture utenze
+export interface BaseContractData {
+    lease: Lease;
+    tenant: any; // Tipo Tenant
+    apartment: any; // Tipo Apartment
+    initialUtilityReadings?: {
+        electricity?: number;
+        water?: number;
+        gas?: number;
+    };
+    propertyDescription?: string;
+    propertyCondition?: string;
+    boilerCondition?: string;
+    securityDepositAmount?: number;
 }
 
 export interface LeaseDocument {
@@ -47,4 +72,13 @@ export interface LeaseFormData {
     termsAndConditions: string;
     specialClauses?: string;
     notes?: string;
+    // Aggiunti per il contratto base
+    initialUtilityReadings?: {
+        electricity?: number;
+        water?: number;
+        gas?: number;
+    };
+    propertyDescription?: string;
+    propertyCondition?: string;
+    boilerCondition?: string;
 }

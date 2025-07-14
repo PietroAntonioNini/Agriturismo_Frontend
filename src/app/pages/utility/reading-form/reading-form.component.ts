@@ -78,10 +78,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUtilityTypes();
-    this.initForm();
     this.setupFormSubscriptions();
     
-    // Se in modalità modifica, popola i dati
+    // Se abbiamo dati di editing, configura il form
     if (this.data.editingReading) {
       this.populateFormForEditing();
     }
@@ -99,13 +98,50 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (types) => {
-        this.utilityTypes = types;
+        this.utilityTypes = types || [];
         this.isLoadingUtilityTypes = false;
+        
+        
+        // Inizializza il form dopo aver caricato i tipi di utenza
+        this.initForm();
       },
       error: (error) => {
         console.error('Errore nel caricamento dei tipi utility:', error);
         this.isLoadingUtilityTypes = false;
-        this.snackBar.open('Errore nel caricamento dei tipi di utility', 'Chiudi', { duration: 3000 });
+        
+        // Inizializza con i tipi predefiniti in caso di errore
+        this.utilityTypes = [
+          {
+            type: 'electricity',
+            label: 'Elettricità',
+            unit: 'kWh',
+            icon: 'bolt',
+            color: '#FF6B6B',
+            defaultCost: 0.25
+          },
+          {
+            type: 'water',
+            label: 'Acqua',
+            unit: 'm³',
+            icon: 'water_drop',
+            color: '#4ECDC4',
+            defaultCost: 1.50
+          },
+          {
+            type: 'gas',
+            label: 'Gas',
+            unit: 'm³',
+            icon: 'local_fire_department',
+            color: '#45B7D1',
+            defaultCost: 0.80
+          }
+        ];
+        
+        // Mostra un messaggio meno invasivo
+        this.snackBar.open('Utilizzando configurazione predefinita per i tipi di utenza', 'Chiudi', { duration: 3000 });
+        
+        // Inizializza il form anche in caso di errore (con fallback)
+        this.initForm();
       }
     });
   }

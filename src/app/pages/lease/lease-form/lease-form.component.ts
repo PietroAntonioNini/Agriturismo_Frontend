@@ -23,13 +23,17 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatNativeDateModule, MAT_DATE_FORMATS, DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
 
+// Components
+import { BaseContractUtilitiesComponent } from './base-contract-utilities.component';
+
 // Services
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { ContractGeneratorService } from '../../../shared/services/contract-generator.service';
 import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
+import { BaseContractGeneratorService } from '../../../shared/services/base-contract-generator.service';
 
 // Models
-import { Lease, LeaseFormData } from '../../../shared/models/lease.model';
+import { Lease, LeaseFormData, BaseContractData } from '../../../shared/models/lease.model';
 import { Tenant } from '../../../shared/models';
 import { Apartment } from '../../../shared/models';
 
@@ -66,7 +70,8 @@ const MY_DATE_FORMATS = {
     MatStepperModule,
     MatTooltipModule,
     MatNativeDateModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    BaseContractUtilitiesComponent
   ],
   providers: [
     { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
@@ -93,6 +98,7 @@ export class LeaseFormComponent implements OnInit {
   partiesFormGroup!: FormGroup;
   termsFormGroup!: FormGroup;
   conditionsFormGroup!: FormGroup;
+  utilitiesFormGroup!: FormGroup;
   
   isLoading = false;
   isSubmitting = false;
@@ -108,6 +114,10 @@ export class LeaseFormComponent implements OnInit {
   
   filteredTenants!: Observable<Tenant[]>;
   filteredApartments!: Observable<Apartment[]>;
+  
+  // Dati per le utenze
+  utilitiesData: any = {};
+  isUtilitiesFormValid = false;
 
   constructor(
     private fb: FormBuilder,
@@ -117,6 +127,7 @@ export class LeaseFormComponent implements OnInit {
     private snackBar: MatSnackBar,
     private contractGenerator: ContractGeneratorService,
     private contractTemplates: ContractTemplatesService,
+    private baseContractGenerator: BaseContractGeneratorService,
     private dateAdapter: DateAdapter<Date>,
     @Optional() @Inject(MAT_DIALOG_DATA) public dialogData: any,
     @Optional() public dialogRef: MatDialogRef<LeaseFormComponent>
@@ -179,6 +190,17 @@ export class LeaseFormComponent implements OnInit {
       termsAndConditions: ['', Validators.required],
       specialClauses: [''],
       notes: ['']
+    });
+    
+    // Form group per step 4: Utenze e contratto base
+    this.utilitiesFormGroup = this.fb.group({
+      hasUtilities: [false], // Flag per decidere se generare il contratto base
+      electricity: [null],
+      water: [null],
+      gas: [null],
+      propertyDescription: [''],
+      propertyCondition: ['Ottimo stato generale'],
+      boilerCondition: ['Perfetto stato di funzionamento']
     });
   }
   
@@ -304,6 +326,18 @@ export class LeaseFormComponent implements OnInit {
           notes: lease.notes || ''
         });
         
+        // Carica i dati delle utenze se disponibili
+        if (lease.initialUtilityReadings) {
+          this.utilitiesFormGroup.patchValue({
+            electricity: lease.initialUtilityReadings.electricity,
+            water: lease.initialUtilityReadings.water,
+            gas: lease.initialUtilityReadings.gas,
+            propertyDescription: lease.propertyDescription || '',
+            propertyCondition: lease.propertyCondition || 'Ottimo stato generale',
+            boilerCondition: lease.boilerCondition || 'Perfetto stato di funzionamento'
+          });
+        }
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -339,7 +373,7 @@ export class LeaseFormComponent implements OnInit {
   }
 
   isFormValid(): boolean {
-    return this.partiesFormGroup.valid && this.termsFormGroup.valid && this.conditionsFormGroup.valid;
+    return this.partiesFormGroup.valid && this.termsFormGroup.valid && this.conditionsFormGroup.valid && this.utilitiesFormGroup.valid;
   }
 
   onSubmit(): void {
@@ -365,7 +399,12 @@ export class LeaseFormComponent implements OnInit {
       tenantId: tenant.id,
       apartmentId: apartment.id,
       ...this.termsFormGroup.value,
-      ...this.conditionsFormGroup.value
+      ...this.conditionsFormGroup.value,
+      // Aggiungi dati delle utenze se disponibili
+      initialUtilityReadings: this.utilitiesData,
+      propertyDescription: this.utilitiesFormGroup.value.propertyDescription,
+      propertyCondition: this.utilitiesFormGroup.value.propertyCondition,
+      boilerCondition: this.utilitiesFormGroup.value.boilerCondition
     };
 
     if (this.isEditMode && this.leaseId) {
@@ -411,6 +450,7 @@ export class LeaseFormComponent implements OnInit {
     this.markFormGroupTouched(this.partiesFormGroup);
     this.markFormGroupTouched(this.termsFormGroup);
     this.markFormGroupTouched(this.conditionsFormGroup);
+    this.markFormGroupTouched(this.utilitiesFormGroup);
   }
 
   markFormGroupTouched(formGroup: FormGroup): void {
@@ -469,5 +509,67 @@ export class LeaseFormComponent implements OnInit {
     } else {
       this.snackBar.open('Compila tutti i campi prima di generare il contratto.', 'Chiudi', { duration: 3000 });
     }
+  }
+
+  generateBaseContract(): void {
+    const tenant = this.partiesFormGroup.get('tenant')?.value;
+    const apartment = this.partiesFormGroup.get('apartment')?.value;
+    const terms = this.termsFormGroup.value;
+    const conditions = this.conditionsFormGroup.value;
+    const utilities = this.utilitiesFormGroup.value;
+    
+    if (tenant && apartment && this.isFormValid()) {
+      // Crea un oggetto Lease completo
+      const lease: Lease = {
+        id: this.leaseId ?? 0,
+        tenantId: tenant.id,
+        apartmentId: apartment.id,
+        startDate: terms.startDate,
+        endDate: terms.endDate,
+        monthlyRent: terms.monthlyRent,
+        securityDeposit: terms.securityDeposit,
+        paymentDueDay: terms.paymentDueDay,
+        termsAndConditions: conditions.termsAndConditions,
+        specialClauses: conditions.specialClauses || '',
+        notes: conditions.notes || '',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // Crea i dati per il contratto base
+      const baseContractData: BaseContractData = {
+        lease,
+        tenant,
+        apartment,
+        initialUtilityReadings: {
+          electricity: utilities.electricity,
+          water: utilities.water,
+          gas: utilities.gas
+        },
+        propertyDescription: utilities.propertyDescription,
+        propertyCondition: utilities.propertyCondition,
+        boilerCondition: utilities.boilerCondition,
+        securityDepositAmount: terms.securityDeposit
+      };
+
+      this.baseContractGenerator.generateBaseContract(baseContractData);
+    } else {
+      this.snackBar.open('Compila tutti i campi prima di generare il contratto base.', 'Chiudi', { duration: 3000 });
+    }
+  }
+
+  onUtilitiesChange(utilitiesData: any): void {
+    this.utilitiesData = utilitiesData;
+    // Aggiorna i valori nel form group
+    this.utilitiesFormGroup.patchValue({
+      electricity: utilitiesData.electricity,
+      water: utilitiesData.water,
+      gas: utilitiesData.gas
+    });
+  }
+
+  onUtilitiesValidationChange(isValid: boolean): void {
+    this.isUtilitiesFormValid = isValid;
   }
 }

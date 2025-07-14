@@ -1,0 +1,177 @@
+<div class="base-contract-utilities-container">
+  <!-- Header della sezione -->
+  <div class="section-header">
+    <div class="section-title">
+      <mat-icon>bolt</mat-icon>
+      <h3>Letture Utenze Iniziali</h3>
+    </div>
+    <div class="section-subtitle">
+      <p>Inserisci le letture dei contatori al momento della consegna dell'appartamento</p>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Caricamento ultime letture...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="errorMessage" class="error-container">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <p>{{ errorMessage }}</p>
+    <button mat-button color="primary" (click)="refreshLastReadings()">
+      <mat-icon>refresh</mat-icon>
+      Riprova
+    </button>
+  </div>
+
+  <!-- Form principale -->
+  <form [formGroup]="utilitiesForm" *ngIf="!isLoading">
+    
+    <!-- Sezione letture utenze -->
+    <mat-card class="utilities-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>settings</mat-icon>
+          Letture Contatori
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ getHelpMessage() }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="utilities-grid">
+          <!-- Elettricità -->
+          <div class="utility-item" *ngFor="let utility of utilityData">
+            <div class="utility-header">
+              <div class="utility-icon" [style.background-color]="utility.color + '20'">
+                <mat-icon [style.color]="utility.color">{{ utility.icon }}</mat-icon>
+              </div>
+              <div class="utility-info">
+                <h4>{{ utility.label }}</h4>
+                <span class="utility-unit">{{ utility.unit }}</span>
+              </div>
+            </div>
+            
+            <div class="utility-content">
+              <!-- Ultima lettura -->
+              <div class="last-reading-info" *ngIf="utility.lastReading && utility.lastReading.hasHistory">
+                <div class="info-row">
+                  <mat-icon class="info-icon">history</mat-icon>
+                  <span class="info-label">Ultima lettura:</span>
+                  <span class="info-value">{{ utility.lastReading.lastReading | number:'1.0-3' }} {{ utility.unit }}</span>
+                </div>
+                <div class="info-row">
+                  <mat-icon class="info-icon">event</mat-icon>
+                  <span class="info-label">Data:</span>
+                  <span class="info-value">{{ formatDate(utility.lastReading.lastReadingDate) }}</span>
+                </div>
+              </div>
+              
+              <!-- Messaggio prima lettura -->
+              <div class="first-reading-info" *ngIf="!utility.lastReading || !utility.lastReading.hasHistory">
+                <mat-icon class="info-icon">new_releases</mat-icon>
+                <span>Prima lettura per {{ utility.label.toLowerCase() }}</span>
+              </div>
+              
+              <!-- Campo input -->
+              <mat-form-field appearance="outline" class="utility-input">
+                <mat-label>Lettura {{ utility.label }}</mat-label>
+                <mat-icon matPrefix [style.color]="utility.color">{{ utility.icon }}</mat-icon>
+                <input 
+                  matInput 
+                  type="number" 
+                  [formControlName]="utility.type"
+                  [placeholder]="'Inserisci lettura ' + utility.label.toLowerCase()"
+                  min="0" 
+                  step="0.01"
+                  [readonly]="isReadOnly">
+                <span matSuffix>{{ utility.unit }}</span>
+                <mat-error *ngIf="utilitiesForm.get(utility.type)?.hasError('min')">
+                  La lettura deve essere positiva
+                </mat-error>
+              </mat-form-field>
+              
+              <!-- Spinner per caricamento -->
+              <div class="utility-loading" *ngIf="utility.isLoading">
+                <mat-spinner diameter="20"></mat-spinner>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Sezione descrizione appartamento -->
+    <mat-card class="description-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>description</mat-icon>
+          Descrizione e Condizioni
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="description-grid">
+          <!-- Descrizione proprietà -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descrizione Proprietà (opzionale)</mat-label>
+            <textarea 
+              matInput 
+              formControlName="propertyDescription"
+              rows="3"
+              placeholder="Inserisci una descrizione personalizzata della proprietà"
+              [readonly]="isReadOnly">
+            </textarea>
+            <mat-hint>Lascia vuoto per usare la descrizione automatica</mat-hint>
+          </mat-form-field>
+
+          <!-- Condizioni proprietà -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Condizioni Generali Appartamento</mat-label>
+            <input 
+              matInput 
+              formControlName="propertyCondition"
+              placeholder="Stato generale dell'appartamento"
+              [readonly]="isReadOnly">
+          </mat-form-field>
+
+          <!-- Condizioni caldaia -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Condizioni Caldaia</mat-label>
+            <input 
+              matInput 
+              formControlName="boilerCondition"
+              placeholder="Stato della caldaia"
+              [readonly]="isReadOnly">
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Info e azioni -->
+    <div class="actions-section" *ngIf="!isReadOnly">
+      <div class="completion-status">
+        <mat-icon [color]="areAllReadingsComplete() ? 'primary' : 'warn'">
+          {{ areAllReadingsComplete() ? 'check_circle' : 'warning' }}
+        </mat-icon>
+        <span>
+          {{ areAllReadingsComplete() ? 'Tutte le letture sono complete' : 'Alcune letture sono mancanti' }}
+        </span>
+      </div>
+      
+      <div class="action-buttons">
+        <button 
+          mat-button 
+          color="accent" 
+          (click)="refreshLastReadings()"
+          [disabled]="!apartment">
+          <mat-icon>refresh</mat-icon>
+          Ricarica Letture
+        </button>
+      </div>
+    </div>
+  </form>
+</div> 

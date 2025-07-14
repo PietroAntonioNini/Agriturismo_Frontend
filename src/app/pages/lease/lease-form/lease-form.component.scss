@@ -226,6 +226,29 @@
   }
 }
 
+.utilities-info {
+  display: flex;
+  align-items: center;
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  
+  mat-icon {
+    color: #1976d2;
+    margin-right: 12px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+  
+  p {
+    margin: 0;
+    color: #1565c0;
+    font-size: 14px;
+  }
+}
+
 .stepper-buttons {
   display: flex;
   justify-content: space-between;

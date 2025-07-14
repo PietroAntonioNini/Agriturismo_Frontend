@@ -301,7 +301,42 @@
             </form>
           </mat-step>
           
-          <!-- Step 4: Riepilogo e Conferma -->
+          <!-- Step 4: Utenze e Contratto Base -->
+          <mat-step [stepControl]="utilitiesFormGroup">
+            <form [formGroup]="utilitiesFormGroup">
+              <ng-template matStepLabel>Utenze e Contratto Base</ng-template>
+              
+              <div class="step-content">
+                <div class="section-title">
+                  <mat-icon>bolt</mat-icon>
+                  <h3>Letture Utenze e Contratto Base</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <div class="utilities-info">
+                      <mat-icon>info</mat-icon>
+                      <p>Inserisci le letture iniziali delle utenze per generare il contratto base di consegna dell'appartamento.</p>
+                    </div>
+                    
+                    <app-base-contract-utilities
+                      [apartment]="selectedApartment"
+                      [isReadOnly]="false"
+                      (utilitiesChange)="onUtilitiesChange($event)"
+                      (validationChange)="onUtilitiesValidationChange($event)">
+                    </app-base-contract-utilities>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+              
+              <div class="stepper-buttons">
+                <button mat-button matStepperPrevious>Indietro</button>
+                <button mat-button matStepperNext color="primary">Avanti</button>
+              </div>
+            </form>
+          </mat-step>
+          
+          <!-- Step 5: Riepilogo e Conferma -->
           <mat-step>
             <ng-template matStepLabel>Riepilogo</ng-template>
             
@@ -347,6 +382,28 @@
                       <span>Giorno {{termsFormGroup.get('paymentDueDay')?.value}} di ogni mese</span>
                     </div>
                   </div>
+                  
+                  <mat-divider></mat-divider>
+                  
+                  <div class="summary-section">
+                    <h4>Letture Utenze Iniziali</h4>
+                    <div class="summary-row" *ngIf="utilitiesFormGroup.get('electricity')?.value">
+                      <span class="summary-label">Elettricità:</span>
+                      <span>{{utilitiesFormGroup.get('electricity')?.value | number:'1.0-3'}} kWh</span>
+                    </div>
+                    <div class="summary-row" *ngIf="utilitiesFormGroup.get('water')?.value">
+                      <span class="summary-label">Acqua:</span>
+                      <span>{{utilitiesFormGroup.get('water')?.value | number:'1.0-3'}} m³</span>
+                    </div>
+                    <div class="summary-row" *ngIf="utilitiesFormGroup.get('gas')?.value">
+                      <span class="summary-label">Gas:</span>
+                      <span>{{utilitiesFormGroup.get('gas')?.value | number:'1.0-3'}} m³</span>
+                    </div>
+                    <div class="summary-row" *ngIf="utilitiesFormGroup.get('propertyCondition')?.value">
+                      <span class="summary-label">Condizioni Appartamento:</span>
+                      <span>{{utilitiesFormGroup.get('propertyCondition')?.value}}</span>
+                    </div>
+                  </div>
                 </mat-card-content>
               </mat-card>
               
@@ -374,6 +431,13 @@
                      color="accent">
                 <mat-icon>description</mat-icon>
                 Genera Contratto
+              </button>
+              <button mat-raised-button 
+                     [disabled]="!isFormValid()" 
+                     (click)="generateBaseContract()" 
+                     color="warn">
+                <mat-icon>home</mat-icon>
+                Genera Contratto Base
               </button>
             </div>
           </mat-step>

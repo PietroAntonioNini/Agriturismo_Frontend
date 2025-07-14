@@ -2,7 +2,7 @@
 $modal-max-width: 1600px;
 $modal-padding: 1.5rem;
 $table-row-height: 60px;
-$table-max-rows: 5;
+$table-max-rows: 8; // Aumentato da 5 a 8 per visualizzare più righe
 
 // === BREAKPOINT RESPONSIVI ===
 $breakpoint-4k: 2560px;      // 4K e monitor grandi
@@ -15,12 +15,14 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
 // === CONTAINER PRINCIPALE ===
 .reading-history-container {
   height: 100%;
+  max-height: 90vh; // Limita l'altezza massima per evitare overflow
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   padding: $modal-padding;
   box-sizing: border-box;
+  overflow: hidden; // Previene overflow del container principale
 
   @media (max-width: #{$breakpoint-mobile}) {
     padding: 1rem;
@@ -177,10 +179,17 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
     }
 
     .utility-option,
-    .payment-option {
+    .payment-option,
+    .selected-utility,
+    .selected-payment {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+    
+    // Fix padding per i form field
+    .mdc-text-field--outlined .mat-mdc-form-field-infix {
+      padding-bottom: 0 !important;
     }
   }
 }
@@ -256,6 +265,11 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  
+  // Assicura che la sezione contenuto possa scrollare se necessario
+  &.table-section {
+    min-height: 400px;
+  }
 }
 
 // === VISTA TABELLA OTTIMIZZATA ===
@@ -267,7 +281,19 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
     background: var(--surface-color);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-light);
-    max-height: calc(#{$table-row-height} * #{$table-max-rows + 1} + 120px); // +1 per header, +120px per padding e paginator
+    min-height: 400px; // Altezza minima per garantire visibilità
+    max-height: calc(80vh - 200px); // Usa viewport height per adattarsi al dialog
+    
+    // Responsive adjustments for table card
+    @media (max-width: #{$breakpoint-tablet}) {
+      min-height: 350px;
+      max-height: calc(85vh - 150px);
+    }
+    
+    @media (max-width: #{$breakpoint-mobile}) {
+      min-height: 300px;
+      max-height: calc(90vh - 120px);
+    }
 
     .table-header {
       padding: 1.5rem 1.5rem 0 1.5rem;
@@ -292,68 +318,119 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
       }
     }
 
-    .table-content {
-      flex: 1;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+          .table-content {
+        flex: 1;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
 
-              .table-wrapper {
+                    .table-wrapper {
         flex: 1;
         overflow-y: auto;
         overflow-x: auto;
-        max-height: calc(#{$table-row-height} * #{$table-max-rows + 1}); // Esattamente 5 righe dati + 1 header = 6 righe totali
+        min-height: 300px; // Altezza minima per la tabella
+        max-height: calc(80vh - 300px); // Adatta al dialog, lasciando spazio per header e paginator
+        
+        // Responsive adjustments for table wrapper
+        @media (max-width: #{$breakpoint-tablet}) {
+          min-height: 250px;
+          max-height: calc(85vh - 250px);
+        }
+        
+        @media (max-width: #{$breakpoint-mobile}) {
+          min-height: 200px;
+          max-height: calc(90vh - 200px);
+        }
 
-        .modern-table {
-          width: 100%;
-          background: var(--surface-color);
+                  .modern-table {
+            width: 100%;
+            background: var(--surface-color);
+            
+            // Responsive table adjustments
+            @media (max-width: #{$breakpoint-tablet}) {
+              font-size: 0.875rem;
+              
+              .mat-mdc-header-cell,
+              .mat-mdc-cell {
+                padding: 0.75rem 0.5rem;
+              }
+            }
+            
+            @media (max-width: #{$breakpoint-mobile}) {
+              font-size: 0.8rem;
+              
+              .mat-mdc-header-cell,
+              .mat-mdc-cell {
+                padding: 0.5rem 0.25rem;
+              }
+            }
 
-          // Header della tabella
-          .mat-mdc-header-row {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid var(--divider-color);
-            height: $table-row-height;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+                      // Header della tabella
+            .mat-mdc-header-row {
+              background-color: #f8f9fa;
+              border-bottom: 2px solid var(--divider-color);
+              height: $table-row-height;
+              position: sticky;
+              top: 0;
+              z-index: 10;
 
-            .mat-mdc-header-cell {
-              border-bottom: none;
-              color: var(--text-primary);
-              font-weight: 600;
-              padding: 1rem 0.75rem;
+              .mat-mdc-header-cell {
+                border-bottom: none;
+                color: var(--text-primary);
+                font-weight: 600;
+                padding: 1rem 0.75rem;
 
-              .header-content {
-                display: flex;
-                align-items: center;
-                justify-content: center !important;
-                gap: 0.5rem;
+                .header-content {
+                  display: flex;
+                  align-items: center;
+                  justify-content: center !important;
+                  gap: 0.5rem;
 
-                mat-icon {
-                  font-size: 1.125rem;
-                  color: var(--text-secondary);
+                  mat-icon {
+                    font-size: 1.125rem;
+                    color: var(--text-secondary);
+                  }
+                  
+                  // Responsive headers
+                  @media (max-width: #{$breakpoint-mobile}) {
+                    span {
+                      font-size: 0.75rem;
+                    }
+                    
+                    mat-icon {
+                      font-size: 1rem;
+                    }
+                  }
                 }
               }
             }
-          }
 
-          // Righe della tabella
-          .table-row {
-            height: $table-row-height;
-            transition: background-color var(--transition-fast);
-            cursor: pointer;
+                      // Righe della tabella
+            .table-row {
+              height: $table-row-height;
+              transition: background-color var(--transition-fast);
+              cursor: pointer;
 
-            &:hover {
-              background-color: rgba(25, 118, 210, 0.04);
+              &:hover {
+                background-color: rgba(25, 118, 210, 0.04);
+              }
+
+              .mat-mdc-cell {
+                border-bottom: 1px solid #f0f0f0;
+                padding: 1rem 0.75rem;
+                vertical-align: middle;
+              }
+              
+              // Responsive row heights
+              @media (max-width: #{$breakpoint-tablet}) {
+                height: calc(#{$table-row-height} * 0.9);
+              }
+              
+              @media (max-width: #{$breakpoint-mobile}) {
+                height: calc(#{$table-row-height} * 0.8);
+              }
             }
-
-            .mat-mdc-cell {
-              border-bottom: 1px solid #f0f0f0;
-              padding: 1rem 0.75rem;
-              vertical-align: middle;
-            }
-          }
 
           // Stili specifici per celle
           .apartment-cell {
@@ -511,6 +588,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
         background-color: #f8f9fa;
         padding: 0.5rem 1rem;
         min-height: 56px;
+        flex-shrink: 0; // Previene la compressione del paginator
         
         // Nascondi il selettore di righe per pagina
         ::ng-deep {
@@ -769,14 +847,15 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
       .mat-mdc-dialog-content {
         padding: 0;
         max-height: 100%;
-        overflow: hidden;
+        overflow-y: auto; // Permette scroll verticale se necessario
+        overflow-x: hidden; // Previene scroll orizzontale
       }
       
       // === DEFAULT (4K+ e schermi molto grandi) ===
       max-width: 1400px;
       width: 70vw;
       height: 80vh;
-      max-height: 900px;
+      max-height: 950px;
       
       // === 2K DISPLAYS (2560px+) ===
       @media (min-width: #{$breakpoint-4k}) {
@@ -790,8 +869,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
       @media (max-width: #{$breakpoint-4k - 1px}) and (min-width: #{$breakpoint-2k}) {
         max-width: 1300px;
         width: 75vw;
-        height: 82vh;
-        max-height: 850px;
+        height: 90vh;
       }
       
       // === LAPTOP GRANDE (1600px - 1919px) ===
