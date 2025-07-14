@@ -101,6 +101,9 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   errorMessage: string | null = null;
   viewMode: 'table' | 'grouped' = 'table';
   
+  // Flip card states - track which cards are flipped
+  flippedCards: Set<number> = new Set();
+  
   // Filters
   filterForm!: FormGroup;
   
@@ -384,6 +387,21 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     if (mode === 'grouped') {
       this.updateGroupedData();
     }
+    
+    // Reset flip states when changing view
+    this.flippedCards.clear();
+  }
+  
+  toggleCardFlip(apartmentId: number): void {
+    if (this.flippedCards.has(apartmentId)) {
+      this.flippedCards.delete(apartmentId);
+    } else {
+      this.flippedCards.add(apartmentId);
+    }
+  }
+  
+  isCardFlipped(apartmentId: number): boolean {
+    return this.flippedCards.has(apartmentId);
   }
   
   editReading(reading: ReadingWithApartmentName): void {

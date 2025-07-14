@@ -12,9 +12,88 @@ $breakpoint-laptop: 1366px;  // Laptop standard
 $breakpoint-tablet: 1024px;  // Tablet landscape
 $breakpoint-mobile: 768px;   // Mobile e tablet portrait
 
+// === FLIP CARD ANIMATION ===
+.flip-card-container {
+  perspective: 1000px;
+  width: 100%;
+  height: 100%;
+}
+
+.flip-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s ease-in-out;
+  transform-style: preserve-3d;
+  
+  &.flipped {
+    transform: rotateY(180deg);
+  }
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: var(--border-radius);
+  
+  .apartment-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    
+      mat-card-content {
+        height: calc(100% - 90px);
+        flex: 1;
+      }
+    
+      mat-card-actions {
+       position: absolute;
+       top: 16px;
+       right: 16px;
+       padding: 0;
+       margin: 0;
+       z-index: 10;
+       
+       .flip-button {
+         width: 48px;
+         height: 48px;
+         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+         transition: all 0.3s ease;
+         background-color: var(--primary-color);
+         color: white;
+         
+         &:hover {
+           transform: scale(1.1);
+           box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+         }
+         
+         mat-icon {
+           font-size: 24px;
+           width: 24px;
+           height: 24px;
+         }
+       }
+     }
+  }
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  
+  .apartment-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid var(--primary-color);
+  }
+}
+
 // === CONTAINER PRINCIPALE ===
 .reading-history-container {
   height: 100%;
+  min-height: fit-content;
   max-height: 90vh; // Limita l'altezza massima per evitare overflow
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   display: flex;
@@ -628,9 +707,15 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
 
 // === VISTA RAGGRUPPATA ===
 .grouped-section {
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  max-height: calc(100vh - 200px); // Limita l'altezza massima del modale
+  
   .grouped-header {
     text-align: center;
     margin-bottom: 1.5rem;
+    flex-shrink: 0; // Non comprimere l'header
 
     h3 {
       display: flex;
@@ -656,28 +741,56 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
-    overflow-y: auto;
     padding: 0.5rem;
-    flex: 1;
+    
+    // Calcolo altezza per 3 card: 3 × 320px + 2 × 24px (gap) + 16px (padding) = 1008px
+    max-height: calc(3 * 320px + 2 * 1.5rem + 1rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    
+    // Nasconde scrollbar quando non necessaria
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
 
     @media (max-width: 768px) {
       grid-template-columns: 1fr;
+      max-height: calc(3 * 280px + 2 * 1.5rem + 1rem); // Card più piccole su mobile
+    }
+
+    .flip-card-container {
+      height: 320px; // Altezza fissa per calcolo preciso
+      
+      @media (max-width: 768px) {
+        height: 280px; // Altezza ridotta su mobile
+      }
     }
 
     .apartment-card {
       background: var(--surface-color);
-      border-radius: var(--border-radius);
       box-shadow: var(--shadow-light);
       transition: all var(--transition-medium);
       border-left: 4px solid var(--primary-color);
 
       &:hover {
         box-shadow: var(--shadow-medium);
-        transform: translateY(-2px);
       }
 
       .mat-mdc-card-header {
-        padding: 1.5rem 1.5rem 1rem 1.5rem;
+        padding: 1rem 1.5rem 1rem 1.5rem;
 
         .mat-mdc-card-title {
           display: flex;
@@ -746,7 +859,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
         }
 
         .total-cost {
-          margin-top: 1rem;
+          margin-top: 0.7rem;
           padding: 0.75rem;
           background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%);
           border-radius: 0.5rem;
@@ -772,7 +885,6 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
             padding: 0.75rem;
             border-radius: 0.5rem;
             background-color: #f8f9fa;
-            margin-bottom: 0.5rem;
             transition: background-color var(--transition-fast);
 
             &:hover {
@@ -822,7 +934,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
         }
 
         button {
-          margin-top: 1rem;
+          margin-top: 0.6rem;
           width: 100%;
         }
       }
@@ -854,63 +966,72 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
       // === DEFAULT (4K+ e schermi molto grandi) ===
       max-width: 1400px;
       width: 70vw;
-      height: 80vh;
-      max-height: 950px;
+      height: auto;
+      min-height: 60vh;
+      max-height: 90vh;
       
       // === 2K DISPLAYS (2560px+) ===
       @media (min-width: #{$breakpoint-4k}) {
         max-width: 1500px;
         width: 65vw;
-        height: 75vh;
-        max-height: 1000px;
+        height: auto;
+        min-height: 60vh;
+        max-height: 90vh;
       }
       
       // === FULL HD (1920px - 2559px) ===
       @media (max-width: #{$breakpoint-4k - 1px}) and (min-width: #{$breakpoint-2k}) {
         max-width: 1300px;
         width: 75vw;
-        height: 90vh;
+        height: auto;
+        min-height: 60vh;
+        max-height: 90vh;
       }
       
       // === LAPTOP GRANDE (1600px - 1919px) ===
       @media (max-width: #{$breakpoint-2k - 1px}) and (min-width: #{$breakpoint-full-hd}) {
         max-width: 1200px;
         width: 85vw;
-        height: 85vh;
-        max-height: 800px;
+        height: auto;
+        min-height: 50vh;
+        max-height: 85vh;
       }
       
       // === LAPTOP STANDARD (1366px - 1599px) ===
       @media (max-width: #{$breakpoint-full-hd - 1px}) and (min-width: #{$breakpoint-laptop}) {
         max-width: 1100px;
         width: 90vw;
-        height: 88vh;
-        max-height: 750px;
+        height: auto;
+        min-height: 50vh;
+        max-height: 85vh;
       }
       
       // === TABLET LANDSCAPE (1024px - 1365px) ===
       @media (max-width: #{$breakpoint-laptop - 1px}) and (min-width: #{$breakpoint-tablet}) {
         max-width: 950px;
         width: 95vw;
-        height: 90vh;
-        max-height: 700px;
+        height: auto;
+        min-height: 50vh;
+        max-height: 80vh;
       }
       
       // === TABLET PORTRAIT E MOBILE GRANDE (768px - 1023px) ===
       @media (max-width: #{$breakpoint-tablet - 1px}) and (min-width: #{$breakpoint-mobile}) {
         max-width: 100vw;
         width: 98vw;
-        height: 92vh;
-        max-height: none;
+        height: auto;
+        min-height: 70vh;
+        max-height: 92vh;
         border-radius: 8px;
       }
       
       // === MOBILE (< 768px) ===
       @media (max-width: #{$breakpoint-mobile - 1px}) {
         width: 100vw;
-        height: 100vh;
-        max-width: 100vw;
+        height: auto;
+        min-height: 100vh;
         max-height: 100vh;
+        max-width: 100vw;
         border-radius: 0;
       }
     }
