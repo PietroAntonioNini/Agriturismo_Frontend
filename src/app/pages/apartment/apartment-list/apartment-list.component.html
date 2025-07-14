@@ -89,7 +89,7 @@
   <!-- Vista Griglia -->
   <div *ngIf="viewMode === 'grid' && filteredApartments.length > 0" class="apartments-grid">
     <div *ngFor="let apartment of filteredApartments" class="apartment-card" [class.highlight-available]="apartment.status === 'available'" [class.highlight-occupied]="apartment.status === 'occupied'" [class.highlight-maintenance]="apartment.status === 'maintenance'">
-      <div class="apartment-header">
+      <div class="apartment-header" (click)="openApartmentDetails(apartment.id)">
         <div class="apartment-name">{{apartment.name}}</div>
         <div class="apartment-status-badge" [class]="getStatusClass(apartment.status)">
           {{getStatusLabel(apartment.status)}}
@@ -109,7 +109,7 @@
         </div>
       </div>
       
-      <div class="apartment-details">
+      <div class="apartment-details" (click)="openApartmentDetails(apartment.id)">
         <div class="detail-group">
           <div class="detail-item">
             <mat-icon>straighten</mat-icon>

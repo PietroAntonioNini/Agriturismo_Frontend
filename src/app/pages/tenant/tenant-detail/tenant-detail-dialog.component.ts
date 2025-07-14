@@ -18,6 +18,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Tenant } from '../../../shared/models';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 import { ImageService } from '../../../shared/services/image.service';
+import { LeaseService } from '../../../shared/services/lease.service';
 import { catchError, delay, map, Observable, of, retry, tap } from 'rxjs';
 
 // Componente per l'anteprima dell'immagine a schermo intero
@@ -119,7 +120,8 @@ export class TenantDetailDialogComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
     private ngZone: NgZone,
-    private imageService: ImageService
+    private imageService: ImageService,
+    private leaseService: LeaseService
   ) {}
 
   ngOnInit(): void {
@@ -810,6 +812,49 @@ export class TenantDetailDialogComponent implements OnInit {
             this.documentLoadingBack = false;
             this.cdr.markForCheck();
           }
+        });
+      }
+    });
+  }
+
+  // Metodi per gestire le operazioni sui lease
+  
+  /**
+   * Apre il modale per visualizzare il lease
+   */
+  viewLease(lease: any): void {
+    this.leaseService.openLeaseDetail(lease);
+  }
+
+  /**
+   * Apre il modale per modificare il lease
+   */
+  editLease(lease: any): void {
+    this.leaseService.openLeaseEdit(lease);
+  }
+
+  /**
+   * Elimina il lease con conferma
+   */
+  deleteLease(lease: any): void {
+    this.leaseService.deleteLease(lease).subscribe({
+      next: (deleted: boolean) => {
+        if (deleted) {
+          this.snackBar.open('Contratto eliminato con successo', 'Chiudi', {
+            duration: 3000,
+            horizontalPosition: 'end',
+            verticalPosition: 'top'
+          });
+          // Ricarica i lease dell'inquilino
+          this.loadTenantLeases(this.tenant!.id);
+        }
+      },
+      error: (error: any) => {
+        console.error('Errore durante l\'eliminazione del contratto', error);
+        this.snackBar.open('Errore durante l\'eliminazione del contratto', 'Chiudi', {
+          duration: 3000,
+          horizontalPosition: 'end',
+          verticalPosition: 'top'
         });
       }
     });

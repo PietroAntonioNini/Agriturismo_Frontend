@@ -114,6 +114,16 @@
   margin-bottom: 16px;
 }
 
+.description-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+  
+  .full-width {
+    width: 100%;
+  }
+}
+
 .option-display {
   display: flex;
   align-items: center;

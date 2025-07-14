@@ -1,12 +1,15 @@
 <div class="page-container">
   <div class="page-header">
     <div class="header-left">
-      <button mat-icon-button (click)="goBack()" class="back-button">
+      <button mat-icon-button (click)="goBack()" class="back-button" *ngIf="!dialogRef">
         <mat-icon>arrow_back</mat-icon>
+      </button>
+      <button mat-icon-button (click)="closeModal()" class="close-button" *ngIf="dialogRef">
+        <mat-icon>close</mat-icon>
       </button>
       <h1>Dettaglio Contratto</h1>
     </div>
-    <div class="header-actions" *ngIf="!isLoading && lease">
+    <div class="header-actions" *ngIf="!isLoading && lease && !dialogRef">
       <button mat-button class="action-button edit" (click)="editLease()">
         <mat-icon>edit</mat-icon>
         <span>Modifica</span>

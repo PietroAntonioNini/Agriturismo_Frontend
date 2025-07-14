@@ -234,6 +234,7 @@
               </div>
             </mat-tab>
             
+            <!-- Contratti attivi -->
             <mat-tab>
               <ng-template mat-tab-label>
                 <div class="tab-label">
@@ -264,11 +265,11 @@
                       <span class="property-tag">Appartamento ID: {{ lease.apartmentId }}</span>
                     </div>
                     <div class="contract-actions">
-                      <button class="action-button edit" matTooltip="Modifica">
+                      <button class="action-button edit" matTooltip="Modifica" (click)="editLease(lease)">
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button class="action-button more" matTooltip="Opzioni">
-                        <mat-icon>more_vert</mat-icon>
+                      <button class="action-button delete" matTooltip="Elimina" (click)="deleteLease(lease)">
+                        <mat-icon>delete</mat-icon>
                       </button>
                     </div>
                   </div>
@@ -314,7 +315,7 @@
                   </div>
 
                   <div class="contract-footer">
-                    <button class="view-details" [routerLink]="['/lease/detail', lease.id]" (click)="close()">
+                    <button class="view-details" (click)="viewLease(lease)">
                       <mat-icon>visibility</mat-icon>
                       <span>Visualizza Dettagli</span>
                     </button>

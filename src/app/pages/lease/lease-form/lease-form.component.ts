@@ -28,6 +28,7 @@ import { BaseContractUtilitiesComponent } from './base-contract-utilities.compon
 
 // Services
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { LeaseService } from '../../../shared/services/lease.service';
 import { ContractGeneratorService } from '../../../shared/services/contract-generator.service';
 import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
 import { BaseContractGeneratorService } from '../../../shared/services/base-contract-generator.service';
@@ -92,9 +93,10 @@ const MY_DATE_FORMATS = {
   ]
 })
 export class LeaseFormComponent implements OnInit {
-  @ViewChild('stepper') stepper!: MatStepper;
-  
+    @ViewChild('stepper') stepper!: MatStepper;
+
   // Form groups for stepper
+  currentStepIndex = 0;
   partiesFormGroup!: FormGroup;
   termsFormGroup!: FormGroup;
   conditionsFormGroup!: FormGroup;
@@ -125,6 +127,7 @@ export class LeaseFormComponent implements OnInit {
     private router: Router,
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
+    private leaseService: LeaseService,
     private contractGenerator: ContractGeneratorService,
     private contractTemplates: ContractTemplatesService,
     private baseContractGenerator: BaseContractGeneratorService,
@@ -401,10 +404,7 @@ export class LeaseFormComponent implements OnInit {
       ...this.termsFormGroup.value,
       ...this.conditionsFormGroup.value,
       // Aggiungi dati delle utenze se disponibili
-      initialUtilityReadings: this.utilitiesData,
-      propertyDescription: this.utilitiesFormGroup.value.propertyDescription,
-      propertyCondition: this.utilitiesFormGroup.value.propertyCondition,
-      boilerCondition: this.utilitiesFormGroup.value.boilerCondition
+      initialUtilityReadings: this.utilitiesData
     };
 
     if (this.isEditMode && this.leaseId) {
@@ -463,9 +463,9 @@ export class LeaseFormComponent implements OnInit {
   }
 
   cancel(): void {
-    if (this.isDialogMode && this.dialogRef) {
-      // Se siamo in modalità dialog, chiudi il dialog
-      this.dialogRef.close();
+    if (this.isDialogMode) {
+      // Se siamo in modalità dialog, usa il leaseService per chiudere
+      this.leaseService.closeModal();
     } else {
       // Se siamo in modalità pagina normale, naviga alla lista
       this.router.navigate(['/lease/list']);
@@ -478,6 +478,24 @@ export class LeaseFormComponent implements OnInit {
 
   getSubmitButtonText(): string {
     return this.isEditMode ? 'Aggiorna' : 'Crea';
+  }
+
+  shouldShowBackButton(): boolean {
+    return this.isDialogMode && this.currentStepIndex > 0;
+  }
+
+  goBack(): void {
+    if (this.isDialogMode && this.currentStepIndex > 0) {
+      this.stepper.previous();
+      // Non c'è bisogno di decrementare currentStepIndex manualmente
+      // perché onStepChange() lo gestisce automaticamente
+    } else if (!this.isDialogMode) {
+      this.router.navigate(['/lease/list']);
+    }
+  }
+
+  onStepChange(event: any): void {
+    this.currentStepIndex = event.selectedIndex;
   }
 
   generateContract(): void {

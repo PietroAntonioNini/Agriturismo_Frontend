@@ -77,22 +77,23 @@
               </div>
               
               <!-- Campo input -->
-              <mat-form-field appearance="outline" class="utility-input">
-                <mat-label>Lettura {{ utility.label }}</mat-label>
-                <mat-icon matPrefix [style.color]="utility.color">{{ utility.icon }}</mat-icon>
-                <input 
-                  matInput 
-                  type="number" 
-                  [formControlName]="utility.type"
-                  [placeholder]="'Inserisci lettura ' + utility.label.toLowerCase()"
-                  min="0" 
-                  step="0.01"
-                  [readonly]="isReadOnly">
+              <div class="d-flex align-items-center gap-2">
+                <mat-form-field appearance="outline" class="utility-input">
+                  <!-- <mat-label>{{ utility.unit }}</mat-label> -->
+                  <input 
+                    matInput 
+                    type="number" 
+                    [formControlName]="utility.type"
+                    [placeholder]="'Inserisci lettura'"
+                    min="0" 
+                    step="1"
+                    [readonly]="isReadOnly">
+                    <mat-error *ngIf="utilitiesForm.get(utility.type)?.hasError('min')">
+                      La lettura deve essere positiva
+                    </mat-error>
+                </mat-form-field>
                 <span matSuffix>{{ utility.unit }}</span>
-                <mat-error *ngIf="utilitiesForm.get(utility.type)?.hasError('min')">
-                  La lettura deve essere positiva
-                </mat-error>
-              </mat-form-field>
+              </div>
               
               <!-- Spinner per caricamento -->
               <div class="utility-loading" *ngIf="utility.isLoading">
@@ -104,52 +105,7 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Sezione descrizione appartamento -->
-    <mat-card class="description-card">
-      <mat-card-header>
-        <mat-card-title>
-          <mat-icon>description</mat-icon>
-          Descrizione e Condizioni
-        </mat-card-title>
-      </mat-card-header>
-      
-      <mat-card-content>
-        <div class="description-grid">
-          <!-- Descrizione proprietà -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descrizione Proprietà (opzionale)</mat-label>
-            <textarea 
-              matInput 
-              formControlName="propertyDescription"
-              rows="3"
-              placeholder="Inserisci una descrizione personalizzata della proprietà"
-              [readonly]="isReadOnly">
-            </textarea>
-            <mat-hint>Lascia vuoto per usare la descrizione automatica</mat-hint>
-          </mat-form-field>
 
-          <!-- Condizioni proprietà -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Condizioni Generali Appartamento</mat-label>
-            <input 
-              matInput 
-              formControlName="propertyCondition"
-              placeholder="Stato generale dell'appartamento"
-              [readonly]="isReadOnly">
-          </mat-form-field>
-
-          <!-- Condizioni caldaia -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Condizioni Caldaia</mat-label>
-            <input 
-              matInput 
-              formControlName="boilerCondition"
-              placeholder="Stato della caldaia"
-              [readonly]="isReadOnly">
-          </mat-form-field>
-        </div>
-      </mat-card-content>
-    </mat-card>
 
     <!-- Info e azioni -->
     <div class="actions-section" *ngIf="!isReadOnly">
@@ -165,7 +121,7 @@
       <div class="action-buttons">
         <button 
           mat-button 
-          color="accent" 
+          color="primary" 
           (click)="refreshLastReadings()"
           [disabled]="!apartment">
           <mat-icon>refresh</mat-icon>

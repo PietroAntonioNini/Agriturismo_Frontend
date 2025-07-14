@@ -649,19 +649,6 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Icone stato appartamento
-   */
-  getApartmentStatusIcon(status: string): string {
-    switch (status) {
-      case 'occupied': return 'home';
-      case 'available': return 'home_work';
-      case 'maintenance': return 'build';
-      case 'cleaning': return 'cleaning_services';
-      default: return 'home';
-    }
-  }
-
-  /**
    * Funzioni di tracciamento per ngFor
    */
   trackByActivityId(index: number, activity: any): string {

@@ -3,8 +3,11 @@
     <mat-card-header class="header">
       <mat-card-title class="title">{{getFormTitle()}}</mat-card-title>
       <div class="header-actions">
-        <button mat-icon-button (click)="cancel()" matTooltip="Torna alla lista">
+        <button mat-icon-button (click)="goBack()" matTooltip="Indietro" *ngIf="shouldShowBackButton()">
           <mat-icon>arrow_back</mat-icon>
+        </button>
+        <button mat-icon-button (click)="cancel()" matTooltip="Chiudi" *ngIf="isDialogMode">
+          <mat-icon>close</mat-icon>
         </button>
       </div>
     </mat-card-header>
@@ -21,7 +24,7 @@
       </div>
       
       <div *ngIf="!isLoading && !errorMessage">
-        <mat-stepper linear #stepper>
+        <mat-stepper linear #stepper (selectionChange)="onStepChange($event)">
           <!-- Step 1: Parti contraenti -->
           <mat-step [stepControl]="partiesFormGroup">
             <form [formGroup]="partiesFormGroup">
@@ -301,15 +304,70 @@
             </form>
           </mat-step>
           
-          <!-- Step 4: Utenze e Contratto Base -->
+          <!-- Step 4: Descrizione e Condizioni -->
+          <mat-step [stepControl]="conditionsFormGroup">
+            <form [formGroup]="conditionsFormGroup">
+              <ng-template matStepLabel>Descrizione e Condizioni</ng-template>
+              
+              <div class="step-content">
+                <div class="section-title">
+                  <mat-icon>description</mat-icon>
+                  <h3>Descrizione e Condizioni</h3>
+                </div>
+                
+                <mat-card class="inner-card">
+                  <mat-card-content>
+                    <div class="description-grid">
+                      <!-- Descrizione proprietà -->
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Descrizione Proprietà (opzionale)</mat-label>
+                        <textarea 
+                          matInput 
+                          formControlName="propertyDescription"
+                          rows="3"
+                          placeholder="Inserisci una descrizione personalizzata della proprietà">
+                        </textarea>
+                        <mat-hint>Lascia vuoto per usare la descrizione automatica</mat-hint>
+                      </mat-form-field>
+
+                      <!-- Condizioni proprietà -->
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Condizioni Generali Appartamento</mat-label>
+                        <input 
+                          matInput 
+                          formControlName="propertyCondition"
+                          placeholder="Stato generale dell'appartamento">
+                      </mat-form-field>
+
+                      <!-- Condizioni caldaia -->
+                      <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Condizioni Caldaia</mat-label>
+                        <input 
+                          matInput 
+                          formControlName="boilerCondition"
+                          placeholder="Stato della caldaia">
+                      </mat-form-field>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+              
+              <div class="stepper-buttons">
+                <button mat-button matStepperPrevious>Indietro</button>
+                <button mat-button matStepperNext color="primary">Avanti</button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 5: Letture Utenze -->
           <mat-step [stepControl]="utilitiesFormGroup">
             <form [formGroup]="utilitiesFormGroup">
-              <ng-template matStepLabel>Utenze e Contratto Base</ng-template>
+              <ng-template matStepLabel>Letture Utenze</ng-template>
               
               <div class="step-content">
                 <div class="section-title">
                   <mat-icon>bolt</mat-icon>
-                  <h3>Letture Utenze e Contratto Base</h3>
+                  <h3>Letture Utenze Iniziali</h3>
                 </div>
                 
                 <mat-card class="inner-card">
@@ -336,7 +394,7 @@
             </form>
           </mat-step>
           
-          <!-- Step 5: Riepilogo e Conferma -->
+          <!-- Step 6: Riepilogo e Conferma -->
           <mat-step>
             <ng-template matStepLabel>Riepilogo</ng-template>
             
@@ -399,9 +457,23 @@
                       <span class="summary-label">Gas:</span>
                       <span>{{utilitiesFormGroup.get('gas')?.value | number:'1.0-3'}} m³</span>
                     </div>
-                    <div class="summary-row" *ngIf="utilitiesFormGroup.get('propertyCondition')?.value">
+                  </div>
+                  
+                  <mat-divider></mat-divider>
+                  
+                  <div class="summary-section">
+                    <h4>Descrizione e Condizioni</h4>
+                    <div class="summary-row" *ngIf="conditionsFormGroup.get('propertyDescription')?.value">
+                      <span class="summary-label">Descrizione Proprietà:</span>
+                      <span>{{conditionsFormGroup.get('propertyDescription')?.value}}</span>
+                    </div>
+                    <div class="summary-row" *ngIf="conditionsFormGroup.get('propertyCondition')?.value">
                       <span class="summary-label">Condizioni Appartamento:</span>
-                      <span>{{utilitiesFormGroup.get('propertyCondition')?.value}}</span>
+                      <span>{{conditionsFormGroup.get('propertyCondition')?.value}}</span>
+                    </div>
+                    <div class="summary-row" *ngIf="conditionsFormGroup.get('boilerCondition')?.value">
+                      <span class="summary-label">Condizioni Caldaia:</span>
+                      <span>{{conditionsFormGroup.get('boilerCondition')?.value}}</span>
                     </div>
                   </div>
                 </mat-card-content>

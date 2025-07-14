@@ -115,10 +115,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
     this.utilitiesForm = this.fb.group({
       electricity: [null, [Validators.min(0)]],
       water: [null, [Validators.min(0)]],
-      gas: [null, [Validators.min(0)]],
-      propertyDescription: [''],
-      propertyCondition: ['Ottimo stato generale'],
-      boilerCondition: ['Perfetto stato di funzionamento']
+      gas: [null, [Validators.min(0)]]
     });
   }
 

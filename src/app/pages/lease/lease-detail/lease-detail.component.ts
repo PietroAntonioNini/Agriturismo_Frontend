@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject, Optional } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatChipsModule } from '@angular/material/chips';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { LeaseService } from '../../../shared/services/lease.service';
 import { Lease, LeaseDocument, LeasePayment } from '../../../shared/models/lease.model';
 import { Tenant } from '../../../shared/models';
 import { Apartment } from '../../../shared/models';
@@ -50,13 +51,27 @@ export class LeaseDetailComponent implements OnInit {
     private router: Router,
     private apiService: GenericApiService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private leaseService: LeaseService,
+    @Optional() public dialogRef: MatDialogRef<LeaseDetailComponent>,
+    @Optional() @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.loadLease(+id);
+    // Se siamo in un dialog, usa i dati passati, altrimenti usa i parametri della route
+    let leaseId: number | null = null;
+    
+    if (this.data && this.data.leaseId) {
+      leaseId = this.data.leaseId;
+    } else {
+      const id = this.route.snapshot.paramMap.get('id');
+      if (id) {
+        leaseId = +id;
+      }
+    }
+    
+    if (leaseId) {
+      this.loadLease(leaseId);
     } else {
       this.errorMessage = 'ID contratto non valido';
       this.isLoading = false;
@@ -148,7 +163,14 @@ export class LeaseDetailComponent implements OnInit {
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.router.navigate(['/lease/list']);
+          
+          // Se siamo in un modale, chiudilo con risultato
+          if (this.dialogRef) {
+            this.dialogRef.close({ deleted: true });
+          } else {
+            // Se siamo in una pagina normale, naviga alla lista
+            this.router.navigate(['/lease/list']);
+          }
         },
         error: (error) => {
           console.error('Errore durante l\'eliminazione del contratto', error);
@@ -197,5 +219,9 @@ export class LeaseDetailComponent implements OnInit {
                    (end.getMonth() - today.getMonth());
     
     return Math.max(0, months);
+  }
+
+  closeModal(): void {
+    this.leaseService.closeModal();
   }
 }

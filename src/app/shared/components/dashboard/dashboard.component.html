@@ -349,9 +349,11 @@
                 <h3 class="apartment-name">{{ apartment.name }}</h3>
                 <mat-chip class="status-chip" 
                          [style.background-color]="getApartmentStatusColor(apartment.status) + '20'"
-                         [style.color]="getApartmentStatusColor(apartment.status)">
-                  <mat-icon>{{ getApartmentStatusIcon(apartment.status) }}</mat-icon>
-                  {{ apartment.status | titlecase }}
+                         [style.color]="getApartmentStatusColor(apartment.status)"
+                         [style.border]="'1px solid ' + getApartmentStatusColor(apartment.status)">
+                  <span [style.color]="getApartmentStatusColor(apartment.status)">
+                    {{ apartment.status === 'occupied' ? 'Occupato' : 'Disponibile' | titlecase }}  
+                  </span>
                 </mat-chip>
               </div>
               <button mat-icon-button 

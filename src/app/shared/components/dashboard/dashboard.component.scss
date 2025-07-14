@@ -1,5 +1,27 @@
 @use '../../../shared/styles/themes/variables' as vars;
 
+// Variables with light/dark theme support
+$primary-color: var(--primary-color);
+$primary-dark: var(--primary-dark);
+$accent-color: var(--secondary-color);
+$danger-color: var(--error-color);
+$available-color: var(--success-color);
+$occupied-color: var(--error-color);
+$maintenance-color: var(--warning-color);
+$background-color: var(--app-background);
+$card-background: var(--card-background);
+$surface-color: var(--card-background);
+$text-primary: var(--text-color);
+$text-secondary: var(--text-muted);
+$border-color: var(--border-color);
+$hover-color: rgba(var(--primary-color-rgb), 0.1);
+$active-color: rgba(var(--primary-color-rgb), 0.15);
+$card-shadow: var(--shadow-medium);
+$radius-sm: var(--border-radius-sm);
+$radius-md: var(--border-radius-md);
+$radius-lg: var(--border-radius-lg);
+$transition-speed: var(--transition-normal);
+
 // Animazioni
 @keyframes fadeIn {
   from {
@@ -588,7 +610,6 @@
 
 .activities-list {
   max-height: 400px;
-  overflow-y: auto;
 }
 
 .activity-item {
@@ -755,17 +776,22 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
 
-  mat-icon {
-    font-size: 14px;
-    height: 14px;
-    width: 14px;
+  span {
+    font-weight: 600;
+    white-space: nowrap;
   }
 }
 
