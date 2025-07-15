@@ -89,17 +89,31 @@ export class ApartmentListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.apiService.getAll<Apartment>('apartments').subscribe({
-      next: (apartments) => {
-        this.apartments = apartments;
-        this.applyFilter(); // Applica i filtri già impostati
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Errore durante il caricamento degli appartamenti', error);
-        this.errorMessage = 'Si è verificato un errore durante il caricamento degli appartamenti. Riprova più tardi.';
-        this.isLoading = false;
-      }
+    Promise.all([
+      this.apiService.getAll<Apartment>('apartments').toPromise(),
+      this.apiService.getAll<any>('leases', { status: 'active' }).toPromise()
+    ]).then(([apartments, activeLeases]) => {
+      if (!apartments) apartments = [];
+      if (!activeLeases) activeLeases = [];
+
+      const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
+
+      this.apartments = apartments.map(apartment => {
+        const isOccupied = occupiedApartmentIds.has(apartment.id);
+        // Aggiorna lo stato solo se non è già 'maintenance'
+        const newStatus = apartment.status === 'maintenance' 
+          ? 'maintenance' 
+          : isOccupied ? 'occupied' : 'available';
+          
+        return { ...apartment, status: newStatus };
+      });
+
+      this.applyFilter();
+      this.isLoading = false;
+    }).catch(error => {
+      console.error('Errore durante il caricamento dei dati', error);
+      this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
+      this.isLoading = false;
     });
   }
 

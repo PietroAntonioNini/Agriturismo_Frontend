@@ -347,20 +347,12 @@
 }
 
 ::ng-deep {
-  
-  // FIX CURSORE SPECIFICO: assicura che il cursore sia visibile sempre
-  input.mat-mdc-input-element,
-  textarea.mat-mdc-input-element,
-  .mat-mdc-form-field-input-control {
-    caret-color: var(--primary-color) !important;
-    cursor: text !important;
-  }
 
   // Assicura che il cursore funzioni anche sui contenitori di input
   .mat-mdc-text-field-wrapper,
   .mat-mdc-form-field-flex,
   .mat-mdc-form-field-infix {
-    cursor: text !important;
+    cursor: black !important;
   }
 
   // FIX COLORE LABEL: sovrascrive specificamente i colori delle label di Angular Material

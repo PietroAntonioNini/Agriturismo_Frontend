@@ -144,13 +144,16 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     }).subscribe({
       next: (result) => {
         this.apartments = result.apartments || [];
-        this.processUtilityData(result.utilityData || []);
-        this.isLoading = false;
         
-        // Usa setTimeout per assicurarsi che il DOM sia aggiornato
+        // Sposta l'elaborazione pesante fuori dal thread principale per migliorare la reattività
         setTimeout(() => {
-          this.initializeChart();
+          this.processUtilityData(result.utilityData || []);
+          this.isLoading = false;
+          
+          // Inizializza il grafico dopo che i dati sono stati processati
+          setTimeout(() => this.initializeChart(), 50);
         }, 50);
+
       },
       error: (error) => {
         console.error('Errore durante il caricamento dei dati', error);

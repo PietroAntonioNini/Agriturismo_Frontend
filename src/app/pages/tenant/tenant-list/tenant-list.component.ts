@@ -94,53 +94,36 @@ export class TenantListComponent implements OnInit {
   loadTenants(): void {
     this.isLoading = true;
     this.errorMessage = null;
-  
-    // Il backend gestisce automaticamente la sincronizzazione
-    this.apiService.getAll<Tenant>('tenants').subscribe({
-      next: (tenants) => {
-        if (tenants && tenants.length > 0) {
-          // Ottimizzazione: utilizza Promise.all per le chiamate parallele
-          const promises = tenants.map(tenant => 
-            this.apiService.getAll<any>('leases', {
-              tenantId: tenant.id.toString(),
-              status: 'active'
-            }).toPromise()
-            .then(leases => {
-              tenant.hasLease = leases && leases.length > 0;
-              return tenant;
-            })
-            .catch(() => {
-              // In caso di errore nella query dei contratti, lascia hasLease come falso
-              tenant.hasLease = false;
-              return tenant;
-            })
-          );
-  
-          Promise.all(promises)
-            .then(tenantsWithLeaseStatus => {
-              this.tenants = tenantsWithLeaseStatus;
-              this.applyFilter();
-              this.isLoading = false;
-            })
-            .catch(error => {
-              console.error('Errore durante l\'elaborazione dei contratti', error);
-              // Se c'è un errore con i contratti, mostra comunque i tenant
-              this.tenants = tenants;
-              this.applyFilter();
-              this.isLoading = false;
-            });
-        } else {
-          // Nessun tenant trovato
-          this.tenants = [];
-          this.filteredTenants = [];
-          this.isLoading = false;
-        }
-      },
-      error: (error) => {
-        console.error('Errore durante il caricamento degli inquilini', error);
-        this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
-        this.isLoading = false;
+
+    // Esegui tutte le chiamate necessarie in parallelo per massima efficienza
+    Promise.all([
+      this.apiService.getAll<Tenant>('tenants').toPromise(),
+      this.apiService.getAll<any>('leases', { status: 'active' }).toPromise()
+    ]).then(([tenants, activeLeases]) => {
+      if (!tenants) {
+        tenants = [];
       }
+      if (!activeLeases) {
+        activeLeases = [];
+      }
+
+      // Crea un set di ID inquilini con contratti attivi per un lookup O(1)
+      const tenantIdsWithActiveLease = new Set(activeLeases.map(lease => lease.tenantId));
+
+      // Mappa lo stato del contratto a ogni inquilino
+      this.tenants = tenants.map(tenant => ({
+        ...tenant,
+        hasLease: tenantIdsWithActiveLease.has(tenant.id)
+      }));
+
+      this.applyFilter();
+      this.isLoading = false;
+    }).catch(error => {
+      console.error('Errore durante il caricamento dei dati', error);
+      this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
+      this.isLoading = false;
+      this.tenants = [];
+      this.filteredTenants = [];
     });
   }
 

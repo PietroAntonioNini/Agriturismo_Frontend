@@ -60,6 +60,7 @@ $transition-speed: var(--transition-normal);
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   animation: fadeIn 0.5s ease-out;
+  cursor: default;
 }
 
 // Header della dashboard
@@ -758,25 +759,25 @@ $transition-speed: var(--transition-normal);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
 }
 
 .apartment-info {
-  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .apartment-name {
   font-size: 18px;
   font-weight: 600;
   color: vars.$text-dark;
-  margin: 0 0 8px;
+  margin: 0;
 }
 
 .status-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 16px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;

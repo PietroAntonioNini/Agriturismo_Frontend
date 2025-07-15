@@ -226,8 +226,11 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (readings) => {
-          this.processReadings(readings);
-          this.isLoading = false;
+          // Sposta l'elaborazione pesante fuori dal thread principale
+          setTimeout(() => {
+            this.processReadings(readings);
+            this.isLoading = false;
+          }, 50);
         },
         error: (error) => {
           console.error('Errore durante il caricamento delle letture:', error);

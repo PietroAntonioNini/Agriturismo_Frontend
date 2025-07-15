@@ -41,16 +41,6 @@ body {
   background-color: var(--app-background) !important;
 }
 
-/* ====== FIX PER INPUT E CURSORE ====== */
-/* Fix per il cursore e conversione colori a verde */
-input, 
-textarea, 
-.mat-mdc-input-element,
-.mat-mdc-textarea-element,
-[contenteditable] {
-  caret-color: var(--primary-color) !important;
-}
-
 /* Fix per input prefix (€, m², ecc.) */
 .mat-mdc-form-field-text-prefix {
   padding-left: 16px !important;
@@ -135,8 +125,6 @@ textarea,
   background-color: var(--primary-color) !important;
 }
 
-/* ====== FORM FIELDS E INPUT ====== */
-
 /* Input enhancement per modalità chiara */
 .mat-mdc-text-field-wrapper {
   background-color: rgba(0, 0, 0, 0.03) !important; /* Aumentato contrasto per vedere meglio il cursore */
@@ -165,37 +153,6 @@ textarea,
   .mdc-notched-outline__trailing {
     border-color: var(--primary-color) !important;
   }
-}
-
-/* Fix per assicurare che il cursore sia sempre visibile */
-input.mat-mdc-input-element,
-textarea.mat-mdc-input-element,
-input[matinput],
-textarea[matinput],
-.mat-mdc-form-field-input-control {
-  caret-color: var(--primary-color) !important;
-  -webkit-text-fill-color: var(--text-color) !important; /* Fix per WebKit */
-  color: var(--text-color) !important;
-  opacity: 1 !important;
-  cursor: text !important;
-}
-
-/* Assicura che il cursore funzioni anche sui contenitori di input */
-.mat-mdc-text-field-wrapper,
-.mat-mdc-form-field-flex,
-.mat-mdc-form-field-infix {
-  cursor: text !important;
-}
-
-/* Input text colore più scuro in light mode per migliorare la visibilità */
-input.mat-mdc-input-element,
-textarea.mat-mdc-input-element,
-.mat-mdc-form-field-input-control {
-  color: rgba(0, 0, 0, 0.9) !important; /* Colore di testo ancora più scuro per gli input */
-  
-  /* Fix per light mode come nei file component specifici */
-  caret-color: var(--primary-color) !important;
-  cursor: text !important;
 }
 
 /* Select e dropdown */

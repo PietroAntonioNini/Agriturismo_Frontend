@@ -546,24 +546,6 @@ h3 {
     border-left: none !important;
   }
   
-  // FIX CURSORE SPECIFICO: assicura che il cursore sia visibile sempre
-  input.mat-mdc-input-element,
-  textarea.mat-mdc-input-element,
-  .mat-mdc-form-field-input-control {
-    caret-color: var(--primary-color) !important;
-    cursor: text !important;
-    color: var(--text-color) !important;
-    -webkit-text-fill-color: var(--text-color) !important;
-    opacity: 1 !important;
-  }
-
-  // Assicura che il cursore funzioni anche sui contenitori di input
-  .mat-mdc-text-field-wrapper,
-  .mat-mdc-form-field-flex,
-  .mat-mdc-form-field-infix {
-    cursor: text !important;
-  }
-  
   // Fix per l'input background in light mode per migliorare la visibilità del cursore
   .mat-mdc-text-field-wrapper {
     background-color: rgba(0, 0, 0, 0.04) !important;

@@ -85,9 +85,7 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadLeases();
-    this.loadTenants();
-    this.loadApartments();
+    this.loadInitialData();
   }
 
   ngAfterViewInit(): void {
@@ -112,56 +110,39 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Carica i contratti dal server
+   * Carica tutti i dati iniziali in parallelo per massima efficienza.
    */
-  loadLeases(): void {
+  loadInitialData(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    this.leaseService.getAllLeasesSortedByExpiration().subscribe({
-      next: (leases) => {
-        this.dataSource.data = leases;
-        this.dataSource.filteredData = leases;
-        this.updatePaginationLabels();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Errore durante il caricamento dei contratti', error);
-        this.errorMessage = 'Si è verificato un errore durante il caricamento dei contratti.';
-        this.isLoading = false;
-      }
-    });
-  }
-
-  /**
-   * Carica gli inquilini per visualizzare i nomi
-   */
-  loadTenants(): void {
-    this.apiService.getAll<Tenant>('tenants').subscribe({
-      next: (tenants) => {
+    Promise.all([
+      this.leaseService.getAllLeasesSortedByExpiration().toPromise(),
+      this.apiService.getAll<Tenant>('tenants').toPromise(),
+      this.apiService.getAll<Apartment>('apartments').toPromise()
+    ]).then(([leases, tenants, apartments]) => {
+      // Popola le cache dei nomi
+      if (tenants) {
         tenants.forEach(tenant => {
           this.tenantNames[tenant.id] = `${tenant.firstName} ${tenant.lastName}`;
         });
-      },
-      error: (error) => {
-        console.error('Errore durante il caricamento degli inquilini', error);
       }
-    });
-  }
-
-  /**
-   * Carica gli appartamenti per visualizzare i nomi
-   */
-  loadApartments(): void {
-    this.apiService.getAll<Apartment>('apartments').subscribe({
-      next: (apartments) => {
+      if (apartments) {
         apartments.forEach(apartment => {
           this.apartmentNames[apartment.id] = apartment.name || `Appartamento #${apartment.id}`;
         });
-      },
-      error: (error) => {
-        console.error('Errore durante il caricamento degli appartamenti', error);
       }
+
+      // Imposta i dati della tabella
+      this.dataSource.data = leases || [];
+      this.dataSource.filteredData = leases || [];
+      this.updatePaginationLabels();
+      
+    }).catch(error => {
+      console.error('Errore durante il caricamento dei dati iniziali', error);
+      this.errorMessage = 'Si è verificato un errore durante il caricamento dei dati.';
+    }).finally(() => {
+      this.isLoading = false;
     });
   }
 
@@ -315,7 +296,7 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
-          this.loadLeases();
+          this.loadInitialData(); // Reload all data after deletion
         },
         error: (error) => {
           console.error('Errore durante l\'eliminazione del contratto', error);
