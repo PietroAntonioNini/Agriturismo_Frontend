@@ -63,6 +63,10 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   apartmentUtilityData: ApartmentUtilityData[] = [];
   utilityStatistics: UtilityStatistics | null = null;
   
+  // Alert appartamenti senza letture
+  apartmentsWithoutReadings: Apartment[] = [];
+  utilityAlerts = 0;
+  
   // Anni disponibili
   availableYears: number[] = [];
   
@@ -770,6 +774,9 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       averageConsumption,
       monthlyTrend
     };
+
+    // Calcola appartamenti senza letture
+    this.calculateApartmentsWithoutReadings();
   }
 
   /**
@@ -781,5 +788,39 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.loadDashboardData(true);
     }, 800); // Delay ottimizzato: abbastanza per il backend, non troppo per l'utente
+  }
+
+  /**
+   * Calcola gli appartamenti senza letture per il mese corrente
+   */
+  private calculateApartmentsWithoutReadings(): void {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    // Filtra gli appartamenti che non hanno letture per il mese corrente
+    this.apartmentsWithoutReadings = this.apartments.filter(apartment => {
+      const hasCurrentMonthReading = this.allApartmentsData.some(reading => {
+        const readingDate = new Date(reading.year, reading.month - 1);
+        return reading.apartmentId === apartment.id &&
+               readingDate.getMonth() === currentMonth &&
+               readingDate.getFullYear() === currentYear &&
+               (reading.electricity > 0 || reading.water > 0 || reading.gas > 0);
+      });
+      return !hasCurrentMonthReading;
+    });
+    
+    this.utilityAlerts = this.apartmentsWithoutReadings.length;
+  }
+
+  /**
+   * Ottiene i nomi degli appartamenti senza letture
+   */
+  getApartmentsWithoutReadingsNames(maxCount?: number): string {
+    const apartments = maxCount 
+      ? this.apartmentsWithoutReadings.slice(0, maxCount)
+      : this.apartmentsWithoutReadings;
+    
+    return apartments.map(apt => apt.name).join(', ');
   }
 }

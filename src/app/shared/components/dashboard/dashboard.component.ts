@@ -85,6 +85,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   unpaidInvoices = 0;
   overdueInvoices = 0;
   utilityAlerts = 0;
+  apartmentsWithoutReadings: Apartment[] = [];
 
   // Attività recenti (dinamiche)
   recentActivities: any[] = [];
@@ -275,7 +276,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     const currentYear = now.getFullYear();
     
     // Appartamenti senza letture per il mese corrente
-    this.utilityAlerts = this.apartments.filter(apartment => {
+    const apartmentsWithoutReadings = this.apartments.filter(apartment => {
       const hasCurrentMonthReading = this.utilityReadings.some(reading => {
         const readingDate = new Date(reading.readingDate);
         return reading.apartmentId === apartment.id &&
@@ -283,7 +284,10 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
                readingDate.getFullYear() === currentYear;
       });
       return !hasCurrentMonthReading;
-    }).length;
+    });
+    
+    this.utilityAlerts = apartmentsWithoutReadings.length;
+    this.apartmentsWithoutReadings = apartmentsWithoutReadings;
   }
 
   /**
@@ -420,6 +424,23 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Ottieni appartamenti occupati e disponibili
+   */
+  private getOccupiedAndAvailableApartments(): { occupied: string[], available: string[] } {
+    const apartmentStatuses = this.getApartmentStatuses();
+    
+    const occupied = apartmentStatuses
+      .filter(apt => apt.status === 'occupied')
+      .map(apt => apt.name);
+    
+    const available = apartmentStatuses
+      .filter(apt => apt.status === 'available')
+      .map(apt => apt.name);
+    
+    return { occupied, available };
+  }
+
+  /**
    * Inizializza i grafici principali della dashboard
    */
   private initializeCharts(): void {
@@ -475,7 +496,22 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
                 const value = context.raw as number;
                 const total = this.totalApartments;
                 const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                return `${label}: ${value} (${percentage}%)`;
+                
+                // Ottieni gli appartamenti per questa categoria
+                const { occupied, available } = this.getOccupiedAndAvailableApartments();
+                const apartments = label === 'Occupati' ? occupied : available;
+                
+                // Se non ci sono appartamenti, mostra solo il conteggio
+                if (apartments.length === 0) {
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+                
+                // Altrimenti mostra i nomi degli appartamenti
+                const apartmentList = apartments.join('\n');
+                return [
+                  `${label}: ${value} (${percentage}%)`,
+                  ...apartments.map(apt => `• ${apt}`)
+                ];
               }
             }
           }
@@ -660,7 +696,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   getApartmentStatusColor(status: string): string {
     switch (status) {
-      case 'occupied': return '#2D7D46';
+      case 'occupied': return '#f55b56';
       case 'available': return '#10b981';
       case 'maintenance': return '#f59e0b';
       case 'cleaning': return '#3b82f6';
@@ -871,6 +907,17 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   openUtilityForm(): void {
     this.router.navigate(['/utility/reading-form']);
+  }
+
+  /**
+   * Ottiene i nomi degli appartamenti senza letture
+   */
+  getApartmentsWithoutReadingsNames(maxCount?: number): string {
+    const apartments = maxCount 
+      ? this.apartmentsWithoutReadings.slice(0, maxCount)
+      : this.apartmentsWithoutReadings;
+    
+    return apartments.map(apt => apt.name).join(', ');
   }
 
   /**

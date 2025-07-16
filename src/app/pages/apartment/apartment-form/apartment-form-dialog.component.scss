@@ -538,34 +538,3 @@ h3 {
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 }
-
-/* Fix specifico per il cursore degli input */
-::ng-deep {
-  // Rimuove specificamente il bordo sinistro che causa la striscia verticale
-  .mdc-notched-outline__notch {
-    border-left: none !important;
-  }
-  
-  // Fix per l'input background in light mode per migliorare la visibilità del cursore
-  .mat-mdc-text-field-wrapper {
-    background-color: rgba(0, 0, 0, 0.04) !important;
-    
-    &:hover .mdc-notched-outline__leading,
-    &:hover .mdc-notched-outline__notch,
-    &:hover .mdc-notched-outline__trailing {
-      border-color: var(--primary-color) !important;
-      border-width: 1px !important;
-    }
-  }
-  
-  // Migliora ulteriormente la visibilità del cursore rendendo più scuro il background dell'input
-  input, textarea {
-    background-color: rgba(0, 0, 0, 0.01) !important;
-  }
-  
-  // Fix specifico per il colore dei placeholder
-  ::placeholder {
-    color: rgba(0, 0, 0, 0.5) !important;
-    opacity: 1 !important;
-  }
-}

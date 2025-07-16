@@ -1,3 +1,39 @@
+// === MIXINS OTTIMIZZAZIONE CONSERVATIVA ===
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-align-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin text-primary-bold {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+@mixin text-secondary-normal {
+  color: var(--text-secondary);
+}
+
+@mixin hover-background {
+  transition: background-color var(--transition-fast);
+  background-color: #f8f9fa;
+  
+  &:hover {
+    background-color: #e9ecef;
+  }
+}
+
 // === VARIABILI LOCALI DEL COMPONENTE ===
 $modal-max-width: 1600px;
 $modal-padding: 1.5rem;
@@ -501,29 +537,23 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
                 vertical-align: middle;
               }
               
-              // Responsive row heights
               @media (max-width: #{$breakpoint-tablet}) {
                 height: calc(#{$table-row-height} * 0.9);
               }
-              
               @media (max-width: #{$breakpoint-mobile}) {
                 height: calc(#{$table-row-height} * 0.8);
               }
             }
 
-          // Stili specifici per celle
           .apartment-cell {
             .cell-content {
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              @include flex-center;
               gap: 0.5rem;
 
               .cell-icon {
-                color: var(--text-secondary);
+                @include text-secondary-normal;
                 font-size: 1.125rem;
               }
-
               .cell-text {
                 font-weight: 500;
                 color: var(--text-primary);
@@ -546,9 +576,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
 
           .date-cell {
             .date-value {
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              @include flex-center;
               font-weight: 500;
               color: var(--text-primary);
             }
@@ -558,9 +586,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
           .consumption-cell {
             .reading-content,
             .consumption-content {
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              @include flex-center;
               gap: 0.425rem;
 
               .reading-value,
@@ -569,33 +595,29 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
                 font-size: 1rem;
               }
 
-              .reading-value {
-                color: var(--text-primary);
-              }
-
-              .consumption-value {
-                color: var(--success-color);
-
-                &.high-consumption {
-                  color: var(--warning-color);
+                              .reading-value {
+                  color: var(--text-primary);
                 }
-              }
+                .consumption-value {
+                  color: var(--success-color);
+                  &.high-consumption {
+                    color: var(--warning-color);
+                  }
+                }
 
-              .reading-unit,
-              .consumption-unit {
-                font-size: 0.75rem;
-                color: var(--text-secondary);
-                text-transform: uppercase;
-                font-weight: 500;
-              }
+                              .reading-unit,
+                .consumption-unit {
+                  font-size: 0.75rem;
+                  @include text-secondary-normal;
+                  text-transform: uppercase;
+                  font-weight: 500;
+                }
             }
           }
 
           .cost-cell {
             .cost-content {
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              @include flex-center;
             }
 
             .cost-value {
@@ -815,18 +837,12 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
         margin-bottom: 1.5rem;
 
         .summary-item {
-          display: flex;
-          align-items: center;
+          @include flex-align-center;
           gap: 0.75rem;
           padding: 0.75rem;
           border-radius: 0.5rem;
-          background-color: #f8f9fa;
+          @include hover-background;
           margin-bottom: 0.5rem;
-          transition: background-color var(--transition-fast);
-
-          &:hover {
-            background-color: #e9ecef;
-          }
 
           mat-icon {
             font-size: 1.25rem;
@@ -845,8 +861,7 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
             }
 
             .summary-value {
-              font-weight: 600;
-              color: var(--text-primary);
+              @include text-primary-bold;
               text-align: right;
             }
 
@@ -872,30 +887,21 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
       .recent-readings {
         h4 {
           margin: 0 0 1rem 0;
-          color: var(--text-primary);
-          font-weight: 600;
+          @include text-primary-bold;
           font-size: 1rem;
         }
 
         .readings-list {
           .reading-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            @include flex-between;
             padding: 0.75rem;
             border-radius: 0.5rem;
-            background-color: #f8f9fa;
-            transition: background-color var(--transition-fast);
+            @include hover-background;
 
-            &:hover {
-              background-color: #e9ecef;
-            }
-
-            .reading-info {
-              display: flex;
-              align-items: center;
-              gap: 0.75rem;
-              flex: 1;
+                          .reading-info {
+                @include flex-align-center;
+                gap: 0.75rem;
+                flex: 1;
 
               mat-icon {
                 font-size: 1.125rem;
@@ -1038,60 +1044,21 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
   }
 }
 
-// === LAYOUT RESPONSIVE COMPLETO ===
-
-// === SCHERMI MOLTO GRANDI (4K+, 2560px+) ===
+// === RESPONSIVE CONSOLIDATO ===
 @media (min-width: #{$breakpoint-4k}) {
-  .reading-history-container {
-    padding: 2rem;
-    gap: 2rem;
-    font-size: 1.1rem; // Leggermente più grande per leggibilità su schermi grandi
-  }
-  
-  .history-header {
-    padding: 2rem 2.5rem;
-    
-    .title-content h1 {
-      font-size: 2rem;
-    }
-  }
-  
-  .table-wrapper .modern-table {
-    font-size: 1rem;
-    
-    .mat-mdc-header-cell,
-    .mat-mdc-cell {
-      padding: 1.25rem 1rem;
-    }
-  }
+  .reading-history-container { padding: 2rem; gap: 2rem; font-size: 1.1rem; }
+  .history-header { padding: 2rem 2.5rem; .title-content h1 { font-size: 2rem; } }
+  .table-wrapper .modern-table { font-size: 1rem; .mat-mdc-header-cell, .mat-mdc-cell { padding: 1.25rem 1rem; } }
 }
-
-// === FULL HD (1920px - 2559px) ===
 @media (max-width: #{$breakpoint-4k - 1px}) and (min-width: #{$breakpoint-2k}) {
-  .reading-history-container {
-    padding: 1.75rem;
-    gap: 1.75rem;
-  }
-  
-  .history-header {
-    padding: 1.75rem 2rem;
-  }
+  .reading-history-container { padding: 1.75rem; gap: 1.75rem; }
+  .history-header { padding: 1.75rem 2rem; }
 }
-
-// === LAPTOP GRANDE (1600px - 1919px) ===
 @media (max-width: #{$breakpoint-2k - 1px}) and (min-width: #{$breakpoint-full-hd}) {
-  .reading-history-container {
-    padding: 1.5rem;
-    gap: 1.5rem;
-  }
+  .reading-history-container { padding: 1.5rem; gap: 1.5rem; }
 }
-
-// === LAPTOP STANDARD (1366px - 1599px) ===
 @media (max-width: #{$breakpoint-full-hd - 1px}) and (min-width: #{$breakpoint-laptop}) {
-  .reading-history-container {
-    padding: 1.25rem;
-    gap: 1.25rem;
-  }
+  .reading-history-container { padding: 1.25rem; gap: 1.25rem; }
   
   .history-header {
     padding: 1.25rem 1.5rem;
@@ -1128,51 +1095,10 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
     gap: 1rem;
   }
   
-  .history-header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-    
-    .header-actions {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-  
-  .filters-form .filter-row {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .table-wrapper .modern-table {
-    font-size: 0.875rem;
-    
-    .mat-mdc-header-cell,
-    .mat-mdc-cell {
-      padding: 0.75rem 0.5rem;
-    }
-    
-    // Ottimizza il layout per tablet
-    .apartment-header,
-    .apartment-cell {
-      min-width: 120px;
-    }
-    
-    .utility-header,
-    .utility-cell {
-      min-width: 100px;
-    }
-    
-    .actions-header,
-    .actions-cell {
-      min-width: 80px;
-    }
-  }
-  
-  .apartments-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
+  .history-header { flex-direction: column; gap: 1rem; padding: 1rem; .header-actions { width: 100%; justify-content: center; } }
+  .filters-form .filter-row { grid-template-columns: 1fr; gap: 0.75rem; }
+  .table-wrapper .modern-table { font-size: 0.875rem; .mat-mdc-header-cell, .mat-mdc-cell { padding: 0.75rem 0.5rem; } .apartment-header, .apartment-cell { min-width: 120px; } .utility-header, .utility-cell { min-width: 100px; } .actions-header, .actions-cell { min-width: 80px; } }
+  .apartments-grid { grid-template-columns: 1fr; gap: 1rem; }
 }
 
 // === MOBILE (< 768px) ===
@@ -1219,126 +1145,29 @@ $breakpoint-mobile: 768px;   // Mobile e tablet portrait
         padding: 0.5rem 0.25rem;
         
         // Testo più compatto su mobile
-        &.apartment-cell,
-        &.apartment-header {
-          min-width: 100px;
-        }
-        
-        &.utility-cell,
-        &.utility-header {
-          min-width: 80px;
-        }
-        
-        &.date-cell,
-        &.date-header {
-          min-width: 90px;
-        }
-        
-        &.reading-cell,
-        &.reading-header,
-        &.consumption-cell,
-        &.consumption-header {
-          min-width: 80px;
-        }
-        
-        &.cost-cell,
-        &.cost-header {
-          min-width: 70px;
-        }
-        
-        &.payment-cell,
-        &.payment-header {
-          min-width: 90px;
-        }
-        
-        &.actions-cell,
-        &.actions-header {
-          min-width: 70px;
-        }
+        &.apartment-cell, &.apartment-header { min-width: 100px; }
+        &.utility-cell, &.utility-header { min-width: 80px; }
+        &.date-cell, &.date-header { min-width: 90px; }
+        &.reading-cell, &.reading-header, &.consumption-cell, &.consumption-header { min-width: 80px; }
+        &.cost-cell, &.cost-header { min-width: 70px; }
+        &.payment-cell, &.payment-header { min-width: 90px; }
+        &.actions-cell, &.actions-header { min-width: 70px; }
       }
       
-      // Layout più compatto per mobile
-      .utility-badge {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.75rem !important;
-      }
-      
-      .payment-chip {
-        padding: 0.25rem 0.5rem !important;
-        font-size: 0.7rem !important;
-      }
-      
-      .actions-content {
-        gap: 0.25rem !important;
-        
-        button {
-          width: 32px !important;
-          height: 32px !important;
-          
-          mat-icon {
-            font-size: 1rem !important;
-          }
-        }
-      }
+      .utility-badge { padding: 0.25rem 0.5rem !important; font-size: 0.75rem !important; }
+      .payment-chip { padding: 0.25rem 0.5rem !important; font-size: 0.7rem !important; }
+      .actions-content { gap: 0.25rem !important; button { width: 32px !important; height: 32px !important; mat-icon { font-size: 1rem !important; } } }
     }
   }
   
-  .apartments-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-    
-    .apartment-card {
-      .summary-details {
-        grid-template-columns: 1fr auto;
-        
-        .summary-value {
-          grid-column: 2;
-        }
-        
-        .summary-cost {
-          grid-column: 1 / -1;
-          text-align: center;
-          margin-top: 0.25rem;
-        }
-      }
-    }
-  }
+  .apartments-grid { grid-template-columns: 1fr; gap: 0.75rem; .apartment-card .summary-details { grid-template-columns: 1fr auto; .summary-value { grid-column: 2; } .summary-cost { grid-column: 1 / -1; text-align: center; margin-top: 0.25rem; } } }
 }
 
-// === ANIMAZIONI ===
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.state-container, .table-card, .apartment-card { animation: fadeIn 0.5s ease-out; }
 
-.state-container,
-.table-card,
-.apartment-card {
-  animation: fadeIn 0.5s ease-out;
-}
-
-// === STAMPA ===
 @media print {
-  .header-actions,
-  .filters-section,
-  .custom-paginator,
-  .actions-cell {
-    display: none !important;
-  }
-
-  .reading-history-container {
-    background: white;
-    padding: 0;
-  }
-
-  .table-card {
-    box-shadow: none;
-    border: 1px solid #ddd;
-  }
+  .header-actions, .filters-section, .custom-paginator, .actions-cell { display: none !important; }
+  .reading-history-container { background: white; padding: 0; }
+  .table-card { box-shadow: none; border: 1px solid #ddd; }
 }

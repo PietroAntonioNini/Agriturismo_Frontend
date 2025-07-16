@@ -108,6 +108,34 @@
       </div>
     </div>
 
+    <!-- Alert appartamenti senza letture -->
+    <div class="alerts-section" *ngIf="utilityAlerts > 0">
+      <mat-card class="alert-card warning-card">
+        <mat-card-content>
+          <div class="alert-content">
+            <mat-icon class="alert-icon">warning</mat-icon>
+            <div class="alert-text">
+              <h3>Letture utenze</h3>
+              <p *ngIf="apartmentsWithoutReadings.length <= 3">
+                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture: 
+                <span class="apartment-names">{{ getApartmentsWithoutReadingsNames() }}</span>
+              </p>
+              <p *ngIf="apartmentsWithoutReadings.length > 3">
+                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture: 
+                <span class="apartment-names">{{ getApartmentsWithoutReadingsNames(3) }} e altri {{ apartmentsWithoutReadings.length - 3 }}</span>
+              </p>
+            </div>
+            <button mat-button 
+                    color="warn" 
+                    (click)="openReadingForm()"
+                    class="alert-action">
+              Aggiungi Letture
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
     <!-- Filters and Controls -->
     <div class="controls-section">
       <mat-card class="controls-card">

@@ -57,7 +57,7 @@
             </div>
             <div class="stat-value">
               <span class="big-number">{{ occupancyRate }}%</span>
-              <span class="stat-subtitle">{{ occupiedApartments }}/{{ totalApartments }} appartamenti</span>
+              <span class="stat-subtitle">{{ occupiedApartments }} di {{ totalApartments }} <span *ngIf="totalApartments > 1">appartamenti</span><span *ngIf="totalApartments === 1">appartamento</span> occupati</span>
             </div>
             <mat-progress-bar 
               mode="determinate" 
@@ -90,7 +90,7 @@
             </div>
             <div class="stat-value">
               <span class="big-number">{{ totalTenants }}</span>
-              <span class="stat-subtitle">{{ activeLeases }} contratti attivi</span>
+              <span class="stat-subtitle">{{ activeLeases }} <span *ngIf="activeLeases > 1">inquilini</span><span *ngIf="activeLeases === 1">inquilino</span> con contratto attivo</span>
             </div>
           </mat-card-content>
         </mat-card>
@@ -133,13 +133,13 @@
             <div class="alert-content">
               <mat-icon class="alert-icon">schedule</mat-icon>
               <div class="alert-text">
-                <h3>Contratti in scadenza</h3>
+                <h3><span class="me-1" *ngIf="expiringLeases > 1">Contratti</span><span *ngIf="expiringLeases === 1">Contratto</span> in scadenza</h3>
                 <p>{{ getExpiringLeasesText() }}</p>
               </div>
               <button mat-button 
                       color="warn" 
                       (click)="navigateToExpiringLeases()"
-                      class="alert-action">
+                      class="alert-action-expiring-leases">
                 Visualizza
               </button>
             </div>
@@ -158,7 +158,7 @@
               <button mat-button 
                       color="warn" 
                       (click)="navigateTo('/invoices')"
-                      class="alert-action">
+                      class="alert-action-overdue-invoices">
                 Gestisci
               </button>
             </div>
@@ -172,12 +172,19 @@
               <mat-icon class="alert-icon">warning</mat-icon>
               <div class="alert-text">
                 <h3>Letture utenze</h3>
-                <p>{{ utilityAlerts }} appartamenti senza letture</p>
+                <p *ngIf="apartmentsWithoutReadings.length <= 3">
+                  {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture: 
+                  <span class="apartment-names">{{ getApartmentsWithoutReadingsNames() }}</span>
+                </p>
+                <p *ngIf="apartmentsWithoutReadings.length > 3">
+                  {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture: 
+                  <span class="apartment-names">{{ getApartmentsWithoutReadingsNames(3) }} e altri {{ apartmentsWithoutReadings.length - 3 }}</span>
+                </p>
               </div>
               <button mat-button 
                       color="primary" 
                       (click)="navigateTo('/utility')"
-                      class="alert-action">
+                      class="alert-action-utility-alerts">
                 Controlla
               </button>
             </div>

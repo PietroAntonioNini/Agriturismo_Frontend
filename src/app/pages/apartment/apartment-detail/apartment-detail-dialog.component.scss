@@ -1,29 +1,55 @@
-:host {
-  display: block;
+// Mixins ottimizzati
+@mixin card-base {
+  background-color: var(--card-background);
+  border-radius: 12px;
+  box-shadow: var(--shadow-light);
+  transition: all 0.2s ease;
 }
 
-.dialog-container {
-  min-width: 800px;
-  max-width: 90vw;
-}
-
-.dialog-actions {
+@mixin action-button {
+  background: none;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
-  justify-content: flex-end;
-  padding: 5px 24px;
-}
-
-.dialog-content {
-  max-height: 80vh;
-  padding: 0 !important;
-}
-
-::ng-deep .mat-mdc-dialog-container {
-  .mdc-dialog__surface {
-    min-width: 800px !important;
-    max-width: 90vw !important;
-    background-color: var(--card-background) !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: var(--app-background);
+    color: var(--text-color);
   }
+  
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+@mixin status-style($color) {
+  background-color: rgba(var(#{$color}-rgb), 0.1) !important;
+  .feature-icon { background-color: rgba(var(#{$color}-rgb), 0.2) !important; mat-icon { color: var(#{$color}) !important; } }
+  .feature-label { color: var(#{$color}) !important; }
+}
+
+@mixin grid-container($min-width: 110px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min-width, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+:host { display: block; }
+
+.dialog-container { min-width: 800px; max-width: 90vw; }
+.dialog-actions { display: flex; justify-content: flex-end; padding: 5px 24px; }
+.dialog-content { max-height: 80vh; padding: 0 !important; }
+
+::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
+  min-width: 800px !important;
+  max-width: 90vw !important;
+  background-color: var(--card-background) !important;
 }
 
 .apartment-card {
@@ -31,10 +57,7 @@
   box-shadow: none;
   border: none;
   user-select: none;
-
-  mat-card-header {
-    margin: auto;
-  }
+  mat-card-header { margin: auto; }
 }
 
 .apartment-header {
@@ -42,8 +65,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16px 24px;
-  padding-top: 0;
+  padding: 16px 24px 0;
 }
 
 .apartment-title {
@@ -76,13 +98,8 @@
   }
 }
 
-/* Rimossi stili status-available, status-occupied, status-maintenance */
-
-/* Carousel Styles */
-.image-carousel {
-  margin: 0 0 16px 0;
-  position: relative;
-}
+/* Carousel semplificato */
+.image-carousel { margin: 0 0 16px 0; position: relative; }
 
 .carousel-container {
   position: relative;
@@ -114,11 +131,8 @@
   left: 0;
   opacity: 0;
   transition: opacity 0.3s ease;
-}
-
-.carousel-item.active {
-  opacity: 1;
-  z-index: 1;
+  
+  &.active { opacity: 1; z-index: 1; }
 }
 
 .carousel-image {
@@ -143,23 +157,11 @@
   cursor: pointer;
   z-index: 2;
   
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.6);
-  }
+  &:hover { background-color: rgba(0, 0, 0, 0.6); }
+  &.prev { left: 10px; }
+  &.next { right: 10px; }
   
-  &.prev {
-    left: 10px;
-  }
-  
-  &.next {
-    right: 10px;
-  }
-  
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-  }
+  mat-icon { font-size: 24px; width: 24px; height: 24px; }
 }
 
 .carousel-dots {
@@ -176,163 +178,62 @@
   background-color: rgba(var(--text-muted-rgb), 0.3);
   cursor: pointer;
   
-  &.active {
-    background-color: var(--primary-color);
-  }
-  
-  &:hover {
-    background-color: var(--text-muted);
-  }
+  &.active { background-color: var(--primary-color); }
+  &:hover { background-color: var(--text-muted); }
 }
 
+/* Tabs semplificati */
 mat-tab-group {
   height: 530px;
   
   ::ng-deep {
-    .mat-mdc-tab .mdc-tab__text-label {
-      color: var(--text-color);
-    }
-    
-    .mat-mdc-tab-header {
-      border-bottom: 1px solid var(--border-color);
-    }
-    
-    .mat-mdc-tab .mat-icon {
-      color: var(--text-muted);
-    }
-    
-    .mat-mdc-tab.mdc-tab--active {
-      background-color: rgba(var(--primary-color-rgb), 0.15);
-      
-      .mat-icon,
-      .mdc-tab__text-label {
-        color: var(--primary-color);
-      }
-    }
-    
-    .mat-mdc-tab-header .mat-mdc-tab-header-pagination-chevron {
-      border-color: var(--text-color);
-    }
-    
-    .mat-mdc-tab-header .mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {
-      border-color: var(--text-muted);
-    }
-    
-    .mat-mdc-tab-group.mat-background-primary .mat-mdc-tab-header,
-    .mat-mdc-tab-group.mat-background-primary .mat-mdc-tab-links,
-    .mat-mdc-tab-nav-bar.mat-background-primary .mat-mdc-tab-header,
-    .mat-mdc-tab-nav-bar.mat-background-primary .mat-mdc-tab-links {
-      background-color: var(--primary-color);
-    }
-    
-    .mat-mdc-tab-body-content {
-      overflow: auto;
-      background-color: var(--card-background);
-    }
-    
-    .mat-mdc-tab-body-wrapper {
-      background-color: var(--card-background);
-    }
-    
-    .mat-mdc-tab-list .mat-mdc-tab-labels {
-      background-color: var(--card-background);
-    }
-    
-    .mat-mdc-tab .mdc-tab-indicator__content--underline {
-      border-color: var(--primary-color);
-    }
-    
-    .mat-mdc-tab:hover {
-      background-color: rgba(var(--primary-color-rgb), 0.08);
-      
-      .mdc-tab__text-label {
-        color: var(--primary-color);
-        opacity: 0.8;
-      }
-      
-      .mat-icon {
-        color: var(--primary-color);
-        opacity: 0.8;
-      }
-    }
-    
-    .mdc-tab-indicator__content--underline {
-      border-color: var(--primary-color) !important;
-    }
-    
-    .mat-mdc-tab:not(.mdc-tab--active) .mdc-tab-indicator__content--underline {
-      border-color: transparent !important;
-    }
-    
-    .mat-mdc-tab.mat-mdc-focus-indicator:focus {
-      &::before {
-        background-color: transparent;
-      }
-    }
-    
-    .mat-mdc-tab-ripple {
-      display: none;
-    }
+    .mat-mdc-tab .mdc-tab__text-label { color: var(--text-color); }
+    .mat-mdc-tab-header { border-bottom: 1px solid var(--border-color); }
+    .mat-mdc-tab .mat-icon { color: var(--text-muted); }
+    .mat-mdc-tab.mdc-tab--active { background-color: rgba(var(--primary-color-rgb), 0.15); .mat-icon, .mdc-tab__text-label { color: var(--primary-color); } }
+    .mat-mdc-tab-header .mat-mdc-tab-header-pagination-chevron { border-color: var(--text-color); }
+    .mat-mdc-tab-header .mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron { border-color: var(--text-muted); }
+    .mat-mdc-tab-body-content, .mat-mdc-tab-body-wrapper, .mat-mdc-tab-list .mat-mdc-tab-labels { background-color: var(--card-background); }
+    .mat-mdc-tab .mdc-tab-indicator__content--underline { border-color: var(--primary-color); }
+    .mat-mdc-tab:hover { background-color: rgba(var(--primary-color-rgb), 0.08); .mdc-tab__text-label, .mat-icon { color: var(--primary-color); opacity: 0.8; } }
+    .mdc-tab-indicator__content--underline { border-color: var(--primary-color) !important; }
+    .mat-mdc-tab:not(.mdc-tab--active) .mdc-tab-indicator__content--underline { border-color: transparent !important; }
+    .mat-mdc-tab.mat-mdc-focus-indicator:focus::before { background-color: transparent; }
+    .mat-mdc-tab-ripple { display: none; }
   }
 }
 
-.tab-content {
-  padding: 16px;
-}
+.tab-content { padding: 16px; }
+.loading-container { display: flex; justify-content: center; align-items: center; min-height: 300px; }
 
-.loading-container {
+.error-message, .no-data-message {
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 300px;
+  padding: 16px;
+  border-radius: 4px;
+  mat-icon { margin-right: 8px; }
 }
 
 .error-message {
-  display: flex;
-  align-items: center;
   color: var(--error-color);
   background-color: rgba(var(--error-color-rgb), 0.1);
-  padding: 16px;
-  border-radius: 4px;
-  margin: 16px;
-
-  mat-icon {
-    margin-right: 8px;
-    color: var(--error-color);
-  }
+  mat-icon { color: var(--error-color); }
 }
 
 .no-data-message {
-  display: flex;
-  align-items: center;
   gap: 8px;
   color: var(--text-muted);
-  padding: 16px;
   background-color: var(--app-background);
-  border-radius: 4px;
-  
-  mat-icon {
-    color: var(--text-muted);
-  }
+  mat-icon { color: var(--text-muted); }
 }
 
-/* REDESIGNED INFO TAB STYLES */
-.info-container-redesigned {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+/* Info containers */
+.info-container-redesigned { display: flex; flex-direction: column; gap: 20px; }
 
 .info-card {
-  background-color: var(--card-background);
-  border-radius: 12px;
-  box-shadow: var(--shadow-light);
+  @include card-base;
   overflow: hidden;
-  transition: box-shadow 0.3s ease;
-  
-  &:hover {
-    box-shadow: var(--shadow-medium);
-  }
+  &:hover { box-shadow: var(--shadow-medium); }
 }
 
 .info-header {
@@ -350,12 +251,7 @@ mat-tab-group {
     background-color: var(--primary-color);
   }
   
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 500;
-    color: var(--text-color);
-  }
+  h3 { margin: 0; font-size: 18px; font-weight: 500; color: var(--text-color); }
 }
 
 .info-details-grid {
@@ -364,9 +260,7 @@ mat-tab-group {
   gap: 20px;
   padding: 20px;
   
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  @media (min-width: 768px) { grid-template-columns: repeat(4, 1fr); }
 }
 
 .info-detail-item {
@@ -385,64 +279,30 @@ mat-tab-group {
     align-items: center;
     margin-bottom: 12px;
     
-    mat-icon {
-      color: var(--primary-color);
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
+    mat-icon { color: var(--primary-color); font-size: 24px; width: 24px; height: 24px; }
   }
   
   .detail-content {
-    .detail-label {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-    
-    .detail-value {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-color);
-    }
+    .detail-label { color: var(--text-muted); font-size: 14px; margin-bottom: 4px; }
+    .detail-value { font-size: 18px; font-weight: 600; color: var(--text-color); }
   }
 }
 
-.features-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding: 20px;
-}
+/* Features y amenities */
+.features-container, .amenities-container-redesigned { @include grid-container; }
 
-.feature-item {
+.feature-item, .amenity-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   width: 110px;
-  padding: 16px 0px;
+  padding: 16px 8px;
   border-radius: 8px;
   background-color: var(--app-background);
   transition: all 0.2s ease;
   
-  &.feature-active {
-    background-color: rgba(var(--primary-color-rgb), 0.1);
-    
-    .feature-icon {
-      background-color: rgba(var(--primary-color-rgb), 0.2);
-      
-      mat-icon {
-        color: var(--primary-color);
-      }
-    }
-    
-    .feature-label {
-      color: var(--primary-color);
-    }
-  }
-  
-  .feature-icon {
+  .feature-icon, .amenity-icon {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -452,86 +312,19 @@ mat-tab-group {
     align-items: center;
     margin-bottom: 10px;
     
-    mat-icon {
-      color: var(--text-muted);
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
+    mat-icon { color: var(--text-muted); font-size: 20px; width: 20px; height: 20px; }
   }
   
-  .feature-label {
-    font-size: 14px;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
+  .feature-label, .amenity-label { font-size: 14px; color: var(--text-muted); font-weight: 500; }
 }
 
-/* Stili per lo stato come caratteristica */
-.feature-status-available {
-  background-color: rgba(var(--success-color-rgb), 0.1) !important;
-  
-  .feature-icon {
-    background-color: rgba(var(--success-color-rgb), 0.2) !important;
-    
-    mat-icon {
-      color: var(--success-color) !important;
-    }
-  }
-  
-  .feature-label {
-    color: var(--success-color) !important;
-  }
-}
-
-.feature-status-occupied {
-  background-color: rgba(var(--error-color-rgb), 0.1) !important;
-  
-  .feature-icon {
-    background-color: rgba(var(--error-color-rgb), 0.2) !important;
-    
-    mat-icon {
-      color: var(--error-color) !important;
-    }
-  }
-  
-  .feature-label {
-    color: var(--error-color) !important;
-  }
-}
-
-.feature-status-maintenance {
-  background-color: rgba(var(--warning-color-rgb), 0.1) !important;
-  
-  .feature-icon {
-    background-color: rgba(var(--warning-color-rgb), 0.2) !important;
-    
-    mat-icon {
-      color: var(--warning-color) !important;
-    }
-  }
-  
-  .feature-label {
-    color: var(--warning-color) !important;
-  }
-}
-
-.amenities-container-redesigned {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 16px;
-  padding: 20px;
+.feature-item.feature-active {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  .feature-icon { background-color: rgba(var(--primary-color-rgb), 0.2); mat-icon { color: var(--primary-color); } }
+  .feature-label { color: var(--primary-color); }
 }
 
 .amenity-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  background-color: var(--app-background);
-  border-radius: 12px;
-  padding: 16px 8px;
-  transition: all 0.2s ease;
   border: 1px solid var(--border-color);
   
   &:hover {
@@ -541,59 +334,46 @@ mat-tab-group {
   }
   
   .amenity-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
     width: 42px;
     height: 42px;
-    border-radius: 50%;
     background-color: rgba(var(--primary-color-rgb), 0.1);
     margin-bottom: 12px;
     
-    mat-icon {
-      color: var(--primary-color);
-      font-size: 22px;
-      width: 22px;
-      height: 22px;
-    }
+    mat-icon { color: var(--primary-color); font-size: 22px; width: 22px; height: 22px; }
   }
   
   .amenity-label {
-    font-size: 14px;
-    font-weight: 500;
     color: var(--text-color);
     white-space: normal;
     word-break: break-word;
   }
 }
 
+/* Status styles */
+.feature-status-available { @include status-style(--success-color); }
+.feature-status-occupied { @include status-style(--error-color); }
+.feature-status-maintenance { @include status-style(--warning-color); }
+
 .description-container, .notes-container {
   padding: 20px;
   line-height: 1.6;
   color: var(--text-color);
-  
-  p {
-    margin: 0;
-    font-size: 15px;
-  }
+  p { margin: 0; font-size: 15px; }
 }
 
-/* Stile per schede inquilini */
+/* Cards unificate */
+.tenant-card, .contract-card {
+  @include card-base;
+  margin-bottom: 16px;
+}
+
 .tenant-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background-color: var(--card-background);
-  border-radius: 8px;
-  box-shadow: var(--shadow-light);
-  margin-bottom: 16px;
   
-  .tenant-info {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  .tenant-info { display: flex; align-items: center; gap: 16px; }
   
   .tenant-avatar {
     width: 48px;
@@ -605,21 +385,10 @@ mat-tab-group {
     justify-content: center;
     align-items: center;
     
-    mat-icon {
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
+    mat-icon { font-size: 24px; width: 24px; height: 24px; }
   }
   
-  .tenant-details {
-    h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--text-color);
-    }
-  }
+  .tenant-details h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: 500; color: var(--text-color); }
   
   .tenant-contact {
     display: flex;
@@ -633,33 +402,15 @@ mat-tab-group {
       font-size: 14px;
       color: var(--text-muted);
       
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        color: var(--text-muted);
-      }
+      mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
     }
   }
   
-  .tenant-actions {
-    button {
-      mat-icon {
-        color: var(--primary-color);
-      }
-    }
-  }
+  .tenant-actions button mat-icon { color: var(--primary-color); }
 }
 
-/* Stile per i contratti */
-.contract-card {
-  background-color: var(--card-background);
-  border-radius: 12px;
-  box-shadow: var(--shadow-light);
-  margin-bottom: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
-}
+/* Contract simplificado */
+.contract-card { margin-bottom: 20px; overflow: hidden; }
 
 .contract-header {
   display: flex;
@@ -691,27 +442,14 @@ mat-tab-group {
   &.active {
     background-color: rgba(var(--success-color-rgb), 0.1);
     color: var(--success-color);
-    
-    .status-dot {
-      background-color: var(--success-color);
-    }
+    .status-dot { background-color: var(--success-color); }
   }
   
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 }
 
 .contract-id {
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-color);
-  }
+  h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-color); }
   
   .tenant-tag {
     display: inline-block;
@@ -729,51 +467,16 @@ mat-tab-group {
   gap: 8px;
   
   .action-button {
-    background: none;
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--text-muted);
-    transition: background-color 0.2s ease;
+    @include action-button;
     
-    &:hover {
-      background-color: var(--app-background);
-      color: var(--text-color);
-    }
-    
-    mat-icon {
-      font-size: 20px;
-      width: 20px;
-      height: 20px;
-    }
-    
-    &.edit:hover {
+    &.edit:hover, &.more:hover {
       background-color: rgba(var(--primary-color-rgb), 0.1);
-      
-      mat-icon {
-        color: var(--primary-color);
-      }
-    }
-    
-    &.more:hover {
-      background-color: rgba(var(--primary-color-rgb), 0.1);
-
-      mat-icon {
-        color: var(--primary-color);
-      }
+      mat-icon { color: var(--primary-color); }
     }
   }
 }
 
-/* STILE PER LA SEZIONE INFO CONTRATTO */
-.contract-body {
-  padding: 20px;
-}
+.contract-body { padding: 20px; }
 
 .contract-info-redesigned {
   display: flex;
@@ -804,19 +507,10 @@ mat-tab-group {
       font-size: 14px;
       margin-bottom: 8px;
       
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        color: var(--text-muted);
-      }
+      mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
     }
     
-    .date-value {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-color);
-    }
+    .date-value { font-size: 18px; font-weight: 600; color: var(--text-color); }
   }
 }
 
@@ -839,12 +533,7 @@ mat-tab-group {
       font-size: 14px;
       margin-bottom: 8px;
       
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-        color: var(--text-muted);
-      }
+      mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-muted); }
     }
     
     .detail-value {
@@ -852,12 +541,7 @@ mat-tab-group {
       font-weight: 700;
       color: var(--text-color);
       
-      .detail-period {
-        font-size: 14px;
-        font-weight: 400;
-        color: var(--text-muted);
-        margin-left: 4px;
-      }
+      .detail-period { font-size: 14px; font-weight: 400; color: var(--text-muted); margin-left: 4px; }
     }
   }
   
@@ -867,30 +551,13 @@ mat-tab-group {
     font-size: 14px;
     font-weight: 500;
     
-    &.paid {
-      background-color: rgba(var(--success-color-rgb), 0.1);
-      color: var(--success-color);
-      border: 1px solid rgba(var(--success-color-rgb), 0.3);
-    }
-    
-    &.pending {
-      background-color: rgba(var(--warning-color-rgb), 0.1);
-      color: var(--warning-color);
-      border: 1px solid rgba(var(--warning-color-rgb), 0.3);
-    }
-    
-    &.overdue {
-      background-color: rgba(var(--error-color-rgb), 0.1);
-      color: var(--error-color);
-      border: 1px solid rgba(var(--error-color-rgb), 0.3);
-    }
+    &.paid { background-color: rgba(var(--success-color-rgb), 0.1); color: var(--success-color); border: 1px solid rgba(var(--success-color-rgb), 0.3); }
+    &.pending { background-color: rgba(var(--warning-color-rgb), 0.1); color: var(--warning-color); border: 1px solid rgba(var(--warning-color-rgb), 0.3); }
+    &.overdue { background-color: rgba(var(--error-color-rgb), 0.1); color: var(--error-color); border: 1px solid rgba(var(--error-color-rgb), 0.3); }
   }
 }
 
-.contract-timeline {
-  width: 100%;
-  margin: 0 20px;
-}
+.contract-timeline { width: 100%; margin: 0 20px; }
 
 .timeline-progress {
   display: flex;
@@ -902,19 +569,10 @@ mat-tab-group {
     border-radius: 3px;
     overflow: hidden;
     
-    .progress-fill {
-      height: 100%;
-      background-color: var(--primary-color);
-      border-radius: 3px;
-    }
+    .progress-fill { height: 100%; background-color: var(--primary-color); border-radius: 3px; }
   }
   
-  span {
-    text-align: center;
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
+  span { text-align: center; font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
 }
 
 .contract-footer {
@@ -939,39 +597,16 @@ mat-tab-group {
     cursor: pointer;
     transition: background-color 0.2s ease;
     
-    &:hover {
-      background-color: var(--primary-dark);
-    }
-    
-    mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
+    &:hover { background-color: var(--primary-dark); }
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
   }
   
   .quick-action {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    @include action-button;
     background-color: var(--card-background);
-    color: var(--text-muted);
     border: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
     
-    &:hover {
-      background-color: var(--app-background);
-      color: var(--primary-color);
-    }
-    
-    mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
+    &:hover { background-color: var(--app-background); color: var(--primary-color); }
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
   }
 }
