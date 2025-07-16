@@ -52,7 +52,6 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   selectedApartmentId: number | null = null;
   selectedYear: number = new Date().getFullYear();
   selectedView: 'consumption' | 'costs' | 'comparison' = 'consumption';
-  searchQuery: string = '';
   isLoading = true;
   errorMessage: string | null = null;
   chart: Chart | null = null;
@@ -78,9 +77,9 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   
   // Colori per i grafici
   chartColors = {
-    electricity: 'rgba(255, 99, 132, 0.7)',
-    water: 'rgba(54, 162, 235, 0.7)',
-    gas: 'rgba(255, 206, 86, 0.7)'
+    electricity: 'rgba(255, 206, 86, 0.7)',  // Giallo per Elettricità
+    water: 'rgba(54, 162, 235, 0.7)',        // Blu per Acqua
+    gas: 'rgba(255, 99, 132, 0.7)'           // Rosa/Rosso per Gas
   };
 
   constructor(
@@ -275,25 +274,26 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       console.log('Nessun appartamento disponibile per il grafico');
       return;
     }
-    
-    const labels = this.apartments.map(apt => apt.name || 'N/A');
+    // Ordina alfabeticamente gli appartamenti per nome
+    const sortedApartments = [...this.apartments].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const labels = sortedApartments.map(apt => apt.name || 'N/A');
     let datasets: any[] = [];
     let chartTitle = '';
     let yAxisTitle = '';
     
     if (this.selectedView === 'consumption') {
       // Grafico dei consumi
-      const electricityData = this.apartments.map(apt => {
+      const electricityData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.electricity || 0), 0) : 0;
       });
       
-      const waterData = this.apartments.map(apt => {
+      const waterData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.water || 0), 0) : 0;
       });
       
-      const gasData = this.apartments.map(apt => {
+      const gasData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.gas || 0), 0) : 0;
       });
@@ -303,21 +303,21 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           label: 'Elettricità (kWh)',
           data: electricityData,
           backgroundColor: this.chartColors.electricity,
-          borderColor: 'rgba(255, 99, 132, 1)',
+          borderColor: 'rgba(255, 206, 86, 1)',  // Giallo per Elettricità
           borderWidth: 1
         },
         {
           label: 'Acqua (m³)',
           data: waterData,
           backgroundColor: this.chartColors.water,
-          borderColor: 'rgba(54, 162, 235, 1)',
+          borderColor: 'rgba(54, 162, 235, 1)',  // Blu per Acqua
           borderWidth: 1
         },
         {
           label: 'Gas (m³)',
           data: gasData,
           backgroundColor: this.chartColors.gas,
-          borderColor: 'rgba(255, 206, 86, 1)',
+          borderColor: 'rgba(255, 99, 132, 1)',  // Rosa/Rosso per Gas
           borderWidth: 1
         }
       ];
@@ -327,17 +327,17 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       
     } else if (this.selectedView === 'costs') {
       // Grafico dei costi
-      const electricityCostData = this.apartments.map(apt => {
+      const electricityCostData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.electricityCost || 0), 0) : 0;
       });
       
-      const waterCostData = this.apartments.map(apt => {
+      const waterCostData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.waterCost || 0), 0) : 0;
       });
       
-      const gasCostData = this.apartments.map(apt => {
+      const gasCostData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.gasCost || 0), 0) : 0;
       });
@@ -347,21 +347,21 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           label: 'Elettricità (€)',
           data: electricityCostData,
           backgroundColor: this.chartColors.electricity,
-          borderColor: 'rgba(255, 99, 132, 1)',
+          borderColor: 'rgba(255, 206, 86, 1)',  // Giallo per Elettricità
           borderWidth: 1
         },
         {
           label: 'Acqua (€)',
           data: waterCostData,
           backgroundColor: this.chartColors.water,
-          borderColor: 'rgba(54, 162, 235, 1)',
+          borderColor: 'rgba(54, 162, 235, 1)',  // Blu per Acqua
           borderWidth: 1
         },
         {
           label: 'Gas (€)',
           data: gasCostData,
           backgroundColor: this.chartColors.gas,
-          borderColor: 'rgba(255, 206, 86, 1)',
+          borderColor: 'rgba(255, 99, 132, 1)',  // Rosa/Rosso per Gas
           borderWidth: 1
         }
       ];
@@ -371,7 +371,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       
     } else if (this.selectedView === 'comparison') {
       // Grafico di confronto totale
-      const totalCostData = this.apartments.map(apt => {
+      const totalCostData = sortedApartments.map(apt => {
         const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.yearlyTotals.totalCost : 0;
       });
@@ -454,21 +454,21 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           label: 'Elettricità (kWh)',
           data: electricityData,
           backgroundColor: this.chartColors.electricity,
-          borderColor: 'rgba(255, 99, 132, 1)',
+          borderColor: 'rgba(255, 206, 86, 1)',  // Giallo per Elettricità
           borderWidth: 1
         },
         {
           label: 'Acqua (m³)',
           data: waterData,
           backgroundColor: this.chartColors.water,
-          borderColor: 'rgba(54, 162, 235, 1)',
+          borderColor: 'rgba(54, 162, 235, 1)',  // Blu per Acqua
           borderWidth: 1
         },
         {
           label: 'Gas (m³)',
           data: gasData,
           backgroundColor: this.chartColors.gas,
-          borderColor: 'rgba(255, 206, 86, 1)',
+          borderColor: 'rgba(255, 99, 132, 1)',  // Rosa/Rosso per Gas
           borderWidth: 1
         }
       ];
@@ -487,21 +487,21 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           label: 'Elettricità (€)',
           data: electricityCostData,
           backgroundColor: this.chartColors.electricity,
-          borderColor: 'rgba(255, 99, 132, 1)',
+          borderColor: 'rgba(255, 206, 86, 1)',  // Giallo per Elettricità
           borderWidth: 1
         },
         {
           label: 'Acqua (€)',
           data: waterCostData,
           backgroundColor: this.chartColors.water,
-          borderColor: 'rgba(54, 162, 235, 1)',
+          borderColor: 'rgba(54, 162, 235, 1)',  // Blu per Acqua
           borderWidth: 1
         },
         {
           label: 'Gas (€)',
           data: gasCostData,
           backgroundColor: this.chartColors.gas,
-          borderColor: 'rgba(255, 206, 86, 1)',
+          borderColor: 'rgba(255, 99, 132, 1)',  // Rosa/Rosso per Gas
           borderWidth: 1
         }
       ];
@@ -696,16 +696,10 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     return this.apartmentUtilityData.find(data => data.apartmentId === this.selectedApartmentId);
   }
 
-  get filteredApartments(): Apartment[] {
-    if (!this.apartments || this.apartments.length === 0) {
-      return [];
-    }
-    if (!this.searchQuery || !this.searchQuery.trim()) {
-      return this.apartments;
-    }
-    return this.apartments.filter(apartment => 
-      apartment.name && apartment.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-    );
+  get sortedApartmentUtilityData(): ApartmentUtilityData[] {
+    if (!this.apartmentUtilityData) return [];
+    // Ordina alfabeticamente per nome appartamento
+    return [...this.apartmentUtilityData].sort((a, b) => (a.apartmentName || '').localeCompare(b.apartmentName || ''));
   }
 
   onViewChange(view: 'consumption' | 'costs' | 'comparison'): void {

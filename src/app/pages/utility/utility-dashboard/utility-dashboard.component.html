@@ -141,8 +141,8 @@
       <mat-card class="controls-card">
         <div class="controls-content">
           
-          <!-- Year Selector -->
           <div class="control-group">
+            <!-- Year Selector -->
             <mat-form-field appearance="outline">
               <mat-label>Anno</mat-label>
               <mat-select [value]="selectedYear" (selectionChange)="onYearChange($event.value)">
@@ -151,30 +151,16 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-          </div>
 
-          <!-- Apartment Selector -->
-          <div class="control-group">
+            <!-- Apartment Selector -->
             <mat-form-field appearance="outline">
               <mat-label>Appartamento</mat-label>
               <mat-select [value]="selectedApartmentId" (selectionChange)="onApartmentChange($event.value)">
                 <mat-option [value]="null">Tutti gli appartamenti</mat-option>
-                <mat-option *ngFor="let apartment of filteredApartments" [value]="apartment.id">
+                <mat-option *ngFor="let apartment of apartments" [value]="apartment.id">
                   {{apartment.name}}
                 </mat-option>
               </mat-select>
-            </mat-form-field>
-          </div>
-
-          <!-- Search -->
-          <div class="control-group search-group">
-            <mat-form-field appearance="outline" class="search-field">
-              <mat-label>Cerca appartamento</mat-label>
-              <mat-icon matPrefix>search</mat-icon>
-              <input matInput placeholder="Nome appartamento..." [(ngModel)]="searchQuery">
-              <button *ngIf="searchQuery" matSuffix mat-icon-button (click)="searchQuery = ''">
-                <mat-icon>close</mat-icon>
-              </button>
             </mat-form-field>
           </div>
 
@@ -257,7 +243,7 @@
         </mat-card-header>
         <mat-card-content>
           <div class="apartments-grid">
-            <div class="apartment-summary" *ngFor="let aptData of apartmentUtilityData" 
+            <div class="apartment-summary" *ngFor="let aptData of sortedApartmentUtilityData" 
                  (click)="onApartmentChange(aptData.apartmentId)" 
                  [class.selectable]="true">
               <div class="apartment-header">

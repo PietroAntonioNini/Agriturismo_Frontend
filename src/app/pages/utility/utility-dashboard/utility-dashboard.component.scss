@@ -364,15 +364,13 @@
       .controls-content {
         padding: 24px;
         display: flex;
-        flex-wrap: wrap;
+        justify-content: space-between;
         gap: 20px;
         align-items: center;
 
         .control-group {
-          &.search-group {
-            flex: 1;
-            min-width: 200px;
-          }
+          display: flex;
+          gap: 20px;
 
           &.view-toggle {
             mat-chip-listbox {
@@ -397,10 +395,6 @@
 
           mat-form-field {
             min-width: 150px;
-
-            &.search-field {
-              min-width: 250px;
-            }
           }
         }
       }

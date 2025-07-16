@@ -327,7 +327,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   getApartmentStatuses(): any[] {
     const now = new Date();
     
-    return this.apartments.map(apartment => {
+    const apartmentStatuses = this.apartments.map(apartment => {
       const activeLease = this.leases.find(lease => {
         const startDate = new Date(lease.startDate);
         const endDate = new Date(lease.endDate);
@@ -363,6 +363,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
         revenue
       };
     });
+
+    // Ordina gli appartamenti alfabeticamente per nome
+    return apartmentStatuses.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**
@@ -517,8 +520,9 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     
     // Dati di esempio per le utenze (da sostituire con dati reali)
-    const labels = ['Acqua', 'Elettricità', 'Gas'];
-    const consumptionData = [300, 500, 200];
+    // Ordine: Elettricità, Acqua, Gas
+    const labels = ['Elettricità', 'Acqua', 'Gas'];
+    const consumptionData = [500, 300, 200];
 
     this.utilityChartInstance = new Chart(this.utilityChart.nativeElement, {
       type: 'bar',
@@ -528,14 +532,14 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           label: 'Consumo Ultimo Mese',
           data: consumptionData,
           backgroundColor: [
-            'rgba(54, 162, 235, 0.5)',
-            'rgba(255, 206, 86, 0.5)',
-            'rgba(255, 99, 132, 0.5)'
+            'rgba(255, 206, 86, 0.5)',  // Giallo per Elettricità
+            'rgba(54, 162, 235, 0.5)',  // Blu per Acqua
+            'rgba(255, 99, 132, 0.5)'   // Rosa/Rosso per Gas
           ],
           borderColor: [
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(255, 99, 132, 1)'
+            'rgba(255, 206, 86, 1)',    // Giallo per Elettricità
+            'rgba(54, 162, 235, 1)',    // Blu per Acqua
+            'rgba(255, 99, 132, 1)'     // Rosa/Rosso per Gas
           ],
           borderWidth: 1
         }]
