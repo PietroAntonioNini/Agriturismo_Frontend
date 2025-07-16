@@ -91,16 +91,17 @@ export class ApartmentListComponent implements OnInit {
 
     Promise.all([
       this.apiService.getAll<Apartment>('apartments').toPromise(),
-      this.apiService.getAll<any>('leases', { status: 'active' }).toPromise()
-    ]).then(([apartments, activeLeases]) => {
+      this.apiService.getAll<any>('leases').toPromise() // Carica tutti i contratti
+    ]).then(([apartments, allLeases]) => {
       if (!apartments) apartments = [];
-      if (!activeLeases) activeLeases = [];
+      if (!allLeases) allLeases = [];
 
+      // Filtra solo i contratti attivi usando lo stato fornito dal backend
+      const activeLeases = allLeases.filter(lease => lease.status === 'active');
       const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
 
       this.apartments = apartments.map(apartment => {
         const isOccupied = occupiedApartmentIds.has(apartment.id);
-        // Aggiorna lo stato solo se non è già 'maintenance'
         const newStatus = apartment.status === 'maintenance' 
           ? 'maintenance' 
           : isOccupied ? 'occupied' : 'available';

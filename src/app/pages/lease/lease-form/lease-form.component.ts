@@ -238,18 +238,23 @@ export class LeaseFormComponent implements OnInit {
   }
 
   private _filterApartments(value: string | Apartment): Apartment[] {
-    const filterValue = (typeof value === 'string' ? value : value.name).toLowerCase();
+    const filterValue = (typeof value === 'string' ? value : value?.description)?.toLowerCase() || '';
     return this.apartments.filter(apartment => 
-      apartment.name.toLowerCase().includes(filterValue)
+      apartment.description?.toLowerCase().includes(filterValue)
     );
   }
 
   // Funzione helper per formattare le date senza problemi di timezone
-  private formatDateForServer(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  private formatDate(date: Date): string {
+    if (!date) {
+      return '';
+    }
+    // Clona la data per non modificare l'originale
+    const newDate = new Date(date);
+    // Azzera l'offset del fuso orario per evitare che la data venga alterata
+    newDate.setMinutes(newDate.getMinutes() - newDate.getTimezoneOffset());
+    // Restituisce la data in formato 'YYYY-MM-DD'
+    return newDate.toISOString().split('T')[0];
   }
 
   loadInitialData(): void {
@@ -398,10 +403,13 @@ export class LeaseFormComponent implements OnInit {
     }
     
     // Rimuovo la formattazione manuale delle date. Angular HttpClient le gestirà.
+    const terms = this.termsFormGroup.value;
     const leasePayload = {
       tenantId: tenant.id,
       apartmentId: apartment.id,
-      ...this.termsFormGroup.value,
+      ...terms,
+      startDate: this.formatDate(terms.startDate),
+      endDate: this.formatDate(terms.endDate),
       ...this.conditionsFormGroup.value,
       // Aggiungi dati delle utenze se disponibili
       initialUtilityReadings: this.utilitiesData
@@ -527,6 +535,7 @@ export class LeaseFormComponent implements OnInit {
     } else {
       this.snackBar.open('Compila tutti i campi prima di generare il contratto.', 'Chiudi', { duration: 3000 });
     }
+
   }
 
   generateBaseContract(): void {
