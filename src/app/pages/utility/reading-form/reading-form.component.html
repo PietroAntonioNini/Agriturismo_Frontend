@@ -16,7 +16,7 @@
       </div>
       
       <!-- Utility Type Chips -->
-      <div class="utility-chips" *ngIf="readingForm.get('type')?.value">
+      <div class="utility-chips" *ngIf="readingForm && readingForm.get('type')?.value">
         <mat-chip [style.background-color]="getSelectedUtilityConfig()?.color + '20'" 
                   [style.color]="getSelectedUtilityConfig()?.color">
           <mat-icon>{{getSelectedUtilityConfig()?.icon}}</mat-icon>
@@ -74,7 +74,7 @@
   </mat-card>
 
   <!-- Form -->
-  <form [formGroup]="readingForm" (ngSubmit)="onSubmit()" class="reading-form">
+  <form *ngIf="readingForm" [formGroup]="readingForm" (ngSubmit)="onSubmit()" class="reading-form">
     
     <!-- Basic Info Section -->
     <mat-card class="form-section">
@@ -104,7 +104,7 @@
             <mat-label>Tipo Utenza</mat-label>
             <mat-icon matPrefix>category</mat-icon>
             <mat-select formControlName="type" [disabled]="!!data.editingReading">
-              <mat-select-trigger *ngIf="readingForm.get('type')?.value">
+              <mat-select-trigger *ngIf="readingForm && readingForm.get('type')?.value">
                 <div class="selected-utility">
                   <mat-icon [style.color]="getSelectedUtilityConfig()?.color">
                     {{getSelectedUtilityConfig()?.icon}}
