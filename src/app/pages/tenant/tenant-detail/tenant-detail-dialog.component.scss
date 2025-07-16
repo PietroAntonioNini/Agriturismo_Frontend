@@ -23,6 +23,7 @@
   padding: 8px 24px;
   
   button {
+    background: none !important;
     color: var(--text-color);
     margin-left: 8px;
     
@@ -31,7 +32,22 @@
     }
     
     &:hover {
-      background-color: rgba(var(--primary-color-rgb), 0.08);
+      background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+    }
+    
+    ::ng-deep {
+      .mdc-icon-button {
+        padding: 0;
+        width: auto;
+        height: auto;
+        --mdc-icon-button-state-layer-size: 0;
+      }
+
+      .mdc-icon-button__ripple,
+      .mat-mdc-focus-indicator,
+      .mat-ripple {
+        display: none !important;
+      }
     }
   }
 }

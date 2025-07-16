@@ -1,13 +1,15 @@
 <div class="container">
+  <!-- Pulsante X per dialog mode -->
+  <button class="close-button-dialog" mat-icon-button (click)="cancel()" matTooltip="Chiudi" *ngIf="isDialogMode">
+    <mat-icon>close</mat-icon>
+  </button>
+
   <mat-card class="form-card">
     <mat-card-header class="header">
       <mat-card-title class="title">{{getFormTitle()}}</mat-card-title>
       <div class="header-actions">
         <button mat-icon-button (click)="goBack()" matTooltip="Indietro" *ngIf="shouldShowBackButton()">
           <mat-icon>arrow_back</mat-icon>
-        </button>
-        <button mat-icon-button (click)="cancel()" matTooltip="Chiudi" *ngIf="isDialogMode">
-          <mat-icon>close</mat-icon>
         </button>
       </div>
     </mat-card-header>
@@ -38,7 +40,7 @@
                 
                 <mat-card class="inner-card">
                   <mat-card-content>
-                    <mat-form-field appearance="outline" class="full-width">
+                    <mat-form-field appearance="outline" floatLabel="always" class="full-width">
                       <mat-label>Cerca Inquilino</mat-label>
                       <input type="text"
                              placeholder="Digita per cercare..."
@@ -91,7 +93,7 @@
                 
                 <mat-card class="inner-card">
                   <mat-card-content>
-                    <mat-form-field appearance="outline" class="full-width">
+                    <mat-form-field appearance="outline" floatLabel="always" class="full-width">
                       <mat-label>Cerca Appartamento</mat-label>
                        <input type="text"
                              placeholder="Digita per cercare..."
@@ -159,7 +161,7 @@
                 <mat-card class="inner-card">
                   <mat-card-content>
                     <div class="form-grid date-grid">
-                      <mat-form-field appearance="outline">
+                      <mat-form-field appearance="outline" floatLabel="always">
                         <mat-label>Data Inizio</mat-label>
                         <input matInput [matDatepicker]="startPicker" formControlName="startDate">
                         <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
@@ -170,7 +172,7 @@
                         </mat-error>
                       </mat-form-field>
                       
-                      <mat-form-field appearance="outline">
+                      <mat-form-field appearance="outline" floatLabel="always">
                         <mat-label>Data Fine</mat-label>
                         <input matInput [matDatepicker]="endPicker" formControlName="endDate">
                         <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
@@ -195,7 +197,7 @@
                 <mat-card class="inner-card">
                   <mat-card-content>
                     <div class="form-grid">
-                      <mat-form-field appearance="outline" class="full-width-field">
+                      <mat-form-field appearance="outline" floatLabel="always" class="full-width-field">
                         <mat-label>Canone Mensile</mat-label>
                         <input matInput type="number" formControlName="monthlyRent" min="0" placeholder="Es. 500">
                         <span matTextPrefix>€&nbsp;</span>
@@ -208,7 +210,7 @@
                         </mat-error>
                       </mat-form-field>
                       
-                      <mat-form-field appearance="outline" class="full-width-field">
+                      <mat-form-field appearance="outline" floatLabel="always" class="full-width-field">
                         <mat-label>Deposito Cauzionale</mat-label>
                         <input matInput type="number" formControlName="securityDeposit" min="0" placeholder="Es. 1000">
                         <span matTextPrefix>€&nbsp;</span>
@@ -221,7 +223,7 @@
                         </mat-error>
                       </mat-form-field>
                       
-                      <mat-form-field appearance="outline" class="short-field">
+                      <mat-form-field appearance="outline" floatLabel="always" class="short-field">
                         <mat-label>Giorno Scadenza</mat-label>
                         <input matInput type="number" formControlName="paymentDueDay" min="1" max="31" placeholder="Es. 5">
                         <mat-hint>Giorno del mese per il pagamento</mat-hint>
@@ -280,14 +282,14 @@
                       </mat-form-field>
                     </div>
                     
-                    <mat-form-field appearance="outline" class="full-width">
+                    <mat-form-field appearance="outline" floatLabel="always" class="full-width">
                       <mat-label>Clausole Speciali (opzionale)</mat-label>
                       <textarea matInput formControlName="specialClauses" rows="4" 
                                 placeholder="Es. Divieto di sublocazione, regole specifiche per animali domestici, etc."></textarea>
                       <mat-hint>Inserisci eventuali clausole aggiuntive o specifiche per questo contratto</mat-hint>
                     </mat-form-field>
                     
-                    <mat-form-field appearance="outline" class="full-width">
+                    <mat-form-field appearance="outline" floatLabel="always" class="full-width">
                       <mat-label>Note (opzionale)</mat-label>
                       <textarea matInput formControlName="notes" rows="3" 
                                 placeholder="Inserisci eventuali note o promemoria relativi a questo contratto"></textarea>
@@ -331,7 +333,7 @@
                       </mat-form-field>
 
                       <!-- Condizioni proprietà -->
-                      <mat-form-field appearance="outline" class="full-width">
+                      <mat-form-field appearance="outline" floatLabel="always" class="full-width">
                         <mat-label>Condizioni Generali Appartamento</mat-label>
                         <input 
                           matInput 
@@ -340,7 +342,7 @@
                       </mat-form-field>
 
                       <!-- Condizioni caldaia -->
-                      <mat-form-field appearance="outline" class="full-width">
+                      <mat-form-field appearance="outline" floatLabel="always" class="full-width">
                         <mat-label>Condizioni Caldaia</mat-label>
                         <input 
                           matInput 

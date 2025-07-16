@@ -43,7 +43,40 @@
 :host { display: block; }
 
 .dialog-container { min-width: 800px; max-width: 90vw; }
-.dialog-actions { display: flex; justify-content: flex-end; padding: 5px 24px; }
+.dialog-actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  padding: 5px 24px; 
+  
+  button {
+    background: none !important;
+    color: var(--text-color);
+    margin-left: 8px;
+    
+    &[color="warn"] {
+      color: var(--error-color);
+    }
+    
+    &:hover {
+      background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+    }
+    
+    ::ng-deep {
+      .mdc-icon-button {
+        padding: 0;
+        width: auto;
+        height: auto;
+        --mdc-icon-button-state-layer-size: 0;
+      }
+
+      .mdc-icon-button__ripple,
+      .mat-mdc-focus-indicator,
+      .mat-ripple {
+        display: none !important;
+      }
+    }
+  }
+}
 .dialog-content { max-height: 80vh; padding: 0 !important; }
 
 ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {

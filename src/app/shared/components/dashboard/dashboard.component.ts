@@ -33,6 +33,7 @@ import { ApartmentDetailDialogComponent } from '../../../pages/apartment/apartme
 import { TenantFormComponent } from '../../../pages/tenant/tenant-form/tenant-form-dialog.component';
 import { TenantDetailDialogComponent } from '../../../pages/tenant/tenant-detail/tenant-detail-dialog.component';
 import { LeaseFormComponent } from '../../../pages/lease/lease-form/lease-form.component';
+import { ReadingFormComponent } from '../../../pages/utility/reading-form/reading-form.component';
 
 // Registra Chart.js
 Chart.register(...registerables);
@@ -684,9 +685,12 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   openApartmentForm(apartmentId?: number): void {
     const dialogRef = this.dialog.open(ApartmentFormComponent, {
-      data: { apartmentId },
       width: '900px',
-      maxHeight: '90vh'
+      maxWidth: '95vw',
+      height: 'auto',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: { apartmentId }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -697,12 +701,6 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
         if (result.apartment) {
           const action = apartmentId ? 'updated' : 'created';
           this.notificationService.notifyApartment(action, result.apartment.name, result.apartment.id);
-        }
-        
-        if (result.apartment && !result.skipDetailView) {
-          setTimeout(() => {
-            this.openApartmentDetails(result.apartment.id);
-          }, 300);
         }
       }
     });
@@ -765,6 +763,11 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   openTenantForm(tenantId?: number): void {
     const dialogRef = this.dialog.open(TenantFormComponent, {
+      width: '800px',
+      maxWidth: '95vw',
+      height: 'auto',
+      maxHeight: '90vh',
+      disableClose: true,
       data: { tenantId }
     });
 
@@ -818,9 +821,12 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   openLeaseForm(leaseId?: number): void {
     const dialogRef = this.dialog.open(LeaseFormComponent, {
-      data: { leaseId },
-      width: '900px',
-      maxHeight: '90vh'
+      // width: '900px',
+      maxWidth: '95vw',
+      height: 'auto',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: { leaseId }
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -875,10 +881,42 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Naviga verso la pagina utility per aggiungere letture
+   * Apre il form per aggiungere letture utenze
    */
   openUtilityForm(): void {
-    this.router.navigate(['/utility/reading-form']);
+    // Carica gli appartamenti se non sono già disponibili
+    if (this.apartments.length === 0) {
+      this.apiService.getAll<Apartment>('apartments').subscribe(apartments => {
+        this.apartments = apartments || [];
+        this.openReadingFormDialog();
+      });
+    } else {
+      this.openReadingFormDialog();
+    }
+  }
+
+  /**
+   * Apre il dialog del form di lettura
+   */
+  private openReadingFormDialog(): void {
+    const dialogRef = this.dialog.open(ReadingFormComponent, {
+      width: '600px',
+      maxWidth: '95vw',
+      height: 'auto',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: {
+        apartments: this.apartments,
+        selectedApartmentId: null
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Ricarica i dati della dashboard per aggiornare le statistiche
+        this.loadDashboardData();
+      }
+    });
   }
 
   /**

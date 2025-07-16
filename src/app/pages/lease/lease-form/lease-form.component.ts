@@ -490,8 +490,8 @@ export class LeaseFormComponent implements OnInit {
 
   cancel(): void {
     if (this.isDialogMode) {
-      // Se siamo in modalità dialog, usa il leaseService per chiudere
-      this.leaseService.closeModal();
+      // Se siamo in modalità dialog, chiudi direttamente il dialog
+      this.dialogRef.close();
     } else {
       // Se siamo in modalità pagina normale, naviga alla lista
       this.router.navigate(['/lease/list']);

@@ -1,8 +1,40 @@
+@use '../../../shared/styles/themes/variables' as vars;
+
+.close-button-dialog {
+  position: absolute;
+  top: vars.$spacing-sm;
+  right: vars.$spacing-sm;
+  z-index: 10;
+  color: var(--text-color);
+  background: none !important;
+  transition: transform 0.1s linear;
+
+  &:hover {
+    transform: scale(1.2);
+  }
+
+  ::ng-deep {
+    .mdc-icon-button {
+      padding: 0;
+      width: auto;
+      height: auto;
+      --mdc-icon-button-state-layer-size: 0;
+    }
+
+    .mdc-icon-button__ripple,
+    .mat-mdc-focus-indicator,
+    .mat-ripple {
+      display: none !important;
+    }
+  }
+}
+
 .container {
-  padding: 20px;
+  padding: 0;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
+  position: relative;
   
   @media (max-width: 768px) {
     padding: 10px;

@@ -686,6 +686,8 @@ $transition-speed: var(--transition-normal);
       border-top: 1px solid $border-color;
       
       button {
+        background: none !important;
+        
         mat-icon {
           transition: transform 0.2s ease;
         }
@@ -715,6 +717,21 @@ $transition-speed: var(--transition-normal);
           
           mat-icon {
             color: $danger-color !important;
+          }
+        }
+        
+        ::ng-deep {
+          .mdc-icon-button {
+            padding: 0;
+            width: auto;
+            height: auto;
+            --mdc-icon-button-state-layer-size: 0;
+          }
+
+          .mdc-icon-button__ripple,
+          .mat-mdc-focus-indicator,
+          .mat-ripple {
+            display: none !important;
           }
         }
       }
@@ -892,6 +909,8 @@ $transition-speed: var(--transition-normal);
         gap: 8px;
         
         button {
+          background: none !important;
+          
           mat-icon {
             transition: transform 0.2s ease;
           }
@@ -921,6 +940,21 @@ $transition-speed: var(--transition-normal);
             
             mat-icon {
               color: $danger-color !important;
+            }
+          }
+          
+          ::ng-deep {
+            .mdc-icon-button {
+              padding: 0;
+              width: auto;
+              height: auto;
+              --mdc-icon-button-state-layer-size: 0;
+            }
+
+            .mdc-icon-button__ripple,
+            .mat-mdc-focus-indicator,
+            .mat-ripple {
+              display: none !important;
             }
           }
         }
