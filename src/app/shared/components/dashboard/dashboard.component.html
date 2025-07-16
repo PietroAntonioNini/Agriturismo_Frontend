@@ -315,6 +315,12 @@
               <mat-icon>history</mat-icon>
               Attività Recenti
             </mat-card-title>
+            <button mat-icon-button 
+                    (click)="clearAllNotifications()"
+                    matTooltip="Pulisci tutte le notifiche"
+                    *ngIf="recentActivities.length > 0">
+              <mat-icon>clear_all</mat-icon>
+            </button>
           </mat-card-header>
           <mat-card-content>
             <div class="activities-list" *ngIf="recentActivities.length > 0; else noActivities">

@@ -25,6 +25,7 @@ import { RouterModule } from '@angular/router';
 import { Apartment, Invoice, Lease, Tenant, UtilityReading } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+import { NotificationService, ActivityNotification } from '../../../shared/services/notification.service';
 
 // Dialog Components
 import { ApartmentFormComponent } from '../../../pages/apartment/apartment-form/apartment-form-dialog.component';
@@ -88,7 +89,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   apartmentsWithoutReadings: Apartment[] = [];
 
   // Attività recenti (dinamiche)
-  recentActivities: any[] = [];
+  recentActivities: ActivityNotification[] = [];
 
   // Meteo semplice (per ora statico, futuro API)
   weather = {
@@ -118,11 +119,19 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     private router: Router,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
-    private confirmationService: ConfirmationDialogService
+    private confirmationService: ConfirmationDialogService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
+    
+    // Sottoscrizione alle notifiche in tempo reale
+    this.notificationService.notifications$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(notifications => {
+        this.recentActivities = notifications;
+      });
   }
 
   ngAfterViewInit(): void {
@@ -165,7 +174,6 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
         this.loadUtilityReadings();
         
         this.calculateAllStats();
-        this.generateRecentActivities();
         this.updateWeather();
         
         this.isLoading = false;
@@ -290,74 +298,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     this.apartmentsWithoutReadings = apartmentsWithoutReadings;
   }
 
-  /**
-   * Genera attività recenti dinamicamente
-   */
-  private generateRecentActivities(): void {
-    this.recentActivities = [];
-    
-    // Contratti recenti
-    this.leases
-      .sort((a, b) => new Date(b.createdAt || b.startDate).getTime() - new Date(a.createdAt || a.startDate).getTime())
-      .slice(0, 3)
-      .forEach(lease => {
-        const apartment = this.apartments.find(apt => apt.id === lease.apartmentId);
-        const tenant = this.tenants.find(t => t.id === lease.tenantId);
-        const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
-        
-        this.recentActivities.push({
-          id: `lease-${lease.id}`,
-          type: 'lease',
-          title: 'Nuovo contratto',
-          subtitle: `${apartment?.name || 'Appartamento'} - ${tenantName}`,
-          timestamp: new Date(lease.createdAt || lease.startDate),
-          icon: 'description',
-          color: '#2D7D46'
-        });
-      });
 
-    // Pagamenti recenti - TODO: Decommentare quando le invoice saranno implementate
-    // this.invoices
-    //   .filter(invoice => invoice.isPaid && invoice.paymentDate)
-    //   .sort((a, b) => new Date(b.paymentDate!).getTime() - new Date(a.paymentDate!).getTime())
-    //   .slice(0, 3)
-    //   .forEach(invoice => {
-    //     const description = invoice.items && invoice.items.length > 0 
-    //       ? invoice.items[0].description 
-    //       : 'Fattura';
-    //     
-    //     this.recentActivities.push({
-    //       id: `payment-${invoice.id}`,
-    //       type: 'payment',
-    //       title: 'Pagamento ricevuto',
-    //       subtitle: `€${invoice.total?.toFixed(2)} - ${description}`,
-    //       timestamp: new Date(invoice.paymentDate!),
-    //       icon: 'payment',
-    //       color: '#10b981'
-    //     });
-    //   });
-
-    // Nuovi inquilini
-    this.tenants
-      .filter(tenant => tenant.createdAt)
-      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-      .slice(0, 2)
-      .forEach(tenant => {
-        this.recentActivities.push({
-          id: `tenant-${tenant.id}`,
-          type: 'tenant',
-          title: 'Nuovo inquilino',
-          subtitle: `${tenant.firstName} ${tenant.lastName}`,
-          timestamp: new Date(tenant.createdAt!),
-          icon: 'person_add',
-          color: '#3b82f6'
-        });
-      });
-
-    // Ordina per data
-    this.recentActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    this.recentActivities = this.recentActivities.slice(0, 8);
-  }
 
   /**
    * Aggiorna info meteo (per ora semplice)
@@ -752,6 +693,12 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       if (result && result.success) {
         this.loadDashboardData();
         
+        // Aggiungi notifica
+        if (result.apartment) {
+          const action = apartmentId ? 'updated' : 'created';
+          this.notificationService.notifyApartment(action, result.apartment.name, result.apartment.id);
+        }
+        
         if (result.apartment && !result.skipDetailView) {
           setTimeout(() => {
             this.openApartmentDetails(result.apartment.id);
@@ -771,6 +718,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           this.apiService.delete('apartments', apartment.id).subscribe({
             next: () => {
               this.loadDashboardData();
+              this.notificationService.notifyApartment('deleted', apartment.name, apartment.id);
               this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
                 duration: 3000,
                 horizontalPosition: 'end',
@@ -823,6 +771,13 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
         this.loadDashboardData();
+        
+        // Aggiungi notifica
+        if (result.tenant) {
+          const action = tenantId ? 'updated' : 'created';
+          const tenantName = `${result.tenant.firstName} ${result.tenant.lastName}`;
+          this.notificationService.notifyTenant(action, tenantName, result.tenant.id);
+        }
       }
     });
   }
@@ -837,6 +792,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           this.apiService.delete('tenants', tenant.id).subscribe({
             next: () => {
               this.loadDashboardData();
+              const tenantName = `${tenant.firstName} ${tenant.lastName}`;
+              this.notificationService.notifyTenant('deleted', tenantName, tenant.id);
               this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
                 duration: 3000,
                 horizontalPosition: 'end',
@@ -869,6 +826,16 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
         this.loadDashboardData();
+        
+        // Aggiungi notifica
+        if (result.lease) {
+          const action = leaseId ? 'updated' : 'created';
+          const apartment = this.apartments.find(a => a.id === result.lease.apartmentId);
+          const tenant = this.tenants.find(t => t.id === result.lease.tenantId);
+          const apartmentName = apartment?.name || 'Appartamento';
+          const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+          this.notificationService.notifyLease(action, apartmentName, tenantName, result.lease.id);
+        }
       }
     });
   }
@@ -883,6 +850,11 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           this.apiService.delete('leases', lease.id).subscribe({
             next: () => {
               this.loadDashboardData();
+              const apartment = this.apartments.find(a => a.id === lease.apartmentId);
+              const tenant = this.tenants.find(t => t.id === lease.tenantId);
+              const apartmentName = apartment?.name || 'Appartamento';
+              const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+              this.notificationService.notifyLease('deleted', apartmentName, tenantName, lease.id);
               this.snackBar.open('Contratto eliminato con successo', 'Chiudi', {
                 duration: 3000,
                 horizontalPosition: 'end',
@@ -925,5 +897,12 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   openUtilityDashboard(): void {
     this.router.navigate(['/utility/dashboard']);
+  }
+
+  /**
+   * Pulisce tutte le notifiche
+   */
+  clearAllNotifications(): void {
+    this.notificationService.clearAllNotifications();
   }
 }

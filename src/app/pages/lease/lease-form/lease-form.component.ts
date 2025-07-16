@@ -32,6 +32,7 @@ import { LeaseService } from '../../../shared/services/lease.service';
 import { ContractGeneratorService } from '../../../shared/services/contract-generator.service';
 import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
 import { BaseContractGeneratorService } from '../../../shared/services/base-contract-generator.service';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 // Models
 import { Lease, LeaseFormData, BaseContractData } from '../../../shared/models/lease.model';
@@ -132,6 +133,7 @@ export class LeaseFormComponent implements OnInit {
     private contractTemplates: ContractTemplatesService,
     private baseContractGenerator: BaseContractGeneratorService,
     private dateAdapter: DateAdapter<Date>,
+    private notificationService: NotificationService,
     @Optional() @Inject(MAT_DIALOG_DATA) public dialogData: any,
     @Optional() public dialogRef: MatDialogRef<LeaseFormComponent>
   ) {
@@ -420,6 +422,14 @@ export class LeaseFormComponent implements OnInit {
         next: () => {
           this.snackBar.open('Contratto aggiornato con successo', 'Chiudi', { duration: 3000 });
           this.isSubmitting = false;
+          
+          // Aggiungi notifica
+          const apartment = this.apartments.find(a => a.id === this.partiesFormGroup.get('apartment')?.value?.id);
+          const tenant = this.tenants.find(t => t.id === this.partiesFormGroup.get('tenant')?.value?.id);
+          const apartmentName = apartment?.name || 'Appartamento';
+          const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+          this.notificationService.notifyLease('updated', apartmentName, tenantName, this.leaseId || undefined);
+          
           this.closeDialog(true);
         },
         error: (error) => {
@@ -433,6 +443,14 @@ export class LeaseFormComponent implements OnInit {
         next: () => {
           this.snackBar.open('Contratto creato con successo', 'Chiudi', { duration: 3000 });
           this.isSubmitting = false;
+          
+          // Aggiungi notifica
+          const apartment = this.apartments.find(a => a.id === this.partiesFormGroup.get('apartment')?.value?.id);
+          const tenant = this.tenants.find(t => t.id === this.partiesFormGroup.get('tenant')?.value?.id);
+          const apartmentName = apartment?.name || 'Appartamento';
+          const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+          this.notificationService.notifyLease('created', apartmentName, tenantName);
+          
           this.closeDialog(true);
         },
         error: (error) => {

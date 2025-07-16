@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltip, MatTooltipModule } from '@angular/material/tooltip';
@@ -18,6 +18,8 @@ import { Apartment, Tenant } from '../../../shared/models';
 import { Lease } from '../../../shared/models/lease.model';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 import { TenantDetailDialogComponent } from '../../tenant/tenant-detail/tenant-detail-dialog.component';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { ApartmentFormComponent } from '../apartment-form/apartment-form-dialog.component';
 
 // Componente per l'anteprima dell'immagine a schermo intero (riutilizzato da tenant-detail)
 @Component({
@@ -112,7 +114,8 @@ export class ApartmentDetailDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { apartmentId: number },
     private snackBar: MatSnackBar,
     private confirmationService: ConfirmationDialogService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -189,6 +192,7 @@ export class ApartmentDetailDialogComponent implements OnInit {
                 horizontalPosition: 'end',
                 verticalPosition: 'top'
               });
+              this.notificationService.notifyApartment('deleted', this.apartment!.name, this.apartment!.id);
               this.dialogRef.close({ deleted: true });
             },
             error: (error) => {

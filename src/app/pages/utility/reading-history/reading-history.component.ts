@@ -23,6 +23,7 @@ import { Subject } from 'rxjs';
 import { takeUntil, debounceTime } from 'rxjs/operators';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { NotificationService } from '../../../shared/services/notification.service';
 import { ReadingFormComponent } from '../reading-form/reading-form.component';
 import { 
   UtilityReading, 
@@ -114,6 +115,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   constructor(
     private fb: FormBuilder,
     private apiService: GenericApiService,
+    private notificationService: NotificationService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<ReadingHistoryComponent>,
@@ -438,6 +440,14 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
           this.updateGroupedData();
           this.applyFilters();
           
+          // Aggiungi notifica
+          this.notificationService.notifyUtilityReading(
+            'updated', 
+            reading.apartmentName, 
+            updatedReading.type, 
+            updatedReading.id
+          );
+          
           this.showSuccessSnackBar('Lettura aggiornata con successo');
         }
       } else if (result === true) {
@@ -459,6 +469,9 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
   
   performDeleteReading(id: number): void {
+    // Trova la lettura prima di eliminarla per la notifica
+    const readingToDelete = this.allReadings.find(r => r.id === id);
+    
     this.apiService.deleteUtilityReading(id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -467,6 +480,17 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
             this.allReadings = this.allReadings.filter(r => r.id !== id);
             this.updateGroupedData();
             this.applyFilters();
+            
+            // Aggiungi notifica
+            if (readingToDelete) {
+              this.notificationService.notifyUtilityReading(
+                'deleted', 
+                readingToDelete.apartmentName, 
+                readingToDelete.type, 
+                readingToDelete.id
+              );
+            }
+            
             this.showSuccessSnackBar('Lettura eliminata con successo');
           } else {
             this.showInfoSnackBar('Errore durante l\'eliminazione della lettura');

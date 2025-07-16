@@ -19,6 +19,7 @@ import { Tenant } from '../../../shared/models';
 import { ImageService } from '../../../shared/services/image.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-tenant-form',
@@ -81,7 +82,8 @@ export class TenantFormComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: { tenantId?: number },
     private imageService: ImageService,
     private cdr: ChangeDetectorRef,
-    private http: HttpClient
+    private http: HttpClient,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -672,6 +674,13 @@ export class TenantFormComponent implements OnInit {
       next: (tenant) => {
         this.isLoading = false;
         this.snackBar.dismiss();
+        // Aggiungi notifica
+        if (tenant) {
+          const action = this.isEditMode ? 'updated' : 'created';
+          const tenantName = `${tenant.firstName} ${tenant.lastName}`;
+          this.notificationService.notifyTenant(action, tenantName, tenant.id);
+        }
+        
         this.snackBar.open(
           this.isEditMode ? 'Inquilino aggiornato con successo' : 'Inquilino creato con successo', 
           'Chiudi', 

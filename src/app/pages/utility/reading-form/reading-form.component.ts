@@ -25,6 +25,7 @@ import {
   UtilityReadingCreate 
 } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-reading-form',
@@ -68,6 +69,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
+    private notificationService: NotificationService,
     public dialogRef: MatDialogRef<ReadingFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { 
       apartments: Apartment[],
@@ -420,6 +422,13 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         console.log('Backend response:', result);
         if (result) {
           this.isLoading = false;
+          
+          // Aggiungi notifica
+          const apartment = this.data.apartments.find(a => a.id === Number(formValue.apartmentId));
+          const apartmentName = apartment?.name || 'Appartamento';
+          const action = this.data.editingReading ? 'updated' : 'created';
+          this.notificationService.notifyUtilityReading(action, apartmentName, formValue.type, result.id);
+          
           this.showSuccessSnackBar(
             this.data.editingReading 
               ? 'Lettura aggiornata con successo' 
