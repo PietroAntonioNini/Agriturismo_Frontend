@@ -224,13 +224,13 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       ? Math.round((this.occupiedApartments / this.totalApartments) * 100) 
       : 0;
 
-    // Contratti in scadenza (prossimi 30 giorni)
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    // Contratti in scadenza (prossimi 20 giorni)
+    const twentyDaysFromNow = new Date();
+    twentyDaysFromNow.setDate(twentyDaysFromNow.getDate() + 20);
     
     this.expiringLeases = this.leases.filter(lease => {
       const endDate = new Date(lease.endDate);
-      return endDate >= now && endDate <= thirtyDaysFromNow;
+      return endDate >= now && endDate <= twentyDaysFromNow;
     }).length;
 
     // Statistiche inquilini
@@ -420,44 +420,64 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Inizializza tutti i grafici
+   * Inizializza i grafici principali della dashboard
    */
   private initializeCharts(): void {
-    // Distruggi prima i grafici esistenti se ci sono
-    this.destroyCharts();
-    
-    setTimeout(() => {
+    this.destroyCharts(); // Assicura che i grafici precedenti siano distrutti
+
+    if (this.occupancyChart && this.apartments.length > 0) {
       this.createOccupancyChart();
+    }
+    if (this.revenueChart && this.apartments.length > 0) {
       this.createRevenueChart();
+    }
+    if (this.utilityChart && this.utilityReadings.length > 0) {
       this.createUtilityChart();
-    }, 100);
+    }
   }
 
   /**
    * Crea grafico occupazione
    */
   private createOccupancyChart(): void {
-    if (!this.occupancyChart?.nativeElement) return;
+    if (!this.occupancyChart) {
+      return;
+    }
 
     const ctx = this.occupancyChart.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    this.occupancyChartInstance = new Chart(ctx, {
+    const data = {
+      labels: ['Occupati', 'Disponibili'],
+      datasets: [{
+        data: [this.occupiedApartments, this.availableApartments],
+        backgroundColor: ['#2D7D46', '#e5e7eb'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    };
+
+    this.occupancyChartInstance = new Chart(this.occupancyChart.nativeElement, {
       type: 'doughnut',
-      data: {
-        labels: ['Occupati', 'Disponibili'],
-        datasets: [{
-          data: [this.occupiedApartments, this.availableApartments],
-          backgroundColor: ['#2D7D46', '#e5e7eb'],
-          borderWidth: 0
-        }]
-      },
+      data: data,
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom'
+            display: false
+          },
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              label: (context) => {
+                const label = context.label || '';
+                const value = context.raw as number;
+                const total = this.totalApartments;
+                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
           }
         },
         cutout: '70%'
@@ -466,103 +486,80 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Crea grafico ricavi
+   * Crea il grafico dei ricavi (placeholder)
    */
   private createRevenueChart(): void {
-    if (!this.revenueChart?.nativeElement) return;
-
-    const ctx = this.revenueChart.nativeElement.getContext('2d');
-    if (!ctx) return;
-
-    // Genera dati per gli ultimi 6 mesi
-    const months: string[] = [];
-    const revenues: number[] = [];
-    
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(date.getMonth() - i);
-      months.push(date.toLocaleDateString('it-IT', { month: 'short' }));
-      
-      // TODO: Decommentare quando le invoice saranno implementate
-      // const monthRevenue = this.invoices
-      //   .filter(invoice => {
-      //     if (!invoice.isPaid || !invoice.paymentDate) return false;
-      //     const paidDate = new Date(invoice.paymentDate);
-      //     return paidDate.getMonth() === date.getMonth() && 
-      //            paidDate.getFullYear() === date.getFullYear();
-      //   })
-      //   .reduce((sum, invoice) => sum + (invoice.total || 0), 0);
-      
-      // Temporaneo: dati casuali per mostrare il grafico
-      const monthRevenue = Math.random() * 5000 + 1000;
-      revenues.push(monthRevenue);
+    if (!this.revenueChart) {
+      return;
     }
+    
+    // Dati di esempio per i ricavi (da sostituire con dati reali)
+    const labels = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu'];
+    const revenueData = [1200, 1900, 1500, 2100, 1800, 2400];
 
-    this.revenueChartInstance = new Chart(ctx, {
+    this.revenueChartInstance = new Chart(this.revenueChart.nativeElement, {
       type: 'line',
       data: {
-        labels: months,
+        labels: labels,
         datasets: [{
-          label: 'Ricavi (€)',
-          data: revenues,
-          borderColor: '#10b981',
-          backgroundColor: '#10b98120',
-          borderWidth: 3,
+          label: 'Ricavi Mensili',
+          data: revenueData,
           fill: true,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
           tension: 0.4
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
         scales: {
           y: {
             beginAtZero: true,
             ticks: {
-              callback: (value) => '€' + value
+              callback: (value) => `€${value}`
             }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
           }
         }
       }
     });
   }
-
+  
   /**
-   * Crea grafico utenze
+   * Crea il grafico delle utenze (placeholder)
    */
   private createUtilityChart(): void {
-    if (!this.utilityChart?.nativeElement) return;
-
-    const ctx = this.utilityChart.nativeElement.getContext('2d');
-    if (!ctx) return;
-
-    // Calcola consumi per tipo
-    const electricityTotal = this.utilityReadings
-      .filter(r => r.type === 'electricity')
-      .reduce((sum, r) => sum + (r.consumption || 0), 0);
+    if (!this.utilityChart) {
+      return;
+    }
     
-    const waterTotal = this.utilityReadings
-      .filter(r => r.type === 'water')
-      .reduce((sum, r) => sum + (r.consumption || 0), 0);
-    
-    const gasTotal = this.utilityReadings
-      .filter(r => r.type === 'gas')
-      .reduce((sum, r) => sum + (r.consumption || 0), 0);
+    // Dati di esempio per le utenze (da sostituire con dati reali)
+    const labels = ['Acqua', 'Elettricità', 'Gas'];
+    const consumptionData = [300, 500, 200];
 
-    this.utilityChartInstance = new Chart(ctx, {
+    this.utilityChartInstance = new Chart(this.utilityChart.nativeElement, {
       type: 'bar',
       data: {
-        labels: ['Elettricità', 'Acqua', 'Gas'],
+        labels: labels,
         datasets: [{
-          label: 'Consumo',
-          data: [electricityTotal, waterTotal, gasTotal],
-          backgroundColor: ['#f59e0b', '#3b82f6', '#f5a623'],
-          borderRadius: 4
+          label: 'Consumo Ultimo Mese',
+          data: consumptionData,
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(255, 206, 86, 0.5)',
+            'rgba(255, 99, 132, 0.5)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(255, 99, 132, 1)'
+          ],
+          borderWidth: 1
         }]
       },
       options: {
@@ -572,27 +569,30 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
           legend: {
             display: false
           }
-        },
-        scales: {
-          y: {
-            beginAtZero: true
-          }
         }
       }
     });
   }
 
   /**
-   * Aggiorna grafico utenze
+   * Aggiorna il grafico delle utenze con nuovi dati
    */
   private updateUtilityChart(): void {
-    if (this.utilityChartInstance) {
-      this.createUtilityChart();
+    if (!this.utilityChartInstance) {
+      if (this.utilityChart && this.utilityReadings.length > 0) {
+        this.createUtilityChart();
+      }
+      return;
     }
+
+    // Qui andrebbe la logica per aggiornare i dati del grafico
+    // this.utilityChartInstance.data.labels = ...
+    // this.utilityChartInstance.data.datasets[0].data = ...
+    this.utilityChartInstance.update();
   }
 
   /**
-   * Distrugge tutti i grafici
+   * Distrugge tutte le istanze dei grafici
    */
   private destroyCharts(): void {
     if (this.occupancyChartInstance) {
@@ -614,6 +614,26 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   navigateTo(route: string): void {
     this.router.navigate([route]);
+  }
+
+  /**
+   * Naviga alla sezione contratti con il filtro "In Scadenza" attivo
+   */
+  navigateToExpiringLeases(): void {
+    this.router.navigate(['/lease/list'], { queryParams: { filter: 'expiring' } });
+  }
+
+  /**
+   * Ottiene il testo dinamico per i contratti in scadenza
+   */
+  getExpiringLeasesText(): string {
+    if (this.expiringLeases === 0) {
+      return 'Nessun contratto in scadenza';
+    } else if (this.expiringLeases === 1) {
+      return '1 contratto scade nei prossimi 20 giorni';
+    } else {
+      return `${this.expiringLeases} contratti scadranno entro 20 giorni`;
+    }
   }
 
   /**

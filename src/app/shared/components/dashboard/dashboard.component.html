@@ -134,11 +134,11 @@
               <mat-icon class="alert-icon">schedule</mat-icon>
               <div class="alert-text">
                 <h3>Contratti in scadenza</h3>
-                <p>{{ expiringLeases }} contratti scadono nei prossimi 30 giorni</p>
+                <p>{{ getExpiringLeasesText() }}</p>
               </div>
               <button mat-button 
                       color="warn" 
-                      (click)="navigateTo('/leases')"
+                      (click)="navigateToExpiringLeases()"
                       class="alert-action">
                 Visualizza
               </button>

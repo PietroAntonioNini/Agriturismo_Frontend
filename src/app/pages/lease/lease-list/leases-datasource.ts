@@ -107,17 +107,17 @@ export class LeasesDataSource extends DataSource<Lease> {
   }
 
   /**
-   * Verifica se un contratto è in scadenza (entro un mese)
+   * Verifica se un contratto è in scadenza (entro 20 giorni)
    */
   private isLeaseExpiring(lease: Lease): boolean {
     if (!lease.isActive) return false;
     
     const today = new Date();
-    const oneMonthFromNow = new Date();
-    oneMonthFromNow.setMonth(today.getMonth() + 1);
+    const twentyDaysFromNow = new Date();
+    twentyDaysFromNow.setDate(today.getDate() + 20);
     
     const endDate = new Date(lease.endDate);
-    return endDate <= oneMonthFromNow && endDate >= today;
+    return endDate <= twentyDaysFromNow && endDate >= today;
   }
 
   /**

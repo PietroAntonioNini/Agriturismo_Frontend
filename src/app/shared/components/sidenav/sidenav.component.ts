@@ -14,6 +14,7 @@ interface NavItem {
   route: string;
   roles?: ('admin' | 'manager' | 'staff')[];
   badge?: number | string; // Numero notifiche o indicatore
+  exact?: boolean;
 }
 
 @Component({
@@ -34,7 +35,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
     {
       label: 'Dashboard',
       icon: 'dashboard',
-      route: '/dashboard'
+      route: '/',
+      exact: true
     },
     {
       label: 'Inquilini',

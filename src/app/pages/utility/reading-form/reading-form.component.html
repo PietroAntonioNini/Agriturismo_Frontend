@@ -45,7 +45,10 @@
             {{lastReading.lastReadingDate | date:'dd/MM/yyyy'}}
           </div>
           <div class="info-message" *ngIf="isFirstReading()">
-            Prima lettura per questo tipo di utenza. Inserisci la lettura del mese precedente e quella attuale per calcolare il consumo.
+            Prima lettura per questo tipo di utenza. Inserisci la lettura precedente del contatore e quella attuale per calcolare il consumo.
+          </div>
+          <div class="info-message" *ngIf="shouldShowPreviousReadingField() && !isFirstReading()">
+            Inserisci la lettura precedente e quella attuale per calcolare il consumo.
           </div>
         </div>
       </div>
@@ -53,7 +56,7 @@
       <!-- Calculation Preview -->
       <div class="calculation-preview" *ngIf="canCalculateConsumption()">
         <div class="calculation-row">
-          <span class="calc-label">Consumo:</span>
+          <span class="calc-label me-2">Consumo:</span>
           <span class="calc-value">{{calculatedConsumption | number:'1.0-3'}} {{getSelectedUtilityConfig()?.unit}}</span>
         </div>
         <div class="calculation-row">
@@ -144,8 +147,8 @@
       <mat-card-content>
         <div class="form-grid">
           
-          <!-- Previous Reading (solo per prima lettura) -->
-          <mat-form-field appearance="outline" *ngIf="isFirstReading()">
+          <!-- Previous Reading (per prime letture e quando non ci sono dati storici) -->
+          <mat-form-field appearance="outline" *ngIf="shouldShowPreviousReadingField()">
             <mat-label>
               Lettura Precedente 
               <span *ngIf="getSelectedUtilityConfig()">({{getSelectedUtilityConfig()?.unit}})</span>

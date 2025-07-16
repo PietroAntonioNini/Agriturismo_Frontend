@@ -78,7 +78,6 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUtilityTypes();
-    this.setupFormSubscriptions();
     
     // Se abbiamo dati di editing, configura il form
     if (this.data.editingReading) {
@@ -104,6 +103,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         
         // Inizializza il form dopo aver caricato i tipi di utenza
         this.initForm();
+        
+        // Setup delle subscription dopo l'inizializzazione del form
+        this.setupFormSubscriptions();
       },
       error: (error) => {
         console.error('Errore nel caricamento dei tipi utility:', error);
@@ -142,6 +144,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         
         // Inizializza il form anche in caso di errore (con fallback)
         this.initForm();
+        
+        // Setup delle subscription dopo l'inizializzazione del form
+        this.setupFormSubscriptions();
       }
     });
   }
@@ -160,6 +165,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     });
   }
   
+
+
   setupFormSubscriptions(): void {
     // Monitora cambiamenti in appartamento e tipo per caricare l'ultima lettura
     this.readingForm.valueChanges.pipe(
@@ -308,6 +315,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
   }
   
   calculateConsumptionAndCost(): void {
+    if (!this.readingForm) return;
+    
     const currentReading = this.readingForm.get('currentReading')?.value || 0;
     const unitCost = this.readingForm.get('unitCost')?.value || 0;
     
@@ -486,17 +495,21 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
   }
   
   getSelectedUtilityConfig(): UtilityTypeConfig | null {
+    if (!this.readingForm) return null;
     const selectedType = this.readingForm.get('type')?.value;
     return selectedType ? this.getUtilityTypeConfig(selectedType) : null;
   }
   
   getSelectedApartmentName(): string {
+    if (!this.readingForm) return 'Seleziona appartamento';
     const selectedId = this.readingForm.get('apartmentId')?.value;
     const apartment = this.data.apartments.find(apt => apt.id === selectedId);
     return apartment?.name || 'Seleziona appartamento';
   }
   
   canCalculateConsumption(): boolean {
+    if (!this.readingForm) return false;
+    
     const currentReading = this.readingForm.get('currentReading')?.value || 0;
     const unitCost = this.readingForm.get('unitCost')?.value || 0;
     
@@ -511,7 +524,35 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
   }
   
   isFirstReading(): boolean {
-    return this.lastReading !== null && !this.lastReading.hasHistory;
+    // Se lastReading è null, potrebbe essere che non abbiamo ancora caricato i dati
+    // o che ci sia stato un errore - consideriamola come prima lettura
+    if (this.lastReading === null) {
+      return true;
+    }
+    
+    // Se hasHistory è false, è sicuramente la prima lettura
+    return !this.lastReading.hasHistory;
+  }
+
+  /**
+   * Verifica se dobbiamo mostrare il campo "Lettura Precedente"
+   * Mostra il campo SOLO per le prime letture (quando non c'è storico)
+   */
+  shouldShowPreviousReadingField(): boolean {
+    // Se non abbiamo il form inizializzato, nascondi il campo
+    if (!this.readingForm) return false;
+    
+    // Se stiamo modificando una lettura esistente, nascondi il campo
+    if (this.data.editingReading) return false;
+    
+    // Se stiamo ancora caricando, nascondi il campo
+    if (this.isLoadingLastReading) return false;
+    
+    // Se lastReading è null, nascondi il campo (ancora in caricamento)
+    if (!this.lastReading) return false;
+    
+    // Mostra il campo SOLO se non c'è storico (prima lettura)
+    return this.lastReading.hasHistory === false;
   }
   
   getFormControlError(controlName: string): string {
@@ -534,6 +575,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     
     // Errori specifici per previousReading
     if (controlName === 'previousReading') {
+      if (control.hasError('required')) {
+        return 'Inserisci la lettura precedente del contatore';
+      }
       if (control.hasError('min')) {
         return 'La lettura precedente non può essere negativa';
       }

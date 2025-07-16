@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -81,11 +81,13 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
     private apiService: GenericApiService,
     private leaseService: LeaseService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.loadInitialData();
+    this.handleQueryParams();
   }
 
   ngAfterViewInit(): void {
@@ -107,6 +109,45 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
    */
   setViewMode(mode: 'grid' | 'list'): void {
     this.viewMode = mode;
+  }
+
+  /**
+   * Gestisce i query parameters per attivare filtri automaticamente
+   */
+  private handleQueryParams(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['filter']) {
+        const filter = params['filter'];
+        if (filter === 'expiring') {
+          this.selectedStatus = ['expiring'];
+          // Applica il filtro quando i dati sono disponibili
+          this.applyFiltersWhenDataReady();
+        }
+      }
+    });
+  }
+
+  /**
+   * Applica i filtri quando i dati sono pronti
+   */
+  private applyFiltersWhenDataReady(): void {
+    // Controlla se i dati sono già caricati
+    if (this.dataSource.data.length > 0) {
+      this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+    } else {
+      // Se i dati non sono ancora caricati, riprovare dopo un breve intervallo
+      const checkDataInterval = setInterval(() => {
+        if (this.dataSource.data.length > 0) {
+          this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+          clearInterval(checkDataInterval);
+        }
+      }, 50);
+      
+      // Timeout di sicurezza per evitare loop infiniti
+      setTimeout(() => {
+        clearInterval(checkDataInterval);
+      }, 5000);
+    }
   }
 
   /**
@@ -137,6 +178,11 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
       this.dataSource.data = leases || [];
       this.dataSource.filteredData = leases || [];
       this.updatePaginationLabels();
+      
+      // Applica filtri se presenti nei query parameters
+      if (this.selectedStatus.length > 0) {
+        this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+      }
       
     }).catch(error => {
       console.error('Errore durante il caricamento dei dati iniziali', error);

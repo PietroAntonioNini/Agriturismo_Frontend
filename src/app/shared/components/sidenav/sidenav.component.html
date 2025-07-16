@@ -8,6 +8,7 @@
            class="nav-item" 
            [routerLink]="item.route"
            routerLinkActive="active-link"
+           [routerLinkActiveOptions]="{ exact: item.exact === true }"
            (click)="navigateTo(item.route)">
         
         <div class="nav-item-icon">
