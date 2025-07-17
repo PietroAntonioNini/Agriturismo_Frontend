@@ -47,6 +47,7 @@ Chart.register(...registerables);
 })
 export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('comparisonChartCanvas') comparisonChartCanvas!: ElementRef<HTMLCanvasElement>;
   
   apartments: Apartment[] = [];
   selectedApartmentId: number | null = null;
@@ -55,6 +56,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   isLoading = true;
   errorMessage: string | null = null;
   chart: Chart | null = null;
+  comparisonChart: Chart | null = null;
   
   // Dati per i grafici
   allApartmentsData: MonthlyUtilityData[] = [];
@@ -77,9 +79,9 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   
   // Colori per i grafici
   chartColors = {
-    electricity: 'rgba(255, 206, 86, 0.7)',  // Giallo per Elettricità
-    water: 'rgba(54, 162, 235, 0.7)',        // Blu per Acqua
-    gas: 'rgba(255, 99, 132, 0.7)'           // Rosa/Rosso per Gas
+    electricity: 'rgba(255, 206, 86, 0.6)',  // Giallo per Elettricità
+    water: 'rgba(54, 162, 235, 0.6)',        // Blu per Acqua
+    gas: 'rgba(255, 99, 132, 0.6)'           // Rosa/Rosso per Gas
   };
 
   constructor(
@@ -234,38 +236,45 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   }
   
   initializeChart(): void {
+    // Distruggi i grafici esistenti
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
     }
-    
-    if (!this.chartCanvas || !this.chartCanvas.nativeElement) {
-      console.warn('Canvas non disponibile per il grafico');
-      return;
+    if (this.comparisonChart) {
+      this.comparisonChart.destroy();
+      this.comparisonChart = null;
     }
     
-    const canvas = this.chartCanvas.nativeElement;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.warn('Context 2D non disponibile');
-      return;
+    // Inizializza il grafico principale
+    if (this.chartCanvas && this.chartCanvas.nativeElement) {
+      const canvas = this.chartCanvas.nativeElement;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Verifica che il canvas abbia dimensioni valide
+        if (canvas.clientWidth === 0 || canvas.clientHeight === 0) {
+          console.warn('Canvas non ha dimensioni valide, retry in 100ms');
+          setTimeout(() => {
+            this.initializeChart();
+          }, 100);
+          return;
+        }
+        
+        if (this.selectedApartmentId === null) {
+          // Visualizza il grafico per tutti gli appartamenti
+          this.createAllApartmentsChart(ctx);
+        } else {
+          // Visualizza il grafico per un appartamento specifico
+          this.createSingleApartmentChart(ctx);
+        }
+      }
     }
     
-    // Verifica che il canvas abbia dimensioni valide
-    if (canvas.clientWidth === 0 || canvas.clientHeight === 0) {
-      console.warn('Canvas non ha dimensioni valide, retry in 100ms');
+    // Inizializza il grafico di confronto se necessario
+    if (this.selectedView === 'comparison' && this.selectedApartmentId === null) {
       setTimeout(() => {
-        this.initializeChart();
+        this.createComparisonChart();
       }, 100);
-      return;
-    }
-    
-    if (this.selectedApartmentId === null) {
-      // Visualizza il grafico per tutti gli appartamenti
-      this.createAllApartmentsChart(ctx);
-    } else {
-      // Visualizza il grafico per un appartamento specifico
-      this.createSingleApartmentChart(ctx);
     }
   }
   
@@ -816,5 +825,114 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       : this.apartmentsWithoutReadings;
     
     return apartments.map(apt => apt.name).join(', ');
+  }
+
+  /**
+   * Crea il grafico di confronto mensile per tutti gli appartamenti
+   */
+  private createComparisonChart(): void {
+    if (!this.comparisonChartCanvas || !this.comparisonChartCanvas.nativeElement) {
+      console.warn('Canvas di confronto non disponibile');
+      return;
+    }
+
+    const canvas = this.comparisonChartCanvas.nativeElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.warn('Context 2D non disponibile per il grafico di confronto');
+      return;
+    }
+
+    // Verifica che il canvas abbia dimensioni valide
+    if (canvas.clientWidth === 0 || canvas.clientHeight === 0) {
+      console.warn('Canvas di confronto non ha dimensioni valide, retry in 100ms');
+      setTimeout(() => {
+        this.createComparisonChart();
+      }, 100);
+      return;
+    }
+
+    // Calcola i costi totali mensili per tutti gli appartamenti
+    const monthlyTotalCosts = this.months.map((monthName, index) => {
+      const month = index + 1;
+      const totalCost = this.apartmentUtilityData.reduce((sum, apt) => {
+        const monthData = apt.monthlyData.find(m => m.month === month);
+        return sum + (monthData?.totalCost || 0);
+      }, 0);
+      
+      return {
+        month,
+        monthName,
+        totalCost
+      };
+    });
+
+    const labels = monthlyTotalCosts.map(item => item.monthName);
+    const data = monthlyTotalCosts.map(item => item.totalCost);
+
+    this.comparisonChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Costi Totali Mensili (€)',
+          data: data,
+          backgroundColor: 'rgba(156, 39, 176, 0.2)',
+          borderColor: 'rgba(156, 39, 176, 1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgba(156, 39, 176, 1)',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Costo Totale (€)'
+            },
+            ticks: {
+              callback: (value) => {
+                return `€${value.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+              }
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Mesi'
+            }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: `Andamento Mensile Costi Totali - ${this.selectedYear}`,
+            font: {
+              size: 16,
+              weight: 'bold'
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const value = context.raw as number;
+                return `Costo Totale: €${value.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    console.log('Grafico di confronto creato:', this.comparisonChart);
   }
 }

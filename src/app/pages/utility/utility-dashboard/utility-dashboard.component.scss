@@ -139,6 +139,42 @@
 
       .action-button {
         font-weight: 500;
+
+        // Pulsante nuova lettura
+        &.new-reading-button {
+          background: var(--primary-color) !important;
+          color: white !important;
+          border: none !important;
+          transition: all 0.3s ease !important;
+
+          &:hover {
+            background: var(--primary-dark) !important;
+          }
+          
+          &:active {
+            transform: translateY(0) !important;
+          }
+        }
+
+        // Pulsante storico
+        &.history-button {
+          background: #f07a4f !important;
+          color: white !important;
+          border: none !important;
+          transition: all 0.3s ease !important;
+
+          mat-icon {
+            color: white !important;
+          }
+
+          &:hover {
+            background: #f75b2b !important;
+          }
+          
+          &:active {
+            transform: translateY(0) !important;
+          }
+        }
         
         mat-icon {
           margin-right: 8px;
@@ -273,19 +309,19 @@
         }
 
         &.electricity .stat-icon {
-          background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+          background: linear-gradient(135deg, #facf63 0%, #d8a21b 100%);
         }
 
         &.water .stat-icon {
-          background: linear-gradient(135deg, #4ECDC4 0%, #6EE2DB 100%);
+          background: linear-gradient(135deg, #4aabec 0%, #0f79c0 100%);
         }
 
         &.gas .stat-icon {
-          background: linear-gradient(135deg, #45B7D1 0%, #68C5E2 100%);
+          background: linear-gradient(135deg, #FF6384 0%, #f72f5a 100%);
         }
 
         &.cost .stat-icon {
-          background: linear-gradient(135deg, #8B45BE 0%, #A665D8 100%);
+          background: linear-gradient(135deg, #b76feb 0%, #8726d1 100%);
         }
       }
     }
@@ -373,21 +409,43 @@
           gap: 20px;
 
           &.view-toggle {
-            mat-chip-listbox {
-              mat-chip-option {
-                font-weight: 500;
+            // Stili per i pulsanti di cambio vista utenze (identici alla dashboard)
+            .utility-view-toggle {
+              display: flex;
+              gap: 12px;
+              margin-bottom: 16px;
+              
+              button {
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
                 
                 mat-icon {
-                  margin-right: 0;
                   font-size: 18px;
-                  width: 18px;
                   height: 18px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
+                  width: 18px;
+                }
+                
+                &.active {
+                  background-color: var(--primary-color) !important;
+                  color: white !important;
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                  transform: translateY(-1px);
+                }
+                
+                &:not(.active) {
+                  background-color: #f5f5f5 !important;
+                  color: var(--text-color) !important;
+                  border: 1px solid #e0e0e0;
+                  
+                  &:hover {
+                    background-color: #eeeeee !important;
+                    transform: translateY(-1px);
+                  }
                 }
               }
             }

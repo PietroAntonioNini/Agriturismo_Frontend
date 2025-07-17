@@ -7,11 +7,11 @@
     </div>
     
     <div class="header-actions">
-      <button mat-flat-button color="primary" class="action-button" (click)="openReadingForm()">
+      <button mat-flat-button color="primary" class="action-button new-reading-button" (click)="openReadingForm()">
         <mat-icon>add</mat-icon>
         Nuova Lettura
       </button>
-      <button mat-stroked-button color="accent" class="action-button" (click)="openReadingHistory()">
+      <button mat-raised-button color="warn" class="action-button history-button" (click)="openReadingHistory()">
         <mat-icon>history</mat-icon>
         Storico
       </button>
@@ -166,20 +166,23 @@
 
           <!-- View Toggle -->
           <div class="control-group view-toggle">
-            <mat-chip-listbox aria-label="Tipo visualizzazione" [value]="selectedView" (change)="onViewChange($event.value)">
-              <mat-chip-option value="consumption">
-                <mat-icon>bar_chart</mat-icon>
-                Consumi
-              </mat-chip-option>
-              <mat-chip-option value="costs">
-                <mat-icon>euro</mat-icon>
-                Costi
-              </mat-chip-option>
-              <mat-chip-option value="comparison" *ngIf="selectedApartmentId === null">
-                <mat-icon>trending_up</mat-icon>
-                Andamento
-              </mat-chip-option>
-            </mat-chip-listbox>
+            <div class="utility-view-toggle">
+              <button mat-raised-button color="primary"
+                [ngClass]="{'active': selectedView === 'consumption'}"
+                (click)="onViewChange('consumption')">
+                <mat-icon>bar_chart</mat-icon> Consumi
+              </button>
+              <button mat-raised-button color="accent"
+                [ngClass]="{'active': selectedView === 'costs'}"
+                (click)="onViewChange('costs')">
+                <mat-icon>euro</mat-icon> Costi
+              </button>
+              <button mat-raised-button color="warn" *ngIf="selectedApartmentId === null"
+                [ngClass]="{'active': selectedView === 'comparison'}"
+                (click)="onViewChange('comparison')">
+                <mat-icon>trending_up</mat-icon> Andamento
+              </button>
+            </div>
           </div>
 
         </div>
