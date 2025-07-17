@@ -112,6 +112,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   errorMessage = '';
   lastUpdate = new Date();
 
+  selectedUtilityView: 'consumption' | 'costs' = 'consumption';
+
   // Cleanup
   private destroy$ = new Subject<void>();
 
@@ -397,7 +399,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.revenueChart && this.apartments.length > 0) {
       this.createRevenueChart();
     }
-    if (this.utilityChart && this.utilityReadings.length > 0) {
+    if (this.utilityChart) {
       this.createUtilityChart();
     }
   }
@@ -512,25 +514,63 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   }
   
   /**
-   * Crea il grafico delle utenze (placeholder)
+   * Crea il grafico delle utenze con la somma totale di tutti gli appartamenti per l'anno corrente
    */
   private createUtilityChart(): void {
     if (!this.utilityChart) {
       return;
     }
-    
-    // Dati di esempio per le utenze (da sostituire con dati reali)
-    // Ordine: Elettricità, Acqua, Gas
+
+    // Ottieni anno corrente
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    // Calcola i totali per tipo di utenza per l'anno corrente
+    const totals = {
+      electricity: 0,
+      water: 0,
+      gas: 0,
+      electricityCost: 0,
+      waterCost: 0,
+      gasCost: 0
+    };
+
+    this.utilityReadings.forEach(reading => {
+      const readingYear = new Date(reading.readingDate).getFullYear();
+      if (readingYear !== currentYear) return;
+      
+      switch (reading.type) {
+        case 'electricity':
+          totals.electricity += reading.consumption || 0;
+          totals.electricityCost += reading.totalCost || 0;
+          break;
+        case 'water':
+          totals.water += reading.consumption || 0;
+          totals.waterCost += reading.totalCost || 0;
+          break;
+        case 'gas':
+          totals.gas += reading.consumption || 0;
+          totals.gasCost += reading.totalCost || 0;
+          break;
+      }
+    });
+
+    // Prepara i dati per il grafico
     const labels = ['Elettricità', 'Acqua', 'Gas'];
-    const consumptionData = [500, 300, 200];
+    const data = this.selectedUtilityView === 'consumption' 
+      ? [totals.electricity, totals.water, totals.gas]
+      : [totals.electricityCost, totals.waterCost, totals.gasCost];
+
+    const unit = this.selectedUtilityView === 'consumption' ? ['kWh', 'm³', 'm³'] : ['€', '€', '€'];
+    const yAxisTitle = this.selectedUtilityView === 'consumption' ? 'Consumo' : 'Costo (€)';
 
     this.utilityChartInstance = new Chart(this.utilityChart.nativeElement, {
       type: 'bar',
       data: {
-        labels: labels,
+        labels: labels.map((label, index) => `${label} (${unit[index]})`),
         datasets: [{
-          label: 'Consumo Ultimo Mese',
-          data: consumptionData,
+          label: this.selectedUtilityView === 'consumption' ? 'Consumo Totale' : 'Costo Totale',
+          data: data,
           backgroundColor: [
             'rgba(255, 206, 86, 0.5)',  // Giallo per Elettricità
             'rgba(54, 162, 235, 0.5)',  // Blu per Acqua
@@ -550,27 +590,57 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
         plugins: {
           legend: {
             display: false
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                const label = context.label || '';
+                const value = context.raw as number;
+                return `${label}: ${value.toLocaleString('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (value) => {
+                return value.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+              }
+            },
+            title: {
+              display: true,
+              text: yAxisTitle
+            }
           }
         }
       }
     });
   }
 
+
+
   /**
    * Aggiorna il grafico delle utenze con nuovi dati
    */
   private updateUtilityChart(): void {
-    if (!this.utilityChartInstance) {
-      if (this.utilityChart && this.utilityReadings.length > 0) {
-        this.createUtilityChart();
-      }
-      return;
+    if (this.utilityChartInstance) {
+      this.utilityChartInstance.destroy();
+      this.utilityChartInstance = null;
     }
+    
+    if (this.utilityChart) {
+      this.createUtilityChart();
+    }
+  }
 
-    // Qui andrebbe la logica per aggiornare i dati del grafico
-    // this.utilityChartInstance.data.labels = ...
-    // this.utilityChartInstance.data.datasets[0].data = ...
-    this.utilityChartInstance.update();
+  /**
+   * Cambia la vista del grafico utenze
+   */
+  setUtilityView(view: 'consumption' | 'costs') {
+    this.selectedUtilityView = view;
+    this.updateUtilityChart();
   }
 
   /**

@@ -239,6 +239,18 @@
             </mat-card-title>
           </mat-card-header>
           <mat-card-content>
+            <div class="utility-view-toggle" style="display: flex; gap: 12px; margin-bottom: 12px;">
+              <button mat-raised-button color="primary"
+                [ngClass]="{'active': selectedUtilityView === 'consumption'}"
+                (click)="setUtilityView('consumption')">
+                <mat-icon>bar_chart</mat-icon> Consumi
+              </button>
+              <button mat-raised-button color="accent"
+                [ngClass]="{'active': selectedUtilityView === 'costs'}"
+                (click)="setUtilityView('costs')">
+                <mat-icon>euro</mat-icon> Costi
+              </button>
+            </div>
             <div class="chart-container">
               <canvas #utilityChart></canvas>
             </div>
