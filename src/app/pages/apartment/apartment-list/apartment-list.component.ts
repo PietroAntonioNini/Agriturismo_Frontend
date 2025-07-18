@@ -262,7 +262,6 @@ export class ApartmentListComponent implements OnInit {
     const dialogRef = this.dialog.open(ApartmentDetailDialogComponent, {
       data: { apartmentId },
       width: '800px',
-      maxHeight: '90vh'
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -280,7 +279,7 @@ export class ApartmentListComponent implements OnInit {
     const dialogRef = this.dialog.open(ApartmentFormComponent, {
       data: { apartmentId },
       width: '900px',
-      maxHeight: '90vh'
+      maxHeight: '80vh'
     });
 
     dialogRef.afterClosed().subscribe(result => {

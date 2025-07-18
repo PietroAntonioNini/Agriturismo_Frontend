@@ -77,13 +77,6 @@
     }
   }
 }
-.dialog-content { max-height: 80vh; padding: 0 !important; }
-
-::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
-  min-width: 800px !important;
-  max-width: 90vw !important;
-  background-color: var(--card-background) !important;
-}
 
 .apartment-card {
   margin: 0;
@@ -217,7 +210,6 @@
 
 /* Tabs semplificati */
 mat-tab-group {
-  height: 530px;
   
   ::ng-deep {
     .mat-mdc-tab .mdc-tab__text-label { color: var(--text-color); }
