@@ -11,7 +11,7 @@ export class GenericApiService {
   constructor(private http: HttpClient) { }
 
   private apiUrl(entity: string): string {
-    return `${environment.apiUrl}/${entity}`;
+    return `${environment.apiUrl}/${entity}/`;
   }
 
   // GET: Tutti gli elementi
@@ -45,7 +45,7 @@ export class GenericApiService {
     }
     
     return this.http.get<T>(
-      `${this.apiUrl(entity)}/${id}`, 
+      `${environment.apiUrl}/${entity}/${id}/`, 
       { 
         params: httpParams,
         headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
@@ -124,7 +124,7 @@ export class GenericApiService {
             });
         }
         
-        return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images/`, formData);
     } else if (entity === 'apartments') {
       const formData = new FormData();
 
@@ -145,7 +145,7 @@ export class GenericApiService {
           });
       }
       
-      return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images/`, formData);
     } 
     
     if (!files || files.length === 0) {
@@ -156,9 +156,9 @@ export class GenericApiService {
           apartmentData.amenities = [];
         }
         console.log('Updating apartment without files:', apartmentData);
-        return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, apartmentData);
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/`, apartmentData);
       }
-      return this.http.put<T>(`${this.apiUrl(entity)}/${id}`, data);
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/`, data);
     }
     
     const formData = new FormData();
@@ -171,7 +171,7 @@ export class GenericApiService {
 
   // DELETE: Eliminazione elemento
   delete(entity: string, id: number | string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl(entity)}/${id}`);
+    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}/`);
   }
 
   // Aggiornare il metodo uploadFile per aggiungere timestamp e gestione anti-cache
