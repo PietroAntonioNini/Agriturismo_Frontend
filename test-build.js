@@ -56,6 +56,14 @@ try {
     }
   }
 
+  // Verifica i budget
+  if (productionConfig.budgets) {
+    const initialBudget = productionConfig.budgets.find(b => b.type === 'initial');
+    if (initialBudget) {
+      console.log(`✅ Budget iniziale: ${initialBudget.maximumError}`);
+    }
+  }
+
   // Test del build (solo sintassi, non completo)
   console.log('\n🔨 Testando build (solo sintassi)...');
   try {

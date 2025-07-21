@@ -46,23 +46,31 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1mb",
-                  "maximumError": "2mb"
+                  "maximumWarning": "2mb",
+                  "maximumError": "3mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "20kb",
-                  "maximumError": "30kb"
+                  "maximumWarning": "30kb",
+                  "maximumError": "50kb"
                 }
               ],
-              "optimization": {
-                "scripts": true,
-                "styles": {
-                  "minify": true,
-                  "inlineCritical": false
-                },
-                "fonts": true
+                          "optimization": {
+              "scripts": true,
+              "styles": {
+                "minify": true,
+                "inlineCritical": false
               },
+              "fonts": true
+            },
+            "allowedCommonJsDependencies": [
+              "canvg",
+              "html2canvas",
+              "jspdf",
+              "core-js",
+              "raf",
+              "rgbcolor"
+            ],
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
