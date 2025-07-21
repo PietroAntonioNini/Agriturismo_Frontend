@@ -112,6 +112,15 @@ export class GenericApiService {
     this.pendingRequests.clear();
   }
 
+  // Metodo per ottenere statistiche della cache
+  getCacheStats(): { size: number; pendingRequests: number; keys: string[] } {
+    return {
+      size: this.cache.size,
+      pendingRequests: this.pendingRequests.size,
+      keys: Array.from(this.cache.keys())
+    };
+  }
+
   // GET: Elemento singolo per ID con cache
   getById<T>(entity: string, id: number | string, params?: any, forceRefresh: boolean = false): Observable<T> {
     const cacheKey = this.getCacheKey(`${entity}_${id}`, params);

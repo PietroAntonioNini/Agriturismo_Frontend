@@ -11,6 +11,7 @@
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:build": "node test-build.js",
     "env:local": "node switch-env.js local",
     "env:prod": "node switch-env.js prod"
   },

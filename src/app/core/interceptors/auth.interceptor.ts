@@ -22,7 +22,7 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const startTime = performance.now();
+    const startTime = Date.now();
     
     // Aggiungi JWT token a tutte le richieste (tranne login e refresh)
     if (!request.url.includes('/auth/login') && !request.url.includes('/auth/refresh-token')) {
@@ -38,7 +38,7 @@ export class AuthInterceptor implements HttpInterceptor {
       tap((event: HttpEvent<any>) => {
         // Registra la performance solo per le risposte HTTP complete
         if (event.type === 4) { // HttpEventType.Response
-          const duration = performance.now() - startTime;
+          const duration = Date.now() - startTime;
           const response = event as any;
           this.performanceMonitor.recordApiCall(
             request.url,
@@ -51,7 +51,7 @@ export class AuthInterceptor implements HttpInterceptor {
       }),
       catchError(error => {
         // Registra anche gli errori
-        const duration = performance.now() - startTime;
+        const duration = Date.now() - startTime;
         this.performanceMonitor.recordApiCall(
           request.url,
           request.method,

@@ -48,7 +48,7 @@ export class PerformanceMonitorService {
     const id = `${name}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.metrics.set(id, {
       name,
-      startTime: performance.now(),
+      startTime: Date.now(),
       metadata
     });
     return id;
@@ -61,7 +61,7 @@ export class PerformanceMonitorService {
     const metric = this.metrics.get(id);
     if (!metric) return null;
 
-    metric.endTime = performance.now();
+    metric.endTime = Date.now();
     metric.duration = metric.endTime - metric.startTime;
 
     // Aggiorna le statistiche

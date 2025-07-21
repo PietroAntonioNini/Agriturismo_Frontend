@@ -15,6 +15,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { forkJoin } from 'rxjs';
 import { Apartment } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
@@ -90,40 +91,38 @@ export class ApartmentListComponent implements OnInit {
     this.errorMessage = null;
 
     // Usa forkJoin per caricare i dati in parallelo con cache intelligente
-    import('rxjs').then(({ forkJoin }) => {
-      forkJoin({
-        apartments: this.apiService.getAll<Apartment>('apartments', undefined, forceRefresh),
-        leases: this.apiService.getAll<any>('leases', undefined, forceRefresh)
-      }).subscribe({
-        next: (result) => {
-          const apartments = result.apartments || [];
-          const allLeases = result.leases || [];
+    forkJoin({
+      apartments: this.apiService.getAll<Apartment>('apartments', undefined, forceRefresh),
+      leases: this.apiService.getAll<any>('leases', undefined, forceRefresh)
+    }).subscribe({
+      next: (result) => {
+        const apartments = result.apartments || [];
+        const allLeases = result.leases || [];
 
-          // Filtra solo i contratti attivi usando lo stato fornito dal backend
-          const activeLeases = allLeases.filter(lease => lease.status === 'active');
-          const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
+        // Filtra solo i contratti attivi usando lo stato fornito dal backend
+        const activeLeases = allLeases.filter(lease => lease.status === 'active');
+        const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
 
-          // Usa requestAnimationFrame per evitare blocchi del thread principale
-          requestAnimationFrame(() => {
-            this.apartments = apartments.map(apartment => {
-              const isOccupied = occupiedApartmentIds.has(apartment.id);
-              const newStatus = apartment.status === 'maintenance' 
-                ? 'maintenance' 
-                : isOccupied ? 'occupied' : 'available';
-                
-              return { ...apartment, status: newStatus };
-            });
-
-            this.applyFilter();
-            this.isLoading = false;
+        // Usa requestAnimationFrame per evitare blocchi del thread principale
+        requestAnimationFrame(() => {
+          this.apartments = apartments.map(apartment => {
+            const isOccupied = occupiedApartmentIds.has(apartment.id);
+            const newStatus = apartment.status === 'maintenance' 
+              ? 'maintenance' 
+              : isOccupied ? 'occupied' : 'available';
+              
+            return { ...apartment, status: newStatus };
           });
-        },
-        error: (error) => {
-          console.error('Errore durante il caricamento dei dati', error);
-          this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
+
+          this.applyFilter();
           this.isLoading = false;
-        }
-      });
+        });
+      },
+      error: (error) => {
+        console.error('Errore durante il caricamento dei dati', error);
+        this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
+        this.isLoading = false;
+      }
     });
   }
 

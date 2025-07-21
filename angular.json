@@ -67,11 +67,7 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "subresourceIntegrity": true,
-              "aot": true,
-              "buildOptimizer": true,
-              "vendorChunk": true,
-              "commonChunk": true
+              "subresourceIntegrity": true
             },
             "development": {
               "optimization": false,
