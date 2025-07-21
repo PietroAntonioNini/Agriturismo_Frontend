@@ -4,11 +4,15 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:local": "node switch-env.js local && ng serve",
+    "start:prod": "node switch-env.js prod && ng serve",
     "build": "ng build",
     "prebuild": "node set-env.js",
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "env:local": "node switch-env.js local",
+    "env:prod": "node switch-env.js prod"
   },
   "private": true,
   "dependencies": {

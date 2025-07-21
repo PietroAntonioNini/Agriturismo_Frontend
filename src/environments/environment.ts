@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000'  // L'URL del tuo backend FastAPI
+  apiUrl: 'https://flat-damselfly-agriturismo-backend-47075869.koyeb.app/',
+  appName: 'Agriturismo Management (Dev)'
 };
