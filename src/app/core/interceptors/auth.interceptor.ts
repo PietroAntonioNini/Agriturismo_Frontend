@@ -7,17 +7,23 @@ import {
   HttpErrorResponse
 } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
-import { catchError, filter, switchMap, take } from 'rxjs/operators';
+import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
 import { AuthService } from '../../shared/services/auth.service';
+import { PerformanceMonitorService } from '../../shared/services/performance-monitor.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private performanceMonitor: PerformanceMonitorService
+  ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    const startTime = performance.now();
+    
     // Aggiungi JWT token a tutte le richieste (tranne login e refresh)
     if (!request.url.includes('/auth/login') && !request.url.includes('/auth/refresh-token')) {
       request = this.addAuthToken(request);
@@ -29,7 +35,31 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     return next.handle(request).pipe(
+      tap((event: HttpEvent<any>) => {
+        // Registra la performance solo per le risposte HTTP complete
+        if (event.type === 4) { // HttpEventType.Response
+          const duration = performance.now() - startTime;
+          const response = event as any;
+          this.performanceMonitor.recordApiCall(
+            request.url,
+            request.method,
+            duration,
+            response.status,
+            response.status >= 200 && response.status < 300
+          );
+        }
+      }),
       catchError(error => {
+        // Registra anche gli errori
+        const duration = performance.now() - startTime;
+        this.performanceMonitor.recordApiCall(
+          request.url,
+          request.method,
+          duration,
+          error.status || 0,
+          false
+        );
+        
         if (error instanceof HttpErrorResponse) {
           if (error.status === 401) {
             // Gestione errore 401 (Unauthorized)

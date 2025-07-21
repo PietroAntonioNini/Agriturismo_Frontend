@@ -85,66 +85,83 @@ export class ApartmentListComponent implements OnInit {
     }
   }
 
-  loadApartments(): void {
+  loadApartments(forceRefresh: boolean = false): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    Promise.all([
-      this.apiService.getAll<Apartment>('apartments').toPromise(),
-      this.apiService.getAll<any>('leases').toPromise() // Carica tutti i contratti
-    ]).then(([apartments, allLeases]) => {
-      if (!apartments) apartments = [];
-      if (!allLeases) allLeases = [];
+    // Usa forkJoin per caricare i dati in parallelo con cache intelligente
+    import('rxjs').then(({ forkJoin }) => {
+      forkJoin({
+        apartments: this.apiService.getAll<Apartment>('apartments', undefined, forceRefresh),
+        leases: this.apiService.getAll<any>('leases', undefined, forceRefresh)
+      }).subscribe({
+        next: (result) => {
+          const apartments = result.apartments || [];
+          const allLeases = result.leases || [];
 
-      // Filtra solo i contratti attivi usando lo stato fornito dal backend
-      const activeLeases = allLeases.filter(lease => lease.status === 'active');
-      const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
+          // Filtra solo i contratti attivi usando lo stato fornito dal backend
+          const activeLeases = allLeases.filter(lease => lease.status === 'active');
+          const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
 
-      this.apartments = apartments.map(apartment => {
-        const isOccupied = occupiedApartmentIds.has(apartment.id);
-        const newStatus = apartment.status === 'maintenance' 
-          ? 'maintenance' 
-          : isOccupied ? 'occupied' : 'available';
-          
-        return { ...apartment, status: newStatus };
+          // Usa requestAnimationFrame per evitare blocchi del thread principale
+          requestAnimationFrame(() => {
+            this.apartments = apartments.map(apartment => {
+              const isOccupied = occupiedApartmentIds.has(apartment.id);
+              const newStatus = apartment.status === 'maintenance' 
+                ? 'maintenance' 
+                : isOccupied ? 'occupied' : 'available';
+                
+              return { ...apartment, status: newStatus };
+            });
+
+            this.applyFilter();
+            this.isLoading = false;
+          });
+        },
+        error: (error) => {
+          console.error('Errore durante il caricamento dei dati', error);
+          this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
+          this.isLoading = false;
+        }
       });
-
-      this.applyFilter();
-      this.isLoading = false;
-    }).catch(error => {
-      console.error('Errore durante il caricamento dei dati', error);
-      this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
-      this.isLoading = false;
     });
   }
 
   applyFilter(): void {
-    let filtered = [...this.apartments];
-    
-    // Applica filtro di ricerca
-    if (this.searchQuery) {
-      const query = this.searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(apartment => 
-        apartment.name.toLowerCase().includes(query) ||
-        apartment.monthlyRent.toString().includes(query) ||
-        apartment.squareMeters.toString().includes(query) ||
-        apartment.rooms.toString().includes(query)
-      );
-    }
-    
-    // Applica filtri di stato
-    if (this.activeStatusFilters.length > 0) {
-      filtered = filtered.filter(apartment => 
-        this.activeStatusFilters.includes(apartment.status)
-      );
-    }
-    
-    // Applica ordinamento se disponibile
-    if (this.sort && this.sort.active && this.sort.direction) {
-      this.applySortToData(filtered);
-    }
-    
-    this.updatePagination(filtered);
+    // Usa requestAnimationFrame per evitare blocchi del thread principale
+    requestAnimationFrame(() => {
+      let filtered = [...this.apartments];
+      
+      // Applica filtro di ricerca con debounce
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase().trim();
+        filtered = filtered.filter(apartment => 
+          apartment.name.toLowerCase().includes(query) ||
+          apartment.monthlyRent.toString().includes(query) ||
+          apartment.squareMeters.toString().includes(query) ||
+          apartment.rooms.toString().includes(query)
+        );
+      }
+      
+      // Applica filtri di stato
+      if (this.activeStatusFilters.length > 0) {
+        filtered = filtered.filter(apartment => 
+          this.activeStatusFilters.includes(apartment.status)
+        );
+      }
+      
+      // Applica ordinamento se disponibile
+      if (this.sort && this.sort.active && this.sort.direction) {
+        this.applySortToData(filtered);
+      }
+      
+      this.updatePagination(filtered);
+    });
+  }
+
+  // Metodo per forzare il refresh dei dati
+  refreshData(): void {
+    this.loadApartments(true);
   }
 
   applySortToData(data: Apartment[]): void {

@@ -1,12 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+import { Observable, of, BehaviorSubject } from 'rxjs';
+import { map, catchError, tap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { UtilityReading, UtilityReadingCreate, MonthlyUtilityData, ApartmentUtilityData, LastReading, UtilityStatistics, UtilityTypeConfig } from '../models';
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  expiresAt: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GenericApiService {
+  // Cache per le richieste GET
+  private cache = new Map<string, CacheEntry<any>>();
+  private cacheTimeout = 5 * 60 * 1000; // 5 minuti di cache
+  private pendingRequests = new Map<string, Observable<any>>();
 
   constructor(private http: HttpClient) { }
 
@@ -14,8 +24,43 @@ export class GenericApiService {
     return `${environment.apiUrl}/${entity}/`;
   }
 
-  // GET: Tutti gli elementi
-  getAll<T>(entity: string, params?: any): Observable<T[]> {
+  private getCacheKey(entity: string, params?: any): string {
+    const paramsString = params ? JSON.stringify(params) : '';
+    return `${entity}_${paramsString}`;
+  }
+
+  private isCacheValid(key: string): boolean {
+    const entry = this.cache.get(key);
+    if (!entry) return false;
+    return Date.now() < entry.expiresAt;
+  }
+
+  private clearExpiredCache(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now >= entry.expiresAt) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  // GET: Tutti gli elementi con cache intelligente
+  getAll<T>(entity: string, params?: any, forceRefresh: boolean = false): Observable<T[]> {
+    const cacheKey = this.getCacheKey(entity, params);
+    
+    // Pulisci cache scaduta
+    this.clearExpiredCache();
+    
+    // Se non è richiesto un refresh e la cache è valida, usa la cache
+    if (!forceRefresh && this.isCacheValid(cacheKey)) {
+      return of(this.cache.get(cacheKey)!.data);
+    }
+    
+    // Se c'è già una richiesta in corso per questa chiave, riutilizzala
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey)!;
+    }
+
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -24,11 +69,61 @@ export class GenericApiService {
         }
       });
     }
-    return this.http.get<T[]>(this.apiUrl(entity), { params: httpParams });
+
+    const request = this.http.get<T[]>(this.apiUrl(entity), { params: httpParams }).pipe(
+      tap(data => {
+        // Salva nella cache
+        this.cache.set(cacheKey, {
+          data: data,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + this.cacheTimeout
+        });
+        // Rimuovi dalla lista delle richieste pendenti
+        this.pendingRequests.delete(cacheKey);
+      }),
+      shareReplay(1) // Condividi la risposta tra più subscriber
+    );
+
+    // Salva la richiesta pendente
+    this.pendingRequests.set(cacheKey, request);
+    
+    return request;
   }
 
-  // GET: Elemento singolo per ID
-  getById<T>(entity: string, id: number | string, params?: any): Observable<T> {
+  // Metodo per invalidare la cache per un'entità specifica
+  invalidateCache(entity: string, id?: number | string): void {
+    if (id) {
+      // Invalida cache per un elemento specifico
+      const cacheKey = this.getCacheKey(`${entity}_${id}`);
+      this.cache.delete(cacheKey);
+    } else {
+      // Invalida tutta la cache per un'entità
+      for (const key of this.cache.keys()) {
+        if (key.startsWith(entity + '_')) {
+          this.cache.delete(key);
+        }
+      }
+    }
+  }
+
+  // Metodo per pulire tutta la cache
+  clearCache(): void {
+    this.cache.clear();
+    this.pendingRequests.clear();
+  }
+
+  // GET: Elemento singolo per ID con cache
+  getById<T>(entity: string, id: number | string, params?: any, forceRefresh: boolean = false): Observable<T> {
+    const cacheKey = this.getCacheKey(`${entity}_${id}`, params);
+    
+    // Pulisci cache scaduta
+    this.clearExpiredCache();
+    
+    // Se non è richiesto un refresh e la cache è valida, usa la cache
+    if (!forceRefresh && this.isCacheValid(cacheKey)) {
+      return of(this.cache.get(cacheKey)!.data);
+    }
+
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -38,7 +133,7 @@ export class GenericApiService {
       });
     }
     
-    // Se non ci sono parametri, aggiungi un timestamp per evitare la cache
+    // Se non ci sono parametri, aggiungi un timestamp per evitare la cache del browser
     if (!params || Object.keys(params).length === 0) {
       const timestamp = new Date().getTime();
       httpParams = httpParams.set('_t', timestamp.toString());
@@ -50,6 +145,15 @@ export class GenericApiService {
         params: httpParams,
         headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
       }
+    ).pipe(
+      tap(data => {
+        // Salva nella cache
+        this.cache.set(cacheKey, {
+          data: data,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + this.cacheTimeout
+        });
+      })
     );
   }
   
@@ -64,9 +168,13 @@ export class GenericApiService {
           apartmentData.amenities = [];
         }
         console.log('Sending apartment data without files:', apartmentData);
-        return this.http.post<T>(this.apiUrl(entity), apartmentData);
+        return this.http.post<T>(this.apiUrl(entity), apartmentData).pipe(
+          tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
+        );
       }
-      return this.http.post<T>(this.apiUrl(entity), data);
+      return this.http.post<T>(this.apiUrl(entity), data).pipe(
+        tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
+      );
     }
   
     const formData = new FormData();
@@ -124,7 +232,9 @@ export class GenericApiService {
             });
         }
         
-        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData);
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
+        tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo aggiornamento
+      );
     } else if (entity === 'apartments') {
       const formData = new FormData();
 
@@ -145,7 +255,9 @@ export class GenericApiService {
           });
       }
       
-      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData);
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
+        tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo aggiornamento
+      );
     } 
     
     if (!files || files.length === 0) {
@@ -171,7 +283,9 @@ export class GenericApiService {
 
   // DELETE: Eliminazione elemento
   delete(entity: string, id: number | string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`);
+    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`).pipe(
+      tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo eliminazione
+    );
   }
 
   // Aggiornare il metodo uploadFile per aggiungere timestamp e gestione anti-cache

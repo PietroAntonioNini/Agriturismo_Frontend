@@ -18,7 +18,7 @@ export class ImageService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Ottiene un'immagine come Base64 da un URL
+   * Ottiene un'immagine come Base64 da un URL con cache ottimizzata
    */
   getImage(url: string, retryCount: number = 3, retryDelay: number = 300): Observable<string> {
     // Verifica se l'immagine è già in cache
@@ -31,30 +31,43 @@ export class ImageService {
       return of(this.fallbackCache.get(url)!);
     }
 
+    // Verifica se è già in caricamento
+    if (this.pendingRequests.has(url)) {
+      if (this.imageCache.has(url)) {
+        return this.imageCache.get(url)!.asObservable();
+      }
+    }
+
     // Crea un nuovo BehaviorSubject per questa immagine
     const subject = new BehaviorSubject<string>('');
     this.imageCache.set(url, subject);
 
-    // Carica l'immagine con tentativi multipli
+    // Segna questa richiesta come in elaborazione
+    this.pendingRequests.add(url);
+
+    // Carica l'immagine con tentativi multipli e timeout
     this.loadImage(url).pipe(
-      retry(retryCount),
-      delay(retryDelay),
+      retry({ count: retryCount, delay: retryDelay }),
       catchError(error => {
         console.error(`Errore nel caricamento dell'immagine: ${url}`, error);
         // In caso di errore, prova a caricare un'immagine con un timestamp più recente
         const newUrl = this.appendTimestamp(url);
-        return this.loadImage(newUrl);
+        return this.loadImage(newUrl).pipe(
+          retry({ count: 1, delay: 100 })
+        );
       })
     ).subscribe({
       next: (dataUrl) => {
         subject.next(dataUrl);
         // Memorizza nella cache di fallback per accesso rapido
         this.fallbackCache.set(url, dataUrl);
+        this.pendingRequests.delete(url);
       },
       error: () => {
         console.error(`Impossibile caricare l'immagine dopo tutti i tentativi: ${url}`);
         // Rimuovi dalla cache principale e usa un'immagine placeholder
         this.imageCache.delete(url);
+        this.pendingRequests.delete(url);
         const placeholder = 'assets/images/no-image.png';
         subject.next(placeholder);
         this.fallbackCache.set(url, placeholder);
