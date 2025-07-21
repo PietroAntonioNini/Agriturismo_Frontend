@@ -45,7 +45,7 @@ export class GenericApiService {
     }
     
     return this.http.get<T>(
-      `${environment.apiUrl}/${entity}/${id}/`, 
+      `${environment.apiUrl}/${entity}/${id}`, 
       { 
         params: httpParams,
         headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
@@ -124,7 +124,7 @@ export class GenericApiService {
             });
         }
         
-        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images/`, formData);
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData);
     } else if (entity === 'apartments') {
       const formData = new FormData();
 
@@ -145,7 +145,7 @@ export class GenericApiService {
           });
       }
       
-      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images/`, formData);
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData);
     } 
     
     if (!files || files.length === 0) {
@@ -156,9 +156,9 @@ export class GenericApiService {
           apartmentData.amenities = [];
         }
         console.log('Updating apartment without files:', apartmentData);
-        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/`, apartmentData);
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, apartmentData);
       }
-      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/`, data);
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, data);
     }
     
     const formData = new FormData();
@@ -171,7 +171,7 @@ export class GenericApiService {
 
   // DELETE: Eliminazione elemento
   delete(entity: string, id: number | string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}/`);
+    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`);
   }
 
   // Aggiornare il metodo uploadFile per aggiungere timestamp e gestione anti-cache
@@ -181,7 +181,7 @@ export class GenericApiService {
     
     // Aggiungi timestamp per evitare la cache
     const timestamp = Date.now();
-    const url = `${this.apiUrl(entity)}/${id}/${path}?_=${timestamp}`;
+    const url = `${environment.apiUrl}/${entity}/${id}/${path}?_=${timestamp}`;
     
     return this.http.post<{ imageUrl: string }>(
       url, 
@@ -199,7 +199,7 @@ export class GenericApiService {
   deleteFile(entity: string, id: number | string, path: string): Observable<void> {
     // Aggiungi timestamp per evitare la cache
     const timestamp = Date.now();
-    const url = `${this.apiUrl(entity)}/${id}/${path}?_=${timestamp}`;
+    const url = `${environment.apiUrl}/${entity}/${id}/${path}?_=${timestamp}`;
     
     return this.http.delete<void>(
       url,
@@ -215,7 +215,7 @@ export class GenericApiService {
 
   // PATCH: Aggiornamento parziale di un elemento
   patch<T>(entity: string, id: number | string, data: Partial<T>): Observable<T> {
-    return this.http.patch<T>(`${this.apiUrl(entity)}/${id}`, data);
+    return this.http.patch<T>(`${environment.apiUrl}/${entity}/${id}`, data);
   }
 
   // GET: Elementi per chiave-valore
@@ -243,7 +243,7 @@ export class GenericApiService {
 
   // Metodi specifici migrati da ApartmentService
   updateStatus<T>(entity: string, id: number | string, status: string): Observable<T> {
-    return this.http.patch<T>(`${this.apiUrl(entity)}/${id}/status`, { status });
+    return this.http.patch<T>(`${environment.apiUrl}/${entity}/${id}/status`, { status });
   }
 
   getActiveEntities<T>(entity: string): Observable<T[]> {
@@ -259,11 +259,11 @@ export class GenericApiService {
 
   // Metodi specifici migrati da LeaseService
   addDocument(entity: string, id: number | string, document: FormData): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl(entity)}/${id}/documents`, document);
+    return this.http.post<any>(`${environment.apiUrl}/${entity}/${id}/documents`, document);
   }
 
   recordPayment(entity: string, id: number | string, paymentData: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl(entity)}/${id}/payments`, paymentData);
+    return this.http.post<any>(`${environment.apiUrl}/${entity}/${id}/payments`, paymentData);
   }
 
   // Metodi specifici migrati da UtilityService
@@ -307,7 +307,7 @@ export class GenericApiService {
     preferences: { email: boolean; sms: boolean; whatsapp: boolean }
   ): Observable<T> {
     return this.http.patch<T>(
-      `${this.apiUrl('tenants')}/${tenantId}/communication-preferences`, 
+      `${environment.apiUrl}/tenants/${tenantId}/communication-preferences`, 
       preferences
     );
   }
