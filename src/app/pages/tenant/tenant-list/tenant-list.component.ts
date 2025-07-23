@@ -21,6 +21,7 @@ import { TenantFormComponent } from '../tenant-form/tenant-form-dialog.component
 import { MatChipListboxChange } from '@angular/material/chips';
 import { MatChipOption } from '@angular/material/chips';
 import { MatChipListbox } from '@angular/material/chips';
+import { combineLatest, timeout } from 'rxjs';
 
 interface Tenant {
   id: number;
@@ -90,40 +91,56 @@ export class TenantListComponent implements OnInit {
     this.loadTenants();
   }
 
-  // Carica gli inquilini dall'API
+  // Carica gli inquilini dall'API con ottimizzazioni
   loadTenants(): void {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Esegui tutte le chiamate necessarie in parallelo per massima efficienza
-    Promise.all([
-      this.apiService.getAll<Tenant>('tenants').toPromise(),
-      this.apiService.getAll<any>('leases', { status: 'active' }).toPromise()
-    ]).then(([tenants, activeLeases]) => {
-      if (!tenants) {
-        tenants = [];
+    // Ottimizzazione: usa Observable invece di Promise per migliore gestione degli errori
+    // e aggiungi timeout per evitare attese infinite
+    const tenantsRequest = this.apiService.getAll<Tenant>('tenants', undefined, true); // forceRefresh per evitare cache
+    const leasesRequest = this.apiService.getAll<any>('leases', { status: 'active' }, true); // forceRefresh per evitare cache
+
+    // Combina le due richieste con timeout
+    const timeoutMs = 30000; // 30 secondi di timeout
+    
+    const tenantsWithTimeout = tenantsRequest.pipe(
+      // Aggiungi timeout per evitare attese infinite
+      timeout(timeoutMs)
+    );
+    
+    const leasesWithTimeout = leasesRequest.pipe(
+      timeout(timeoutMs)
+    );
+
+    // Esegui le chiamate in parallelo
+    combineLatest([tenantsWithTimeout, leasesWithTimeout]).subscribe({
+      next: ([tenants, activeLeases]) => {
+        if (!tenants) tenants = [];
+        if (!activeLeases) activeLeases = [];
+
+        // Ottimizzazione: usa Map invece di Set per lookup più efficiente
+        const tenantIdsWithActiveLease = new Map();
+        activeLeases.forEach(lease => {
+          tenantIdsWithActiveLease.set(lease.tenantId, true);
+        });
+
+        // Mappa lo stato del contratto a ogni inquilino
+        this.tenants = tenants.map(tenant => ({
+          ...tenant,
+          hasLease: tenantIdsWithActiveLease.has(tenant.id)
+        }));
+
+        this.applyFilter();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Errore durante il caricamento dei dati', error);
+        this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
+        this.isLoading = false;
+        this.tenants = [];
+        this.filteredTenants = [];
       }
-      if (!activeLeases) {
-        activeLeases = [];
-      }
-
-      // Crea un set di ID inquilini con contratti attivi per un lookup O(1)
-      const tenantIdsWithActiveLease = new Set(activeLeases.map(lease => lease.tenantId));
-
-      // Mappa lo stato del contratto a ogni inquilino
-      this.tenants = tenants.map(tenant => ({
-        ...tenant,
-        hasLease: tenantIdsWithActiveLease.has(tenant.id)
-      }));
-
-      this.applyFilter();
-      this.isLoading = false;
-    }).catch(error => {
-      console.error('Errore durante il caricamento dei dati', error);
-      this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
-      this.isLoading = false;
-      this.tenants = [];
-      this.filteredTenants = [];
     });
   }
 
@@ -293,7 +310,8 @@ export class TenantListComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
-        this.loadTenants();
+        // Ottimizzazione: aggiorna solo il tenant modificato invece di ricaricare tutto
+        this.updateTenantInList(result.tenant);
       }
     });
   }
@@ -303,15 +321,61 @@ export class TenantListComponent implements OnInit {
   
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
-        // Prima carica immediatamente per dare un feedback veloce
-        this.loadTenants();
-        
-        // Imposta un timer per ricaricare i dati dopo un breve ritardo 
-        // per assicurare che le modifiche siano visibili
-        // setTimeout(() => {
-        //   this.loadTenants();
-        // }, 1000);
+        // Ottimizzazione: aggiungi il nuovo tenant alla lista invece di ricaricare tutto
+        if (result.tenant) {
+          this.addTenantToList(result.tenant);
+        }
       }
+    });
+  }
+
+  // Metodo per aggiornare un tenant specifico nella lista
+  private updateTenantInList(updatedTenant: Tenant): void {
+    if (!updatedTenant) return;
+
+    // Trova e aggiorna il tenant nella lista
+    const index = this.tenants.findIndex(t => t.id === updatedTenant.id);
+    if (index !== -1) {
+      // Mantieni lo stato hasLease esistente se non è stato modificato
+      const existingTenant = this.tenants[index];
+      this.tenants[index] = {
+        ...updatedTenant,
+        hasLease: existingTenant.hasLease
+      };
+      
+      // Riapplica i filtri per aggiornare la visualizzazione
+      this.applyFilter();
+      
+      // Mostra feedback all'utente
+      this.snackBar.open('Inquilino aggiornato con successo', 'Chiudi', {
+        duration: 2000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
+    } else {
+      // Se non trovato, ricarica tutto (caso raro)
+      this.loadTenants();
+    }
+  }
+
+  // Metodo per aggiungere un nuovo tenant alla lista
+  private addTenantToList(newTenant: Tenant): void {
+    if (!newTenant) return;
+
+    // Aggiungi il nuovo tenant all'inizio della lista
+    this.tenants.unshift({
+      ...newTenant,
+      hasLease: false // Nuovo tenant non ha ancora contratti
+    });
+    
+    // Riapplica i filtri per aggiornare la visualizzazione
+    this.applyFilter();
+    
+    // Mostra feedback all'utente
+    this.snackBar.open('Inquilino creato con successo', 'Chiudi', {
+      duration: 2000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
     });
   }
 
@@ -321,10 +385,8 @@ export class TenantListComponent implements OnInit {
         if (confirmed) {
           this.apiService.delete('tenants', tenant.id).subscribe({
             next: () => {
-              this.loadTenants();
-              this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
-                duration: 3000
-              });
+              // Ottimizzazione: rimuovi il tenant dalla lista invece di ricaricare tutto
+              this.removeTenantFromList(tenant.id);
             },
             error: (error) => {
               console.error('Errore durante l\'eliminazione dell\'inquilino', error);
@@ -335,5 +397,21 @@ export class TenantListComponent implements OnInit {
           });
         }
       });
+  }
+
+  // Metodo per rimuovere un tenant dalla lista
+  private removeTenantFromList(tenantId: number): void {
+    // Rimuovi il tenant dalla lista principale
+    this.tenants = this.tenants.filter(t => t.id !== tenantId);
+    
+    // Riapplica i filtri per aggiornare la visualizzazione
+    this.applyFilter();
+    
+    // Mostra feedback all'utente
+    this.snackBar.open('Inquilino eliminato con successo', 'Chiudi', {
+      duration: 2000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
+    });
   }
 }

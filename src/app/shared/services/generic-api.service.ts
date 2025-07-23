@@ -104,6 +104,22 @@ export class GenericApiService {
         }
       }
     }
+    
+    // Ottimizzazione: invalida anche le richieste pendenti per questa entità
+    for (const [key, request] of this.pendingRequests.entries()) {
+      if (key.startsWith(entity + '_')) {
+        this.pendingRequests.delete(key);
+      }
+    }
+  }
+
+  // Metodo per invalidare cache specifiche con parametri
+  invalidateCacheWithParams(entity: string, params?: any): void {
+    const cacheKey = this.getCacheKey(entity, params);
+    this.cache.delete(cacheKey);
+    
+    // Invalida anche le richieste pendenti per questa chiave
+    this.pendingRequests.delete(cacheKey);
   }
 
   // Metodo per pulire tutta la cache
@@ -242,7 +258,11 @@ export class GenericApiService {
         }
         
         return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
-        tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo aggiornamento
+        tap(() => {
+          this.invalidateCache(entity, id); // Invalida cache dopo aggiornamento
+          // Ottimizzazione: se è un tenant, invalida anche la cache dei contratti attivi
+          this.invalidateCacheWithParams('leases', { status: 'active' });
+        })
       );
     } else if (entity === 'apartments') {
       const formData = new FormData();
@@ -293,7 +313,13 @@ export class GenericApiService {
   // DELETE: Eliminazione elemento
   delete(entity: string, id: number | string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`).pipe(
-      tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo eliminazione
+      tap(() => {
+        this.invalidateCache(entity, id); // Invalida cache dopo eliminazione
+        // Ottimizzazione: se è un tenant, invalida anche la cache dei contratti attivi
+        if (entity === 'tenants') {
+          this.invalidateCacheWithParams('leases', { status: 'active' });
+        }
+      })
     );
   }
 
