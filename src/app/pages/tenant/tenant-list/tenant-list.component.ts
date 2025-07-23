@@ -96,10 +96,9 @@ export class TenantListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Ottimizzazione: usa Observable invece di Promise per migliore gestione degli errori
-    // e aggiungi timeout per evitare attese infinite
-    const tenantsRequest = this.apiService.getAll<Tenant>('tenants', undefined, true); // forceRefresh per evitare cache
-    const leasesRequest = this.apiService.getAll<any>('leases', { status: 'active' }, true); // forceRefresh per evitare cache
+    // Usa i metodi standard ora che il backend ha risolto il problema cache
+    const tenantsRequest = this.apiService.getAll<Tenant>('tenants');
+    const leasesRequest = this.apiService.getAll<any>('leases', { status: 'active' });
 
     // Combina le due richieste con timeout
     const timeoutMs = 30000; // 30 secondi di timeout
@@ -352,11 +351,15 @@ export class TenantListComponent implements OnInit {
         horizontalPosition: 'end',
         verticalPosition: 'top'
       });
+
+
     } else {
       // Se non trovato, ricarica tutto (caso raro)
       this.loadTenants();
     }
   }
+
+
 
   // Metodo per aggiungere un nuovo tenant alla lista
   private addTenantToList(newTenant: Tenant): void {

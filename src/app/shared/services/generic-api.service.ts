@@ -70,7 +70,9 @@ export class GenericApiService {
       });
     }
 
-    const request = this.http.get<T[]>(this.apiUrl(entity), { params: httpParams }).pipe(
+    const request = this.http.get<T[]>(this.apiUrl(entity), { 
+      params: httpParams
+    }).pipe(
       tap(data => {
         // Salva nella cache
         this.cache.set(cacheKey, {
@@ -122,6 +124,8 @@ export class GenericApiService {
     this.pendingRequests.delete(cacheKey);
   }
 
+
+
   // Metodo per pulire tutta la cache
   clearCache(): void {
     this.cache.clear();
@@ -158,17 +162,10 @@ export class GenericApiService {
       });
     }
     
-    // Se non ci sono parametri, aggiungi un timestamp per evitare la cache del browser
-    if (!params || Object.keys(params).length === 0) {
-      const timestamp = new Date().getTime();
-      httpParams = httpParams.set('_t', timestamp.toString());
-    }
-    
     return this.http.get<T>(
       `${environment.apiUrl}/${entity}/${id}`, 
       { 
-        params: httpParams,
-        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+        params: httpParams
       }
     ).pipe(
       tap(data => {

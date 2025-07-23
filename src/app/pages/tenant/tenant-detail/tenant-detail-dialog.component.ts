@@ -142,7 +142,6 @@ export class TenantDetailDialogComponent implements OnInit {
     
     this.cdr.markForCheck();
 
-    // Il backend gestisce automaticamente la sincronizzazione
     this.apiService.getById<Tenant>('tenants', id).subscribe({
       next: (tenant) => {
         this.tenant = tenant;
