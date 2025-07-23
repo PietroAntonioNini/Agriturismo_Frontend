@@ -562,8 +562,8 @@ export class ContractGeneratorService {
                 <div class="property-details">
                     <p style="margin-bottom: 15px; font-weight: bold;">Il proprietario fornisce l'appartamento così descritto:</p>
                     <ul class="description-list">
-                        <li>Cucina perfettamente funzionante con elettrodomestici funzionanti, in perfetto stato, tavolo con 4 sedie, divano, mobiletto TV, camino</li>
-                        <li>Camera con letto matrimoniale, rete doghe, materasso, coprimaterasso, armadio, 2 comodini, 2 abat-jour, cassettone con specchio, tutto in ottimo stato</li>
+                        <li>Cucina perfettamente funzionante con elettrodomestici funzionanti, in perfetto stato, tavolo con sedie, divano, mobiletto TV, camino</li>
+                        <li>Camera con letto matrimoniale, rete doghe, materasso, coprimaterasso, armadio, comodini, abat-jour, cassettone con specchio, tutto in ottimo stato</li>
                         <li>Bagno con doccia, sanitari e accessori in perfetto stato</li>
                         <li>Condizioni dell'appartamento al momento della consegna: ottimo stato generale</li>
                         <li>Condizioni della caldaia di riscaldamento in perfetto stato di funzionamento</li>
@@ -677,15 +677,6 @@ export class ContractGeneratorService {
                         </p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Note Legali -->
-            <div class="legal-notice">
-                <strong>CLAUSOLE IMPORTANTI:</strong><br>
-                • Il presente contratto è soggetto a registrazione presso l'Agenzia delle Entrate entro 30 giorni dalla stipula<br>
-                • Il conduttore dichiara di aver ricevuto informazioni sulla prestazione energetica dell'edificio (APE)<br>
-                • Le parti si danno atto di aver preso visione delle condizioni generali del contratto<br>
-                • Il contratto è regolato dalla Legge 431/98 e successive modificazioni
             </div>
 
             <!-- Firme -->
