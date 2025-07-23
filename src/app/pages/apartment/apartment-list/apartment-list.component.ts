@@ -15,7 +15,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { forkJoin } from 'rxjs';
+import { combineLatest, timeout } from 'rxjs';
 import { Apartment } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
@@ -90,22 +90,33 @@ export class ApartmentListComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = null;
 
-    // Usa forkJoin per caricare i dati in parallelo con cache intelligente
-    forkJoin({
-      apartments: this.apiService.getAll<Apartment>('apartments', undefined, forceRefresh),
-      leases: this.apiService.getAll<any>('leases', undefined, forceRefresh)
-    }).subscribe({
-      next: (result) => {
-        const apartments = result.apartments || [];
-        const allLeases = result.leases || [];
+    // Usa combineLatest per caricare i dati in parallelo con timeout
+    const apartmentsRequest = this.apiService.getAll<Apartment>('apartments', undefined, forceRefresh);
+    const leasesRequest = this.apiService.getAll<any>('leases', undefined, forceRefresh);
+
+    // Combina le due richieste con timeout
+    const timeoutMs = 30000; // 30 secondi di timeout
+    
+    const apartmentsWithTimeout = apartmentsRequest.pipe(
+      timeout(timeoutMs)
+    );
+    
+    const leasesWithTimeout = leasesRequest.pipe(
+      timeout(timeoutMs)
+    );
+
+    combineLatest([apartmentsWithTimeout, leasesWithTimeout]).subscribe({
+      next: ([apartments, allLeases]) => {
+        const apartmentsArray = apartments || [];
+        const leasesArray = allLeases || [];
 
         // Filtra solo i contratti attivi usando lo stato fornito dal backend
-        const activeLeases = allLeases.filter(lease => lease.status === 'active');
-        const occupiedApartmentIds = new Set(activeLeases.map(lease => lease.apartmentId));
+        const activeLeases = leasesArray.filter((lease: any) => lease.status === 'active');
+        const occupiedApartmentIds = new Set(activeLeases.map((lease: any) => lease.apartmentId));
 
         // Usa requestAnimationFrame per evitare blocchi del thread principale
         requestAnimationFrame(() => {
-          this.apartments = apartments.map(apartment => {
+          this.apartments = apartmentsArray.map((apartment: any) => {
             const isOccupied = occupiedApartmentIds.has(apartment.id);
             const newStatus = apartment.status === 'maintenance' 
               ? 'maintenance' 
@@ -118,7 +129,7 @@ export class ApartmentListComponent implements OnInit {
           this.isLoading = false;
         });
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Errore durante il caricamento dei dati', error);
         this.errorMessage = 'Si è verificato un errore. Riprova più tardi.';
         this.isLoading = false;
@@ -275,15 +286,19 @@ export class ApartmentListComponent implements OnInit {
   }
 
   openApartmentDetails(apartmentId: number): void {
+    // Trova l'appartamento nella lista locale per passare i dati aggiornati
+    const apartment = this.apartments.find(a => a.id === apartmentId);
+    
     const dialogRef = this.dialog.open(ApartmentDetailDialogComponent, {
-      data: { apartmentId },
+      data: { apartmentId, apartment }, // Passa anche l'appartamento aggiornato
       width: '800px',
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         if (result.deleted) {
-          this.loadApartments();
+          // Ottimizzazione: rimuovi l'appartamento dalla lista invece di ricaricare tutto
+          this.removeApartmentFromList(apartmentId);
         } else if (result.edit) {
           this.openApartmentForm(result.apartmentId);
         }
@@ -292,15 +307,27 @@ export class ApartmentListComponent implements OnInit {
   }
 
   openApartmentForm(apartmentId?: number): void {
+    // Se è in modalità modifica, trova l'appartamento nella lista locale
+    const apartment = apartmentId ? this.apartments.find(a => a.id === apartmentId) : undefined;
+    
     const dialogRef = this.dialog.open(ApartmentFormComponent, {
-      data: { apartmentId },
+      data: { apartmentId, apartment }, // Passa anche l'appartamento aggiornato
       width: '900px',
       maxHeight: '80vh'
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.success) {
-        this.loadApartments();
+        // Ottimizzazione: aggiorna solo l'appartamento modificato invece di ricaricare tutto
+        if (result.apartment) {
+          if (apartmentId) {
+            // Modifica
+            this.updateApartmentInList(result.apartment);
+          } else {
+            // Creazione
+            this.addApartmentToList(result.apartment);
+          }
+        }
         
         // Apri il dialog dei dettagli solo se non è stato richiesto di saltarlo
         if (result.apartment && !result.skipDetailView) {
@@ -318,12 +345,8 @@ export class ApartmentListComponent implements OnInit {
         if (confirmed) {
           this.apiService.delete('apartments', apartment.id).subscribe({
             next: () => {
-              this.loadApartments();
-              this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
-                duration: 3000,
-                horizontalPosition: 'end',
-                verticalPosition: 'top'
-              });
+              // Ottimizzazione: rimuovi l'appartamento dalla lista invece di ricaricare tutto
+              this.removeApartmentFromList(apartment.id);
             },
             error: (error) => {
               console.error('Errore durante l\'eliminazione dell\'appartamento', error);
@@ -336,5 +359,71 @@ export class ApartmentListComponent implements OnInit {
           });
         }
       });
+  }
+
+  // Metodo per aggiornare un appartamento specifico nella lista
+  private updateApartmentInList(updatedApartment: Apartment): void {
+    if (!updatedApartment) return;
+
+    // Trova e aggiorna l'appartamento nella lista
+    const index = this.apartments.findIndex(a => a.id === updatedApartment.id);
+    if (index !== -1) {
+      // Mantieni lo stato esistente se non è stato modificato
+      const existingApartment = this.apartments[index];
+      this.apartments[index] = {
+        ...updatedApartment,
+        status: existingApartment.status // Mantieni lo stato calcolato
+      };
+      
+      // Riapplica i filtri per aggiornare la visualizzazione
+      this.applyFilter();
+      
+      // Mostra feedback all'utente
+      this.snackBar.open('Appartamento aggiornato con successo', 'Chiudi', {
+        duration: 2000,
+        horizontalPosition: 'end',
+        verticalPosition: 'top'
+      });
+    } else {
+      // Se non trovato, ricarica tutto (caso raro)
+      this.loadApartments();
+    }
+  }
+
+  // Metodo per aggiungere un nuovo appartamento alla lista
+  private addApartmentToList(newApartment: Apartment): void {
+    if (!newApartment) return;
+
+    // Aggiungi il nuovo appartamento all'inizio della lista
+    this.apartments.unshift({
+      ...newApartment,
+      status: 'available' // Nuovo appartamento è disponibile
+    });
+    
+    // Riapplica i filtri per aggiornare la visualizzazione
+    this.applyFilter();
+    
+    // Mostra feedback all'utente
+    this.snackBar.open('Appartamento creato con successo', 'Chiudi', {
+      duration: 2000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
+    });
+  }
+
+  // Metodo per rimuovere un appartamento dalla lista
+  private removeApartmentFromList(apartmentId: number): void {
+    // Rimuovi l'appartamento dalla lista principale
+    this.apartments = this.apartments.filter(a => a.id !== apartmentId);
+    
+    // Riapplica i filtri per aggiornare la visualizzazione
+    this.applyFilter();
+    
+    // Mostra feedback all'utente
+    this.snackBar.open('Appartamento eliminato con successo', 'Chiudi', {
+      duration: 2000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top'
+    });
   }
 }

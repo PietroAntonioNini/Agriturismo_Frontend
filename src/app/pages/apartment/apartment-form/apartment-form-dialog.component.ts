@@ -98,7 +98,7 @@ export class ApartmentFormComponent implements OnInit {
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<ApartmentFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { apartmentId?: number },
+    @Inject(MAT_DIALOG_DATA) public data: { apartmentId?: number; apartment?: Apartment },
     private imageService: ImageService,
     private notificationService: NotificationService
   ) {}
@@ -110,7 +110,33 @@ export class ApartmentFormComponent implements OnInit {
     if (this.data && this.data.apartmentId) {
       this.isEditMode = true;
       this.apartmentId = this.data.apartmentId;
-      this.loadApartmentData(this.data.apartmentId);
+      
+      // Se abbiamo già i dati dell'appartamento aggiornati, usali direttamente
+      if (this.data.apartment) {
+        this.currentApartment = this.data.apartment;
+        this.updateForm(this.currentApartment);
+        this.selectedAmenities = this.currentApartment.amenities || [];
+        
+        // Clear existing arrays
+        this.imageFiles = [];
+        this.imagePreviews = [];
+        this.newImagePreviews = [];
+        
+        // Carica le anteprime delle immagini se disponibili
+        if (this.currentApartment.images && this.currentApartment.images.length > 0) {
+          // Carica ogni immagine con il suo URL corretto
+          this.currentApartment.images.forEach((imageUrl) => {
+            // Usa il metodo getImageUrl per ottenere l'URL completo
+            const fullUrl = this.getImageUrl(imageUrl);
+            this.imagePreviews.push(fullUrl);
+          });
+        }
+        
+        this.isLoading = false;
+      } else {
+        // Altrimenti carica dal backend
+        this.loadApartmentData(this.data.apartmentId);
+      }
     } else {
       this.isEditMode = false;
       this.currentApartment = {} as Apartment;

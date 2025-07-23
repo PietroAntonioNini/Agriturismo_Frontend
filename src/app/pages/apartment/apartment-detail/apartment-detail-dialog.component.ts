@@ -111,7 +111,7 @@ export class ApartmentDetailDialogComponent implements OnInit {
     private router: Router,
     private apiService: GenericApiService,
     private dialogRef: MatDialogRef<ApartmentDetailDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { apartmentId: number },
+    @Inject(MAT_DIALOG_DATA) public data: { apartmentId: number; apartment?: Apartment },
     private snackBar: MatSnackBar,
     private confirmationService: ConfirmationDialogService,
     private dialog: MatDialog,
@@ -120,7 +120,15 @@ export class ApartmentDetailDialogComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.data && this.data.apartmentId) {
-      this.loadApartmentData(this.data.apartmentId);
+      // Se abbiamo già i dati dell'appartamento aggiornati, usali direttamente
+      if (this.data.apartment) {
+        this.apartment = this.data.apartment;
+        this.loadActiveLeases(this.data.apartmentId);
+        this.isLoading = false;
+      } else {
+        // Altrimenti carica dal backend
+        this.loadApartmentData(this.data.apartmentId);
+      }
     } else {
       this.errorMessage = 'ID appartamento non valido.';
       this.isLoading = false;
