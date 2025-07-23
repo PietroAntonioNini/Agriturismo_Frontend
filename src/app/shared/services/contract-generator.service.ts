@@ -425,15 +425,181 @@ export class ContractGeneratorService {
             body {
                 background: white;
                 padding: 0;
+                margin: 0;
+                font-size: 11px;
             }
             
             .contract-container {
                 box-shadow: none;
                 border-radius: 0;
+                max-width: 210mm;
+                margin: 0 auto;
+                padding: 0;
+            }
+            
+            .header {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+            
+            .header .subtitle {
+                font-size: 11px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .section {
+                margin-bottom: 20px;
+                page-break-inside: avoid;
+            }
+            
+            .section h2 {
+                font-size: 13px;
+                padding: 8px 15px;
+                margin-bottom: 12px;
+            }
+            
+            .parties-grid {
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .party-box {
+                padding: 12px;
+            }
+            
+            .party-title {
+                font-size: 11px;
+                margin-bottom: 10px;
+            }
+            
+            .field-label {
+                font-size: 10px;
+            }
+            
+            .field-value {
+                font-size: 11px;
+                min-height: 16px;
+            }
+            
+            .property-details {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .property-grid {
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .description-list li {
+                padding: 5px 0;
+                font-size: 10px;
+            }
+            
+            .utilities-section {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .utilities-grid {
+                gap: 15px;
+                margin-top: 10px;
+            }
+            
+            .utility-box {
+                padding: 10px;
+            }
+            
+            .utility-label {
+                font-size: 11px;
+                margin-bottom: 8px;
+            }
+            
+            .utility-value {
+                font-size: 14px;
+                padding: 6px;
+            }
+            
+            .financial-section {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .financial-grid {
+                gap: 15px;
+            }
+            
+            .amount-box {
+                padding: 10px;
+            }
+            
+            .amount-label {
+                font-size: 10px;
+            }
+            
+            .amount-value {
+                font-size: 14px;
+            }
+            
+            .inventory-section {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .inventory-grid {
+                gap: 10px;
+                margin-top: 10px;
+            }
+            
+            .checkbox-item {
+                padding: 6px;
+                font-size: 10px;
+            }
+            
+            .signatures-section {
+                margin-top: 30px;
+                padding-top: 20px;
+            }
+            
+            .signatures-grid {
+                gap: 30px;
+                margin-top: 20px;
+            }
+            
+            .signature-line {
+                height: 40px;
+            }
+            
+            .signature-date {
+                font-size: 10px;
             }
             
             .no-print {
                 display: none;
+            }
+            
+            /* Forza il break di pagina per mantenere le sezioni insieme */
+            .page-break {
+                page-break-before: always;
+            }
+            
+            /* Evita che le sezioni si spezzino */
+            .section {
+                page-break-inside: avoid;
+            }
+            
+            /* Ottimizza per A4 */
+            @page {
+                size: A4;
+                margin: 15mm;
             }
         }
 
@@ -456,9 +622,61 @@ export class ContractGeneratorService {
         .text-small {
             font-size: 12px;
         }
+
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: background 0.3s;
+        }
+
+        .print-button:hover {
+            background: #2980b9;
+        }
+
+        .print-button:active {
+            transform: translateY(1px);
+        }
+
+        .print-info {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+            font-size: 12px;
+            color: #666;
+            max-width: 200px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
+    <!-- Pulsante di stampa -->
+    <button class="print-button no-print" onclick="printContract()">
+        🖨️ Stampa Contratto
+    </button>
+    
+    <!-- Informazioni di stampa -->
+    <div class="print-info no-print">
+        <strong>💡 Suggerimenti:</strong><br>
+        • Usa Ctrl+P per stampare<br>
+        • Seleziona "A4" come formato<br>
+        • Rimuovi margini se necessario
+    </div>
+
     <div class="contract-container">
         <!-- Header -->
         <div class="header">
@@ -560,13 +778,13 @@ export class ContractGeneratorService {
             <div class="section">
                 <h2>DESCRIZIONE DELL'APPARTAMENTO</h2>
                 <div class="property-details">
-                    <p style="margin-bottom: 15px; font-weight: bold;">Il proprietario fornisce l'appartamento così descritto:</p>
+                    <p style="margin-bottom: 10px; font-weight: bold;">Il proprietario fornisce l'appartamento così descritto:</p>
                     <ul class="description-list">
-                        <li>Cucina perfettamente funzionante con elettrodomestici funzionanti, in perfetto stato, tavolo con sedie, divano, mobiletto TV, camino</li>
-                        <li>Camera con letto matrimoniale, rete doghe, materasso, coprimaterasso, armadio, comodini, abat-jour, cassettone con specchio, tutto in ottimo stato</li>
-                        <li>Bagno con doccia, sanitari e accessori in perfetto stato</li>
-                        <li>Condizioni dell'appartamento al momento della consegna: ottimo stato generale</li>
-                        <li>Condizioni della caldaia di riscaldamento in perfetto stato di funzionamento</li>
+                        <li>Cucina con elettrodomestici, tavolo, sedie, divano, mobiletto TV, camino</li>
+                        <li>Camera con letto matrimoniale, armadio, comodini, cassettone con specchio</li>
+                        <li>Bagno con doccia, sanitari e accessori</li>
+                        <li>Condizioni generali: ottimo stato</li>
+                        <li>Caldaia: perfetto funzionamento</li>
                     </ul>
                 </div>
             </div>
@@ -634,7 +852,7 @@ export class ContractGeneratorService {
             <div class="section">
                 <h2>INVENTARIO DEI BENI MOBILI</h2>
                 <div class="inventory-section">
-                    <p style="font-weight: bold; margin-bottom: 15px;">Lista dei beni mobili presenti nell'immobile:</p>
+                    <p style="font-weight: bold; margin-bottom: 10px;">Lista dei beni mobili presenti nell'immobile:</p>
                     <div class="inventory-grid">
                         <div class="checkbox-item">
                             <input type="checkbox" id="cucina" checked>
@@ -670,8 +888,8 @@ export class ContractGeneratorService {
                         </div>
                     </div>
                     
-                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 6px;">
-                        <p style="font-size: 12px; color: #666;">
+                    <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px;">
+                        <p style="font-size: 11px; color: #666;">
                             La presente descrizione è quella dei beni arredati presenti al momento della consegna dell'immobile. 
                             Eventuali danni o deterioramenti dovranno essere risarciti.
                         </p>
@@ -681,8 +899,8 @@ export class ContractGeneratorService {
 
             <!-- Firme -->
             <div class="signatures-section">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <p style="font-weight: bold; font-size: 16px;">VISTO E ACCETTATO</p>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <p style="font-weight: bold; font-size: 14px;">VISTO E ACCETTATO</p>
                 </div>
                 
                 <div class="signatures-grid">
@@ -714,24 +932,38 @@ export class ContractGeneratorService {
                            (today.getMonth() + 1).toString().padStart(2, '0') + '/' + 
                            today.getFullYear();
             
-            // You can uncomment this to auto-fill the date
-            // document.querySelector('.date-location span').textContent = dateStr;
+            // Auto-fill the date
+            const dateElement = document.querySelector('.date-location span');
+            if (dateElement) {
+                dateElement.textContent = dateStr;
+            }
         });
 
         // Print functionality
         function printContract() {
+            // Nascondi i pulsanti prima della stampa
+            const printElements = document.querySelectorAll('.no-print');
+            printElements.forEach(el => el.style.display = 'none');
+            
+            // Stampa
             window.print();
+            
+            // Mostra di nuovo i pulsanti dopo la stampa
+            setTimeout(() => {
+                printElements.forEach(el => el.style.display = '');
+            }, 1000);
         }
 
-        // Add print button (you can uncomment if needed)
-        /*
-        const printBtn = document.createElement('button');
-        printBtn.textContent = 'Stampa Contratto';
-        printBtn.className = 'no-print';
-        printBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; z-index: 1000;';
-        printBtn.onclick = printContract;
-        document.body.appendChild(printBtn);
-        */
+        // Keyboard shortcut per stampa (Ctrl+P)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                printContract();
+            }
+        });
+
+        // Focus sul documento per migliorare l'esperienza
+        window.focus();
     </script>
 </body>
 </html>`;
