@@ -268,9 +268,20 @@ export class TenantListComponent implements OnInit {
   viewTenantDetails(tenantId: number): void {
     // Aggiungi un piccolo ritardo per evitare problemi di caching tra aperture consecutive
     setTimeout(() => {
-      this.dialog.open(TenantDetailDialogComponent, {
+      const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
         data: { tenantId },
         panelClass: 'tenant-detail-dialog'
+      });
+
+      // Gestisce il risultato del modale di dettaglio
+      dialogRef.afterClosed().subscribe(result => {
+        if (result && result.edit && result.tenantId) {
+          // Se l'utente ha cliccato su modifica, apre il form di modifica
+          this.editTenant(result.tenantId);
+        } else if (result && result.deleted) {
+          // Se l'inquilino è stato eliminato, ricarica i dati
+          this.loadTenants();
+        }
       });
     }, 300);
   }

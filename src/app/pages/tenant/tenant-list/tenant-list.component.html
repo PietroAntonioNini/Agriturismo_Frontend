@@ -80,8 +80,8 @@
 
   <!-- Grid View -->
   <div *ngIf="viewMode === 'grid' && filteredTenants.length > 0" class="tenants-grid">
-    <div *ngFor="let tenant of filteredTenants" class="tenant-card" [class.expired]="isDocumentExpired(tenant)" (click)="viewTenantDetails(tenant.id)">
-      <div class="tenant-header">
+    <div *ngFor="let tenant of filteredTenants" class="tenant-card" [class.expired]="isDocumentExpired(tenant)">
+      <div class="tenant-header" (click)="viewTenantDetails(tenant.id)">
         <div class="tenant-avatar">
           <span>{{getTenantInitials(tenant)}}</span>
         </div>
@@ -90,7 +90,7 @@
         </div>
       </div>
       
-      <div class="tenant-info">
+      <div class="tenant-info" (click)="viewTenantDetails(tenant.id)">
         <h3 class="tenant-name">{{tenant.firstName}} {{tenant.lastName}}</h3>
         
         <div class="tenant-contact">
