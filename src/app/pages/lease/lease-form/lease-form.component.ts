@@ -31,11 +31,10 @@ import { GenericApiService } from '../../../shared/services/generic-api.service'
 import { LeaseService } from '../../../shared/services/lease.service';
 import { ContractGeneratorService } from '../../../shared/services/contract-generator.service';
 import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
-import { BaseContractGeneratorService } from '../../../shared/services/base-contract-generator.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 
 // Models
-import { Lease, LeaseFormData, BaseContractData } from '../../../shared/models/lease.model';
+import { Lease, LeaseFormData } from '../../../shared/models/lease.model';
 import { Tenant } from '../../../shared/models';
 import { Apartment } from '../../../shared/models';
 
@@ -118,9 +117,7 @@ export class LeaseFormComponent implements OnInit {
   filteredTenants!: Observable<Tenant[]>;
   filteredApartments!: Observable<Apartment[]>;
   
-  // Dati per le utenze
-  utilitiesData: any = {};
-  isUtilitiesFormValid = false;
+
 
   constructor(
     private fb: FormBuilder,
@@ -131,7 +128,6 @@ export class LeaseFormComponent implements OnInit {
     private leaseService: LeaseService,
     private contractGenerator: ContractGeneratorService,
     private contractTemplates: ContractTemplatesService,
-    private baseContractGenerator: BaseContractGeneratorService,
     private dateAdapter: DateAdapter<Date>,
     private notificationService: NotificationService,
     @Optional() @Inject(MAT_DIALOG_DATA) public dialogData: any,
@@ -197,16 +193,14 @@ export class LeaseFormComponent implements OnInit {
       notes: ['']
     });
     
-    // Form group per step 4: Utenze e contratto base
+    // Form group per step 5: Utenze
     this.utilitiesFormGroup = this.fb.group({
-      hasUtilities: [false], // Flag per decidere se generare il contratto base
-      electricity: [null],
-      water: [null],
-      gas: [null],
-      propertyDescription: [''],
-      propertyCondition: ['Ottimo stato generale'],
-      boilerCondition: ['Perfetto stato di funzionamento']
+      electricity: [null, [Validators.min(0)]],
+      water: [null, [Validators.min(0)]],
+      gas: [null, [Validators.min(0)]]
     });
+    
+
   }
   
   // Validatore per la data di fine che deve essere successiva alla data di inizio
@@ -336,17 +330,7 @@ export class LeaseFormComponent implements OnInit {
           notes: lease.notes || ''
         });
         
-        // Carica i dati delle utenze se disponibili
-        if (lease.initialUtilityReadings) {
-          this.utilitiesFormGroup.patchValue({
-            electricity: lease.initialUtilityReadings.electricity,
-            water: lease.initialUtilityReadings.water,
-            gas: lease.initialUtilityReadings.gas,
-            propertyDescription: lease.propertyDescription || '',
-            propertyCondition: lease.propertyCondition || 'Ottimo stato generale',
-            boilerCondition: lease.boilerCondition || 'Perfetto stato di funzionamento'
-          });
-        }
+
         
         this.isLoading = false;
       },
@@ -412,9 +396,7 @@ export class LeaseFormComponent implements OnInit {
       ...terms,
       startDate: this.formatDate(terms.startDate),
       endDate: this.formatDate(terms.endDate),
-      ...this.conditionsFormGroup.value,
-      // Aggiungi dati delle utenze se disponibili
-      initialUtilityReadings: this.utilitiesData
+      ...this.conditionsFormGroup.value
     };
 
     if (this.isEditMode && this.leaseId) {
@@ -531,8 +513,8 @@ export class LeaseFormComponent implements OnInit {
     const conditions = this.conditionsFormGroup.value;
     
     if (tenant && apartment && this.termsFormGroup.valid && this.conditionsFormGroup.valid) {
-      // Crea un oggetto Lease completo per la generazione del PDF
-      const leaseDataForPdf: Lease = {
+      // Crea un oggetto Lease completo per la generazione del contratto
+      const leaseDataForContract: Lease = {
         id: this.leaseId ?? 0,
         tenantId: tenant.id,
         apartmentId: apartment.id,
@@ -549,63 +531,43 @@ export class LeaseFormComponent implements OnInit {
         updatedAt: new Date()  // Valore di default
       };
 
-      this.contractGenerator.generateRentalContract(leaseDataForPdf, tenant, apartment);
+      // Genera il contratto HTML dettagliato
+      this.contractGenerator.generateDetailedHTMLContract(leaseDataForContract, tenant, apartment)
+        .subscribe({
+          next: (htmlContent: string) => {
+            // Crea una nuova finestra con il contratto HTML
+            const newWindow = window.open('', '_blank');
+            if (newWindow) {
+              newWindow.document.write(htmlContent);
+              newWindow.document.close();
+              newWindow.focus();
+              
+              // Mostra messaggio di successo
+              this.snackBar.open('Contratto generato con successo! Apri la finestra per stamparlo.', 'Chiudi', { 
+                duration: 5000,
+                panelClass: ['success-snackbar']
+              });
+            } else {
+              this.snackBar.open('Impossibile aprire la finestra del contratto. Controlla i popup blocker.', 'Chiudi', { 
+                duration: 5000,
+                panelClass: ['error-snackbar']
+              });
+            }
+          },
+          error: (error) => {
+            console.error('Errore nella generazione del contratto:', error);
+            this.snackBar.open('Errore nella generazione del contratto. Riprova.', 'Chiudi', { 
+              duration: 5000,
+              panelClass: ['error-snackbar']
+            });
+          }
+        });
     } else {
       this.snackBar.open('Compila tutti i campi prima di generare il contratto.', 'Chiudi', { duration: 3000 });
-    }
-
-  }
-
-  generateBaseContract(): void {
-    const tenant = this.partiesFormGroup.get('tenant')?.value;
-    const apartment = this.partiesFormGroup.get('apartment')?.value;
-    const terms = this.termsFormGroup.value;
-    const conditions = this.conditionsFormGroup.value;
-    const utilities = this.utilitiesFormGroup.value;
-    
-    if (tenant && apartment && this.isFormValid()) {
-      // Crea un oggetto Lease completo
-      const lease: Lease = {
-        id: this.leaseId ?? 0,
-        tenantId: tenant.id,
-        apartmentId: apartment.id,
-        startDate: terms.startDate,
-        endDate: terms.endDate,
-        monthlyRent: terms.monthlyRent,
-        securityDeposit: terms.securityDeposit,
-        paymentDueDay: terms.paymentDueDay,
-        termsAndConditions: conditions.termsAndConditions,
-        specialClauses: conditions.specialClauses || '',
-        notes: conditions.notes || '',
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      // Crea i dati per il contratto base
-      const baseContractData: BaseContractData = {
-        lease,
-        tenant,
-        apartment,
-        initialUtilityReadings: {
-          electricity: utilities.electricity,
-          water: utilities.water,
-          gas: utilities.gas
-        },
-        propertyDescription: utilities.propertyDescription,
-        propertyCondition: utilities.propertyCondition,
-        boilerCondition: utilities.boilerCondition,
-        securityDepositAmount: terms.securityDeposit
-      };
-
-      this.baseContractGenerator.generateBaseContract(baseContractData);
-    } else {
-      this.snackBar.open('Compila tutti i campi prima di generare il contratto base.', 'Chiudi', { duration: 3000 });
     }
   }
 
   onUtilitiesChange(utilitiesData: any): void {
-    this.utilitiesData = utilitiesData;
     // Aggiorna i valori nel form group
     this.utilitiesFormGroup.patchValue({
       electricity: utilitiesData.electricity,
@@ -615,6 +577,8 @@ export class LeaseFormComponent implements OnInit {
   }
 
   onUtilitiesValidationChange(isValid: boolean): void {
-    this.isUtilitiesFormValid = isValid;
+    // Gestisce la validazione del form delle utilities
+    console.log('Utilities validation changed:', isValid);
   }
+
 }

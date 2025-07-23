@@ -263,10 +263,7 @@
                       <mat-form-field appearance="outline" class="full-width">
                         <mat-label>Template Contrattuale</mat-label>
                         <mat-select (selectionChange)="onTemplateChange($event.value)">
-                          <mat-option value="4+4">Contratto 4+4 (L. 431/98, art. 2, comma 1)</mat-option>
-                          <mat-option value="3+2">Contratto 3+2 a canone concordato (L. 431/98, art. 2, comma 3)</mat-option>
                           <mat-option value="transitorio">Contratto transitorio (L. 431/98, art. 5)</mat-option>
-                          <mat-option value="studenti">Contratto per studenti universitari</mat-option>
                           <mat-option value="custom">Personalizzato</mat-option>
                         </mat-select>
                         <mat-hint>Seleziona un template di contratto secondo la normativa vigente</mat-hint>
@@ -361,6 +358,8 @@
             </form>
           </mat-step>
 
+
+          
           <!-- Step 5: Letture Utenze -->
           <mat-step [stepControl]="utilitiesFormGroup">
             <form [formGroup]="utilitiesFormGroup">
@@ -376,7 +375,7 @@
                   <mat-card-content>
                     <div class="utilities-info">
                       <mat-icon>info</mat-icon>
-                      <p>Inserisci le letture iniziali delle utenze per generare il contratto base di consegna dell'appartamento.</p>
+                      <p>Inserisci le letture iniziali delle utenze per il contratto di consegna dell'appartamento.</p>
                     </div>
                     
                     <app-base-contract-utilities
@@ -483,7 +482,7 @@
               
               <div class="contract-preview-info">
                 <mat-icon>info</mat-icon>
-                <span>Il contratto completo può essere generato e scaricato cliccando sul pulsante "Genera Contratto"</span>
+                <span>Il contratto completo può essere generato e stampato cliccando sul pulsante "Genera Contratto"</span>
               </div>
             </div>
             
@@ -505,13 +504,6 @@
                      color="accent">
                 <mat-icon>description</mat-icon>
                 Genera Contratto
-              </button>
-              <button mat-raised-button 
-                     [disabled]="!isFormValid()" 
-                     (click)="generateBaseContract()" 
-                     color="warn">
-                <mat-icon>home</mat-icon>
-                Genera Contratto Base
               </button>
             </div>
           </mat-step>

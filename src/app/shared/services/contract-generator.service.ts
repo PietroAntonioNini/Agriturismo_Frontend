@@ -4,12 +4,18 @@ import { Lease } from '../models/lease.model';
 import { Tenant } from '../models/tenant.model';
 import { Apartment } from '../models/apartment.model';
 import { ContractTemplatesService } from './contract-templates.service';
+import { GenericApiService } from './generic-api.service';
+import { forkJoin, Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContractGeneratorService {
-  constructor(private contractTemplatesService: ContractTemplatesService) {}
+  constructor(
+    private contractTemplatesService: ContractTemplatesService,
+    private apiService: GenericApiService
+  ) {}
 
   /**
    * Aggiunge testo con wrap automatico e restituisce l'altezza occupata
@@ -62,6 +68,682 @@ export class ContractGeneratorService {
     // Salva il PDF
     const filename = `contratto_${tenant.lastName.toLowerCase()}_${new Date().getTime()}.pdf`;
     doc.save(filename);
+  }
+
+  /**
+   * Genera un contratto HTML dettagliato e pronto per la stampa
+   * @param lease - Dati del contratto di locazione
+   * @param tenant - Dati dell'inquilino
+   * @param apartment - Dati dell'appartamento
+   */
+  generateDetailedHTMLContract(lease: Lease, tenant: Tenant, apartment: Apartment): Observable<string> {
+    // Ottieni le ultime letture delle utility per l'appartamento
+    return this.getLastUtilityReadings(apartment.id!).pipe(
+      map(utilityReadings => {
+        return this.createHTMLContract(lease, tenant, apartment, utilityReadings);
+      })
+    );
+  }
+
+  /**
+   * Ottiene le ultime letture delle utility per un appartamento
+   */
+  private getLastUtilityReadings(apartmentId: number): Observable<any> {
+    const utilityTypes = ['electricity', 'water', 'gas'];
+    const readingRequests = utilityTypes.map(type => 
+      this.apiService.getLastUtilityReading(apartmentId, type)
+    );
+
+    return forkJoin(readingRequests).pipe(
+      map(readings => {
+        const result: any = {};
+        utilityTypes.forEach((type, index) => {
+          result[type] = readings[index]?.lastReading || 0;
+        });
+        return result;
+      })
+    );
+  }
+
+  /**
+   * Crea il contratto HTML completo
+   */
+  private createHTMLContract(lease: Lease, tenant: Tenant, apartment: Apartment, utilityReadings: any): string {
+    const startDate = new Date(lease.startDate).toLocaleDateString('it-IT');
+    const endDate = new Date(lease.endDate).toLocaleDateString('it-IT');
+    const today = new Date().toLocaleDateString('it-IT');
+    
+    // Calcola la durata in mesi
+    const start = new Date(lease.startDate);
+    const end = new Date(lease.endDate);
+    const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+
+    return `<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contratto di Locazione ad Uso Abitativo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            line-height: 1.4;
+            color: #333;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+
+        .contract-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .date-location {
+            text-align: right;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section h2 {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-left: 4px solid #3498db;
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .parties-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .party-box {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafbfc;
+        }
+
+        .party-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field-group {
+            margin-bottom: 12px;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #555;
+            font-size: 12px;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .field-value {
+            border-bottom: 1px solid #ddd;
+            padding: 4px 0;
+            min-height: 20px;
+            font-size: 14px;
+        }
+
+        .property-details {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .description-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .description-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .description-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .utilities-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .utilities-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .utility-box {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .utility-label {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .utility-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #3498db;
+            border: 2px solid #3498db;
+            padding: 8px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+
+        .financial-section {
+            background: #e8f5e8;
+            border: 1px solid #27ae60;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .amount-box {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .amount-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .amount-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        .inventory-section {
+            border: 2px solid #e74c3c;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #fdf2f2;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .signatures-section {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #34495e;
+        }
+
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-top: 30px;
+        }
+
+        .signature-box {
+            text-align: center;
+        }
+
+        .signature-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .signature-line {
+            border-bottom: 2px solid #34495e;
+            height: 60px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .signature-date {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .legal-notice {
+            background: #f8f9fa;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 30px 0;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .contract-container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+
+        .form-control {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .text-small {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="contract-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>CONTRATTO DI LOCAZIONE</h1>
+            <div class="subtitle">Documento di Consegna Appartamento ad Uso Abitativo</div>
+            <div class="subtitle">Ai sensi della Legge 431/98 e successive modificazioni</div>
+        </div>
+
+        <div class="content">
+            <!-- Data e Luogo -->
+            <div class="date-location">
+                <strong>Data:</strong> <span style="border-bottom: 1px solid #333; padding: 2px 20px; margin-left: 10px;">${today}</span>
+            </div>
+
+            <!-- Parti Contraenti -->
+            <div class="section">
+                <h2>PARTI CONTRAENTI</h2>
+                <div class="parties-grid">
+                    <div class="party-box">
+                        <div class="party-title">IL PROPRIETARIO (Locatore)</div>
+                        <div class="field-group">
+                            <label class="field-label">Nome e Cognome:</label>
+                            <div class="field-value">[Nome Proprietario]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Codice Fiscale:</label>
+                            <div class="field-value">[Codice Fiscale Proprietario]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Data di Nascita:</label>
+                            <div class="field-value">[Data Nascita Proprietario]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Luogo di Nascita:</label>
+                            <div class="field-value">[Luogo Nascita Proprietario]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Residenza:</label>
+                            <div class="field-value">[Residenza Proprietario]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Telefono:</label>
+                            <div class="field-value">[Telefono Proprietario]</div>
+                        </div>
+                    </div>
+
+                    <div class="party-box">
+                        <div class="party-title">IL CONDUTTORE (Inquilino)</div>
+                        <div class="field-group">
+                            <label class="field-label">Nome e Cognome:</label>
+                            <div class="field-value">${tenant.firstName} ${tenant.lastName}</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Documento:</label>
+                            <div class="field-value">${tenant.documentType} n° ${tenant.documentNumber}</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Telefono:</label>
+                            <div class="field-value">${tenant.phone}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dati Immobile -->
+            <div class="section">
+                <h2>IDENTIFICAZIONE DELL'IMMOBILE</h2>
+                <div class="property-details">
+                    <div class="property-grid">
+                        <div class="field-group">
+                            <label class="field-label">Appartamento:</label>
+                            <div class="field-value">${apartment.name}</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Piano:</label>
+                            <div class="field-value">${apartment.floor}</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Superficie:</label>
+                            <div class="field-value">${apartment.squareMeters} m²</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Vani:</label>
+                            <div class="field-value">${apartment.rooms} locali</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Bagni:</label>
+                            <div class="field-value">${apartment.bathrooms}</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Stato:</label>
+                            <div class="field-value">${apartment.isFurnished ? 'Arredato' : 'Non arredato'}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descrizione Appartamento -->
+            <div class="section">
+                <h2>DESCRIZIONE DELL'APPARTAMENTO</h2>
+                <div class="property-details">
+                    <p style="margin-bottom: 15px; font-weight: bold;">Il proprietario fornisce l'appartamento così descritto:</p>
+                    <ul class="description-list">
+                        <li>Cucina perfettamente funzionante con elettrodomestici funzionanti, in perfetto stato, tavolo con 4 sedie, divano, mobiletto TV, camino</li>
+                        <li>Camera con letto matrimoniale, rete doghe, materasso, coprimaterasso, armadio, 2 comodini, 2 abat-jour, cassettone con specchio, tutto in ottimo stato</li>
+                        <li>Bagno con doccia, sanitari e accessori in perfetto stato</li>
+                        <li>Condizioni dell'appartamento al momento della consegna: ottimo stato generale</li>
+                        <li>Condizioni della caldaia di riscaldamento in perfetto stato di funzionamento</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Letture Contatori -->
+            <div class="section">
+                <h2>LETTURE DELLE FORNITURE</h2>
+                <div class="utilities-section">
+                    <p style="font-weight: bold; margin-bottom: 15px; text-align: center;">Letture delle forniture relative alla consegna dell'appartamento</p>
+                    <div class="utilities-grid">
+                        <div class="utility-box">
+                            <div class="utility-label">GAS</div>
+                            <div class="utility-value">${utilityReadings.gas || 0}</div>
+                            <div class="text-small" style="margin-top: 5px; color: #666;">mc</div>
+                        </div>
+                        <div class="utility-box">
+                            <div class="utility-label">LUCE</div>
+                            <div class="utility-value">${utilityReadings.electricity || 0}</div>
+                            <div class="text-small" style="margin-top: 5px; color: #666;">kWh</div>
+                        </div>
+                        <div class="utility-box">
+                            <div class="utility-label">ACQUA</div>
+                            <div class="utility-value">${utilityReadings.water || 0}</div>
+                            <div class="text-small" style="margin-top: 5px; color: #666;">litri</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Condizioni Economiche -->
+            <div class="section">
+                <h2>CONDIZIONI ECONOMICHE</h2>
+                <div class="financial-section">
+                    <div class="financial-grid">
+                        <div class="amount-box">
+                            <div class="amount-label">Canone Mensile</div>
+                            <div class="amount-value">€ ${lease.monthlyRent.toFixed(2)}</div>
+                        </div>
+                        <div class="amount-box">
+                            <div class="amount-label">Deposito Cauzionale</div>
+                            <div class="amount-value">€ ${lease.securityDeposit.toFixed(2)}</div>
+                        </div>
+                        <div class="amount-box">
+                            <div class="amount-label">Durata Contratto</div>
+                            <div class="amount-value" style="color: #2c3e50;">${months} mesi</div>
+                        </div>
+                        <div class="amount-box">
+                            <div class="amount-label">Periodo</div>
+                            <div class="amount-value" style="color: #2c3e50;">${startDate} - ${endDate}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 6px;">
+                        <p style="font-size: 13px; color: #666; line-height: 1.4;">
+                            <strong>Caparra concessa dal conduttore al proprietario per un importo di:</strong> 
+                            <span style="border-bottom: 1px solid #333; padding: 2px 10px; margin: 0 10px;">€ ${lease.securityDeposit.toFixed(2)}</span> 
+                            che sarà restituita alla chiusura del rapporto previo controllo dell'appartamento. 
+                            Il medesimo dovrà essere rilasciato nello stato in cui è stato consegnato, pena trattenuta della caparra.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventario Beni Mobili -->
+            <div class="section">
+                <h2>INVENTARIO DEI BENI MOBILI</h2>
+                <div class="inventory-section">
+                    <p style="font-weight: bold; margin-bottom: 15px;">Lista dei beni mobili presenti nell'immobile:</p>
+                    <div class="inventory-grid">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="cucina" checked>
+                            <label for="cucina">Cucina attrezzata e elettrodomestici</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="camera" checked>
+                            <label for="camera">Camera letto completa</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="soggiorno" checked>
+                            <label for="soggiorno">Soggiorno: divano, tavolo, sedie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bagno" checked>
+                            <label for="bagno">Bagno: sanitari e accessori</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="tv" checked>
+                            <label for="tv">Televisore e mobiletto TV</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="armadi" checked>
+                            <label for="armadi">Armadi e cassettoni</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="biancheria" checked>
+                            <label for="biancheria">Biancheria per casa</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="altro">
+                            <label for="altro">Altro: _________________</label>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 6px;">
+                        <p style="font-size: 12px; color: #666;">
+                            La presente descrizione è quella dei beni arredati presenti al momento della consegna dell'immobile. 
+                            Eventuali danni o deterioramenti dovranno essere risarciti.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Note Legali -->
+            <div class="legal-notice">
+                <strong>CLAUSOLE IMPORTANTI:</strong><br>
+                • Il presente contratto è soggetto a registrazione presso l'Agenzia delle Entrate entro 30 giorni dalla stipula<br>
+                • Il conduttore dichiara di aver ricevuto informazioni sulla prestazione energetica dell'edificio (APE)<br>
+                • Le parti si danno atto di aver preso visione delle condizioni generali del contratto<br>
+                • Il contratto è regolato dalla Legge 431/98 e successive modificazioni
+            </div>
+
+            <!-- Firme -->
+            <div class="signatures-section">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <p style="font-weight: bold; font-size: 16px;">VISTO E ACCETTATO</p>
+                </div>
+                
+                <div class="signatures-grid">
+                    <div class="signature-box">
+                        <div class="signature-title">IL CONDUTTORE</div>
+                        <div class="signature-line"></div>
+                        <div class="signature-date">
+                            Luogo e data: ________________________
+                        </div>
+                    </div>
+                    
+                    <div class="signature-box">
+                        <div class="signature-title">IL PROPRIETARIO</div>
+                        <div class="signature-line"></div>
+                        <div class="signature-date">
+                            Luogo e data: ________________________
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-fill current date
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const dateStr = today.getDate().toString().padStart(2, '0') + '/' + 
+                           (today.getMonth() + 1).toString().padStart(2, '0') + '/' + 
+                           today.getFullYear();
+            
+            // You can uncomment this to auto-fill the date
+            // document.querySelector('.date-location span').textContent = dateStr;
+        });
+
+        // Print functionality
+        function printContract() {
+            window.print();
+        }
+
+        // Add print button (you can uncomment if needed)
+        /*
+        const printBtn = document.createElement('button');
+        printBtn.textContent = 'Stampa Contratto';
+        printBtn.className = 'no-print';
+        printBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; z-index: 1000;';
+        printBtn.onclick = printContract;
+        document.body.appendChild(printBtn);
+        */
+    </script>
+</body>
+</html>`;
   }
 
   /**

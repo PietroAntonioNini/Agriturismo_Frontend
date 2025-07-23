@@ -99,6 +99,19 @@
   }
 }
 
+// Stili per i messaggi di successo e errore dei snackbar
+::ng-deep {
+  .success-snackbar {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+  
+  .error-snackbar {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+}
+
 .step-content {
   padding: 24px 0;
 }

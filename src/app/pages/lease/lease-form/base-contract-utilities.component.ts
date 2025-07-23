@@ -243,15 +243,6 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Apre il dialog per aggiungere una nuova lettura utenza
-   */
-  openAddUtilityReadingDialog(type: 'electricity' | 'water' | 'gas'): void {
-    // Implementazione per aprire il dialog delle letture utenze
-    // Integrerà con il componente ReadingFormComponent esistente
-    console.log('Aprire dialog per aggiungere lettura:', type);
-  }
-
-  /**
    * Ricarica le ultime letture
    */
   refreshLastReadings(): void {
