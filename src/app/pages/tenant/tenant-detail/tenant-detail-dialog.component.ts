@@ -113,7 +113,7 @@ export class TenantDetailDialogComponent implements OnInit {
     private router: Router,
     private apiService: GenericApiService,
     private dialogRef: MatDialogRef<TenantDetailDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { tenantId: number },
+    @Inject(MAT_DIALOG_DATA) public data: { tenantId: number; tenant?: Tenant },
     private snackBar: MatSnackBar,
     private confirmationService: ConfirmationDialogService,
     private dialog: MatDialog,
@@ -126,7 +126,17 @@ export class TenantDetailDialogComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.data && this.data.tenantId) {
-      this.loadTenantData(this.data.tenantId);
+      // Se abbiamo già i dati del tenant aggiornati, usali direttamente
+      if (this.data.tenant) {
+        this.tenant = this.data.tenant;
+        this.loadDocumentImages(this.tenant);
+        this.loadTenantLeases(this.data.tenantId);
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      } else {
+        // Altrimenti carica dal backend
+        this.loadTenantData(this.data.tenantId);
+      }
     } else {
       this.errorMessage = 'ID inquilino non valido.';
       this.isLoading = false;

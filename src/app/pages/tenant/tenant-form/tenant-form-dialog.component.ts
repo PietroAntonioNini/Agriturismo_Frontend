@@ -79,7 +79,7 @@ export class TenantFormComponent implements OnInit {
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     public dialogRef: MatDialogRef<TenantFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { tenantId?: number },
+    @Inject(MAT_DIALOG_DATA) public data: { tenantId?: number; tenant?: Tenant },
     private imageService: ImageService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
@@ -93,7 +93,17 @@ export class TenantFormComponent implements OnInit {
     if (this.data && this.data.tenantId) {
       this.isEditMode = true;
       this.tenantId = this.data.tenantId;
-      this.loadTenantData(this.data.tenantId);
+      
+      // Se abbiamo già i dati del tenant aggiornati, usali direttamente
+      if (this.data.tenant) {
+        this.currentTenant = this.data.tenant;
+        this.updateForm(this.currentTenant);
+        this.loadDocumentImages(this.currentTenant);
+        this.isLoading = false;
+      } else {
+        // Altrimenti carica dal backend
+        this.loadTenantData(this.data.tenantId);
+      }
     } else {
       this.isEditMode = false;
       this.currentTenant = {} as Tenant;
@@ -184,31 +194,31 @@ export class TenantFormComponent implements OnInit {
 
   updateForm(tenant: Tenant): void {
     this.tenantForm.patchValue({
-      firstName: this.currentTenant.firstName,
-      lastName: this.currentTenant.lastName,
-      email: this.currentTenant.email || '',
-      phone: this.currentTenant.phone,
-      documentType: this.currentTenant.documentType,
-      documentNumber: this.currentTenant.documentNumber,
-      documentExpiryDate: this.currentTenant.documentExpiryDate,
-      address: this.currentTenant.address || '',
+      firstName: tenant.firstName,
+      lastName: tenant.lastName,
+      email: tenant.email || '',
+      phone: tenant.phone,
+      documentType: tenant.documentType,
+      documentNumber: tenant.documentNumber,
+      documentExpiryDate: tenant.documentExpiryDate,
+      address: tenant.address || '',
       communicationPreferences: {
-        email: this.currentTenant.communicationPreferences?.email || false,
-        sms: this.currentTenant.communicationPreferences?.sms || false,
-        whatsapp: this.currentTenant.communicationPreferences?.whatsapp || false
+        email: tenant.communicationPreferences?.email || false,
+        sms: tenant.communicationPreferences?.sms || false,
+        whatsapp: tenant.communicationPreferences?.whatsapp || false
       },
-      notes: this.currentTenant.notes || '',
-      createdAt: this.currentTenant.createdAt,
-      updatedAt: this.currentTenant.updatedAt,
+      notes: tenant.notes || '',
+      createdAt: tenant.createdAt,
+      updatedAt: tenant.updatedAt,
     });
     
     // Set document image previews if available
-    if (this.currentTenant.documentFrontImage) {
-      this.frontPreview = this.currentTenant.documentFrontImage;
+    if (tenant.documentFrontImage) {
+      this.frontPreview = tenant.documentFrontImage;
     }
     
-    if (this.currentTenant.documentBackImage) {
-      this.backPreview = this.currentTenant.documentBackImage;
+    if (tenant.documentBackImage) {
+      this.backPreview = tenant.documentBackImage;
     }
   }
 

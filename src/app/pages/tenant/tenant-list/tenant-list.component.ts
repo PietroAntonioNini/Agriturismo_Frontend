@@ -282,10 +282,13 @@ export class TenantListComponent implements OnInit {
 
   // Azioni dell'interfaccia
   viewTenantDetails(tenantId: number): void {
+    // Trova il tenant nella lista locale per passare i dati aggiornati
+    const tenant = this.tenants.find(t => t.id === tenantId);
+    
     // Aggiungi un piccolo ritardo per evitare problemi di caching tra aperture consecutive
     setTimeout(() => {
       const dialogRef = this.dialog.open(TenantDetailDialogComponent, {
-        data: { tenantId },
+        data: { tenantId, tenant }, // Passa anche il tenant aggiornato
         panelClass: 'tenant-detail-dialog'
       });
 
@@ -303,8 +306,11 @@ export class TenantListComponent implements OnInit {
   }
 
   editTenant(tenantId: number): void {
+    // Trova il tenant nella lista locale per passare i dati aggiornati
+    const tenant = this.tenants.find(t => t.id === tenantId);
+    
     const dialogRef = this.dialog.open(TenantFormComponent, {
-      data: { tenantId }
+      data: { tenantId, tenant } // Passa anche il tenant aggiornato
     });
 
     dialogRef.afterClosed().subscribe(result => {
