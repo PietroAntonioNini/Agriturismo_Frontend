@@ -133,254 +133,283 @@ export class ContractGeneratorService {
 
         body {
             font-family: 'Times New Roman', serif;
-            line-height: 1.4;
-            color: #333;
-            background: #f8f9fa;
-            padding: 20px;
+            line-height: 1.3;
+            color: #000;
+            background: white;
+            padding: 10px;
         }
 
         .contract-container {
             max-width: 210mm;
             margin: 0 auto;
             background: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
+            background: #000;
             color: white;
-            padding: 30px;
+            padding: 15px;
             text-align: center;
+            margin-bottom: 15px;
         }
 
         .header h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 18px;
+            margin-bottom: 5px;
             font-weight: bold;
         }
 
         .header .subtitle {
-            font-size: 14px;
-            opacity: 0.9;
+            font-size: 11px;
         }
 
         .content {
-            padding: 40px;
+            padding: 0;
         }
 
         .date-location {
             text-align: right;
-            margin-bottom: 30px;
-            font-size: 14px;
-            color: #666;
+            margin-bottom: 15px;
+            font-size: 12px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
         }
 
         .section {
-            margin-bottom: 35px;
+            margin-bottom: 15px;
+            page-break-inside: avoid;
         }
 
         .section h2 {
-            background: #f8f9fa;
-            padding: 12px 20px;
-            border-left: 4px solid #3498db;
-            color: #2c3e50;
-            font-size: 16px;
-            margin-bottom: 20px;
+            background: #f0f0f0;
+            padding: 6px 10px;
+            border: 2px solid #000;
+            color: #000;
+            font-size: 12px;
+            margin-bottom: 8px;
             font-weight: bold;
+            text-transform: uppercase;
         }
 
         .parties-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
         .party-box {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            background: #fafbfc;
+            border: 2px solid #000;
+            padding: 8px;
+            background: white;
         }
 
         .party-title {
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 14px;
+            color: #000;
+            margin-bottom: 8px;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            text-align: center;
+            border-bottom: 1px solid #000;
+            padding-bottom: 3px;
         }
 
         .field-group {
-            margin-bottom: 12px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
         }
 
         .field-label {
             font-weight: bold;
-            color: #555;
-            font-size: 12px;
-            margin-bottom: 4px;
-            display: block;
+            color: #000;
+            font-size: 9px;
+            margin-right: 5px;
+            min-width: 60px;
         }
 
         .field-value {
-            border-bottom: 1px solid #ddd;
-            padding: 4px 0;
-            min-height: 20px;
-            font-size: 14px;
+            border-bottom: 1px solid #000;
+            padding: 1px 3px;
+            flex: 1;
+            font-size: 10px;
+            min-height: 12px;
         }
 
         .property-details {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 25px;
-            margin: 20px 0;
+            background: #f8f8f8;
+            border: 1px solid #000;
+            padding: 8px;
+            margin: 5px 0;
         }
 
         .property-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .description-list {
             list-style: none;
             padding: 0;
+            font-size: 9px;
+            columns: 2;
+            column-gap: 10px;
         }
 
         .description-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
+            padding: 2px 0;
             position: relative;
-            padding-left: 20px;
+            padding-left: 12px;
+            break-inside: avoid;
         }
 
         .description-list li:before {
-            content: "✓";
+            content: "•";
             position: absolute;
             left: 0;
-            color: #27ae60;
+            color: #000;
             font-weight: bold;
         }
 
         .utilities-section {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+            background: #f5f5f5;
+            border: 2px solid #000;
+            padding: 8px;
+            margin: 8px 0;
         }
 
         .utilities-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 15px;
+            gap: 8px;
+            margin-top: 5px;
         }
 
         .utility-box {
             text-align: center;
-            padding: 15px;
+            padding: 6px;
             background: white;
-            border-radius: 6px;
-            border: 1px solid #ddd;
+            border: 1px solid #000;
         }
 
         .utility-label {
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 14px;
+            color: #000;
+            margin-bottom: 3px;
+            font-size: 10px;
         }
 
-        .utility-value {
-            font-size: 18px;
+        .utility-input {
+            border: none;
+            border-bottom: 2px solid #000;
+            padding: 2px;
+            text-align: center;
+            font-size: 12px;
             font-weight: bold;
-            color: #3498db;
-            border: 2px solid #3498db;
-            padding: 8px;
-            border-radius: 4px;
-            background: #f8f9fa;
+            background: transparent;
+            width: 100%;
         }
 
         .financial-section {
-            background: #e8f5e8;
-            border: 1px solid #27ae60;
-            border-radius: 8px;
-            padding: 25px;
-            margin: 20px 0;
+            background: #f0f0f0;
+            border: 2px solid #000;
+            padding: 8px;
+            margin: 8px 0;
         }
 
         .financial-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
 
         .amount-box {
             background: white;
-            padding: 15px;
-            border-radius: 6px;
+            padding: 6px;
             text-align: center;
-            border: 1px solid #ddd;
+            border: 1px solid #000;
         }
 
         .amount-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
+            font-size: 9px;
+            color: #000;
+            margin-bottom: 2px;
+            font-weight: bold;
         }
 
         .amount-value {
-            font-size: 18px;
+            font-size: 11px;
             font-weight: bold;
-            color: #27ae60;
+            color: #000;
+            border: none;
+            background: transparent;
+            text-align: center;
+            width: 100%;
+        }
+
+        .cauzione-text {
+            margin-top: 8px;
+            padding: 6px;
+            background: white;
+            border: 1px solid #000;
+            font-size: 9px;
+            color: #000;
+            line-height: 1.2;
         }
 
         .inventory-section {
-            border: 2px solid #e74c3c;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            background: #fdf2f2;
+            border: 2px solid #000;
+            padding: 8px;
+            margin: 8px 0;
+            background: #f8f8f8;
         }
 
         .inventory-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 15px;
+            gap: 4px;
+            margin-top: 5px;
         }
 
         .checkbox-item {
             display: flex;
             align-items: center;
-            padding: 8px;
+            padding: 3px;
             background: white;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid #000;
+            font-size: 9px;
         }
 
         .checkbox-item input[type="checkbox"] {
-            margin-right: 10px;
-            transform: scale(1.2);
+            margin-right: 5px;
+            transform: scale(0.8);
+        }
+
+        .legal-notice {
+            background: #f0f0f0;
+            border: 2px solid #000;
+            padding: 8px;
+            margin: 10px 0;
+            font-size: 9px;
+            color: #000;
+            line-height: 1.2;
         }
 
         .signatures-section {
-            margin-top: 50px;
-            padding-top: 30px;
-            border-top: 2px solid #34495e;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 3px solid #000;
+            page-break-inside: avoid;
         }
 
         .signatures-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 50px;
-            margin-top: 30px;
+            gap: 20px;
+            margin-top: 10px;
         }
 
         .signature-box {
@@ -389,226 +418,251 @@ export class ContractGeneratorService {
 
         .signature-title {
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 14px;
+            color: #000;
+            margin-bottom: 8px;
+            font-size: 11px;
         }
 
         .signature-line {
-            border-bottom: 2px solid #34495e;
-            height: 60px;
-            margin-bottom: 10px;
-            position: relative;
+            border-bottom: 2px solid #000;
+            height: 35px;
+            margin-bottom: 5px;
         }
 
         .signature-date {
+            font-size: 9px;
+            color: #000;
+            margin-top: 3px;
+        }
+
+        .compact-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background: #000;
+            color: white;
+            border: none;
+            cursor: pointer;
             font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+            font-weight: bold;
+            z-index: 1000;
         }
 
-        .legal-notice {
-            background: #f8f9fa;
-            border-left: 4px solid #e74c3c;
-            padding: 15px;
-            margin: 30px 0;
-            font-size: 11px;
-            color: #666;
-            line-height: 1.3;
+        .print-button:hover {
+            background: #333;
         }
 
-        .page-break {
-            page-break-before: always;
-        }
-
+        /* OTTIMIZZAZIONE STAMPA */
         @media print {
             body {
                 background: white;
                 padding: 0;
                 margin: 0;
-                font-size: 11px;
+                font-size: 10px;
+                line-height: 1.2;
             }
             
             .contract-container {
-                box-shadow: none;
-                border-radius: 0;
-                max-width: 210mm;
-                margin: 0 auto;
+                max-width: none;
+                margin: 0;
                 padding: 0;
             }
             
             .header {
-                padding: 15px;
-                margin-bottom: 20px;
+                padding: 8px;
+                margin-bottom: 8px;
             }
             
             .header h1 {
-                font-size: 18px;
-                margin-bottom: 5px;
+                font-size: 14px;
+                margin-bottom: 3px;
             }
             
             .header .subtitle {
-                font-size: 11px;
+                font-size: 9px;
             }
             
             .content {
-                padding: 20px;
+                padding: 0;
             }
             
             .section {
-                margin-bottom: 20px;
+                margin-bottom: 10px;
                 page-break-inside: avoid;
             }
             
             .section h2 {
-                font-size: 13px;
-                padding: 8px 15px;
-                margin-bottom: 12px;
+                font-size: 10px;
+                padding: 4px 8px;
+                margin-bottom: 5px;
             }
             
             .parties-grid {
-                gap: 20px;
-                margin-bottom: 20px;
-            }
-            
-            .party-box {
-                padding: 12px;
-            }
-            
-            .party-title {
-                font-size: 11px;
-                margin-bottom: 10px;
-            }
-            
-            .field-label {
-                font-size: 10px;
-            }
-            
-            .field-value {
-                font-size: 11px;
-                min-height: 16px;
-            }
-            
-            .property-details {
-                padding: 15px;
-                margin: 15px 0;
-            }
-            
-            .property-grid {
-                gap: 10px;
-                margin-bottom: 15px;
-            }
-            
-            .description-list li {
-                padding: 5px 0;
-                font-size: 10px;
-            }
-            
-            .utilities-section {
-                padding: 15px;
-                margin: 15px 0;
-            }
-            
-            .utilities-grid {
-                gap: 15px;
-                margin-top: 10px;
-            }
-            
-            .utility-box {
-                padding: 10px;
-            }
-            
-            .utility-label {
-                font-size: 11px;
+                gap: 8px;
                 margin-bottom: 8px;
             }
             
-            .utility-value {
-                font-size: 14px;
+            .party-box {
                 padding: 6px;
+            }
+            
+            .party-title {
+                font-size: 9px;
+                margin-bottom: 5px;
+            }
+            
+            .field-group {
+                margin-bottom: 4px;
+            }
+            
+            .field-label {
+                font-size: 8px;
+                min-width: 50px;
+            }
+            
+            .field-value {
+                font-size: 9px;
+                min-height: 10px;
+            }
+            
+            .property-details {
+                padding: 6px;
+                margin: 4px 0;
+            }
+            
+            .property-grid {
+                gap: 6px;
+                margin-bottom: 6px;
+            }
+            
+            .description-list {
+                font-size: 8px;
+            }
+            
+            .description-list li {
+                padding: 1px 0;
+                padding-left: 10px;
+            }
+            
+            .utilities-section {
+                padding: 6px;
+                margin: 6px 0;
+            }
+            
+            .utilities-grid {
+                gap: 6px;
+                margin-top: 4px;
+            }
+            
+            .utility-box {
+                padding: 4px;
+            }
+            
+            .utility-label {
+                font-size: 8px;
+                margin-bottom: 2px;
+            }
+            
+            .utility-input {
+                font-size: 10px;
+                padding: 1px;
             }
             
             .financial-section {
-                padding: 15px;
-                margin: 15px 0;
+                padding: 6px;
+                margin: 6px 0;
             }
             
             .financial-grid {
-                gap: 15px;
+                gap: 6px;
             }
             
             .amount-box {
-                padding: 10px;
+                padding: 4px;
             }
             
             .amount-label {
-                font-size: 10px;
+                font-size: 8px;
+                margin-bottom: 1px;
             }
             
             .amount-value {
-                font-size: 14px;
+                font-size: 9px;
+            }
+            
+            .cauzione-text {
+                margin-top: 6px;
+                padding: 4px;
+                font-size: 8px;
             }
             
             .inventory-section {
-                padding: 15px;
-                margin: 15px 0;
+                padding: 6px;
+                margin: 6px 0;
             }
             
             .inventory-grid {
-                gap: 10px;
-                margin-top: 10px;
+                gap: 3px;
+                margin-top: 4px;
             }
             
             .checkbox-item {
+                padding: 2px;
+                font-size: 8px;
+            }
+            
+            .legal-notice {
                 padding: 6px;
-                font-size: 10px;
+                margin: 8px 0;
+                font-size: 8px;
             }
             
             .signatures-section {
-                margin-top: 30px;
-                padding-top: 20px;
+                margin-top: 10px;
+                padding-top: 8px;
             }
             
             .signatures-grid {
-                gap: 30px;
-                margin-top: 20px;
+                gap: 15px;
+                margin-top: 8px;
             }
             
             .signature-line {
-                height: 40px;
+                height: 25px;
             }
             
             .signature-date {
-                font-size: 10px;
+                font-size: 8px;
             }
             
             .no-print {
-                display: none;
+                display: none !important;
             }
             
-            /* Forza il break di pagina per mantenere le sezioni insieme */
-            .page-break {
-                page-break-before: always;
-            }
-            
-            /* Evita che le sezioni si spezzino */
-            .section {
-                page-break-inside: avoid;
-            }
-            
-            /* Ottimizza per A4 */
+            /* Pagina senza margini */
             @page {
                 size: A4;
-                margin: 15mm;
+                margin: 5mm;
             }
-        }
-
-        .form-control {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 8px;
-            font-size: 14px;
-            width: 100%;
+            
+            /* Forza il contenuto in 2 pagine max */
+            .page-break-after {
+                page-break-after: always;
+            }
+            
+            /* Mantieni le sezioni insieme */
+            .signatures-section,
+            .inventory-section {
+                page-break-inside: avoid;
+            }
         }
 
         .text-center {
@@ -620,63 +674,11 @@ export class ContractGeneratorService {
         }
 
         .text-small {
-            font-size: 12px;
-        }
-
-        .print-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 1000;
-            transition: background 0.3s;
-        }
-
-        .print-button:hover {
-            background: #2980b9;
-        }
-
-        .print-button:active {
-            transform: translateY(1px);
-        }
-
-        .print-info {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 12px;
-            color: #666;
-            max-width: 200px;
-            z-index: 1000;
+            font-size: 10px;
         }
     </style>
 </head>
 <body>
-    <!-- Pulsante di stampa -->
-    <button class="print-button no-print" onclick="printContract()">
-        🖨️ Stampa Contratto
-    </button>
-    
-    <!-- Informazioni di stampa -->
-    <div class="print-info no-print">
-        <strong>💡 Suggerimenti:</strong><br>
-        • Usa Ctrl+P per stampare<br>
-        • Seleziona "A4" come formato<br>
-        • Rimuovi margini se necessario
-    </div>
-
     <div class="contract-container">
         <!-- Header -->
         <div class="header">
@@ -730,8 +732,20 @@ export class ContractGeneratorService {
                             <div class="field-value">${tenant.firstName} ${tenant.lastName}</div>
                         </div>
                         <div class="field-group">
-                            <label class="field-label">Documento:</label>
-                            <div class="field-value">${tenant.documentType} n° ${tenant.documentNumber}</div>
+                            <label class="field-label">Codice Fiscale:</label>
+                            <div class="field-value">[Codice Fiscale Inquilino]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Data di Nascita:</label>
+                            <div class="field-value">[Data Nascita Inquilino]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Luogo di Nascita:</label>
+                            <div class="field-value">[Luogo Nascita Inquilino]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Residenza:</label>
+                            <div class="field-value">${tenant.address || '[Residenza Inquilino]'}</div>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Telefono:</label>
@@ -747,8 +761,16 @@ export class ContractGeneratorService {
                 <div class="property-details">
                     <div class="property-grid">
                         <div class="field-group">
-                            <label class="field-label">Appartamento:</label>
+                            <label class="field-label">Indirizzo:</label>
                             <div class="field-value">${apartment.name}</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Città:</label>
+                            <div class="field-value">[Città]</div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">CAP:</label>
+                            <div class="field-value">[CAP]</div>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Piano:</label>
@@ -760,15 +782,29 @@ export class ContractGeneratorService {
                         </div>
                         <div class="field-group">
                             <label class="field-label">Vani:</label>
-                            <div class="field-value">${apartment.rooms} locali</div>
+                            <div class="field-value">${apartment.rooms}</div>
                         </div>
-                        <div class="field-group">
-                            <label class="field-label">Bagni:</label>
-                            <div class="field-value">${apartment.bathrooms}</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Stato:</label>
-                            <div class="field-value">${apartment.isFurnished ? 'Arredato' : 'Non arredato'}</div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <label class="field-label">Dati Catastali:</label>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 10px;">
+                            <div class="field-group">
+                                <label class="field-label text-small">Foglio:</label>
+                                <div class="field-value">[Foglio]</div>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label text-small">Particella:</label>
+                                <div class="field-value">[Particella]</div>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label text-small">Subalterno:</label>
+                                <div class="field-value">[Subalterno]</div>
+                            </div>
+                            <div class="field-group">
+                                <label class="field-label text-small">Categoria:</label>
+                                <div class="field-value">[Categoria]</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -778,13 +814,13 @@ export class ContractGeneratorService {
             <div class="section">
                 <h2>DESCRIZIONE DELL'APPARTAMENTO</h2>
                 <div class="property-details">
-                    <p style="margin-bottom: 10px; font-weight: bold;">Il proprietario fornisce l'appartamento così descritto:</p>
+                    <p style="margin-bottom: 15px; font-weight: bold;">Il proprietario fornisce l'appartamento così descritto:</p>
                     <ul class="description-list">
-                        <li>Cucina con elettrodomestici, tavolo, sedie, divano, mobiletto TV, camino</li>
-                        <li>Camera con letto matrimoniale, armadio, comodini, cassettone con specchio</li>
-                        <li>Bagno con doccia, sanitari e accessori</li>
-                        <li>Condizioni generali: ottimo stato</li>
-                        <li>Caldaia: perfetto funzionamento</li>
+                        <li>Cucina perfettamente funzionante con elettrodomestici funzionanti, in perfetto stato, tavolo con 4 sedie, divano, mobiletto TV, camino</li>
+                        <li>Camera con letto matrimoniale, rete doghe, materasso, coprimaterasso, armadio, 2 comodini, 2 abat-jour, cassettone con specchio, tutto in ottimo stato</li>
+                        <li>Bagno con doccia, sanitari e accessori in perfetto stato</li>
+                        <li>Condizioni dell'appartamento al momento della consegna: ottimo stato generale</li>
+                        <li>Condizioni della caldaia di riscaldamento in perfetto stato di funzionamento</li>
                     </ul>
                 </div>
             </div>
@@ -797,17 +833,17 @@ export class ContractGeneratorService {
                     <div class="utilities-grid">
                         <div class="utility-box">
                             <div class="utility-label">GAS</div>
-                            <div class="utility-value">${utilityReadings.gas || 0}</div>
+                            <input type="text" class="utility-input" value="${utilityReadings.gas || 0}">
                             <div class="text-small" style="margin-top: 5px; color: #666;">mc</div>
                         </div>
                         <div class="utility-box">
                             <div class="utility-label">LUCE</div>
-                            <div class="utility-value">${utilityReadings.electricity || 0}</div>
+                            <input type="text" class="utility-input" value="${utilityReadings.electricity || 0}">
                             <div class="text-small" style="margin-top: 5px; color: #666;">kWh</div>
                         </div>
                         <div class="utility-box">
                             <div class="utility-label">ACQUA</div>
-                            <div class="utility-value">${utilityReadings.water || 0}</div>
+                            <input type="text" class="utility-input" value="${utilityReadings.water || 0}">
                             <div class="text-small" style="margin-top: 5px; color: #666;">litri</div>
                         </div>
                     </div>
@@ -821,19 +857,28 @@ export class ContractGeneratorService {
                     <div class="financial-grid">
                         <div class="amount-box">
                             <div class="amount-label">Canone Mensile</div>
-                            <div class="amount-value">€ ${lease.monthlyRent.toFixed(2)}</div>
+                            <div style="display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 14px; margin-right: 5px;">€</span>
+                                <input type="text" class="amount-value" value="${lease.monthlyRent.toFixed(2)}">
+                            </div>
                         </div>
                         <div class="amount-box">
                             <div class="amount-label">Deposito Cauzionale</div>
-                            <div class="amount-value">€ ${lease.securityDeposit.toFixed(2)}</div>
+                            <div style="display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 14px; margin-right: 5px;">€</span>
+                                <input type="text" class="amount-value" value="${lease.securityDeposit.toFixed(2)}">
+                            </div>
+                        </div>
+                        <div class="amount-box">
+                            <div class="amount-label">Spese Condominiali</div>
+                            <div style="display: flex; align-items: center; justify-content: center;">
+                                <span style="font-size: 14px; margin-right: 5px;">€</span>
+                                <input type="text" class="amount-value" value="100,00">
+                            </div>
                         </div>
                         <div class="amount-box">
                             <div class="amount-label">Durata Contratto</div>
-                            <div class="amount-value" style="color: #2c3e50;">${months} mesi</div>
-                        </div>
-                        <div class="amount-box">
-                            <div class="amount-label">Periodo</div>
-                            <div class="amount-value" style="color: #2c3e50;">${startDate} - ${endDate}</div>
+                            <input type="text" class="amount-value" value="${months >= 48 ? '4+4 anni' : months >= 36 ? '3+2 anni' : 'Transitorio'}" style="color: #2c3e50;">
                         </div>
                     </div>
                     
@@ -852,44 +897,44 @@ export class ContractGeneratorService {
             <div class="section">
                 <h2>INVENTARIO DEI BENI MOBILI</h2>
                 <div class="inventory-section">
-                    <p style="font-weight: bold; margin-bottom: 10px;">Lista dei beni mobili presenti nell'immobile:</p>
+                    <p style="font-weight: bold; margin-bottom: 15px;">Lista dei beni mobili presenti nell'immobile:</p>
                     <div class="inventory-grid">
                         <div class="checkbox-item">
-                            <input type="checkbox" id="cucina" checked>
+                            <input type="checkbox" id="cucina" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="cucina">Cucina attrezzata e elettrodomestici</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="camera" checked>
+                            <input type="checkbox" id="camera" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="camera">Camera letto completa</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="soggiorno" checked>
+                            <input type="checkbox" id="soggiorno" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="soggiorno">Soggiorno: divano, tavolo, sedie</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="bagno" checked>
+                            <input type="checkbox" id="bagno" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="bagno">Bagno: sanitari e accessori</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="tv" checked>
+                            <input type="checkbox" id="tv" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="tv">Televisore e mobiletto TV</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="armadi" checked>
+                            <input type="checkbox" id="armadi" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="armadi">Armadi e cassettoni</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="biancheria" checked>
+                            <input type="checkbox" id="biancheria" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="biancheria">Biancheria per casa</label>
                         </div>
                         <div class="checkbox-item">
-                            <input type="checkbox" id="altro">
+                            <input type="checkbox" id="altro" ${apartment.isFurnished ? 'checked' : ''}>
                             <label for="altro">Altro: _________________</label>
                         </div>
                     </div>
                     
-                    <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px;">
-                        <p style="font-size: 11px; color: #666;">
+                    <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 6px;">
+                        <p style="font-size: 12px; color: #666;">
                             La presente descrizione è quella dei beni arredati presenti al momento della consegna dell'immobile. 
                             Eventuali danni o deterioramenti dovranno essere risarciti.
                         </p>
@@ -897,10 +942,19 @@ export class ContractGeneratorService {
                 </div>
             </div>
 
+            <!-- Note Legali -->
+            <div class="legal-notice">
+                <strong>CLAUSOLE IMPORTANTI:</strong><br>
+                • Il presente contratto è soggetto a registrazione presso l'Agenzia delle Entrate entro 30 giorni dalla stipula<br>
+                • Il conduttore dichiara di aver ricevuto informazioni sulla prestazione energetica dell'edificio (APE)<br>
+                • Le parti si danno atto di aver preso visione delle condizioni generali del contratto<br>
+                • Il contratto è regolato dalla Legge 431/98 e successive modificazioni
+            </div>
+
             <!-- Firme -->
             <div class="signatures-section">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <p style="font-weight: bold; font-size: 14px;">VISTO E ACCETTATO</p>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <p style="font-weight: bold; font-size: 16px;">VISTO E ACCETTATO</p>
                 </div>
                 
                 <div class="signatures-grid">
@@ -925,36 +979,28 @@ export class ContractGeneratorService {
     </div>
 
     <script>
-        // Auto-fill current date
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date();
-            const dateStr = today.getDate().toString().padStart(2, '0') + '/' + 
-                           (today.getMonth() + 1).toString().padStart(2, '0') + '/' + 
-                           today.getFullYear();
-            
-            // Auto-fill the date
-            const dateElement = document.querySelector('.date-location span');
-            if (dateElement) {
-                dateElement.textContent = dateStr;
-            }
-        });
-
-        // Print functionality
+        // Print functionality ottimizzata
         function printContract() {
-            // Nascondi i pulsanti prima della stampa
+            // Nascondi elementi non necessari per la stampa
             const printElements = document.querySelectorAll('.no-print');
             printElements.forEach(el => el.style.display = 'none');
             
-            // Stampa
+            // Prepara il documento per stampa ottimale
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            
+            // Stampa il documento
             window.print();
             
-            // Mostra di nuovo i pulsanti dopo la stampa
+            // Ripristina gli elementi dopo la stampa
             setTimeout(() => {
                 printElements.forEach(el => el.style.display = '');
+                document.body.style.margin = '';
+                document.body.style.padding = '';
             }, 1000);
         }
 
-        // Keyboard shortcut per stampa (Ctrl+P)
+        // Keyboard shortcut per stampa veloce (Ctrl+P)
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'p') {
                 e.preventDefault();
@@ -963,7 +1009,41 @@ export class ContractGeneratorService {
         });
 
         // Focus sul documento per migliorare l'esperienza
-        window.focus();
+        document.addEventListener('DOMContentLoaded', function() {
+            window.focus();
+            
+            // Aggiungi funzionalità di auto-salvataggio locale se necessario
+            const inputs = document.querySelectorAll('input, .field-value');
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    // Qui potresti aggiungere logica di auto-salvataggio
+                    // per ora manteniamo solo la funzionalità di stampa
+                });
+            });
+        });
+
+        // Funzione per resettare il form
+        function resetContract() {
+            const inputs = document.querySelectorAll('input[type="text"]');
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            
+            inputs.forEach(input => input.value = '');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+        }
+
+        // Aggiunge tooltip informativi ai campi principali
+        document.addEventListener('DOMContentLoaded', function() {
+            const amountInputs = document.querySelectorAll('.amount-value');
+            amountInputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.style.backgroundColor = '#f0f0f0';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+        });
     </script>
 </body>
 </html>`;
