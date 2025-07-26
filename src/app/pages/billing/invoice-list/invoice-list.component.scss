@@ -1,0 +1,1237 @@
+@use "sass:color";
+
+// Variables with light/dark theme support
+$primary-color: var(--primary-color);
+$primary-dark: var(--primary-dark);
+$accent-color: var(--secondary-color);
+$danger-color: var(--error-color);
+$success-color: var(--success-color);
+$warning-color: var(--warning-color);
+$background-color: var(--app-background);
+$card-background: var(--card-background);
+$surface-color: var(--card-background);
+$text-primary: var(--text-color);
+$text-secondary: var(--text-muted);
+$border-color: var(--border-color);
+$hover-color: rgba(var(--primary-color-rgb), 0.1);
+$active-color: rgba(var(--primary-color-rgb), 0.15);
+$card-shadow: var(--shadow-medium);
+$radius-sm: var(--border-radius-sm);
+$radius-md: var(--border-radius-md);
+$radius-lg: var(--border-radius-lg);
+$transition-speed: var(--transition-normal);
+
+// Mixins per effetti di profondità
+@mixin card-raised {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+}
+
+@mixin section-separator {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, $border-color, transparent);
+  }
+}
+
+.invoice-management-container {
+  padding: 24px;
+  max-width: 1800px;
+  margin: 0 auto;
+  color: $text-primary;
+  user-select: none;
+}
+
+// Header Section
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  
+  .title-area {
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      
+      .counter {
+        font-size: 1.2rem;
+        background-color: $primary-color;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-left: 16px;
+      }
+    }
+    
+    .subtitle {
+      color: $text-secondary;
+      margin: 8px 0 0;
+      font-size: 1rem;
+    }
+  }
+  
+  .new-invoice-button {
+    padding: 0 24px;
+    height: 48px;
+    font-size: 1.1rem;
+    border-radius: $radius-sm;
+    font-weight: 500;
+    background-color: $primary-color !important;
+    color: white !important;
+    
+    mat-icon {
+      font-size: 25px;
+      height: auto;
+      width: auto;
+      margin-right: 10px;
+      margin-bottom: 3px;
+      color: white !important;
+    }
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: $card-shadow;
+      transition: all 0.2s ease;
+      background-color: $primary-dark !important;
+    }
+  }
+}
+
+// KPI Dashboard
+.kpi-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+  
+  .kpi-card {
+    background-color: $card-background;
+    border-radius: $radius-md;
+    padding: 24px;
+    box-shadow: $card-shadow;
+    border: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      @include card-raised;
+    }
+    
+    .kpi-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 20px;
+      
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        color: white;
+      }
+    }
+    
+    .kpi-content {
+      flex: 1;
+      
+      .kpi-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: $text-primary;
+        margin-bottom: 4px;
+      }
+      
+      .kpi-label {
+        font-size: 0.9rem;
+        color: $text-secondary;
+        font-weight: 500;
+      }
+    }
+    
+    // Colori specifici per ogni KPI
+    &.total-invoiced {
+      .kpi-icon {
+        background: linear-gradient(135deg, $primary-color, $primary-dark);
+      }
+    }
+    
+    &.total-paid {
+      .kpi-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+    }
+    
+    &.total-unpaid {
+      .kpi-icon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+    }
+    
+    &.overdue-invoices {
+      .kpi-icon {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+    }
+    
+    &.this-month {
+      .kpi-icon {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+      }
+    }
+    
+    &.avg-payment-time {
+      .kpi-icon {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+      }
+    }
+  }
+}
+
+// Search and Filter Section
+.search-filter-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  
+  .search-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 300px;
+    
+    .search-field {
+      width: 100%;
+      max-width: 500px;
+      
+      ::ng-deep .mat-mdc-form-field-flex {
+        background-color: $surface-color;
+        border-radius: $radius-sm;
+      }
+      
+      ::ng-deep .mat-mdc-text-field-wrapper {
+        background-color: transparent;
+        padding: 0px !important;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-label {
+        color: $text-secondary;
+      }
+      
+      ::ng-deep .mat-mdc-input-element {
+        color: $text-primary !important;
+      }
+      
+      ::ng-deep .mat-mdc-input-element::placeholder {
+        color: $text-secondary !important;
+        opacity: 0.7;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-icon-prefix > .mat-icon {
+        color: $primary-color;
+      }
+      
+      ::ng-deep .mat-mdc-form-field-icon-suffix > .mat-icon {
+        color: $text-secondary;
+      }
+      
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-floating-label {
+        color: $primary-color !important;
+      }
+      
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+      ::ng-deep .mdc-text-field--focused:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+        border-color: $primary-color !important;
+      }
+    }
+    
+    .filter-chips {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      
+      .custom-button-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      
+      .custom-toggle-button {
+        display: flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 12px;
+        border-radius: 16px;
+        background-color: $surface-color;
+        color: $text-primary;
+        border: 1px solid $border-color;
+        font-size: 0.9rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        
+        &:hover {
+          background-color: $hover-color;
+        }
+        
+        .check-icon {
+          font-size: 16px;
+          font-weight: bold;
+          margin-right: 6px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          
+          &.green { color: $success-color; }
+          &.yellow { color: $warning-color; }
+          &.red { color: $danger-color; }
+        }
+        
+        &.active {
+          .check-icon {
+            opacity: 1;
+          }
+          
+          &:nth-child(1) {
+            background-color: rgba(var(--primary-color-rgb), 0.1);
+            color: $primary-color;
+            border-color: $primary-color;
+          }
+          
+          &:nth-child(2) {
+            background-color: rgba(var(--success-color-rgb), 0.1);
+            color: $success-color;
+            border-color: $success-color;
+          }
+          
+          &:nth-child(3) {
+            background-color: rgba(var(--warning-color-rgb), 0.1);
+            color: $warning-color;
+            border-color: $warning-color;
+          }
+          
+          &:nth-child(4) {
+            background-color: rgba(var(--error-color-rgb), 0.1);
+            color: $danger-color;
+            border-color: $danger-color;
+          }
+        }
+        
+        &.reset-filters {
+          color: $primary-color;
+          
+          mat-icon {
+            margin-right: 4px;
+            font-size: 16px;
+            height: 16px;
+            width: 16px;
+            color: $primary-color;
+          }
+        }
+      }
+      
+      .period-filters {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        
+        .period-select {
+          min-width: 200px;
+          
+          ::ng-deep .mat-mdc-form-field-flex {
+            background-color: $surface-color;
+            border-radius: $radius-sm;
+          }
+        }
+        
+        .date-filters {
+          display: flex;
+          gap: 12px;
+          
+          .date-field {
+            min-width: 150px;
+            
+            ::ng-deep .mat-mdc-form-field-flex {
+              background-color: $surface-color;
+              border-radius: $radius-sm;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .view-options {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    background-color: $surface-color;
+    padding: 6px;
+    border-radius: $radius-md;
+    border: 1px solid $border-color;
+    
+    button {
+      background-color: transparent;
+      color: $text-secondary;
+      border-radius: $radius-sm;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+      
+      &.active {
+        background-color: rgba(var(--primary-color-rgb), 0.2);
+        color: $primary-color;
+        
+        mat-icon {
+          color: $primary-color;
+        }
+      }
+      
+      &:hover {
+        background-color: $hover-color;
+      }
+    }
+  }
+}
+
+// Bulk Actions
+.bulk-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+  border-radius: $radius-md;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  
+  .bulk-info {
+    display: flex;
+    align-items: center;
+    color: $primary-color;
+    font-weight: 500;
+    
+    mat-icon {
+      margin-right: 8px;
+      color: $primary-color;
+    }
+  }
+  
+  .bulk-buttons {
+    display: flex;
+    gap: 12px;
+    
+    button {
+      mat-icon {
+        margin-right: 6px;
+      }
+    }
+  }
+}
+
+// Loading Container
+.loading-container {
+  padding: 32px;
+  background-color: $card-background;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  margin-bottom: 24px;
+  text-align: center;
+  
+  mat-progress-bar {
+    margin-bottom: 16px;
+    
+    ::ng-deep .mdc-linear-progress__bar-inner {
+      border-color: $primary-color !important;
+    }
+  }
+  
+  .loading-text {
+    color: $text-secondary;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// No Results
+.no-results-container {
+  padding: 64px 32px;
+  background-color: $card-background;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  text-align: center;
+  
+  .no-results-content {
+    max-width: 400px;
+    margin: 0 auto;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+      color: $text-secondary;
+    }
+    
+    h3 {
+      font-size: 1.4rem;
+      margin: 0 0 8px;
+      color: $text-primary;
+    }
+    
+    p {
+      color: $text-secondary;
+      margin: 0 0 24px;
+    }
+    
+    button {
+      background-color: $primary-color !important;
+      color: white !important;
+      
+      mat-icon {
+        color: white !important;
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+        margin-right: 8px;
+        margin-bottom: 0;
+      }
+      
+      &:hover {
+        background-color: $primary-dark !important;
+      }
+    }
+  }
+}
+
+// Grid view
+.invoices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+  
+  .invoice-card {
+    background-color: $card-background;
+    border-radius: $radius-md;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: $card-shadow;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid $border-color;
+    
+    &:hover {
+      cursor: pointer;
+      @include card-raised;
+    }
+    
+    // Stati della fattura
+    &.status-paid {
+      border-left: 3px solid $success-color;
+    }
+    
+    &.status-unpaid {
+      border-left: 3px solid $warning-color;
+    }
+    
+    &.status-overdue {
+      border-left: 3px solid $danger-color;
+    }
+    
+    &.status-due-soon {
+      border-left: 3px solid $accent-color;
+    }
+    
+    .invoice-header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid $border-color;
+      background-color: rgba(var(--primary-color-rgb), 0.03);
+      
+      .invoice-number {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: $text-primary;
+      }
+      
+      .invoice-status-badge {
+        display: flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        
+        .status-icon {
+          font-size: 16px;
+          height: 16px;
+          width: 16px;
+          margin-right: 6px;
+        }
+        
+        &.status-paid {
+          background-color: rgba(var(--success-color-rgb), 0.1);
+          color: $success-color;
+          border: 1px solid $success-color;
+        }
+        
+        &.status-unpaid {
+          background-color: rgba(var(--warning-color-rgb), 0.1);
+          color: $warning-color;
+          border: 1px solid $warning-color;
+        }
+        
+        &.status-overdue {
+          background-color: rgba(var(--error-color-rgb), 0.1);
+          color: $danger-color;
+          border: 1px solid $danger-color;
+        }
+        
+        &.status-due-soon {
+          background-color: rgba(var(--secondary-color-rgb), 0.1);
+          color: $accent-color;
+          border: 1px solid $accent-color;
+        }
+      }
+    }
+    
+    .invoice-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+      
+      .invoice-info-container {
+        display: flex;
+        gap: 50px;
+        
+        .invoice-info-section {
+          .info-label {
+            display: flex;
+            align-items: center;
+            color: $text-secondary;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            
+            .section-icon {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-right: 8px;
+              
+              &.tenant-icon {
+                background-color: rgba(var(--primary-color-rgb), 0.2);
+                color: $primary-color;
+              }
+              
+              &.apartment-icon {
+                background-color: rgba(var(--secondary-color-rgb), 0.2);
+                color: $accent-color;
+              }
+              
+              mat-icon {
+                font-size: 14px;
+                height: 14px;
+                width: 14px;
+              }
+            }
+          }
+          
+          .info-value {
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding-left: 32px;
+            color: $text-primary;
+          }
+        }
+      }
+      
+      .invoice-financial-section {
+        padding: 12px;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: $radius-sm;
+        
+        .info-label {
+          display: flex;
+          align-items: center;
+          color: $text-secondary;
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+          
+          .section-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            
+            &.payment-icon {
+              background-color: rgba(var(--success-color-rgb), 0.2);
+              color: $success-color;
+            }
+            
+            mat-icon {
+              font-size: 14px;
+              height: 14px;
+              width: 14px;
+            }
+          }
+        }
+        
+        .total-value {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: $success-color;
+          margin: 6px 0 10px 32px;
+        }
+        
+        .period-info {
+          display: flex;
+          align-items: center;
+          font-size: 0.85rem;
+          color: $text-secondary;
+          padding-top: 8px;
+          border-top: 1px solid $border-color;
+          
+          mat-icon {
+            font-size: 16px;
+            height: 16px;
+            width: 16px;
+            margin-right: 8px;
+          }
+        }
+      }
+      
+      .invoice-dates-section {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        
+        .date-column {
+          flex: 1;
+          
+          .date-label {
+            font-size: 0.9rem;
+            color: $text-secondary;
+            margin-bottom: 10px;
+          }
+          
+          .date-value {
+            display: flex;
+            align-items: center;
+            
+            .date-calendar {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              width: 60px;
+              height: 60px;
+              border-radius: $radius-sm;
+              margin-right: 12px;
+              padding-top: 3px;
+              
+              &.issue-date {
+                background-color: rgba(var(--primary-color-rgb), 0.1);
+                border: 1px solid rgba(var(--primary-color-rgb), 0.3);
+                
+                .month, .day {
+                  color: $primary-color;
+                }
+              }
+              
+              &.due-date {
+                background-color: rgba(var(--warning-color-rgb), 0.1);
+                border: 1px solid rgba(var(--warning-color-rgb), 0.3);
+                
+                .month, .day {
+                  color: $warning-color;
+                }
+                
+                &.overdue {
+                  background-color: rgba(var(--error-color-rgb), 0.1);
+                  border: 1px solid rgba(var(--error-color-rgb), 0.3);
+                  
+                  .month, .day {
+                    color: $danger-color;
+                  }
+                }
+              }
+              
+              .month {
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                font-weight: 600;
+                margin-bottom: 4px;
+              }
+              
+              .day {
+                font-size: 1.8rem;
+                font-weight: 700;
+                line-height: 1;
+                padding: 4px 8px;
+                border-radius: $radius-sm;
+              }
+            }
+            
+            .full-date {
+              font-weight: 500;
+              color: $text-primary;
+            }
+          }
+        }
+      }
+      
+      .invoice-items-preview {
+        border-top: 1px solid $border-color;
+        padding-top: 16px;
+        
+        .items-header {
+          display: flex;
+          align-items: center;
+          color: $text-secondary;
+          font-size: 0.9rem;
+          margin-bottom: 12px;
+          
+          mat-icon {
+            font-size: 16px;
+            height: 16px;
+            width: 16px;
+            margin-right: 6px;
+          }
+        }
+        
+        .items-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          
+          .item-preview {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: $radius-sm;
+            
+            .item-description {
+              font-size: 0.9rem;
+              color: $text-primary;
+              flex: 1;
+            }
+            
+            .item-amount {
+              font-weight: 600;
+              color: $text-primary;
+              font-size: 0.9rem;
+            }
+          }
+          
+          .more-items {
+            text-align: center;
+            color: $text-secondary;
+            font-size: 0.85rem;
+            font-style: italic;
+            padding: 8px;
+          }
+        }
+      }
+    }
+    
+    .invoice-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px;
+      background-color: rgba(0, 0, 0, 0.05);
+      border-top: 1px solid $border-color;
+      
+      button {
+        background: none !important;
+        
+        mat-icon {
+          transition: transform 0.2s ease;
+        }
+        
+        &:hover mat-icon {
+          transform: scale(1.15);
+        }
+        
+        &[color="primary"] {
+          color: $primary-color !important;
+          
+          mat-icon {
+            color: $primary-color !important;
+          }
+        }
+        
+        &[color="accent"] {
+          color: $warning-color !important;
+          
+          mat-icon {
+            color: $warning-color !important;
+          }
+        }
+        
+        &[color="warn"] {
+          color: $danger-color !important;
+          
+          mat-icon {
+            color: $danger-color !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// List view
+.invoices-table-container {
+  overflow-x: auto;
+  margin-bottom: 24px;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  
+  .invoices-table {
+    width: 100%;
+    background-color: $card-background;
+    
+    .mat-mdc-header-row {
+      background-color: rgba(var(--primary-color-rgb), 0.05);
+      height: 56px;
+      
+      .mat-mdc-header-cell {
+        color: $text-secondary;
+        font-size: 0.9rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .mat-mdc-row {
+      height: 72px;
+      transition: background-color 0.15s ease;
+      
+      &:hover {
+        background-color: $hover-color;
+      }
+      
+      &.paid-row {
+        border-left: 3px solid $success-color;
+      }
+      
+      &.overdue-row {
+        border-left: 3px solid $danger-color;
+      }
+    }
+    
+    // Cell styles
+    .invoice-number-cell {
+      display: flex;
+      flex-direction: column;
+      
+      .number-badge {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: $text-primary;
+      }
+      
+      .period-badge {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+    }
+    
+    .tenant-cell, .apartment-cell {
+      display: flex;
+      align-items: center;
+      
+      mat-icon {
+        margin-right: 8px;
+        
+        &.tenant-icon {
+          color: $primary-color;
+        }
+        
+        &.apartment-icon {
+          color: $accent-color;
+        }
+      }
+      
+      span {
+        color: $text-primary;
+      }
+    }
+    
+    .period-cell {
+      display: flex;
+      flex-direction: column;
+      
+      .period-label {
+        font-weight: 600;
+        color: $text-primary;
+        font-size: 0.9rem;
+      }
+      
+      .period-dates {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+    }
+    
+    .total-cell {
+      display: flex;
+      flex-direction: column;
+      
+      .total-amount {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: $success-color;
+      }
+      
+      .items-count {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+    }
+    
+    .status-badge {
+      display: flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      width: fit-content;
+      
+      .status-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+        margin-right: 4px;
+      }
+      
+      &.status-paid {
+        background-color: rgba(var(--success-color-rgb), 0.2);
+        color: $success-color;
+        border: 1px solid $success-color;
+      }
+      
+      &.status-unpaid {
+        background-color: rgba(var(--warning-color-rgb), 0.2);
+        color: $warning-color;
+        border: 1px solid $warning-color;
+      }
+      
+      &.status-overdue {
+        background-color: rgba(var(--error-color-rgb), 0.2);
+        color: $danger-color;
+        border: 1px solid $danger-color;
+      }
+      
+      &.status-due-soon {
+        background-color: rgba(var(--secondary-color-rgb), 0.2);
+        color: $accent-color;
+        border: 1px solid $accent-color;
+      }
+    }
+    
+    .due-date-cell {
+      display: flex;
+      flex-direction: column;
+      
+      .due-date {
+        font-weight: 500;
+        color: $text-primary;
+      }
+      
+      .days-remaining {
+        font-size: 0.8rem;
+        color: $text-secondary;
+      }
+      
+      &.overdue {
+        .due-date {
+          color: $danger-color;
+          font-weight: 600;
+        }
+        
+        .days-remaining {
+          color: $danger-color;
+        }
+      }
+    }
+    
+    .table-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      
+      button {
+        background: none !important;
+        
+        mat-icon {
+          transition: transform 0.2s ease;
+        }
+        
+        &:hover mat-icon {
+          transform: scale(1.15);
+        }
+        
+        &[color="primary"] {
+          color: $primary-color !important;
+          
+          mat-icon {
+            color: $primary-color !important;
+          }
+        }
+        
+        &[color="accent"] {
+          color: $warning-color !important;
+          
+          mat-icon {
+            color: $warning-color !important;
+          }
+        }
+        
+        &[color="warn"] {
+          color: $danger-color !important;
+          
+          mat-icon {
+            color: $danger-color !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Pagination controls
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: $card-background;
+  padding: 16px 24px;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  
+  .page-info {
+    color: $text-secondary;
+    font-size: 0.9rem;
+  }
+  
+  mat-paginator {
+    ::ng-deep .mat-mdc-paginator-container {
+      background-color: transparent;
+    }
+    
+    ::ng-deep .mat-mdc-paginator-page-size {
+      color: $text-secondary;
+    }
+    
+    ::ng-deep .mat-mdc-paginator-range-label {
+      color: $text-secondary;
+    }
+    
+    ::ng-deep .mat-mdc-paginator-navigation-previous,
+    ::ng-deep .mat-mdc-paginator-navigation-next {
+      color: $primary-color;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .invoice-management-container {
+    padding: 16px;
+  }
+  
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    
+    .new-invoice-button {
+      align-self: stretch;
+    }
+  }
+  
+  .kpi-dashboard {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-filter-section {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .search-container {
+      min-width: auto;
+    }
+    
+    .view-options {
+      align-self: center;
+    }
+  }
+  
+  .invoices-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bulk-actions {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    
+    .bulk-buttons {
+      justify-content: center;
+    }
+  }
+  
+  .pagination-controls {
+    flex-direction: column;
+    gap: 16px;
+    
+    .page-info {
+      text-align: center;
+    }
+  }
+} 

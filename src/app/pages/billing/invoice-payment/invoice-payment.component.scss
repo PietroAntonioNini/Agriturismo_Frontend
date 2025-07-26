@@ -1,0 +1,424 @@
+// Variabili SASS basate sul tema dell'applicazione
+$primary-color: #4caf50;
+$primary-light: #81c784;
+$primary-dark: #388e3c;
+$accent-color: #ff9800;
+$warn-color: #f44336;
+$success-color: #4caf50;
+
+$background-color: #fafafa;
+$surface-color: #ffffff;
+$text-primary: #212121;
+$text-secondary: #757575;
+$border-color: #e0e0e0;
+
+$border-radius: 8px;
+$card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+$elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+
+.invoice-payment-container {
+  padding: 24px;
+  background-color: $background-color;
+  min-height: 100vh;
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    gap: 16px;
+
+    p {
+      color: $text-secondary;
+      font-size: 16px;
+      margin: 0;
+    }
+  }
+
+  .payment-content {
+    max-width: 1200px;
+    margin: 0 auto;
+
+    .payment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding: 24px;
+      background: $surface-color;
+      border-radius: $border-radius;
+      box-shadow: $card-shadow;
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .back-button {
+          color: $text-secondary;
+        }
+
+        .header-info {
+          h1 {
+            margin: 0 0 4px 0;
+            color: $text-primary;
+            font-size: 24px;
+            font-weight: 500;
+          }
+
+          .subtitle {
+            margin: 0;
+            color: $text-secondary;
+            font-size: 14px;
+          }
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+    }
+
+    .payment-tabs {
+      background: $surface-color;
+      border-radius: $border-radius;
+      box-shadow: $card-shadow;
+      overflow: hidden;
+
+      ::ng-deep .mat-tab-header {
+        background: $primary-color;
+        color: white;
+      }
+
+      ::ng-deep .mat-tab-label {
+        color: white;
+        opacity: 0.7;
+        
+        &.mat-tab-label-active {
+          opacity: 1;
+        }
+      }
+
+      ::ng-deep .mat-ink-bar {
+        background-color: white;
+      }
+
+      .tab-content {
+        padding: 32px;
+
+        .payment-form-card, .payment-history-card, .summary-card {
+          box-shadow: none;
+          border: 1px solid $border-color;
+          border-radius: $border-radius;
+
+          mat-card-header {
+            margin-bottom: 24px;
+
+            mat-card-title {
+              color: $text-primary;
+              font-size: 20px;
+              font-weight: 500;
+              margin: 0;
+            }
+
+            mat-card-subtitle {
+              color: $text-secondary;
+              margin: 8px 0 0 0;
+            }
+          }
+
+          mat-card-content {
+            .payment-form {
+              .form-row {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 24px;
+                margin-bottom: 24px;
+
+                .form-field {
+                  width: 100%;
+
+                  &.full-width {
+                    grid-column: 1 / -1;
+                  }
+                }
+              }
+
+              .form-actions {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 32px;
+
+                .button-spinner {
+                  margin-left: 8px;
+                }
+              }
+            }
+
+            .payments-table {
+              .payment-table {
+                width: 100%;
+
+                .amount-cell {
+                  font-weight: 500;
+                  color: $primary-color;
+                }
+
+                .method-cell {
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+
+                  mat-icon {
+                    font-size: 18px;
+                    color: $text-secondary;
+                  }
+                }
+
+                .reference-cell {
+                  font-family: monospace;
+                  color: $text-secondary;
+                }
+              }
+            }
+
+            .no-payments {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 48px 24px;
+              text-align: center;
+
+              mat-icon {
+                font-size: 48px;
+                color: $text-secondary;
+                margin-bottom: 16px;
+              }
+
+              h3 {
+                margin: 0 0 8px 0;
+                color: $text-primary;
+                font-size: 18px;
+                font-weight: 500;
+              }
+
+              p {
+                margin: 0;
+                color: $text-secondary;
+                font-size: 14px;
+              }
+            }
+
+            .summary-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+              gap: 32px;
+              margin-bottom: 32px;
+
+              .summary-section {
+                h4 {
+                  margin: 0 0 16px 0;
+                  color: $text-primary;
+                  font-size: 16px;
+                  font-weight: 500;
+                }
+
+                .summary-item {
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  padding: 12px 0;
+                  border-bottom: 1px solid $border-color;
+
+                  &:last-child {
+                    border-bottom: none;
+                  }
+
+                  .label {
+                    color: $text-secondary;
+                    font-size: 14px;
+                  }
+
+                  .value {
+                    color: $text-primary;
+                    font-weight: 500;
+
+                    &.total {
+                      color: $primary-color;
+                      font-size: 18px;
+                      font-weight: 600;
+                    }
+
+                    &.paid {
+                      color: $success-color;
+                      font-weight: 600;
+                    }
+
+                    &.remaining {
+                      color: $warn-color;
+                      font-weight: 600;
+                    }
+                  }
+                }
+              }
+            }
+
+            .payment-progress {
+              h4 {
+                margin: 0 0 16px 0;
+                color: $text-primary;
+                font-size: 16px;
+                font-weight: 500;
+              }
+
+              .progress-text {
+                margin-top: 8px;
+                text-align: center;
+                color: $text-secondary;
+                font-size: 14px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Stili per payment method options
+.payment-method-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+
+  mat-icon {
+    color: $primary-color;
+    font-size: 20px;
+  }
+
+  .method-info {
+    .method-label {
+      font-weight: 500;
+      color: $text-primary;
+    }
+
+    .method-description {
+      font-size: 12px;
+      color: $text-secondary;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .invoice-payment-container {
+    padding: 16px;
+
+    .payment-content {
+      .payment-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+
+        .header-content {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+
+        .header-actions {
+          justify-content: flex-end;
+        }
+      }
+
+      .payment-tabs {
+        .tab-content {
+          padding: 16px;
+
+          .payment-form-card, .payment-history-card, .summary-card {
+            mat-card-content {
+              .payment-form {
+                .form-row {
+                  grid-template-columns: 1fr;
+                  gap: 16px;
+                }
+
+                .form-actions {
+                  button {
+                    width: 100%;
+                  }
+                }
+              }
+
+              .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Stili per Material Design
+::ng-deep {
+  .mat-form-field-appearance-outline {
+    .mat-form-field-outline {
+      color: $border-color;
+    }
+
+    &.mat-focused .mat-form-field-outline-thick {
+      color: $primary-color;
+    }
+  }
+
+  .mat-button, .mat-flat-button {
+    border-radius: $border-radius;
+    text-transform: none;
+    font-weight: 500;
+  }
+
+  .mat-flat-button.mat-primary {
+    background-color: $primary-color;
+    
+    &:hover {
+      background-color: $primary-dark;
+    }
+  }
+
+  .mat-chip.mat-standard-chip {
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .mat-chip.mat-standard-chip.mat-chip-selected.mat-primary {
+    background-color: $primary-color;
+    color: white;
+  }
+
+  .mat-chip.mat-standard-chip.mat-chip-selected.mat-warn {
+    background-color: $warn-color;
+    color: white;
+  }
+
+  .mat-chip.mat-standard-chip.mat-chip-selected.mat-accent {
+    background-color: $accent-color;
+    color: white;
+  }
+
+  .mat-progress-bar-fill::after {
+    background-color: $primary-color;
+  }
+
+  .mat-progress-bar-buffer {
+    background-color: rgba($primary-color, 0.2);
+  }
+} 

@@ -17,6 +17,8 @@ export class InvoiceService {
       invoiceId: 1,
       description: 'Affitto Giugno 2023',
       amount: 750,
+      quantity: 1,
+      unitPrice: 750,
       type: 'rent'
     },
     {
@@ -24,6 +26,8 @@ export class InvoiceService {
       invoiceId: 1,
       description: 'Utenza Elettrica Giugno 2023',
       amount: 95.50,
+      quantity: 1,
+      unitPrice: 95.50,
       type: 'electricity'
     },
     {
@@ -31,6 +35,8 @@ export class InvoiceService {
       invoiceId: 1,
       description: 'Utenza Idrica Giugno 2023',
       amount: 45.80,
+      quantity: 1,
+      unitPrice: 45.80,
       type: 'water'
     },
     {
@@ -38,6 +44,8 @@ export class InvoiceService {
       invoiceId: 2,
       description: 'Affitto Giugno 2023',
       amount: 600,
+      quantity: 1,
+      unitPrice: 600,
       type: 'rent'
     },
     {
@@ -45,6 +53,8 @@ export class InvoiceService {
       invoiceId: 2,
       description: 'Utenza Gas Giugno 2023',
       amount: 30.25,
+      quantity: 1,
+      unitPrice: 30.25,
       type: 'gas'
     },
     {
@@ -52,6 +62,8 @@ export class InvoiceService {
       invoiceId: 3,
       description: 'Affitto Luglio 2023',
       amount: 750,
+      quantity: 1,
+      unitPrice: 750,
       type: 'rent'
     }
   ];
@@ -67,11 +79,14 @@ export class InvoiceService {
       year: 2023,
       issueDate: new Date('2023-06-01'),
       dueDate: new Date('2023-06-10'),
+      periodStart: new Date('2023-06-01'),
+      periodEnd: new Date('2023-06-30'),
       items: this.mockInvoiceItems.filter(item => item.invoiceId === 1),
       subtotal: 891.30,
       tax: 0,
       total: 891.30,
       isPaid: true,
+      status: 'paid',
       paymentDate: new Date('2023-06-08'),
       paymentMethod: 'bank_transfer',
       notes: 'Fattura di giugno',
@@ -89,11 +104,14 @@ export class InvoiceService {
       year: 2023,
       issueDate: new Date('2023-06-01'),
       dueDate: new Date('2023-06-10'),
+      periodStart: new Date('2023-06-01'),
+      periodEnd: new Date('2023-06-30'),
       items: this.mockInvoiceItems.filter(item => item.invoiceId === 2),
       subtotal: 630.25,
       tax: 0,
       total: 630.25,
       isPaid: false,
+      status: 'pending',
       reminderSent: true,
       reminderDate: new Date('2023-06-15'),
       createdAt: new Date('2023-06-01'),
@@ -109,11 +127,14 @@ export class InvoiceService {
       year: 2023,
       issueDate: new Date('2023-07-01'),
       dueDate: new Date('2023-07-10'),
+      periodStart: new Date('2023-07-01'),
+      periodEnd: new Date('2023-07-31'),
       items: this.mockInvoiceItems.filter(item => item.invoiceId === 3),
       subtotal: 750,
       tax: 0,
       total: 750,
       isPaid: false,
+      status: 'pending',
       reminderSent: false,
       createdAt: new Date('2023-07-01'),
       updatedAt: new Date('2023-07-01')
@@ -128,6 +149,7 @@ export class InvoiceService {
       paymentDate: new Date('2023-06-08'),
       paymentMethod: 'bank_transfer',
       reference: 'TRNX-123456',
+      status: 'completed',
       createdAt: new Date('2023-06-08'),
       updatedAt: new Date('2023-06-08')
     }
@@ -309,7 +331,8 @@ export class InvoiceService {
         amount: invoice.total,
         paymentDate,
         paymentMethod,
-        reference: `PAY-${Date.now()}`
+        reference: `PAY-${Date.now()}`,
+        status: 'completed'
       }).subscribe();
       
       return of(invoice).pipe(delay(300));
@@ -357,17 +380,22 @@ export class InvoiceService {
       year,
       issueDate: today,
       dueDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 10),
+      periodStart: new Date(year, month - 1, 1),
+      periodEnd: new Date(year, month, 0),
       items: [{
         id: Math.max(...this.mockInvoiceItems.map(i => i.id)) + 1,
         invoiceId: Math.max(...this.mockInvoices.map(i => i.id)) + 1,
         description: `Affitto ${month}/${year}`,
         amount: 750,
+        quantity: 1,
+        unitPrice: 750,
         type: 'rent'
       }],
       subtotal: 750,
       tax: 0,
       total: 750,
       isPaid: false,
+      status: 'pending',
       reminderSent: false,
       createdAt: today,
       updatedAt: today
@@ -386,5 +414,76 @@ export class InvoiceService {
     const tax = subtotal * taxRate;
     const total = subtotal + tax;
     return { subtotal, tax, total };
+  }
+
+  // Metodi aggiuntivi per i componenti di fatturazione
+  markAsPaid(invoiceId: number): Observable<Invoice> {
+    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
+    if (invoice) {
+      invoice.isPaid = true;
+      invoice.status = 'paid';
+      invoice.paymentDate = new Date();
+      invoice.updatedAt = new Date();
+      return of(invoice).pipe(delay(300));
+    }
+    return of({} as Invoice);
+  }
+
+  recordPayment(invoiceId: number, payment: Partial<PaymentRecord>): Observable<PaymentRecord> {
+    const newPayment: PaymentRecord = {
+      id: this.mockPaymentRecords.length > 0 ? Math.max(...this.mockPaymentRecords.map(p => p.id)) + 1 : 1,
+      invoiceId,
+      amount: payment.amount || 0,
+      paymentDate: payment.paymentDate || new Date(),
+      paymentMethod: payment.paymentMethod || 'bank_transfer',
+      reference: payment.reference,
+      notes: payment.notes,
+      status: 'completed',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    this.mockPaymentRecords.push(newPayment);
+    
+    // Aggiorna lo stato della fattura
+    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
+    if (invoice) {
+      const totalPaid = this.mockPaymentRecords
+        .filter(p => p.invoiceId === invoiceId)
+        .reduce((sum, p) => sum + p.amount, 0);
+      
+      if (totalPaid >= invoice.total) {
+        invoice.isPaid = true;
+        invoice.status = 'paid';
+        invoice.paymentDate = new Date();
+      }
+      invoice.updatedAt = new Date();
+    }
+    
+    return of(newPayment).pipe(delay(300));
+  }
+
+  removePayment(paymentId: number): Observable<void> {
+    const index = this.mockPaymentRecords.findIndex(p => p.id === paymentId);
+    if (index !== -1) {
+      const payment = this.mockPaymentRecords[index];
+      this.mockPaymentRecords.splice(index, 1);
+      
+      // Ricalcola lo stato della fattura
+      const invoice = this.mockInvoices.find(i => i.id === payment.invoiceId);
+      if (invoice) {
+        const totalPaid = this.mockPaymentRecords
+          .filter(p => p.invoiceId === payment.invoiceId)
+          .reduce((sum, p) => sum + p.amount, 0);
+        
+        if (totalPaid < invoice.total) {
+          invoice.isPaid = false;
+          invoice.status = 'pending';
+          invoice.paymentDate = undefined;
+        }
+        invoice.updatedAt = new Date();
+      }
+    }
+    return of(void 0).pipe(delay(300));
   }
 }

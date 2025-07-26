@@ -1,0 +1,338 @@
+<div class="invoice-detail-container">
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+    <p>Caricamento fattura in corso...</p>
+  </div>
+
+  <!-- Contenuto principale -->
+  <div *ngIf="!isLoading && (invoice$ | async) as invoice" class="invoice-content">
+    <!-- Header con azioni -->
+    <div class="invoice-header">
+      <div class="header-left">
+        <button mat-icon-button routerLink="/billing/list" matTooltip="Torna alla lista">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="invoice-title">
+          <h1>Fattura {{invoice.invoiceNumber}}</h1>
+          <div class="invoice-subtitle">
+            <span class="period">{{getPeriodLabel(invoice)}}</span>
+            <span class="separator">•</span>
+            <span class="tenant">{{getTenantName(invoice.tenantId)}}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <div class="status-badge" [class]="getStatusClass(invoice)">
+          <mat-icon class="status-icon">{{getStatusIcon(invoice)}}</mat-icon>
+          {{getStatusLabel(invoice)}}
+        </div>
+        
+        <button mat-icon-button [matMenuTriggerFor]="actionsMenu" matTooltip="Azioni">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        
+        <mat-menu #actionsMenu="matMenu">
+          <button mat-menu-item (click)="editInvoice(invoice)">
+            <mat-icon>edit</mat-icon>
+            <span>Modifica Fattura</span>
+          </button>
+          <button mat-menu-item (click)="printInvoice(invoice)">
+            <mat-icon>print</mat-icon>
+            <span>Stampa Fattura</span>
+          </button>
+          <button mat-menu-item (click)="recordPayment(invoice)" *ngIf="!invoice.isPaid">
+            <mat-icon>payments</mat-icon>
+            <span>Registra Pagamento</span>
+          </button>
+          <button mat-menu-item (click)="markAsPaid(invoice)" *ngIf="!invoice.isPaid">
+            <mat-icon>check_circle</mat-icon>
+            <span>Marca come Pagata</span>
+          </button>
+          <button mat-menu-item (click)="sendReminder(invoice)" *ngIf="!invoice.isPaid">
+            <mat-icon>notifications</mat-icon>
+            <span>Invia Promemoria</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="deleteInvoice(invoice)" class="danger-action">
+            <mat-icon>delete</mat-icon>
+            <span>Elimina Fattura</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <!-- Tabs principali -->
+    <mat-tab-group [(selectedIndex)]="selectedTab" class="invoice-tabs">
+      <!-- Tab Dettagli -->
+      <mat-tab label="Dettagli">
+        <div class="tab-content">
+          <div class="invoice-details-grid">
+            <!-- Informazioni principali -->
+            <mat-card class="detail-card main-info">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>info</mat-icon>
+                  Informazioni Principali
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <label>Numero Fattura</label>
+                    <span class="value">{{invoice.invoiceNumber}}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Periodo</label>
+                    <span class="value">{{getPeriodLabel(invoice)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Inquilino</label>
+                    <span class="value">{{getTenantName(invoice.tenantId)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Appartamento</label>
+                    <span class="value">{{getApartmentName(invoice.apartmentId)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Data Emissione</label>
+                    <span class="value">{{formatDate(invoice.issueDate)}}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Data Scadenza</label>
+                    <span class="value" [class.overdue]="isOverdue(invoice)">
+                      {{formatDate(invoice.dueDate)}}
+                      <span *ngIf="!invoice.isPaid" class="days-info">
+                        <span *ngIf="isOverdue(invoice); else daysLeft" class="overdue">
+                          Scaduta da {{Math.abs(getDaysUntilDue(invoice))}} giorni
+                        </span>
+                        <ng-template #daysLeft>
+                          <span *ngIf="isDueSoon(invoice)" class="due-soon">
+                            Scade tra {{getDaysUntilDue(invoice)}} giorni
+                          </span>
+                        </ng-template>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Riepilogo finanziario -->
+            <mat-card class="detail-card financial-summary">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>euro</mat-icon>
+                  Riepilogo Finanziario
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="financial-grid">
+                  <div class="financial-item subtotal">
+                    <label>Subtotale</label>
+                    <span class="amount">{{formatCurrency(invoice.subtotal)}}</span>
+                  </div>
+                  <div class="financial-item tax">
+                    <label>IVA</label>
+                    <span class="amount">{{formatCurrency(invoice.tax)}}</span>
+                  </div>
+                  <mat-divider></mat-divider>
+                  <div class="financial-item total">
+                    <label>Totale</label>
+                    <span class="amount">{{formatCurrency(invoice.total)}}</span>
+                  </div>
+                </div>
+                
+                <div class="payment-info" *ngIf="invoice.isPaid">
+                  <mat-divider></mat-divider>
+                  <div class="payment-details">
+                    <div class="payment-item">
+                      <label>Pagato il</label>
+                      <span>{{formatDate(invoice.paymentDate!)}}</span>
+                    </div>
+                    <div class="payment-item">
+                      <label>Metodo di Pagamento</label>
+                      <span>{{getPaymentMethodLabel(invoice.paymentMethod)}}</span>
+                    </div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Voci della fattura -->
+            <mat-card class="detail-card invoice-items">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>list</mat-icon>
+                  Voci della Fattura ({{invoice.items.length}})
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="items-list">
+                  <div *ngFor="let item of invoice.items" class="item-row">
+                    <div class="item-info">
+                      <div class="item-type">
+                        <mat-icon [style.color]="getItemTypeColor(item.type)">
+                          {{getItemTypeIcon(item.type)}}
+                        </mat-icon>
+                        <span class="type-label">{{getItemTypeLabel(item.type)}}</span>
+                      </div>
+                      <div class="item-description">{{item.description}}</div>
+                    </div>
+                    <div class="item-amount">{{formatCurrency(item.amount)}}</div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Note -->
+            <mat-card class="detail-card notes" *ngIf="invoice.notes">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>note</mat-icon>
+                  Note
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <p class="notes-text">{{invoice.notes}}</p>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab Pagamenti -->
+      <mat-tab label="Pagamenti">
+        <div class="tab-content">
+          <div class="payments-section">
+            <!-- Stato pagamento -->
+            <mat-card class="payment-status-card">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>payments</mat-icon>
+                  Stato Pagamento
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="payment-status">
+                  <div class="status-indicator" [class]="getStatusClass(invoice)">
+                    <mat-icon>{{getStatusIcon(invoice)}}</mat-icon>
+                    <div class="status-text">
+                      <h3>{{getStatusLabel(invoice)}}</h3>
+                      <p *ngIf="!invoice.isPaid">
+                        <span *ngIf="isOverdue(invoice)" class="overdue">
+                          Fattura scaduta da {{Math.abs(getDaysUntilDue(invoice))}} giorni
+                        </span>
+                        <span *ngIf="!isOverdue(invoice)" class="due">
+                          Scade il {{formatDate(invoice.dueDate)}}
+                        </span>
+                      </p>
+                      <p *ngIf="invoice.isPaid">
+                        Pagata il {{formatDate(invoice.paymentDate!)}}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div class="payment-actions" *ngIf="!invoice.isPaid">
+                    <button mat-flat-button color="primary" (click)="recordPayment(invoice)">
+                      <mat-icon>payments</mat-icon>
+                      Registra Pagamento
+                    </button>
+                    <button mat-stroked-button color="primary" (click)="markAsPaid(invoice)">
+                      <mat-icon>check_circle</mat-icon>
+                      Marca come Pagata
+                    </button>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Storico pagamenti -->
+            <mat-card class="payment-history-card">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>history</mat-icon>
+                  Storico Pagamenti
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div *ngIf="isLoadingPayments" class="loading-payments">
+                  <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                  <span>Caricamento pagamenti...</span>
+                </div>
+                
+                <div *ngIf="!isLoadingPayments && (paymentRecords$ | async) as payments">
+                  <div *ngIf="payments.length === 0" class="no-payments">
+                    <mat-icon>payments_off</mat-icon>
+                    <p>Nessun pagamento registrato</p>
+                  </div>
+                  
+                  <div *ngIf="payments.length > 0" class="payments-list">
+                    <div *ngFor="let payment of payments" class="payment-record">
+                      <div class="payment-info">
+                        <div class="payment-amount">{{formatCurrency(payment.amount)}}</div>
+                        <div class="payment-details">
+                          <div class="payment-date">{{formatDate(payment.paymentDate)}}</div>
+                          <div class="payment-method">{{getPaymentMethodLabel(payment.paymentMethod)}}</div>
+                          <div class="payment-reference" *ngIf="payment.reference">
+                            Riferimento: {{payment.reference}}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="payment-notes" *ngIf="payment.notes">
+                        {{payment.notes}}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Tab Timeline -->
+      <mat-tab label="Timeline">
+        <div class="tab-content">
+          <mat-card class="timeline-card">
+            <mat-card-header>
+              <mat-card-title>
+                <mat-icon>timeline</mat-icon>
+                Cronologia Fattura
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="timeline-container">
+                <div *ngIf="(timeline$ | async) as timeline">
+                  <div *ngFor="let event of timeline; let i = index" class="timeline-event">
+                    <div class="timeline-marker" [style.background-color]="event.color">
+                      <mat-icon>{{event.icon}}</mat-icon>
+                    </div>
+                    <div class="timeline-content">
+                      <div class="event-header">
+                        <h4>{{event.action}}</h4>
+                        <span class="event-date">{{formatDateTime(event.date)}}</span>
+                      </div>
+                      <p class="event-description">{{event.description}}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+
+  <!-- Errore -->
+  <div *ngIf="!isLoading && !(invoice$ | async)" class="error-container">
+    <mat-icon>error_outline</mat-icon>
+    <h3>Fattura non trovata</h3>
+    <p>La fattura richiesta non esiste o è stata rimossa.</p>
+    <button mat-flat-button color="primary" routerLink="/billing/list">
+      Torna alla Lista
+    </button>
+  </div>
+</div> 

@@ -222,4 +222,32 @@ export class NotificationService {
       console.warn('Impossibile caricare le notifiche dal localStorage:', error);
     }
   }
+
+  /**
+   * Mostra una notifica di successo
+   */
+  showSuccess(message: string): void {
+    this.addNotification({
+      type: 'utility',
+      action: 'created',
+      title: 'Successo',
+      subtitle: message,
+      icon: 'check_circle',
+      color: '#10b981'
+    });
+  }
+
+  /**
+   * Mostra una notifica di errore
+   */
+  showError(message: string): void {
+    this.addNotification({
+      type: 'utility',
+      action: 'deleted',
+      title: 'Errore',
+      subtitle: message,
+      icon: 'error',
+      color: '#ef4444'
+    });
+  }
 } 

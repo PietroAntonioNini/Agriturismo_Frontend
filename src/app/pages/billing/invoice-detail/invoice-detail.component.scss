@@ -1,0 +1,797 @@
+@use "sass:color";
+
+// Variables with light/dark theme support
+$primary-color: var(--primary-color);
+$primary-dark: var(--primary-dark);
+$accent-color: var(--secondary-color);
+$danger-color: var(--error-color);
+$success-color: var(--success-color);
+$warning-color: var(--warning-color);
+$background-color: var(--app-background);
+$card-background: var(--card-background);
+$surface-color: var(--card-background);
+$text-primary: var(--text-color);
+$text-secondary: var(--text-muted);
+$border-color: var(--border-color);
+$hover-color: rgba(var(--primary-color-rgb), 0.1);
+$active-color: rgba(var(--primary-color-rgb), 0.15);
+$card-shadow: var(--shadow-medium);
+$radius-sm: var(--border-radius-sm);
+$radius-md: var(--border-radius-md);
+$radius-lg: var(--border-radius-lg);
+$transition-speed: var(--transition-normal);
+
+.invoice-detail-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: $text-primary;
+  min-height: 100vh;
+}
+
+// Loading Container
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  
+  mat-progress-spinner {
+    margin-bottom: 16px;
+  }
+  
+  p {
+    color: $text-secondary;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// Error Container
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  
+  mat-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    margin-bottom: 16px;
+    color: $danger-color;
+  }
+  
+  h3 {
+    font-size: 1.4rem;
+    margin: 0 0 8px;
+    color: $text-primary;
+  }
+  
+  p {
+    color: $text-secondary;
+    margin: 0 0 24px;
+  }
+  
+  button {
+    background-color: $primary-color !important;
+    color: white !important;
+    
+    &:hover {
+      background-color: $primary-dark !important;
+    }
+  }
+}
+
+// Invoice Content
+.invoice-content {
+  .invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid $border-color;
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      button {
+        color: $text-secondary;
+        
+        &:hover {
+          color: $primary-color;
+        }
+      }
+      
+      .invoice-title {
+        h1 {
+          font-size: 2rem;
+          font-weight: 600;
+          margin: 0;
+          color: $text-primary;
+        }
+        
+        .invoice-subtitle {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-top: 4px;
+          
+          .period {
+            color: $primary-color;
+            font-weight: 500;
+          }
+          
+          .separator {
+            color: $text-secondary;
+          }
+          
+          .tenant {
+            color: $text-secondary;
+          }
+        }
+      }
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      
+      .status-badge {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        
+        .status-icon {
+          font-size: 18px;
+          height: 18px;
+          width: 18px;
+          margin-right: 8px;
+        }
+        
+        &.status-paid {
+          background-color: rgba(var(--success-color-rgb), 0.1);
+          color: $success-color;
+          border: 1px solid $success-color;
+        }
+        
+        &.status-unpaid {
+          background-color: rgba(var(--warning-color-rgb), 0.1);
+          color: $warning-color;
+          border: 1px solid $warning-color;
+        }
+        
+        &.status-overdue {
+          background-color: rgba(var(--error-color-rgb), 0.1);
+          color: $danger-color;
+          border: 1px solid $danger-color;
+        }
+        
+        &.status-due-soon {
+          background-color: rgba(var(--secondary-color-rgb), 0.1);
+          color: $accent-color;
+          border: 1px solid $accent-color;
+        }
+      }
+      
+      button {
+        color: $text-secondary;
+        
+        &:hover {
+          color: $primary-color;
+        }
+      }
+    }
+  }
+}
+
+// Tabs
+.invoice-tabs {
+  ::ng-deep .mat-mdc-tab-group {
+    .mat-mdc-tab-header {
+      border-bottom: 1px solid $border-color;
+      
+      .mat-mdc-tab-label {
+        color: $text-secondary;
+        font-weight: 500;
+        
+        &.mat-mdc-tab-label-active {
+          color: $primary-color;
+        }
+      }
+      
+      .mat-mdc-tab-header-pagination-chevron {
+        border-color: $text-secondary;
+      }
+    }
+    
+    .mat-mdc-tab-body-content {
+      padding: 24px 0;
+    }
+  }
+}
+
+.tab-content {
+  .invoice-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 24px;
+    
+    .detail-card {
+      background-color: $card-background;
+      border-radius: $radius-md;
+      box-shadow: $card-shadow;
+      border: 1px solid $border-color;
+      
+      mat-card-header {
+        padding: 20px 20px 0;
+        
+        mat-card-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: $text-primary;
+          
+          mat-icon {
+            color: $primary-color;
+          }
+        }
+      }
+      
+      mat-card-content {
+        padding: 20px;
+      }
+      
+      // Info Grid
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        
+        .info-item {
+          display: flex;
+          flex-direction: column;
+          
+          label {
+            font-size: 0.85rem;
+            color: $text-secondary;
+            margin-bottom: 4px;
+            font-weight: 500;
+          }
+          
+          .value {
+            font-size: 1rem;
+            color: $text-primary;
+            font-weight: 500;
+            
+            &.overdue {
+              color: $danger-color;
+              font-weight: 600;
+            }
+            
+            .days-info {
+              display: block;
+              font-size: 0.8rem;
+              margin-top: 4px;
+              
+              .overdue {
+                color: $danger-color;
+              }
+              
+              .due-soon {
+                color: $warning-color;
+              }
+            }
+          }
+        }
+      }
+      
+      // Financial Grid
+      .financial-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        
+        .financial-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 0;
+          
+          label {
+            font-size: 0.9rem;
+            color: $text-secondary;
+            font-weight: 500;
+          }
+          
+          .amount {
+            font-size: 1rem;
+            font-weight: 600;
+            color: $text-primary;
+          }
+          
+          &.total {
+            border-top: 2px solid $border-color;
+            padding-top: 16px;
+            margin-top: 8px;
+            
+            label {
+              font-size: 1.1rem;
+              color: $text-primary;
+            }
+            
+            .amount {
+              font-size: 1.3rem;
+              color: $success-color;
+            }
+          }
+        }
+        
+        mat-divider {
+          margin: 8px 0;
+        }
+      }
+      
+      // Payment Info
+      .payment-info {
+        margin-top: 16px;
+        
+        .payment-details {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-top: 16px;
+          
+          .payment-item {
+            display: flex;
+            flex-direction: column;
+            
+            label {
+              font-size: 0.85rem;
+              color: $text-secondary;
+              margin-bottom: 4px;
+            }
+            
+            span {
+              font-size: 0.9rem;
+              color: $text-primary;
+              font-weight: 500;
+            }
+          }
+        }
+      }
+      
+      // Items List
+      .items-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        
+        .item-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 12px;
+          background-color: rgba(0, 0, 0, 0.02);
+          border-radius: $radius-sm;
+          
+          .item-info {
+            flex: 1;
+            
+            .item-type {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 4px;
+              
+              mat-icon {
+                font-size: 16px;
+                height: 16px;
+                width: 16px;
+              }
+              
+              .type-label {
+                font-size: 0.8rem;
+                color: $text-secondary;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+            }
+            
+            .item-description {
+              font-size: 0.9rem;
+              color: $text-primary;
+            }
+          }
+          
+          .item-amount {
+            font-size: 1rem;
+            font-weight: 600;
+            color: $text-primary;
+          }
+        }
+      }
+      
+      // Notes
+      .notes-text {
+        color: $text-primary;
+        line-height: 1.6;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// Payments Section
+.payments-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  
+  .payment-status-card,
+  .payment-history-card {
+    background-color: $card-background;
+    border-radius: $radius-md;
+    box-shadow: $card-shadow;
+    border: 1px solid $border-color;
+    
+    mat-card-header {
+      padding: 20px 20px 0;
+      
+      mat-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: $text-primary;
+        
+        mat-icon {
+          color: $primary-color;
+        }
+      }
+    }
+    
+    mat-card-content {
+      padding: 20px;
+    }
+  }
+  
+  .payment-status {
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border-radius: $radius-md;
+      margin-bottom: 24px;
+      
+      mat-icon {
+        font-size: 32px;
+        height: 32px;
+        width: 32px;
+      }
+      
+      .status-text {
+        h3 {
+          margin: 0 0 4px;
+          font-size: 1.2rem;
+          font-weight: 600;
+        }
+        
+        p {
+          margin: 0;
+          font-size: 0.9rem;
+          
+          .overdue {
+            color: $danger-color;
+            font-weight: 500;
+          }
+          
+          .due {
+            color: $warning-color;
+            font-weight: 500;
+          }
+        }
+      }
+      
+      &.status-paid {
+        background-color: rgba(var(--success-color-rgb), 0.1);
+        border: 1px solid rgba(var(--success-color-rgb), 0.3);
+        
+        mat-icon {
+          color: $success-color;
+        }
+      }
+      
+      &.status-unpaid {
+        background-color: rgba(var(--warning-color-rgb), 0.1);
+        border: 1px solid rgba(var(--warning-color-rgb), 0.3);
+        
+        mat-icon {
+          color: $warning-color;
+        }
+      }
+      
+      &.status-overdue {
+        background-color: rgba(var(--error-color-rgb), 0.1);
+        border: 1px solid rgba(var(--error-color-rgb), 0.3);
+        
+        mat-icon {
+          color: $danger-color;
+        }
+      }
+    }
+    
+    .payment-actions {
+      display: flex;
+      gap: 12px;
+      
+      button {
+        flex: 1;
+        
+        mat-icon {
+          margin-right: 8px;
+        }
+      }
+    }
+  }
+  
+  .loading-payments {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px;
+    color: $text-secondary;
+  }
+  
+  .no-payments {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    
+    mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      margin-bottom: 16px;
+      color: $text-secondary;
+    }
+    
+    p {
+      color: $text-secondary;
+      margin: 0;
+    }
+  }
+  
+  .payments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    
+    .payment-record {
+      padding: 16px;
+      background-color: rgba(0, 0, 0, 0.02);
+      border-radius: $radius-sm;
+      border-left: 3px solid $success-color;
+      
+      .payment-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+        
+        .payment-amount {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: $success-color;
+        }
+        
+        .payment-details {
+          text-align: right;
+          
+          .payment-date {
+            font-size: 0.9rem;
+            color: $text-primary;
+            font-weight: 500;
+          }
+          
+          .payment-method {
+            font-size: 0.8rem;
+            color: $text-secondary;
+            margin-top: 2px;
+          }
+          
+          .payment-reference {
+            font-size: 0.8rem;
+            color: $text-secondary;
+            margin-top: 2px;
+            font-style: italic;
+          }
+        }
+      }
+      
+      .payment-notes {
+        font-size: 0.85rem;
+        color: $text-secondary;
+        font-style: italic;
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+}
+
+// Timeline
+.timeline-card {
+  background-color: $card-background;
+  border-radius: $radius-md;
+  box-shadow: $card-shadow;
+  border: 1px solid $border-color;
+  
+  mat-card-header {
+    padding: 20px 20px 0;
+    
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: $text-primary;
+      
+      mat-icon {
+        color: $primary-color;
+      }
+    }
+  }
+  
+  mat-card-content {
+    padding: 20px;
+  }
+}
+
+.timeline-container {
+  .timeline-event {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    position: relative;
+    
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 48px;
+      bottom: -24px;
+      width: 2px;
+      background-color: $border-color;
+    }
+    
+    .timeline-marker {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      
+      mat-icon {
+        font-size: 20px;
+        height: 20px;
+        width: 20px;
+        color: white;
+      }
+    }
+    
+    .timeline-content {
+      flex: 1;
+      
+      .event-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+        
+        h4 {
+          margin: 0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: $text-primary;
+        }
+        
+        .event-date {
+          font-size: 0.8rem;
+          color: $text-secondary;
+          white-space: nowrap;
+          margin-left: 16px;
+        }
+      }
+      
+      .event-description {
+        margin: 0;
+        font-size: 0.9rem;
+        color: $text-secondary;
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+// Menu styles
+::ng-deep .mat-mdc-menu-panel {
+  .mat-mdc-menu-item {
+    &.danger-action {
+      color: $danger-color;
+      
+      mat-icon {
+        color: $danger-color;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .invoice-detail-container {
+    padding: 16px;
+  }
+  
+  .invoice-content {
+    .invoice-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      
+      .header-actions {
+        align-self: stretch;
+        justify-content: space-between;
+      }
+    }
+  }
+  
+  .tab-content {
+    .invoice-details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .payments-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .timeline-container {
+    .timeline-event {
+      .timeline-content {
+        .event-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+          
+          .event-date {
+            margin-left: 0;
+          }
+        }
+      }
+    }
+  }
+} 

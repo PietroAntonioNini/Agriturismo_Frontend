@@ -1,0 +1,284 @@
+<div class="invoice-payment-container">
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+    <p>Caricamento fattura in corso...</p>
+  </div>
+
+  <!-- Contenuto principale -->
+  <div *ngIf="!isLoading && (invoice$ | async) as invoice" class="payment-content">
+    <!-- Header -->
+    <div class="payment-header">
+      <div class="header-content">
+        <button mat-button (click)="onBack()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+          Indietro
+        </button>
+        <div class="header-info">
+          <h1>Gestione Pagamenti</h1>
+          <p class="subtitle">Fattura {{ invoice.invoiceNumber }} - {{ getTenantName(invoice.tenantId) }}</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-button (click)="onViewInvoice(invoice)">
+          <mat-icon>visibility</mat-icon>
+          Visualizza Fattura
+        </button>
+        <button mat-flat-button color="primary" (click)="markAsPaid()" 
+                [disabled]="invoice.status === 'paid'">
+          <mat-icon>check_circle</mat-icon>
+          Marca come Pagata
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs principali -->
+    <mat-tab-group [(selectedIndex)]="selectedTab" class="payment-tabs">
+      <!-- Tab Nuovo Pagamento -->
+      <mat-tab label="Nuovo Pagamento">
+        <div class="tab-content">
+          <mat-card class="payment-form-card">
+            <mat-card-header>
+              <mat-card-title>Registra Nuovo Pagamento</mat-card-title>
+              <mat-card-subtitle>Inserisci i dettagli del pagamento ricevuto</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()" class="payment-form">
+                <div class="form-row">
+                  <!-- Importo -->
+                  <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Importo (€)</mat-label>
+                    <input matInput type="number" formControlName="amount" min="0.01" step="0.01">
+                    <mat-error *ngIf="isFieldInvalid('amount')">
+                      {{ getFieldError('amount') }}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <!-- Data pagamento -->
+                  <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Data Pagamento</mat-label>
+                    <input matInput [matDatepicker]="paymentDatePicker" formControlName="paymentDate">
+                    <mat-datepicker-toggle matSuffix [for]="paymentDatePicker"></mat-datepicker-toggle>
+                    <mat-datepicker #paymentDatePicker></mat-datepicker>
+                    <mat-error *ngIf="isFieldInvalid('paymentDate')">
+                      {{ getFieldError('paymentDate') }}
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <!-- Metodo di pagamento -->
+                  <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Metodo di Pagamento</mat-label>
+                    <mat-select formControlName="paymentMethod">
+                      <mat-option *ngFor="let method of paymentMethods" [value]="method.value">
+                        <div class="payment-method-option">
+                          <mat-icon>{{ method.icon }}</mat-icon>
+                          <div class="method-info">
+                            <div class="method-label">{{ method.label }}</div>
+                            <div class="method-description">{{ method.description }}</div>
+                          </div>
+                        </div>
+                      </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="isFieldInvalid('paymentMethod')">
+                      {{ getFieldError('paymentMethod') }}
+                    </mat-error>
+                  </mat-form-field>
+
+                  <!-- Riferimento -->
+                  <mat-form-field appearance="outline" class="form-field">
+                    <mat-label>Riferimento</mat-label>
+                    <input matInput formControlName="reference" placeholder="Numero bonifico, assegno, ecc.">
+                  </mat-form-field>
+                </div>
+
+                <!-- Note -->
+                <mat-form-field appearance="outline" class="form-field full-width">
+                  <mat-label>Note</mat-label>
+                  <textarea matInput formControlName="notes" rows="3" 
+                            placeholder="Note aggiuntive sul pagamento..."></textarea>
+                </mat-form-field>
+
+                <!-- Azioni -->
+                <div class="form-actions">
+                  <button mat-flat-button color="primary" type="submit" 
+                          [disabled]="paymentForm.invalid || isProcessing">
+                    <mat-icon>{{ isProcessing ? 'hourglass_empty' : 'payment' }}</mat-icon>
+                    <mat-spinner *ngIf="isProcessing" diameter="16" class="button-spinner"></mat-spinner>
+                    {{ isProcessing ? 'Registrazione...' : 'Registra Pagamento' }}
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab Storico Pagamenti -->
+      <mat-tab label="Storico Pagamenti">
+        <div class="tab-content">
+          <mat-card class="payment-history-card">
+            <mat-card-header>
+              <mat-card-title>Cronologia Pagamenti</mat-card-title>
+              <mat-card-subtitle>Visualizza tutti i pagamenti registrati per questa fattura</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div *ngIf="(paymentHistory$ | async) as payments; else noPayments" class="payments-table">
+                <table mat-table [dataSource]="payments" class="payment-table">
+                  <!-- Data -->
+                  <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>Data</th>
+                    <td mat-cell *matCellDef="let payment">{{ formatDate(payment.paymentDate) }}</td>
+                  </ng-container>
+
+                  <!-- Importo -->
+                  <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef>Importo</th>
+                    <td mat-cell *matCellDef="let payment">
+                      <span class="amount-cell">{{ formatCurrency(payment.amount) }}</span>
+                    </td>
+                  </ng-container>
+
+                  <!-- Metodo -->
+                  <ng-container matColumnDef="method">
+                    <th mat-header-cell *matHeaderCellDef>Metodo</th>
+                    <td mat-cell *matCellDef="let payment">
+                      <div class="method-cell">
+                        <mat-icon>{{ getPaymentMethodIcon(payment.paymentMethod) }}</mat-icon>
+                        <span>{{ getPaymentMethodLabel(payment.paymentMethod) }}</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Riferimento -->
+                  <ng-container matColumnDef="reference">
+                    <th mat-header-cell *matHeaderCellDef>Riferimento</th>
+                    <td mat-cell *matCellDef="let payment">
+                      <span class="reference-cell">{{ payment.reference || '-' }}</span>
+                    </td>
+                  </ng-container>
+
+                  <!-- Status -->
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let payment">
+                      <mat-chip [color]="getStatusColor(payment.status)" selected>
+                        {{ getStatusLabel(payment.status) }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+
+                  <!-- Azioni -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Azioni</th>
+                    <td mat-cell *matCellDef="let payment">
+                      <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="Azioni">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      <mat-menu #menu="matMenu">
+                        <button mat-menu-item (click)="removePayment(payment)">
+                          <mat-icon>delete</mat-icon>
+                          <span>Rimuovi</span>
+                        </button>
+                      </mat-menu>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+              </div>
+
+              <ng-template #noPayments>
+                <div class="no-payments">
+                  <mat-icon>payment</mat-icon>
+                  <h3>Nessun pagamento registrato</h3>
+                  <p>Non sono ancora stati registrati pagamenti per questa fattura.</p>
+                </div>
+              </ng-template>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab Riepilogo -->
+      <mat-tab label="Riepilogo">
+        <div class="tab-content">
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>Riepilogo Fattura</mat-card-title>
+              <mat-card-subtitle>Dettagli finanziari e stato pagamenti</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-grid">
+                <!-- Informazioni fattura -->
+                <div class="summary-section">
+                  <h4>Informazioni Fattura</h4>
+                  <div class="summary-item">
+                    <span class="label">Numero Fattura:</span>
+                    <span class="value">{{ invoice.invoiceNumber }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Inquilino:</span>
+                    <span class="value">{{ getTenantName(invoice.tenantId) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Appartamento:</span>
+                    <span class="value">{{ getApartmentName(invoice.apartmentId) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Data Emissione:</span>
+                    <span class="value">{{ formatDate(invoice.issueDate) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Data Scadenza:</span>
+                    <span class="value">{{ formatDate(invoice.dueDate) }}</span>
+                  </div>
+                </div>
+
+                <!-- Riepilogo finanziario -->
+                <div class="summary-section">
+                  <h4>Riepilogo Finanziario</h4>
+                  <div class="summary-item">
+                    <span class="label">Totale Fattura:</span>
+                    <span class="value total">{{ formatCurrency(invoice.total) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Pagato:</span>
+                    <span class="value paid">{{ formatCurrency(getTotalPaid(invoice)) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Rimanente:</span>
+                    <span class="value remaining">{{ formatCurrency(getRemainingAmount(invoice)) }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Status:</span>
+                    <span class="value">
+                      <mat-chip [color]="getInvoiceStatusColor(invoice.status)" selected>
+                        {{ getInvoiceStatusLabel(invoice.status) }}
+                      </mat-chip>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress bar pagamento -->
+              <div class="payment-progress">
+                <h4>Progresso Pagamento</h4>
+                <mat-progress-bar 
+                  [value]="getPaymentProgress(invoice)" 
+                  [color]="getPaymentProgressColor(invoice)"
+                  mode="determinate">
+                </mat-progress-bar>
+                <div class="progress-text">
+                  {{ getPaymentProgress(invoice) }}% completato
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div> 
