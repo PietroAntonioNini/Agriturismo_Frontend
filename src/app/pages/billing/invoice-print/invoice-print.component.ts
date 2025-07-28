@@ -314,7 +314,7 @@ export class InvoicePrintComponent implements OnInit, OnDestroy {
     return icons[type as keyof typeof icons] || '📋';
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: string | Date): string {
     return new Date(date).toLocaleDateString('it-IT');
   }
 

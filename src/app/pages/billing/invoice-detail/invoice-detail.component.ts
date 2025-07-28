@@ -25,7 +25,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
 
 interface InvoiceTimeline {
-  date: Date;
+  date: string; // Cambiato da Date a string per compatibilità con backend
   action: string;
   description: string;
   icon: string;
@@ -207,7 +207,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     }
 
     // Aggiornamento
-    if (invoice.updatedAt && invoice.updatedAt.getTime() !== invoice.createdAt.getTime()) {
+    if (invoice.updatedAt && new Date(invoice.updatedAt).getTime() !== new Date(invoice.createdAt).getTime()) {
       timeline.push({
         date: invoice.updatedAt,
         action: 'Fattura aggiornata',
@@ -218,7 +218,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     }
 
     // Ordina per data (più recente prima)
-    return timeline.sort((a, b) => b.date.getTime() - a.date.getTime());
+    return timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   /**
@@ -445,11 +445,11 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     return colors[type as keyof typeof colors] || '#6b7280';
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: string | Date): string {
     return new Date(date).toLocaleDateString('it-IT');
   }
 
-  formatDateTime(date: Date): string {
+  formatDateTime(date: string | Date): string {
     return new Date(date).toLocaleString('it-IT');
   }
 

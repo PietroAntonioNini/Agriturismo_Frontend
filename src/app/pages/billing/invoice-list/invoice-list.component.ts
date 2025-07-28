@@ -705,7 +705,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     return 'pending';
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: string | Date): string {
     return new Date(date).toLocaleDateString('it-IT');
   }
 

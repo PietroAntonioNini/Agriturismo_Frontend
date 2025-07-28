@@ -1,3 +1,7 @@
+import { Tenant } from './tenant.model';
+import { Apartment } from './apartment.model';
+import { Lease } from './lease.model';
+
 export interface Invoice {
     id: number;
     leaseId: number;
@@ -50,33 +54,6 @@ export interface PaymentRecord {
     status: 'completed' | 'pending' | 'failed';
     createdAt: string;
     updatedAt: string;
-}
-
-// Interfacce per entità correlate
-export interface Tenant {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email?: string;
-    phone: string;
-    // Altri campi se necessari
-}
-
-export interface Apartment {
-    id: number;
-    name: string;
-    description?: string;
-    // Altri campi se necessari
-}
-
-export interface Lease {
-    id: number;
-    tenantId: number;
-    apartmentId: number;
-    startDate: string;
-    endDate: string;
-    monthlyRent: number;
-    // Altri campi se necessari
 }
 
 // Interfacce per creazione e aggiornamento
