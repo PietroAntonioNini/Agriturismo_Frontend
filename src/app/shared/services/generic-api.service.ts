@@ -843,4 +843,97 @@ export class GenericApiService {
       })
     );
   }
+
+  // ===== METODI AGGIUNTI PER FATTURAZIONE =====
+
+  // Metodo POST generico per endpoint specifici
+  post<T>(url: string, data: any, params?: any): Observable<T> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
+      });
+    }
+
+    return this.http.post<T>(`${environment.apiUrl}/${url}`, data, { 
+      params: httpParams 
+    }).pipe(
+      catchError(error => {
+        console.error(`Errore nella chiamata POST a ${url}:`, error);
+        throw error;
+      })
+    );
+  }
+
+  // Metodo per download blob (PDF, etc.)
+  getBlob(url: string, params?: any): Observable<Blob> {
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
+      });
+    }
+
+    return this.http.get(`${environment.apiUrl}/${url}`, { 
+      params: httpParams,
+      responseType: 'blob'
+    }).pipe(
+      catchError(error => {
+        console.error(`Errore nel download blob da ${url}:`, error);
+        throw error;
+      })
+    );
+  }
+
+  // Metodo per chiamate GET a endpoint specifici con cache
+  getAllWithCache<T>(url: string, params?: any, forceRefresh: boolean = false): Observable<T[]> {
+    const cacheKey = this.getCacheKey(url, params);
+    
+    // Pulisci cache scaduta
+    this.clearExpiredCache();
+    
+    // Se non è richiesto un refresh e la cache è valida, usa la cache
+    if (!forceRefresh && this.isCacheValid(cacheKey)) {
+      return of(this.cache.get(cacheKey)!.data);
+    }
+    
+    // Se c'è già una richiesta in corso per questa chiave, riutilizzala
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey)!;
+    }
+
+    let httpParams = new HttpParams();
+    if (params) {
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          httpParams = httpParams.set(key, params[key].toString());
+        }
+      });
+    }
+
+    const request = this.http.get<T[]>(`${environment.apiUrl}/${url}`, { 
+      params: httpParams
+    }).pipe(
+      tap(data => {
+        // Salva nella cache
+        this.cache.set(cacheKey, {
+          data: data,
+          timestamp: Date.now(),
+          expiresAt: Date.now() + this.cacheTimeout
+        });
+        // Rimuovi dalla lista delle richieste pendenti
+        this.pendingRequests.delete(cacheKey);
+      }),
+      shareReplay(1) // Condividi la risposta tra più subscriber
+    );
+
+    // Salva la richiesta pendente
+    this.pendingRequests.set(cacheKey, request);
+    
+    return request;
+  }
 }

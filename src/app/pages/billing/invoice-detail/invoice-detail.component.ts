@@ -74,6 +74,10 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  // Cache per nomi di inquilini e appartamenti
+  private tenantNames: { [id: number]: string } = {};
+  private apartmentNames: { [id: number]: string } = {};
+
   constructor(
     private invoiceService: InvoiceService,
     private notificationService: NotificationService,
@@ -338,13 +342,25 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
    * Utility methods
    */
   getTenantName(tenantId: number): string {
-    // TODO: Implementare servizio tenant
-    return `Inquilino ${tenantId}`;
+    // Cache locale per i nomi dei tenant
+    if (!this.tenantNames[tenantId]) {
+      this.invoiceService.getTenantName(tenantId).subscribe(name => {
+        this.tenantNames[tenantId] = name;
+      });
+      return `Inquilino ${tenantId}`;
+    }
+    return this.tenantNames[tenantId];
   }
 
   getApartmentName(apartmentId: number): string {
-    // TODO: Implementare servizio apartment
-    return `Appartamento ${apartmentId}`;
+    // Cache locale per i nomi degli appartamenti
+    if (!this.apartmentNames[apartmentId]) {
+      this.invoiceService.getApartmentName(apartmentId).subscribe(name => {
+        this.apartmentNames[apartmentId] = name;
+      });
+      return `Appartamento ${apartmentId}`;
+    }
+    return this.apartmentNames[apartmentId];
   }
 
   getStatusClass(invoice: Invoice): string {

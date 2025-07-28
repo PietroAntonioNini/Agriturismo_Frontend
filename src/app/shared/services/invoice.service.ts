@@ -1,411 +1,272 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
-import { Invoice, InvoiceItem, PaymentRecord } from '../models';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, map, catchError, switchMap, tap, throwError } from 'rxjs';
+import { 
+  Invoice, 
+  InvoiceItem, 
+  PaymentRecord, 
+  InvoiceCreate, 
+  InvoiceItemCreate, 
+  PaymentRecordCreate,
+  InvoiceFilters,
+  InvoiceStatistics,
+  Tenant,
+  Apartment,
+  Lease
+} from '../models';
+import { GenericApiService } from './generic-api.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InvoiceService {
-  private apiUrl = `${environment.apiUrl}/invoices`;
-  
-  private mockInvoiceItems: InvoiceItem[] = [
-    {
-      id: 1,
-      invoiceId: 1,
-      description: 'Affitto Giugno 2023',
-      amount: 750,
-      quantity: 1,
-      unitPrice: 750,
-      type: 'rent'
-    },
-    {
-      id: 2,
-      invoiceId: 1,
-      description: 'Utenza Elettrica Giugno 2023',
-      amount: 95.50,
-      quantity: 1,
-      unitPrice: 95.50,
-      type: 'electricity'
-    },
-    {
-      id: 3,
-      invoiceId: 1,
-      description: 'Utenza Idrica Giugno 2023',
-      amount: 45.80,
-      quantity: 1,
-      unitPrice: 45.80,
-      type: 'water'
-    },
-    {
-      id: 4,
-      invoiceId: 2,
-      description: 'Affitto Giugno 2023',
-      amount: 600,
-      quantity: 1,
-      unitPrice: 600,
-      type: 'rent'
-    },
-    {
-      id: 5,
-      invoiceId: 2,
-      description: 'Utenza Gas Giugno 2023',
-      amount: 30.25,
-      quantity: 1,
-      unitPrice: 30.25,
-      type: 'gas'
-    },
-    {
-      id: 6,
-      invoiceId: 3,
-      description: 'Affitto Luglio 2023',
-      amount: 750,
-      quantity: 1,
-      unitPrice: 750,
-      type: 'rent'
-    }
-  ];
+  private apiUrl = 'invoices';
 
-  private mockInvoices: Invoice[] = [
-    {
-      id: 1,
-      leaseId: 1,
-      tenantId: 1,
-      apartmentId: 1,
-      invoiceNumber: 'INV-2023-001',
-      month: 6,
-      year: 2023,
-      issueDate: new Date('2023-06-01'),
-      dueDate: new Date('2023-06-10'),
-      periodStart: new Date('2023-06-01'),
-      periodEnd: new Date('2023-06-30'),
-      items: this.mockInvoiceItems.filter(item => item.invoiceId === 1),
-      subtotal: 891.30,
-      tax: 0,
-      total: 891.30,
-      isPaid: true,
-      status: 'paid',
-      paymentDate: new Date('2023-06-08'),
-      paymentMethod: 'bank_transfer',
-      notes: 'Fattura di giugno',
-      reminderSent: false,
-      createdAt: new Date('2023-06-01'),
-      updatedAt: new Date('2023-06-08')
-    },
-    {
-      id: 2,
-      leaseId: 2,
-      tenantId: 2,
-      apartmentId: 3,
-      invoiceNumber: 'INV-2023-002',
-      month: 6,
-      year: 2023,
-      issueDate: new Date('2023-06-01'),
-      dueDate: new Date('2023-06-10'),
-      periodStart: new Date('2023-06-01'),
-      periodEnd: new Date('2023-06-30'),
-      items: this.mockInvoiceItems.filter(item => item.invoiceId === 2),
-      subtotal: 630.25,
-      tax: 0,
-      total: 630.25,
-      isPaid: false,
-      status: 'pending',
-      reminderSent: true,
-      reminderDate: new Date('2023-06-15'),
-      createdAt: new Date('2023-06-01'),
-      updatedAt: new Date('2023-06-15')
-    },
-    {
-      id: 3,
-      leaseId: 1,
-      tenantId: 1,
-      apartmentId: 1,
-      invoiceNumber: 'INV-2023-003',
-      month: 7,
-      year: 2023,
-      issueDate: new Date('2023-07-01'),
-      dueDate: new Date('2023-07-10'),
-      periodStart: new Date('2023-07-01'),
-      periodEnd: new Date('2023-07-31'),
-      items: this.mockInvoiceItems.filter(item => item.invoiceId === 3),
-      subtotal: 750,
-      tax: 0,
-      total: 750,
-      isPaid: false,
-      status: 'pending',
-      reminderSent: false,
-      createdAt: new Date('2023-07-01'),
-      updatedAt: new Date('2023-07-01')
-    }
-  ];
+  constructor(
+    private http: HttpClient,
+    private apiService: GenericApiService
+  ) { }
 
-  private mockPaymentRecords: PaymentRecord[] = [
-    {
-      id: 1,
-      invoiceId: 1,
-      amount: 891.30,
-      paymentDate: new Date('2023-06-08'),
-      paymentMethod: 'bank_transfer',
-      reference: 'TRNX-123456',
-      status: 'completed',
-      createdAt: new Date('2023-06-08'),
-      updatedAt: new Date('2023-06-08')
-    }
-  ];
-
-  constructor(private http: HttpClient) { }
-
-  // Operazioni CRUD per le fatture
-  getAllInvoices(): Observable<Invoice[]> {
-    return of(this.mockInvoices).pipe(delay(500));
+  // Operazioni CRUD per le fatture - SOLO DATI REALI
+  getAllInvoices(params?: any): Observable<Invoice[]> {
+    return this.apiService.getAll<Invoice>('invoices', params).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero delle fatture:', error);
+        return throwError(() => new Error('Impossibile recuperare le fatture dal database'));
+      })
+    );
   }
 
   getInvoiceById(id: number): Observable<Invoice> {
-    const invoice = this.mockInvoices.find(i => i.id === id);
-    return of(invoice as Invoice).pipe(delay(300));
+    return this.apiService.getById<Invoice>('invoices', id).pipe(
+      catchError(error => {
+        console.error(`Errore nel recupero della fattura ${id}:`, error);
+        return throwError(() => new Error(`Fattura con ID ${id} non trovata`));
+      })
+    );
   }
 
-  createInvoice(invoice: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>): Observable<Invoice> {
-    const newInvoice: Invoice = {
-      ...invoice as any,
-      id: Math.max(...this.mockInvoices.map(i => i.id)) + 1,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.mockInvoices.push(newInvoice);
-    return of(newInvoice).pipe(delay(500));
+  createInvoice(invoice: Partial<Invoice>): Observable<Invoice> {
+    return this.apiService.create<Invoice>('invoices', invoice).pipe(
+      tap(() => {
+        // Invalida la cache delle fatture
+        this.apiService.invalidateCache('invoices');
+      }),
+      catchError(error => {
+        console.error('Errore nella creazione della fattura:', error);
+        return throwError(() => new Error('Impossibile creare la fattura'));
+      })
+    );
   }
 
   updateInvoice(id: number, invoice: Partial<Invoice>): Observable<Invoice> {
-    const index = this.mockInvoices.findIndex(i => i.id === id);
-    if (index !== -1) {
-      this.mockInvoices[index] = {
-        ...this.mockInvoices[index],
-        ...invoice,
-        updatedAt: new Date()
-      };
-      return of(this.mockInvoices[index]).pipe(delay(300));
-    }
-    return of({} as Invoice);
+    return this.apiService.update<Invoice>('invoices', id, invoice).pipe(
+      tap(() => {
+        // Invalida la cache delle fatture
+        this.apiService.invalidateCache('invoices', id);
+      }),
+      catchError(error => {
+        console.error(`Errore nell'aggiornamento della fattura ${id}:`, error);
+        return throwError(() => new Error(`Impossibile aggiornare la fattura ${id}`));
+      })
+    );
   }
 
   deleteInvoice(id: number): Observable<void> {
-    const index = this.mockInvoices.findIndex(i => i.id === id);
-    if (index !== -1) {
-      this.mockInvoices.splice(index, 1);
-      // Elimina anche gli elementi della fattura
-      this.mockInvoiceItems = this.mockInvoiceItems.filter(item => item.invoiceId !== id);
-    }
-    return of(void 0).pipe(delay(300));
+    return this.apiService.delete('invoices', id).pipe(
+      tap(() => {
+        // Invalida la cache delle fatture
+        this.apiService.invalidateCache('invoices', id);
+      }),
+      catchError(error => {
+        console.error(`Errore nell'eliminazione della fattura ${id}:`, error);
+        return throwError(() => new Error(`Impossibile eliminare la fattura ${id}`));
+      })
+    );
   }
 
-  // Metodi per gli elementi della fattura
+  // Metodi per gli elementi della fattura - SOLO DATI REALI
   getInvoiceItems(invoiceId: number): Observable<InvoiceItem[]> {
-    return of(this.mockInvoiceItems.filter(item => item.invoiceId === invoiceId)).pipe(delay(300));
+    return this.apiService.getRelatedRecords<InvoiceItem>('invoices', invoiceId, 'items').pipe(
+      catchError(error => {
+        console.error(`Errore nel recupero degli elementi della fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile recuperare gli elementi della fattura ${invoiceId}`));
+      })
+    );
   }
 
-  addInvoiceItem(invoiceId: number, item: Omit<InvoiceItem, 'id' | 'invoiceId'>): Observable<InvoiceItem> {
-    const newItem: InvoiceItem = {
-      ...item as any,
-      id: Math.max(...this.mockInvoiceItems.map(i => i.id)) + 1,
-      invoiceId
-    };
-    this.mockInvoiceItems.push(newItem);
-    
-    // Aggiorna il subtotal e total della fattura
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice) {
-      invoice.items.push(newItem);
-      const totals = this.calculateInvoiceTotal(invoice.items);
-      invoice.subtotal = totals.subtotal;
-      invoice.tax = totals.tax;
-      invoice.total = totals.total;
-      invoice.updatedAt = new Date();
-    }
-    
-    return of(newItem).pipe(delay(300));
+  addInvoiceItem(invoiceId: number, item: Partial<InvoiceItem>): Observable<InvoiceItem> {
+    return this.apiService.addRelatedRecord<InvoiceItem>('invoices', invoiceId, 'items', item).pipe(
+      tap(() => {
+        // Invalida la cache della fattura
+        this.apiService.invalidateCache('invoices', invoiceId);
+      }),
+      catchError(error => {
+        console.error(`Errore nell'aggiunta dell'elemento alla fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile aggiungere l'elemento alla fattura ${invoiceId}`));
+      })
+    );
   }
 
   updateInvoiceItem(invoiceId: number, itemId: number, item: Partial<InvoiceItem>): Observable<InvoiceItem> {
-    const index = this.mockInvoiceItems.findIndex(i => i.id === itemId && i.invoiceId === invoiceId);
-    if (index !== -1) {
-      this.mockInvoiceItems[index] = {
-        ...this.mockInvoiceItems[index],
-        ...item
-      };
-      
-      // Aggiorna il subtotal e total della fattura
-      const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-      if (invoice) {
-        invoice.items = this.mockInvoiceItems.filter(item => item.invoiceId === invoiceId);
-        const totals = this.calculateInvoiceTotal(invoice.items);
-        invoice.subtotal = totals.subtotal;
-        invoice.tax = totals.tax;
-        invoice.total = totals.total;
-        invoice.updatedAt = new Date();
-      }
-      
-      return of(this.mockInvoiceItems[index]).pipe(delay(300));
-    }
-    return of({} as InvoiceItem);
+    return this.apiService.updateRelatedRecord<InvoiceItem>('invoices', invoiceId, 'items', itemId, item).pipe(
+      tap(() => {
+        // Invalida la cache della fattura
+        this.apiService.invalidateCache('invoices', invoiceId);
+      }),
+      catchError(error => {
+        console.error(`Errore nell'aggiornamento dell'elemento ${itemId} della fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile aggiornare l'elemento ${itemId} della fattura ${invoiceId}`));
+      })
+    );
   }
 
   deleteInvoiceItem(invoiceId: number, itemId: number): Observable<void> {
-    this.mockInvoiceItems = this.mockInvoiceItems.filter(i => !(i.id === itemId && i.invoiceId === invoiceId));
-    
-    // Aggiorna il subtotal e total della fattura
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice) {
-      invoice.items = this.mockInvoiceItems.filter(item => item.invoiceId === invoiceId);
-      const totals = this.calculateInvoiceTotal(invoice.items);
-      invoice.subtotal = totals.subtotal;
-      invoice.tax = totals.tax;
-      invoice.total = totals.total;
-      invoice.updatedAt = new Date();
-    }
-    
-    return of(void 0).pipe(delay(300));
+    return this.apiService.deleteRelatedRecord('invoices', invoiceId, 'items', itemId).pipe(
+      tap(() => {
+        // Invalida la cache della fattura
+        this.apiService.invalidateCache('invoices', invoiceId);
+      }),
+      catchError(error => {
+        console.error(`Errore nell'eliminazione dell'elemento ${itemId} della fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile eliminare l'elemento ${itemId} della fattura ${invoiceId}`));
+      })
+    );
   }
 
-  // Metodi per i pagamenti
+  // Metodi per i pagamenti - SOLO DATI REALI
   getPaymentRecords(invoiceId: number): Observable<PaymentRecord[]> {
-    return of(this.mockPaymentRecords.filter(p => p.invoiceId === invoiceId)).pipe(delay(300));
+    return this.apiService.getRelatedRecords<PaymentRecord>('invoices', invoiceId, 'payment-records').pipe(
+      catchError(error => {
+        console.error(`Errore nel recupero dei pagamenti della fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile recuperare i pagamenti della fattura ${invoiceId}`));
+      })
+    );
   }
 
-  addPaymentRecord(invoiceId: number, payment: Omit<PaymentRecord, 'id' | 'invoiceId' | 'createdAt' | 'updatedAt'>): Observable<PaymentRecord> {
-    const newPayment: PaymentRecord = {
-      ...payment as any,
-      id: this.mockPaymentRecords.length > 0 ? Math.max(...this.mockPaymentRecords.map(p => p.id)) + 1 : 1,
-      invoiceId,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.mockPaymentRecords.push(newPayment);
-    
-    // Aggiorna lo stato della fattura
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice && payment.amount >= invoice.total) {
-      invoice.isPaid = true;
-      invoice.paymentDate = payment.paymentDate;
-      invoice.paymentMethod = payment.paymentMethod;
-      invoice.updatedAt = new Date();
-    }
-    
-    return of(newPayment).pipe(delay(300));
+  addPaymentRecord(invoiceId: number, payment: Partial<PaymentRecord>): Observable<PaymentRecord> {
+    return this.apiService.addRelatedRecord<PaymentRecord>('invoices', invoiceId, 'payment-records', payment).pipe(
+      tap(() => {
+        // Invalida la cache della fattura
+        this.apiService.invalidateCache('invoices', invoiceId);
+      }),
+      catchError(error => {
+        console.error(`Errore nell'aggiunta del pagamento alla fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile aggiungere il pagamento alla fattura ${invoiceId}`));
+      })
+    );
   }
 
-  // Metodi specifici per le fatture
+  // Metodi specifici per le fatture - SOLO DATI REALI
   getInvoicesByTenant(tenantId: number): Observable<Invoice[]> {
-    return of(this.mockInvoices.filter(i => i.tenantId === tenantId)).pipe(delay(300));
+    return this.apiService.getAll<Invoice>('invoices', { tenant_id: tenantId }).pipe(
+      catchError(error => {
+        console.error(`Errore nel recupero delle fatture del tenant ${tenantId}:`, error);
+        return throwError(() => new Error(`Impossibile recuperare le fatture del tenant ${tenantId}`));
+      })
+    );
   }
 
   getInvoicesByApartment(apartmentId: number): Observable<Invoice[]> {
-    return of(this.mockInvoices.filter(i => i.apartmentId === apartmentId)).pipe(delay(300));
+    return this.apiService.getAll<Invoice>('invoices', { apartment_id: apartmentId }).pipe(
+      catchError(error => {
+        console.error(`Errore nel recupero delle fatture dell'appartamento ${apartmentId}:`, error);
+        return throwError(() => new Error(`Impossibile recuperare le fatture dell'appartamento ${apartmentId}`));
+      })
+    );
   }
 
   getInvoicesByMonth(month: number, year: number): Observable<Invoice[]> {
-    return of(this.mockInvoices.filter(i => i.month === month && i.year === year)).pipe(delay(300));
+    return this.apiService.getAll<Invoice>('invoices', { month, year }).pipe(
+      catchError(error => {
+        console.error(`Errore nel recupero delle fatture per ${month}/${year}:`, error);
+        return throwError(() => new Error(`Impossibile recuperare le fatture per ${month}/${year}`));
+      })
+    );
   }
 
   getUnpaidInvoices(): Observable<Invoice[]> {
-    return of(this.mockInvoices.filter(i => !i.isPaid)).pipe(delay(300));
+    return this.apiService.getAll<Invoice>('invoices', { status: 'unpaid' }).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero delle fatture non pagate:', error);
+        return throwError(() => new Error('Impossibile recuperare le fatture non pagate'));
+      })
+    );
   }
 
   getOverdueInvoices(): Observable<Invoice[]> {
-    const today = new Date();
-    return of(this.mockInvoices.filter(i => !i.isPaid && new Date(i.dueDate) < today)).pipe(delay(300));
+    return this.apiService.getAllWithCache<Invoice>(`${this.apiUrl}/overdue`).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero delle fatture scadute:', error);
+        return throwError(() => new Error('Impossibile recuperare le fatture scadute'));
+      })
+    );
   }
 
   markInvoiceAsPaid(invoiceId: number, paymentDate: Date, paymentMethod: 'cash' | 'bank_transfer' | 'credit_card' | 'check'): Observable<Invoice> {
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice) {
-      invoice.isPaid = true;
-      invoice.paymentDate = paymentDate;
-      invoice.paymentMethod = paymentMethod;
-      invoice.updatedAt = new Date();
-      
-      // Crea un record di pagamento
-      this.addPaymentRecord(invoiceId, {
-        amount: invoice.total,
-        paymentDate,
-        paymentMethod,
-        reference: `PAY-${Date.now()}`,
-        status: 'completed'
-      }).subscribe();
-      
-      return of(invoice).pipe(delay(300));
-    }
-    return of({} as Invoice);
+    return this.apiService.post<Invoice>(`${this.apiUrl}/${invoiceId}/mark-as-paid`, {
+      paymentDate: paymentDate.toISOString().split('T')[0],
+      paymentMethod
+    }).pipe(
+      tap(() => {
+        // Invalida la cache della fattura
+        this.apiService.invalidateCache('invoices', invoiceId);
+      }),
+      catchError(error => {
+        console.error(`Errore nel marcare come pagata la fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile marcare come pagata la fattura ${invoiceId}`));
+      })
+    );
   }
 
-  sendInvoiceReminder(invoiceId: number): Observable<{ success: boolean; message: string }> {
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice && !invoice.isPaid) {
-      invoice.reminderSent = true;
-      invoice.reminderDate = new Date();
-      invoice.updatedAt = new Date();
-      return of({
-        success: true,
-        message: 'Promemoria inviato con successo'
-      }).pipe(delay(500));
-    }
-    return of({
-      success: false,
-      message: 'Impossibile inviare il promemoria: fattura non trovata o già pagata'
-    }).pipe(delay(500));
+  sendInvoiceReminder(invoiceId: number, reminderData?: any): Observable<{ success: boolean; message: string }> {
+    const data = reminderData || { send_via: 'whatsapp' };
+    
+    return this.apiService.post<any>(`${this.apiUrl}/${invoiceId}/send-reminder`, data).pipe(
+      tap(() => {
+        // Invalida la cache della fattura
+        this.apiService.invalidateCache('invoices', invoiceId);
+      }),
+      map(response => ({
+        success: response.success,
+        message: response.message
+      })),
+      catchError(error => {
+        console.error(`Errore nell'invio del promemoria per la fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile inviare il promemoria per la fattura ${invoiceId}`));
+      })
+    );
   }
 
   generateInvoicePdf(invoiceId: number): Observable<Blob> {
-    // Simula un file PDF vuoto
-    const emptyPdf = new Blob(['%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources 4 0 R /MediaBox [0 0 595 842] /Contents 5 0 R >>\nendobj\n4 0 obj\n<< >>\nendobj\n5 0 obj\n<< /Length 16 >>\nstream\n0.5 0 0 RG\n1 1 594 840 re\nS\nendstream\nendobj\nxref\n0 6\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000218 00000 n\n0000000239 00000 n\ntrailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n304\n%%EOF'], { type: 'application/pdf' });
-    return of(emptyPdf).pipe(delay(1000));
+    return this.apiService.getBlob(`${this.apiUrl}/${invoiceId}/pdf`).pipe(
+      catchError(error => {
+        console.error(`Errore nella generazione del PDF per la fattura ${invoiceId}:`, error);
+        return throwError(() => new Error(`Impossibile generare il PDF per la fattura ${invoiceId}`));
+      })
+    );
   }
 
-  // Metodo per generare automaticamente le fatture mensili
-  generateMonthlyInvoices(month: number, year: number): Observable<Invoice[]> {
-    // Simula la generazione di nuove fatture
-    const today = new Date();
-    const newInvoices: Invoice[] = [];
-    
-    // Per semplicità, generiamo solo una nuova fattura
-    const newInvoice: Invoice = {
-      id: Math.max(...this.mockInvoices.map(i => i.id)) + 1,
-      leaseId: 1,
-      tenantId: 1,
-      apartmentId: 1,
-      invoiceNumber: `INV-${year}-${String(newInvoices.length + 1).padStart(3, '0')}`,
+  // Metodo per generare automaticamente le fatture mensili - SOLO DATI REALI
+  generateMonthlyInvoices(month: number, year: number, options?: any): Observable<any> {
+    const data = {
       month,
       year,
-      issueDate: today,
-      dueDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 10),
-      periodStart: new Date(year, month - 1, 1),
-      periodEnd: new Date(year, month, 0),
-      items: [{
-        id: Math.max(...this.mockInvoiceItems.map(i => i.id)) + 1,
-        invoiceId: Math.max(...this.mockInvoices.map(i => i.id)) + 1,
-        description: `Affitto ${month}/${year}`,
-        amount: 750,
-        quantity: 1,
-        unitPrice: 750,
-        type: 'rent'
-      }],
-      subtotal: 750,
-      tax: 0,
-      total: 750,
-      isPaid: false,
-      status: 'pending',
-      reminderSent: false,
-      createdAt: today,
-      updatedAt: today
+      include_utilities: options?.include_utilities ?? true,
+      send_notifications: options?.send_notifications ?? false
     };
     
-    this.mockInvoices.push(newInvoice);
-    this.mockInvoiceItems.push(newInvoice.items[0]);
-    newInvoices.push(newInvoice);
-    
-    return of(newInvoices).pipe(delay(1000));
+    return this.apiService.post<any>(`${this.apiUrl}/generate-monthly`, data).pipe(
+      tap(() => {
+        // Invalida la cache delle fatture
+        this.apiService.invalidateCache('invoices');
+      }),
+      catchError(error => {
+        console.error(`Errore nella generazione delle fatture mensili per ${month}/${year}:`, error);
+        return throwError(() => new Error(`Impossibile generare le fatture mensili per ${month}/${year}`));
+      })
+    );
   }
 
   // Metodo per calcolare il totale della fattura
@@ -416,74 +277,253 @@ export class InvoiceService {
     return { subtotal, tax, total };
   }
 
-  // Metodi aggiuntivi per i componenti di fatturazione
+  // Metodi aggiuntivi per i componenti di fatturazione - SOLO DATI REALI
   markAsPaid(invoiceId: number): Observable<Invoice> {
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice) {
-      invoice.isPaid = true;
-      invoice.status = 'paid';
-      invoice.paymentDate = new Date();
-      invoice.updatedAt = new Date();
-      return of(invoice).pipe(delay(300));
-    }
-    return of({} as Invoice);
+    return this.markInvoiceAsPaid(invoiceId, new Date(), 'bank_transfer');
   }
 
   recordPayment(invoiceId: number, payment: Partial<PaymentRecord>): Observable<PaymentRecord> {
-    const newPayment: PaymentRecord = {
-      id: this.mockPaymentRecords.length > 0 ? Math.max(...this.mockPaymentRecords.map(p => p.id)) + 1 : 1,
-      invoiceId,
-      amount: payment.amount || 0,
-      paymentDate: payment.paymentDate || new Date(),
-      paymentMethod: payment.paymentMethod || 'bank_transfer',
-      reference: payment.reference,
-      notes: payment.notes,
-      status: 'completed',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    this.mockPaymentRecords.push(newPayment);
-    
-    // Aggiorna lo stato della fattura
-    const invoice = this.mockInvoices.find(i => i.id === invoiceId);
-    if (invoice) {
-      const totalPaid = this.mockPaymentRecords
-        .filter(p => p.invoiceId === invoiceId)
-        .reduce((sum, p) => sum + p.amount, 0);
-      
-      if (totalPaid >= invoice.total) {
-        invoice.isPaid = true;
-        invoice.status = 'paid';
-        invoice.paymentDate = new Date();
-      }
-      invoice.updatedAt = new Date();
-    }
-    
-    return of(newPayment).pipe(delay(300));
+    return this.addPaymentRecord(invoiceId, payment);
   }
 
   removePayment(paymentId: number): Observable<void> {
-    const index = this.mockPaymentRecords.findIndex(p => p.id === paymentId);
-    if (index !== -1) {
-      const payment = this.mockPaymentRecords[index];
-      this.mockPaymentRecords.splice(index, 1);
-      
-      // Ricalcola lo stato della fattura
-      const invoice = this.mockInvoices.find(i => i.id === payment.invoiceId);
-      if (invoice) {
-        const totalPaid = this.mockPaymentRecords
-          .filter(p => p.invoiceId === payment.invoiceId)
-          .reduce((sum, p) => sum + p.amount, 0);
+    // Questo metodo richiede di conoscere l'invoiceId dal paymentId
+    // Per ora, restituiamo un errore che indica che il metodo non è supportato
+    return throwError(() => new Error('Rimozione pagamento non supportata. Utilizzare i metodi specifici per gestire i pagamenti.'));
+  }
+
+  // === METODI PER INTEGRAZIONE CON SERVIZI REALI ===
+
+  /**
+   * Ottiene tutti i tenant attivi per l'autocomplete
+   */
+  getActiveTenants(): Observable<any[]> {
+    return this.apiService.getAll<any>('tenants', { status: 'active', has_active_lease: true }).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero dei tenant:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Ottiene tutti gli appartamenti occupati per l'autocomplete
+   */
+  getOccupiedApartments(): Observable<any[]> {
+    return this.apiService.getAll<any>('apartments', { status: 'occupied' }).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero degli appartamenti:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Ottiene tutti i contratti attivi per l'autocomplete
+   */
+  getActiveLeases(): Observable<any[]> {
+    return this.apiService.getAll<any>('leases', { status: 'active' }).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero dei contratti:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Ottiene il nome di un tenant per ID
+   */
+  getTenantName(tenantId: number): Observable<string> {
+    return this.apiService.getById<any>('tenants', tenantId).pipe(
+      map(tenant => `${tenant.firstName} ${tenant.lastName}`),
+      catchError(error => {
+        console.error(`Errore nel recupero del tenant ${tenantId}:`, error);
+        return of(`Inquilino ${tenantId}`);
+      })
+    );
+  }
+
+  /**
+   * Ottiene il nome di un appartamento per ID
+   */
+  getApartmentName(apartmentId: number): Observable<string> {
+    return this.apiService.getById<any>('apartments', apartmentId).pipe(
+      map(apartment => apartment.name || `Appartamento ${apartmentId}`),
+      catchError(error => {
+        console.error(`Errore nel recupero dell'appartamento ${apartmentId}:`, error);
+        return of(`Appartamento ${apartmentId}`);
+      })
+    );
+  }
+
+  /**
+   * Cerca tenant per autocomplete
+   */
+  searchTenants(query: string): Observable<any[]> {
+    return this.apiService.search<any>('tenants', query).pipe(
+      catchError(error => {
+        console.error('Errore nella ricerca tenant:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Cerca appartamenti per autocomplete
+   */
+  searchApartments(query: string): Observable<any[]> {
+    return this.apiService.search<any>('apartments', query).pipe(
+      catchError(error => {
+        console.error('Errore nella ricerca appartamenti:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Ottiene le letture utility per un appartamento e periodo
+   */
+  getUtilityReadingsForPeriod(apartmentId: number, startDate: Date, endDate: Date): Observable<any[]> {
+    const params = {
+      apartmentId: apartmentId.toString(),
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    };
+    
+    return this.apiService.getAll<any>('utilities', params).pipe(
+      catchError(error => {
+        console.error('Errore nel recupero delle letture utility:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Genera automaticamente le voci fattura basate su affitto e utenze
+   */
+  generateInvoiceItemsFromLease(leaseId: number, periodStart: Date, periodEnd: Date): Observable<InvoiceItem[]> {
+    return this.apiService.getById<any>('leases', leaseId).pipe(
+      switchMap(lease => {
+        const items: InvoiceItem[] = [];
         
-        if (totalPaid < invoice.total) {
-          invoice.isPaid = false;
-          invoice.status = 'pending';
-          invoice.paymentDate = undefined;
-        }
-        invoice.updatedAt = new Date();
-      }
-    }
-    return of(void 0).pipe(delay(300));
+        // Aggiungi voce affitto
+        items.push({
+          id: 0,
+          invoiceId: 0,
+          description: `Affitto ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+          amount: lease.monthlyRent,
+          quantity: 1,
+          unitPrice: lease.monthlyRent,
+          type: 'rent'
+        });
+
+        // Aggiungi voci utenze se presenti
+        return this.getUtilityReadingsForPeriod(lease.apartmentId, periodStart, periodEnd).pipe(
+          map(readings => {
+            readings.forEach(reading => {
+              if (reading.type === 'electricity' && reading.totalCost > 0) {
+                items.push({
+                  id: 0,
+                  invoiceId: 0,
+                  description: `Utenza Elettrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                  amount: reading.totalCost,
+                  quantity: 1,
+                  unitPrice: reading.totalCost,
+                  type: 'electricity'
+                });
+              }
+              if (reading.type === 'water' && reading.totalCost > 0) {
+                items.push({
+                  id: 0,
+                  invoiceId: 0,
+                  description: `Utenza Idrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                  amount: reading.totalCost,
+                  quantity: 1,
+                  unitPrice: reading.totalCost,
+                  type: 'water'
+                });
+              }
+              if (reading.type === 'gas' && reading.totalCost > 0) {
+                items.push({
+                  id: 0,
+                  invoiceId: 0,
+                  description: `Utenza Gas ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                  amount: reading.totalCost,
+                  quantity: 1,
+                  unitPrice: reading.totalCost,
+                  type: 'gas'
+                });
+              }
+            });
+            return items;
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Errore nella generazione automatica delle voci fattura:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Genera fattura da contratto specifico
+   */
+  generateInvoiceFromLease(leaseId: number, month: number, year: number, customItems?: any[]): Observable<any> {
+    const data = {
+      lease_id: leaseId,
+      month,
+      year,
+      include_utilities: true,
+      custom_items: customItems || []
+    };
+    
+    return this.apiService.post<any>(`${this.apiUrl}/generate-from-lease`, data).pipe(
+      tap(() => {
+        // Invalida la cache delle fatture
+        this.apiService.invalidateCache('invoices');
+      }),
+      catchError(error => {
+        console.error(`Errore nella generazione della fattura dal contratto ${leaseId}:`, error);
+        return throwError(() => new Error(`Impossibile generare la fattura dal contratto ${leaseId}`));
+      })
+    );
+  }
+
+  /**
+   * Ottiene statistiche delle fatture
+   */
+  getInvoiceStatistics(period?: string): Observable<InvoiceStatistics> {
+    const params = period ? { period } : {};
+    return this.apiService.getAllWithCache<InvoiceStatistics>(`${this.apiUrl}/statistics`, params).pipe(
+      map(response => Array.isArray(response) ? response[0] : response),
+      catchError(error => {
+        console.error('Errore nel recupero delle statistiche fatture:', error);
+        return throwError(() => new Error('Impossibile recuperare le statistiche fatture'));
+      })
+    );
+  }
+
+  /**
+   * Invia promemoria multipli
+   */
+  sendBulkReminders(invoiceIds: number[], options?: any): Observable<any> {
+    const data = {
+      invoice_ids: invoiceIds,
+      send_via: options?.send_via || 'whatsapp',
+      template: options?.template || 'overdue_reminder',
+      custom_message: options?.custom_message
+    };
+    
+    return this.apiService.post<any>(`${this.apiUrl}/send-bulk-reminders`, data).pipe(
+      tap(() => {
+        // Invalida la cache delle fatture
+        this.apiService.invalidateCache('invoices');
+      }),
+      catchError(error => {
+        console.error('Errore nell\'invio dei promemoria multipli:', error);
+        return throwError(() => new Error('Impossibile inviare i promemoria multipli'));
+      })
+    );
   }
 }

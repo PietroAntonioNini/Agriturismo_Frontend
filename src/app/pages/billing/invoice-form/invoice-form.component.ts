@@ -166,18 +166,25 @@ export class InvoiceFormComponent implements OnInit, OnDestroy {
   }
 
   private loadMockData(): void {
-    // TODO: Sostituire con chiamate reali ai servizi
-    this.tenants = [
-      { id: 1, name: 'Mario Rossi', email: 'mario.rossi@email.com', phone: '+39 123 456 789' },
-      { id: 2, name: 'Giulia Bianchi', email: 'giulia.bianchi@email.com', phone: '+39 987 654 321' },
-      { id: 3, name: 'Luca Verdi', email: 'luca.verdi@email.com', phone: '+39 555 123 456' }
-    ];
+    // Carica tenant attivi
+    this.invoiceService.getActiveTenants().subscribe(tenants => {
+      this.tenants = tenants.map(tenant => ({
+        id: tenant.id,
+        name: `${tenant.firstName} ${tenant.lastName}`,
+        email: tenant.email || '',
+        phone: tenant.phone || ''
+      }));
+    });
 
-    this.apartments = [
-      { id: 1, name: 'Appartamento A1', address: 'Via Roma 1, Piano 1', rent: 800 },
-      { id: 2, name: 'Appartamento A2', address: 'Via Roma 1, Piano 2', rent: 850 },
-      { id: 3, name: 'Appartamento B1', address: 'Via Milano 5, Piano 1', rent: 900 }
-    ];
+    // Carica appartamenti occupati
+    this.invoiceService.getOccupiedApartments().subscribe(apartments => {
+      this.apartments = apartments.map(apartment => ({
+        id: apartment.id,
+        name: apartment.name || `Appartamento ${apartment.id}`,
+        address: apartment.address || '',
+        rent: apartment.monthlyRent || 0
+      }));
+    });
   }
 
   private loadInvoiceData(): void {
