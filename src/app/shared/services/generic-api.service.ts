@@ -21,7 +21,7 @@ export class GenericApiService {
   constructor(private http: HttpClient) { }
 
   private apiUrl(entity: string): string {
-    return `${environment.apiUrl}/${entity}`;
+    return `${environment.apiUrl}/${entity}/`;
   }
 
   private getCacheKey(entity: string, params?: any): string {
@@ -414,20 +414,20 @@ export class GenericApiService {
 
   // Metodi specifici migrati da UtilityService
   getUtilitySummaryByApartment(apartmentId: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl('utilities')}/summary/${apartmentId}`);
+    return this.http.get<any>(`${environment.apiUrl}/utilities/summary/${apartmentId}`);
   }
 
   getYearlyUtilityStatistics(year: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl('utilities')}/statistics/${year}`);
+    return this.http.get<any>(`${environment.apiUrl}/utilities/statistics/${year}`);
   }
 
   getApartmentConsumption(apartmentId: number, year: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl('utilities')}/apartment/${apartmentId}/consumption/${year}`);
+    return this.http.get<any>(`${environment.apiUrl}/utilities/apartment/${apartmentId}/consumption/${year}`);
   }
 
   // Cerca inquilini in base a una query di ricerca
   searchTenants<T>(query: string): Observable<T[]> {
-    return this.http.get<T[]>(`${this.apiUrl('tenants')}/search`, {
+    return this.http.get<T[]>(`${environment.apiUrl}/tenants/search`, {
       params: new HttpParams().set('q', query)
     });
   }
@@ -460,7 +460,7 @@ export class GenericApiService {
 
   // Metodo di ricerca generico che può essere usato per qualsiasi entità
   search<T>(entity: string, query: string): Observable<T[]> {
-    return this.http.get<T[]>(`${this.apiUrl(entity)}/search`, {
+    return this.http.get<T[]>(`${environment.apiUrl}/${entity}/search`, {
       params: new HttpParams().set('q', query)
     });
   }
@@ -786,7 +786,7 @@ export class GenericApiService {
 
   // Ottiene statistiche utility per la dashboard
   getUtilityStatistics(year: number): Observable<UtilityStatistics | null> {
-    return this.http.get<UtilityStatistics>(`${this.apiUrl('utilities')}/statistics/overview?year=${year}`).pipe(
+    return this.http.get<UtilityStatistics>(`${environment.apiUrl}/utilities/statistics/overview?year=${year}`).pipe(
       catchError(error => {
         console.error(`Errore durante il recupero delle statistiche utility per l'anno ${year}`, error);
         return of(null);
@@ -796,7 +796,7 @@ export class GenericApiService {
 
   // Ottiene dati mensili per appartamenti (per grafici)
   getMonthlyUtilityData(year: number, forceRefresh: boolean = false): Observable<MonthlyUtilityData[]> {
-    let url = `${this.apiUrl('utilities')}/statistics/${year}`;
+    let url = `${environment.apiUrl}/utilities/statistics/${year}`;
     
     // Aggiunge timestamp per forzare il refresh ed evitare cache
     if (forceRefresh) {
@@ -816,7 +816,7 @@ export class GenericApiService {
 
   // Ottiene dati consumo per appartamento specifico
   getApartmentUtilityData(apartmentId: number, year: number): Observable<ApartmentUtilityData | null> {
-    return this.http.get<ApartmentUtilityData>(`${this.apiUrl('utilities')}/apartment/${apartmentId}/consumption/${year}`).pipe(
+    return this.http.get<ApartmentUtilityData>(`${environment.apiUrl}/utilities/apartment/${apartmentId}/consumption/${year}`).pipe(
       catchError(error => {
         console.error(`Errore durante il recupero dei dati per appartamento ${apartmentId} anno ${year}`, error);
         return of(null);
@@ -826,7 +826,7 @@ export class GenericApiService {
 
   // Crea una nuova lettura utility con payload specifico per il backend
   createUtilityReadingWithCorrectFormat(reading: UtilityReadingCreate): Observable<UtilityReading | null> {
-    return this.http.post<UtilityReading>(`${this.apiUrl('utilities')}/`, reading).pipe(
+    return this.http.post<UtilityReading>(`${this.apiUrl('utilities')}`, reading).pipe(
       catchError(error => {
         console.error('Errore durante la creazione della lettura utility', error);
         return of(null);
