@@ -21,7 +21,7 @@ export class GenericApiService {
   constructor(private http: HttpClient) { }
 
   private apiUrl(entity: string): string {
-    return `${environment.apiUrl}/${entity}/`;
+    return `${environment.apiUrl}/${entity}`;
   }
 
   private getCacheKey(entity: string, params?: any): string {
@@ -826,7 +826,7 @@ export class GenericApiService {
 
   // Crea una nuova lettura utility con payload specifico per il backend
   createUtilityReadingWithCorrectFormat(reading: UtilityReadingCreate): Observable<UtilityReading | null> {
-    return this.http.post<UtilityReading>(`${this.apiUrl('utilities')}`, reading).pipe(
+    return this.http.post<UtilityReading>(`${this.apiUrl('utilities')}/`, reading).pipe(
       catchError(error => {
         console.error('Errore durante la creazione della lettura utility', error);
         return of(null);
