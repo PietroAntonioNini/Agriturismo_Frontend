@@ -168,7 +168,6 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeData();
     this.setupFilters();
-    this.loadInitialData();
   }
 
   ngOnDestroy(): void {
@@ -180,6 +179,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
    * Inizializza i dati e le osservazioni
    */
   private initializeData(): void {
+    this.isLoading = true;
+    
     // Carica le fatture
     this.invoices$ = this.invoiceService.getAllInvoices();
     
@@ -191,11 +192,20 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     // Setup del data source
     this.invoices$.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(invoices => {
-      this.dataSource.data = invoices;
-      this.setupTable();
-      this.dataSource.filter = ' ';
-      this.dataSource.filter = '';
+    ).subscribe({
+      next: (invoices) => {
+        this.dataSource.data = invoices;
+        this.setupTable();
+        // Forza l'applicazione del filtro per attivare il filterPredicate
+        this.dataSource.filter = ' ';
+        this.dataSource.filter = '';
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.showError('Errore nel caricamento delle fatture');
+        console.error('Errore caricamento fatture:', error);
+      }
     });
   }
 
@@ -242,25 +252,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Carica i dati iniziali
-   */
-  private loadInitialData(): void {
-    this.isLoading = true;
-    
-    this.invoices$.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (invoices) => {
-        this.isLoading = false;
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.showError('Errore nel caricamento delle fatture');
-        console.error('Errore caricamento fatture:', error);
-      }
-    });
-  }
+
 
   /**
    * Configura la tabella
@@ -472,7 +464,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         await Promise.all(promises);
         this.selectedInvoices.clear();
         this.selectAll = false;
-        this.loadInitialData();
+        // Ricarica i dati
+        this.invoices$ = this.invoiceService.getAllInvoices();
         this.showSuccess(`${promises.length} fattura/e marcate come pagate`);
         
         // Notifica
@@ -564,7 +557,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          this.loadInitialData();
+          // Ricarica i dati
+          this.invoices$ = this.invoiceService.getAllInvoices();
           this.showSuccess('Fattura eliminata con successo');
           
           // Notifica
@@ -600,7 +594,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          this.loadInitialData();
+          // Ricarica i dati
+          this.invoices$ = this.invoiceService.getAllInvoices();
           this.showSuccess('Fattura marcata come pagata');
         },
         error: (error) => {
