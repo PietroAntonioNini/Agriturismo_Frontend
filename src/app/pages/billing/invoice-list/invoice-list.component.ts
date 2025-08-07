@@ -193,7 +193,9 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(invoices => {
       this.dataSource.data = invoices;
-      this.applyFilters();
+      this.setupTable();
+      this.dataSource.filter = ' ';
+      this.dataSource.filter = '';
     });
   }
 
@@ -208,7 +210,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       distinctUntilChanged()
     ).subscribe(searchText => {
       this.filter.searchText = searchText || '';
-      this.applyFilters();
+      this.dataSource.filter = searchText || '';
     });
 
     // Filtri di stato
@@ -249,9 +251,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.invoices$.pipe(
       takeUntil(this.destroy$)
     ).subscribe({
-      next: () => {
+      next: (invoices) => {
         this.isLoading = false;
-        this.setupTable();
       },
       error: (error) => {
         this.isLoading = false;
@@ -268,14 +269,62 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     
-    // Filtro personalizzato
+    // Filtro personalizzato che gestisce tutti i tipi di filtri
     this.dataSource.filterPredicate = (invoice: Invoice, filter: string) => {
+      // Filtro di ricerca testuale
       const searchText = filter.toLowerCase();
-      return (
+      const matchesSearch = !searchText || 
         invoice.invoiceNumber.toLowerCase().includes(searchText) ||
         this.getTenantName(invoice.tenantId).toLowerCase().includes(searchText) ||
-        this.getApartmentName(invoice.apartmentId).toLowerCase().includes(searchText)
-      );
+        this.getApartmentName(invoice.apartmentId).toLowerCase().includes(searchText);
+
+      if (!matchesSearch) return false;
+
+      // Filtro per stato
+      if (this.filter.status !== 'all') {
+        const today = new Date();
+        switch (this.filter.status) {
+          case 'paid':
+            if (!invoice.isPaid) return false;
+            break;
+          case 'unpaid':
+            if (invoice.isPaid || new Date(invoice.dueDate) < today) return false;
+            break;
+          case 'overdue':
+            if (invoice.isPaid || new Date(invoice.dueDate) >= today) return false;
+            break;
+        }
+      }
+
+      // Filtro per periodo
+      if (this.filter.period !== 'all') {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        switch (this.filter.period) {
+          case 'this_month':
+            if (invoice.month !== currentMonth + 1 || invoice.year !== currentYear) return false;
+            break;
+          case 'last_month':
+            const lastMonth = currentMonth === 0 ? 12 : currentMonth;
+            const lastYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            if (invoice.month !== lastMonth || invoice.year !== lastYear) return false;
+            break;
+          case 'this_year':
+            if (invoice.year !== currentYear) return false;
+            break;
+        }
+      }
+
+      // Filtro per date personalizzate
+      if (this.filter.startDate || this.filter.endDate) {
+        const issueDate = new Date(invoice.issueDate);
+        if (this.filter.startDate && issueDate < this.filter.startDate) return false;
+        if (this.filter.endDate && issueDate > this.filter.endDate) return false;
+      }
+
+      return true;
     };
   }
 
@@ -283,70 +332,10 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
    * Applica i filtri
    */
   private applyFilters(): void {
-    let filteredData = this.dataSource.data;
-
-    // Filtro per stato
-    if (this.filter.status !== 'all') {
-      const today = new Date();
-      filteredData = filteredData.filter(invoice => {
-        switch (this.filter.status) {
-          case 'paid':
-            return invoice.isPaid;
-          case 'unpaid':
-            return !invoice.isPaid && new Date(invoice.dueDate) >= today;
-          case 'overdue':
-            return !invoice.isPaid && new Date(invoice.dueDate) < today;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Filtro per periodo
-    if (this.filter.period !== 'all') {
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
-      filteredData = filteredData.filter(invoice => {
-        switch (this.filter.period) {
-          case 'this_month':
-            return invoice.month === currentMonth + 1 && invoice.year === currentYear;
-          case 'last_month':
-            const lastMonth = currentMonth === 0 ? 12 : currentMonth;
-            const lastYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-            return invoice.month === lastMonth && invoice.year === lastYear;
-          case 'this_year':
-            return invoice.year === currentYear;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Filtro per date personalizzate
-    if (this.filter.startDate || this.filter.endDate) {
-      filteredData = filteredData.filter(invoice => {
-        const issueDate = new Date(invoice.issueDate);
-        const startDate = this.filter.startDate;
-        const endDate = this.filter.endDate;
-        
-        if (startDate && issueDate < startDate) return false;
-        if (endDate && issueDate > endDate) return false;
-        
-        return true;
-      });
-    }
-
-    // Applica il filtro di ricerca
-    if (this.filter.searchText) {
-      this.dataSource.filter = this.filter.searchText;
-    } else {
-      this.dataSource.filter = '';
-    }
-
-    // Aggiorna i dati filtrati
-    this.dataSource.data = filteredData;
+    // Forza il refresh del filtro per applicare tutti i filtri
+    const currentFilter = this.dataSource.filter;
+    this.dataSource.filter = '';
+    this.dataSource.filter = currentFilter || ' ';
   }
 
   /**
@@ -416,7 +405,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.startDateControl.setValue(null);
     this.endDateControl.setValue(null);
     
-    this.applyFilters();
+    this.dataSource.filter = '';
   }
 
   /**
