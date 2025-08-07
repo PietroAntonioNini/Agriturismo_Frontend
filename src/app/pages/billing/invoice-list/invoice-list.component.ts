@@ -632,7 +632,22 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   }
 
   printInvoice(invoiceId: number): void {
-    this.router.navigate(['/billing/print', invoiceId]);
+    // Genera e scarica il PDF direttamente
+    this.invoiceService.generateInvoicePdf(invoiceId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `fattura-${invoiceId}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        this.showSuccess('PDF della fattura scaricato con successo');
+      },
+      error: (error) => {
+        console.error('Errore nella generazione del PDF:', error);
+        this.showError('Errore nella generazione del PDF');
+      }
+    });
   }
 
   /**
@@ -758,5 +773,17 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
 
   private showError(message: string): void {
     this.notificationService.showError(message);
+  }
+
+  /**
+   * Mostra informazioni sulle fatture automatiche
+   */
+  showAutomaticInvoiceInfo(): void {
+    this.snackBar.open(
+      'Le fatture vengono generate automaticamente quando crei un nuovo contratto. ' +
+      'Includono affitto mensile e costi utenze calcolati dalle letture dei contatori.', 
+      'Chiudi', 
+      { duration: 8000 }
+    );
   }
 } 

@@ -39,9 +39,8 @@ import { SharedModule } from '../../shared/shared.module';
 // Import per le routes (necessario per componenti standalone)
 import { InvoiceListComponent } from './invoice-list/invoice-list.component';
 import { InvoiceDetailComponent } from './invoice-detail/invoice-detail.component';
-import { InvoiceFormComponent } from './invoice-form/invoice-form.component';
+
 import { InvoicePaymentComponent } from './invoice-payment/invoice-payment.component';
-import { InvoicePrintComponent } from './invoice-print/invoice-print.component';
 
 const routes: Routes = [
   {
@@ -53,14 +52,7 @@ const routes: Routes = [
     path: 'list',
     component: InvoiceListComponent
   },
-  {
-    path: 'new',
-    component: InvoiceFormComponent
-  },
-  {
-    path: 'edit/:id',
-    component: InvoiceFormComponent
-  },
+
   {
     path: 'detail/:id',
     component: InvoiceDetailComponent
@@ -69,10 +61,7 @@ const routes: Routes = [
     path: 'payment/:id',
     component: InvoicePaymentComponent
   },
-  {
-    path: 'print/:id',
-    component: InvoicePrintComponent
-  }
+
 ];
 
 @NgModule({

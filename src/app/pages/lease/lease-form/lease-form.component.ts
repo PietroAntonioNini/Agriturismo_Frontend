@@ -32,6 +32,7 @@ import { LeaseService } from '../../../shared/services/lease.service';
 import { ContractGeneratorService } from '../../../shared/services/contract-generator.service';
 import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { AutomaticInvoiceService } from '../../../shared/services/automatic-invoice.service';
 
 // Models
 import { Lease, LeaseFormData } from '../../../shared/models/lease.model';
@@ -130,6 +131,7 @@ export class LeaseFormComponent implements OnInit {
     private contractTemplates: ContractTemplatesService,
     private dateAdapter: DateAdapter<Date>,
     private notificationService: NotificationService,
+    private automaticInvoiceService: AutomaticInvoiceService,
     @Optional() @Inject(MAT_DIALOG_DATA) public dialogData: any,
     @Optional() public dialogRef: MatDialogRef<LeaseFormComponent>
   ) {
@@ -422,18 +424,11 @@ export class LeaseFormComponent implements OnInit {
       });
     } else {
       this.apiService.create<Lease>('leases', leasePayload).subscribe({
-        next: () => {
+        next: (createdLease) => {
           this.snackBar.open('Contratto creato con successo', 'Chiudi', { duration: 3000 });
-          this.isSubmitting = false;
           
-          // Aggiungi notifica
-          const apartment = this.apartments.find(a => a.id === this.partiesFormGroup.get('apartment')?.value?.id);
-          const tenant = this.tenants.find(t => t.id === this.partiesFormGroup.get('tenant')?.value?.id);
-          const apartmentName = apartment?.name || 'Appartamento';
-          const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
-          this.notificationService.notifyLease('created', apartmentName, tenantName);
-          
-          this.closeDialog(true);
+          // Genera automaticamente la fattura
+          this.generateAutomaticInvoice(createdLease, leasePayload);
         },
         error: (error) => {
           console.error('Errore durante la creazione del contratto', error);
@@ -581,4 +576,79 @@ export class LeaseFormComponent implements OnInit {
     console.log('Utilities validation changed:', isValid);
   }
 
+  /**
+   * Genera automaticamente una fattura quando viene creato un contratto
+   */
+  private generateAutomaticInvoice(createdLease: Lease, leasePayload: any): void {
+    // Ottieni i dati delle utenze dal form
+    const utilitiesData = this.utilitiesFormGroup.value;
+    
+    const invoiceData = {
+      leaseId: createdLease.id,
+      tenantId: leasePayload.tenantId,
+      apartmentId: leasePayload.apartmentId,
+      monthlyRent: leasePayload.monthlyRent,
+      paymentDueDay: leasePayload.paymentDueDay,
+      startDate: new Date(leasePayload.startDate),
+      endDate: new Date(leasePayload.endDate),
+      utilityReadings: {
+        electricity: utilitiesData.electricity || undefined,
+        water: utilitiesData.water || undefined,
+        gas: utilitiesData.gas || undefined
+      }
+    };
+
+    this.automaticInvoiceService.generateInvoiceFromLease(invoiceData).subscribe({
+      next: (invoice) => {
+        console.log('Fattura generata automaticamente:', invoice);
+        
+        // Ottieni i dati dell'inquilino per l'invio WhatsApp
+        const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
+        if (tenant?.phone) {
+          // Invia la fattura via WhatsApp
+          this.automaticInvoiceService.sendInvoiceViaWhatsApp(invoice.id, tenant.phone).subscribe({
+            next: (result) => {
+              console.log('Fattura inviata via WhatsApp:', result);
+            },
+            error: (error) => {
+              console.error('Errore nell\'invio WhatsApp:', error);
+            }
+          });
+        }
+
+        // Aggiungi notifica
+        const apartment = this.apartments.find(a => a.id === leasePayload.apartmentId);
+        const apartmentName = apartment?.name || 'Appartamento';
+        const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+        this.notificationService.notifyLease('created', apartmentName, tenantName);
+        
+        this.snackBar.open(
+          `Contratto creato e fattura generata automaticamente. Totale: €${invoice.total.toFixed(2)}`, 
+          'Chiudi', 
+          { duration: 5000 }
+        );
+        
+        this.isSubmitting = false;
+        this.closeDialog(true);
+      },
+      error: (error) => {
+        console.error('Errore nella generazione automatica della fattura:', error);
+        this.snackBar.open(
+          'Contratto creato ma errore nella generazione della fattura automatica', 
+          'Chiudi', 
+          { duration: 5000 }
+        );
+        
+        // Aggiungi notifica comunque
+        const apartment = this.apartments.find(a => a.id === leasePayload.apartmentId);
+        const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
+        const apartmentName = apartment?.name || 'Appartamento';
+        const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+        this.notificationService.notifyLease('created', apartmentName, tenantName);
+        
+        this.isSubmitting = false;
+        this.closeDialog(true);
+      }
+    });
+  }
 }

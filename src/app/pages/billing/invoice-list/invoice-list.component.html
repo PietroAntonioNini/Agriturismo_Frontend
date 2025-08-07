@@ -6,9 +6,9 @@
       <p class="subtitle">Visualizza e gestisci tutte le fatture e i pagamenti</p>
     </div>
     
-    <button mat-flat-button color="primary" class="new-invoice-button" routerLink="/billing/new">
-      <mat-icon>add</mat-icon>
-      Nuova Fattura
+    <button mat-flat-button color="primary" class="new-invoice-button" (click)="showAutomaticInvoiceInfo()">
+      <mat-icon>info</mat-icon>
+      Info Fatture Automatiche
     </button>
   </div>
 
