@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -162,7 +162,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     private confirmationDialog: ConfirmationDialogService,
     private snackBar: MatSnackBar,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -180,6 +181,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
    */
   private initializeData(): void {
     this.isLoading = true;
+    this.cdr.detectChanges();
     
     // Carica le fatture
     this.invoices$ = this.invoiceService.getAllInvoices();
@@ -196,13 +198,14 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       next: (invoices) => {
         this.dataSource.data = invoices;
         this.setupTable();
-        // Forza l'applicazione del filtro per attivare il filterPredicate
         this.dataSource.filter = ' ';
         this.dataSource.filter = '';
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         this.isLoading = false;
+        this.cdr.detectChanges();
         this.showError('Errore nel caricamento delle fatture');
         console.error('Errore caricamento fatture:', error);
       }
@@ -455,6 +458,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
 
     if (confirmed) {
       this.isLoading = true;
+      this.cdr.detectChanges();
       
       const promises = Array.from(this.selectedInvoices).map(invoiceId =>
         this.invoiceService.markInvoiceAsPaid(invoiceId, new Date(), 'bank_transfer').toPromise()
@@ -482,6 +486,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         console.error('Errore aggiornamento fatture:', error);
       } finally {
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     }
   }
@@ -503,6 +508,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
 
     if (confirmed) {
       this.isLoading = true;
+      this.cdr.detectChanges();
       
       const promises = Array.from(this.selectedInvoices).map(invoiceId =>
         this.invoiceService.sendInvoiceReminder(invoiceId).toPromise()
@@ -526,6 +532,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         console.error('Errore invio promemoria:', error);
       } finally {
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     }
   }
