@@ -156,7 +156,7 @@ export class ContractGeneratorService {
             line-height: 1.3;
             color: #000;
             background: white;
-            padding: 10px;
+            padding: 20px 24px 12px; /* margini laterali e superiori maggiorati in anteprima */
         }
 
         .contract-container {
@@ -675,7 +675,8 @@ export class ContractGeneratorService {
             /* Pagina senza margini */
             @page {
                 size: A4;
-                margin: 5mm;
+                /* margini di stampa: top e laterali più ampi, bottom leggermente ridotto */
+                margin: 14mm 14mm 10mm 14mm;
             }
             
             /* Forza il contenuto in 2 pagine max */
