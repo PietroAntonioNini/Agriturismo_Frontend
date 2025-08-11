@@ -76,12 +76,32 @@ export class ContractGeneratorService {
    * @param tenant - Dati dell'inquilino
    * @param apartment - Dati dell'appartamento
    */
-  generateDetailedHTMLContract(lease: Lease, tenant: Tenant, apartment: Apartment): Observable<string> {
-    // Ottieni le ultime letture delle utility per l'appartamento
+  generateDetailedHTMLContract(
+    lease: Lease,
+    tenant: Tenant,
+    apartment: Apartment,
+    manualUtilities?: { electricity?: number | null; water?: number | null; gas?: number | null }
+  ): Observable<string> {
+    // Se arrivano letture dal form, usale; altrimenti recupera le ultime letture registrate
+    if (manualUtilities && (
+      manualUtilities.electricity !== undefined ||
+      manualUtilities.water !== undefined ||
+      manualUtilities.gas !== undefined
+    )) {
+      const utilityReadings = {
+        electricity: manualUtilities.electricity ?? 0,
+        water: manualUtilities.water ?? 0,
+        gas: manualUtilities.gas ?? 0
+      };
+      return new Observable<string>(subscriber => {
+        subscriber.next(this.createHTMLContract(lease, tenant, apartment, utilityReadings));
+        subscriber.complete();
+      });
+    }
+
+    // Fallback: carica ultime letture dal sistema utilities
     return this.getLastUtilityReadings(apartment.id!).pipe(
-      map(utilityReadings => {
-        return this.createHTMLContract(lease, tenant, apartment, utilityReadings);
-      })
+      map(utilityReadings => this.createHTMLContract(lease, tenant, apartment, utilityReadings))
     );
   }
 
@@ -442,21 +462,26 @@ export class ContractGeneratorService {
             margin-bottom: 10px;
         }
 
-        .print-button {
+        .toolbar {
             position: fixed;
             top: 10px;
             right: 10px;
-            padding: 8px 16px;
-            background: #000;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 1000;
+          display: flex;
+          gap: 8px;
+          z-index: 1000;
         }
 
-        .print-button:hover {
+        .toolbar button {
+          padding: 6px 12px;
+          background: #000;
+          color: #fff;
+          border: none;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        .toolbar button:hover {
             background: #333;
         }
 
@@ -654,15 +679,18 @@ export class ContractGeneratorService {
             }
             
             /* Forza il contenuto in 2 pagine max */
-            .page-break-after {
-                page-break-after: always;
-            }
+            .page-break-after { page-break-after: always; }
             
             /* Mantieni le sezioni insieme */
             .signatures-section,
             .inventory-section {
                 page-break-inside: avoid;
             }
+
+            /* Compatta per rientrare in 1 facciata quando possibile */
+            .header { margin-bottom: 6px; }
+            .date-location { margin-bottom: 6px; }
+            .inventory-section { display: none; } /* nasconde inventario in stampa per ridurre lunghezza */
         }
 
         .text-center {
@@ -680,6 +708,11 @@ export class ContractGeneratorService {
 </head>
 <body>
     <div class="contract-container">
+        <!-- Toolbar azioni -->
+        <div class="toolbar no-print">
+            <button onclick="printContract()">Scarica PDF</button>
+            <button onclick="window.close()">Chiudi</button>
+        </div>
         <!-- Header -->
         <div class="header">
             <h1>CONTRATTO DI LOCAZIONE</h1>
@@ -697,34 +730,6 @@ export class ContractGeneratorService {
             <div class="section">
                 <h2>PARTI CONTRAENTI</h2>
                 <div class="parties-grid">
-                    <div class="party-box">
-                        <div class="party-title">IL PROPRIETARIO (Locatore)</div>
-                        <div class="field-group">
-                            <label class="field-label">Nome e Cognome:</label>
-                            <div class="field-value">[Nome Proprietario]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Codice Fiscale:</label>
-                            <div class="field-value">[Codice Fiscale Proprietario]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Data di Nascita:</label>
-                            <div class="field-value">[Data Nascita Proprietario]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Luogo di Nascita:</label>
-                            <div class="field-value">[Luogo Nascita Proprietario]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Residenza:</label>
-                            <div class="field-value">[Residenza Proprietario]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Telefono:</label>
-                            <div class="field-value">[Telefono Proprietario]</div>
-                        </div>
-                    </div>
-
                     <div class="party-box">
                         <div class="party-title">IL CONDUTTORE (Inquilino)</div>
                         <div class="field-group">
@@ -752,63 +757,30 @@ export class ContractGeneratorService {
                             <div class="field-value">${tenant.phone}</div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Dati Immobile -->
-            <div class="section">
-                <h2>IDENTIFICAZIONE DELL'IMMOBILE</h2>
-                <div class="property-details">
-                    <div class="property-grid">
+                    <div class="party-box">
+                        <div class="party-title">IMMOBILE</div>
                         <div class="field-group">
-                            <label class="field-label">Indirizzo:</label>
+                            <label class="field-label">Nome/Indirizzo:</label>
                             <div class="field-value">${apartment.name}</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Città:</label>
-                            <div class="field-value">[Città]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">CAP:</label>
-                            <div class="field-value">[CAP]</div>
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Piano:</label>
-                            <div class="field-value">${apartment.floor}</div>
                         </div>
                         <div class="field-group">
                             <label class="field-label">Superficie:</label>
                             <div class="field-value">${apartment.squareMeters} m²</div>
                         </div>
                         <div class="field-group">
-                            <label class="field-label">Vani:</label>
+                            <label class="field-label">Stanze:</label>
                             <div class="field-value">${apartment.rooms}</div>
                         </div>
-                    </div>
-                    
-                    <div style="margin-top: 20px;">
-                        <label class="field-label">Dati Catastali:</label>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 10px;">
-                            <div class="field-group">
-                                <label class="field-label text-small">Foglio:</label>
-                                <div class="field-value">[Foglio]</div>
-                            </div>
-                            <div class="field-group">
-                                <label class="field-label text-small">Particella:</label>
-                                <div class="field-value">[Particella]</div>
-                            </div>
-                            <div class="field-group">
-                                <label class="field-label text-small">Subalterno:</label>
-                                <div class="field-value">[Subalterno]</div>
-                            </div>
-                            <div class="field-group">
-                                <label class="field-label text-small">Categoria:</label>
-                                <div class="field-value">[Categoria]</div>
-                            </div>
+                        <div class="field-group">
+                            <label class="field-label">Piano:</label>
+                            <div class="field-value">${apartment.floor}</div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- La sezione dettagli immobile estesa è stata rimossa per compattezza -->
 
             <!-- Descrizione Appartamento -->
             <div class="section">
@@ -869,13 +841,7 @@ export class ContractGeneratorService {
                                 <input type="text" class="amount-value" value="${lease.securityDeposit.toFixed(2)}">
                             </div>
                         </div>
-                        <div class="amount-box">
-                            <div class="amount-label">Spese Condominiali</div>
-                            <div style="display: flex; align-items: center; justify-content: center;">
-                                <span style="font-size: 14px; margin-right: 5px;">€</span>
-                                <input type="text" class="amount-value" value="100,00">
-                            </div>
-                        </div>
+                        <!-- Spese condominiali rimosse -->
                         <div class="amount-box">
                             <div class="amount-label">Durata Contratto</div>
                             <input type="text" class="amount-value" value="${months >= 48 ? '4+4 anni' : months >= 36 ? '3+2 anni' : 'Transitorio'}" style="color: #2c3e50;">
@@ -942,14 +908,7 @@ export class ContractGeneratorService {
                 </div>
             </div>
 
-            <!-- Note Legali -->
-            <div class="legal-notice">
-                <strong>CLAUSOLE IMPORTANTI:</strong><br>
-                • Il presente contratto è soggetto a registrazione presso l'Agenzia delle Entrate entro 30 giorni dalla stipula<br>
-                • Il conduttore dichiara di aver ricevuto informazioni sulla prestazione energetica dell'edificio (APE)<br>
-                • Le parti si danno atto di aver preso visione delle condizioni generali del contratto<br>
-                • Il contratto è regolato dalla Legge 431/98 e successive modificazioni
-            </div>
+            <!-- Clausole importanti rimosse per richiesta -->
 
             <!-- Firme -->
             <div class="signatures-section">
@@ -979,7 +938,7 @@ export class ContractGeneratorService {
     </div>
 
     <script>
-        // Print functionality ottimizzata
+        // Funzione Scarica/Stampa PDF
         function printContract() {
             // Nascondi elementi non necessari per la stampa
             const printElements = document.querySelectorAll('.no-print');
@@ -1000,7 +959,7 @@ export class ContractGeneratorService {
             }, 1000);
         }
 
-        // Keyboard shortcut per stampa veloce (Ctrl+P)
+        // Scorciatoia tastiera (Ctrl+P)
         document.addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'p') {
                 e.preventDefault();

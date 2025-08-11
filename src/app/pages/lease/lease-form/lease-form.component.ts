@@ -21,7 +21,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatNativeDateModule, MAT_DATE_FORMATS, DateAdapter, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_FORMATS, DateAdapter, MAT_DATE_LOCALE, NativeDateAdapter } from '@angular/material/core';
 
 // Components
 import { BaseContractUtilitiesComponent } from './base-contract-utilities.component';
@@ -52,6 +52,49 @@ const MY_DATE_FORMATS = {
   },
 };
 
+// DateAdapter personalizzato per gestire input manuali in formato dd/MM/yyyy
+class ItalianDateAdapter extends NativeDateAdapter {
+  override parse(value: any): Date | null {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const str = value.trim();
+      // Supporta separatori / - .
+      const parts = str.split(/[\/\-.]/);
+      if (parts.length === 3) {
+        const [dayStr, monthStr, yearStr] = parts;
+        const day = Number(dayStr);
+        const month = Number(monthStr) - 1; // mesi 0-based
+        const year = Number(yearStr.length === 2 ? (Number(yearStr) >= 70 ? '19' + yearStr : '20' + yearStr) : yearStr);
+        const date = new Date(year, month, day);
+        // Valida che la data costruita corrisponda ai valori inseriti
+        if (
+          !isNaN(date.getTime()) &&
+          date.getFullYear() === year &&
+          date.getMonth() === month &&
+          date.getDate() === day
+        ) {
+          return date;
+        }
+      }
+
+      // Fallback al parsing nativo se non rispetta il formato atteso
+      const timestamp = Date.parse(str);
+      return isNaN(timestamp) ? null : new Date(timestamp);
+    }
+    return super.parse(value);
+  }
+
+  override format(date: Date, displayFormat: any): string {
+    const day = this._to2digit(date.getDate());
+    const month = this._to2digit(date.getMonth() + 1);
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  private _to2digit(n: number): string {
+    return ('00' + n).slice(-2);
+  }
+}
+
 @Component({
   selector: 'app-lease-form',
   standalone: true,
@@ -77,7 +120,8 @@ const MY_DATE_FORMATS = {
   ],
   providers: [
     { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
-    { provide: MAT_DATE_LOCALE, useValue: 'it-IT' }
+    { provide: MAT_DATE_LOCALE, useValue: 'it-IT' },
+    { provide: DateAdapter, useClass: ItalianDateAdapter, deps: [MAT_DATE_LOCALE] }
   ],
   templateUrl: './lease-form.component.html',
   styleUrls: ['./lease-form.component.scss'],
@@ -526,8 +570,15 @@ export class LeaseFormComponent implements OnInit {
         updatedAt: new Date()  // Valore di default
       };
 
-      // Genera il contratto HTML dettagliato
-      this.contractGenerator.generateDetailedHTMLContract(leaseDataForContract, tenant, apartment)
+      // Prepara eventuali letture manuali inserite nello step Utenze
+      const manualUtilities = {
+        electricity: this.utilitiesFormGroup.get('electricity')?.value ?? null,
+        water: this.utilitiesFormGroup.get('water')?.value ?? null,
+        gas: this.utilitiesFormGroup.get('gas')?.value ?? null
+      };
+
+      // Genera il contratto HTML dettagliato con priorità alle letture manuali
+      this.contractGenerator.generateDetailedHTMLContract(leaseDataForContract, tenant, apartment, manualUtilities)
         .subscribe({
           next: (htmlContent: string) => {
             // Crea una nuova finestra con il contratto HTML
