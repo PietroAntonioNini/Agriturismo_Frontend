@@ -123,7 +123,7 @@ export class TenantFormComponent implements OnInit {
       communicationPreferences: this.fb.group({
         email: [false],
         sms: [false],
-        whatsapp: [false]
+        whatsapp: [true]
       }),
       notes: ['']
     });
