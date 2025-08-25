@@ -21,7 +21,7 @@ export class GenericApiService {
   constructor(private http: HttpClient) { }
 
   private apiUrl(entity: string): string {
-    return `${environment.apiUrl}/${entity}/`;
+    return `${environment.apiUrl}/${entity}`;
   }
 
   private getCacheKey(entity: string, params?: any): string {
