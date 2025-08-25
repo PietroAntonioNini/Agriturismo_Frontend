@@ -21,7 +21,7 @@ export class GenericApiService {
   constructor(private http: HttpClient) { }
 
   private apiUrl(entity: string): string {
-    return `${environment.apiUrl}/${entity}`;
+    return `${environment.apiUrl}/${entity}/`;
   }
 
   private getCacheKey(entity: string, params?: any): string {
@@ -238,7 +238,7 @@ export class GenericApiService {
       });
     }
     
-    return this.http.post<T>(`${this.apiUrl(entity)}/with-images`, formData);
+    return this.http.post<T>(`${this.apiUrl(entity)}with-images`, formData);
   }
 
   // PUT: Aggiornamento elemento (anche con immagini opzionali)
@@ -304,7 +304,7 @@ export class GenericApiService {
     if (files) {
       files.forEach((file, index) => formData.append(`file${index}`, file));
     }
-    return this.http.put<T>(`${this.apiUrl(entity)}/${id}/with-images`, formData);
+    return this.http.put<T>(`${this.apiUrl(entity)}${id}/with-images`, formData);
   }
 
   // DELETE: Eliminazione elemento
