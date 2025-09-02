@@ -529,7 +529,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
   
   exportData(): void {
-    // TODO: Implementare export
+    // TODO: Implementare esportazione dati
     this.showInfoSnackBar('Funzionalità di export in sviluppo');
   }
   

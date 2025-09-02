@@ -27,8 +27,8 @@ export class WhatsAppService {
    * Invia un messaggio WhatsApp tramite SendGrid
    */
   sendMessage(message: WhatsAppMessage): Observable<WhatsAppResponse> {
-    // TODO: Implementare l'integrazione reale con SendGrid
-    // Per ora, simula l'invio
+    // TODO: Implementare l'integrazione reale con SendPulse
+    // Simula l'invio del messaggio
     
     console.log('Simulazione invio WhatsApp:', {
       to: message.to,

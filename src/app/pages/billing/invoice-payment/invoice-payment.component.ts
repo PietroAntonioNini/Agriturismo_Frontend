@@ -380,12 +380,12 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
 
   // Utility methods per tenant e apartment
   getTenantName(tenantId: number): string {
-    // TODO: Implementare servizio tenant
+    // TODO: Implementare servizio inquilini
     return `Inquilino ${tenantId}`;
   }
 
   getApartmentName(apartmentId: number): string {
-    // TODO: Implementare servizio apartment
+    // TODO: Implementare servizio appartamenti
     return `Appartamento ${apartmentId}`;
   }
 

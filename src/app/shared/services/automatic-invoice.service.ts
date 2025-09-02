@@ -173,7 +173,7 @@ export class AutomaticInvoiceService {
    */
   private calculateUtilityCosts(apartmentId: number, readings: any): Observable<{ electricity: number; water: number; gas: number }> {
     // Per ora, calcola costi base basati sui consumi tipici
-    // In futuro, questo dovrebbe essere integrato con il sistema di letture reali
+    // TODO: Integrare con il sistema di letture reali
     const costs = {
       electricity: 0,
       water: 0,

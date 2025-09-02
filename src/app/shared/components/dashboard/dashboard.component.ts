@@ -164,14 +164,14 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       apartments: this.apiService.getAll<Apartment>('apartments'),
       tenants: this.apiService.getAll<Tenant>('tenants'),
       leases: this.apiService.getAll<Lease>('leases')
-      // invoices: this.apiService.getAll<Invoice>('invoices') // TODO: Decommentare quando le invoice saranno implementate
+      // invoices: this.apiService.getAll<Invoice>('invoices') // TODO: Decommentare quando le fatture saranno implementate
     }).subscribe({
       next: (data) => {
         this.apartments = data.apartments || [];
         this.tenants = data.tenants || [];
         this.leases = data.leases || [];
-        // this.invoices = data.invoices || []; // TODO: Decommentare quando le invoice saranno implementate
-        this.invoices = []; // Temporaneo: array vuoto finché non ci sono le invoice
+        // this.invoices = data.invoices || []; // TODO: Decommentare quando le fatture saranno implementate
+        this.invoices = []; // Array vuoto finché non ci sono le fatture
 
         // Prova a caricare le utility readings se disponibili
         this.loadUtilityReadings();
@@ -248,11 +248,11 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     // Statistiche inquilini
     this.totalTenants = this.tenants.length;
 
-    // Statistiche fatture - TODO: Decommentare quando le invoice saranno implementate
+    // TODO: Decommentare quando le fatture saranno implementate
     // this.unpaidInvoices = this.invoices.filter(invoice => !invoice.isPaid).length;
-    this.unpaidInvoices = 0; // Temporaneo
+    this.unpaidInvoices = 0; // Valore predefinito
 
-    // Fatture scadute - TODO: Decommentare quando le invoice saranno implementate  
+    // TODO: Decommentare quando le fatture saranno implementate  
     // this.overdueInvoices = this.invoices.filter(invoice => {
     //   if (!invoice.isPaid && invoice.dueDate) {
     //     const dueDate = new Date(invoice.dueDate);
@@ -260,13 +260,13 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     //   }
     //   return false;
     // }).length;
-    this.overdueInvoices = 0; // Temporaneo
+    this.overdueInvoices = 0; // Valore predefinito
 
-    // Calcola ricavi - TODO: Decommentare quando le invoice saranno implementate
+    // TODO: Decommentare quando le fatture saranno implementate
     // this.totalRevenue = this.invoices
     //   .filter(invoice => invoice.isPaid)
     //   .reduce((sum, invoice) => sum + (invoice.total || 0), 0);
-    this.totalRevenue = 0; // Temporaneo
+    this.totalRevenue = 0; // Valore predefinito
 
     // this.monthlyRevenue = this.invoices
     //   .filter(invoice => {
@@ -275,7 +275,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     //     return paidDate.getMonth() === currentMonth && paidDate.getFullYear() === currentYear;
     //   })
     //   .reduce((sum, invoice) => sum + (invoice.total || 0), 0);
-    this.monthlyRevenue = 0; // Temporaneo
+    this.monthlyRevenue = 0; // Valore predefinito
   }
 
   /**
@@ -304,14 +304,14 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
   /**
-   * Aggiorna info meteo (per ora semplice)
+   * TODO:Aggiorna info meteo (per ora semplice)
    */
   private updateWeather(): void {
-    // Per ora aggiorna solo la temperatura casualmente
-    // In futuro qui ci sarà la chiamata API meteo
+    // Aggiorna la temperatura con un valore casuale
+    // TODO: Integrare chiamata API meteo
     this.weather.temperature = Math.round(Math.random() * 15 + 15); // 15-30°C
     
-    // Condizioni casuali per ora
+    // Condizioni meteorologiche casuali
     const conditions = [
       { condition: 'Soleggiato', icon: 'wb_sunny' },
       { condition: 'Nuvoloso', icon: 'wb_cloudy' },
@@ -349,11 +349,11 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
         checkOut = new Date(activeLease.endDate);
       }
 
-      // Calcola ricavi appartamento - TODO: Decommentare quando le invoice saranno implementate
+      // Calcola ricavi appartamento - TODO: Decommentare quando le fatture saranno implementate
       // const revenue = this.invoices
       //   .filter(invoice => invoice.isPaid && invoice.apartmentId === apartment.id)
       //   .reduce((sum, invoice) => sum + (invoice.total || 0), 0);
-      const revenue = 0; // Temporaneo
+      const revenue = 0; // Valore predefinito
 
       return {
         id: apartment.id,

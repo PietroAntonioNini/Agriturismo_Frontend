@@ -10,7 +10,7 @@ import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 
-// Material Imports
+// Importazioni Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -140,7 +140,7 @@ class ItalianDateAdapter extends NativeDateAdapter {
 export class LeaseFormComponent implements OnInit {
     @ViewChild('stepper') stepper!: MatStepper;
 
-  // Form groups for stepper
+  // Gruppi di form per lo stepper
   currentStepIndex = 0;
   partiesFormGroup!: FormGroup;
   termsFormGroup!: FormGroup;
@@ -217,13 +217,13 @@ export class LeaseFormComponent implements OnInit {
   }
 
   initFormGroups(): void {
-    // Form group per step 1: Parti contraenti
+    // Gruppo di form per step 1: Parti contraenti
     this.partiesFormGroup = this.fb.group({
       tenant: ['', Validators.required],
       apartment: ['', Validators.required]
     });
     
-    // Form group per step 2: Durata e canone
+    // Gruppo di form per step 2: Durata e canone
     this.termsFormGroup = this.fb.group({
       startDate: ['', Validators.required],
       endDate: ['', [Validators.required, this.endDateValidator]],
@@ -232,14 +232,14 @@ export class LeaseFormComponent implements OnInit {
       paymentDueDay: ['', [Validators.required, Validators.min(1), Validators.max(31)]],
     });
     
-    // Form group per step 3: Termini e condizioni
+    // Gruppo di form per step 3: Termini e condizioni
     this.conditionsFormGroup = this.fb.group({
       termsAndConditions: ['', Validators.required],
       specialClauses: [''],
       notes: ['']
     });
     
-    // Form group per step 5: Utenze
+    // Gruppo di form per step 5: Utenze
     this.utilitiesFormGroup = this.fb.group({
       electricity: [null, [Validators.min(0)]],
       water: [null, [Validators.min(0)]],
