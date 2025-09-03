@@ -633,7 +633,7 @@ export class GenericApiService {
 
   // Ottiene i tipi di utility configurati dal backend
   getUtilityTypes(): Observable<UtilityTypeConfig[]> {
-    return this.http.get<UtilityTypeConfig[]>(`${this.apiUrl('utilities')}/types`).pipe(
+    return this.http.get<UtilityTypeConfig[]>(`${this.apiUrl('utilities')}types`).pipe(
       catchError(error => {
         console.error('Errore durante il recupero dei tipi utility dal backend', error);
         // Fallback ai tipi predefiniti in caso di errore
