@@ -30,6 +30,7 @@ import { Observable, Subject, combineLatest, of } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith, map } from 'rxjs/operators';
 
 import { Invoice, InvoiceItem, PaymentRecord } from '../../../shared/models';
+import { GenerateStatementDialogComponent } from '../generate-statement-dialog/generate-statement-dialog.component';
 import { InvoiceService } from '../../../shared/services/invoice.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
@@ -161,6 +162,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private confirmationDialog: ConfirmationDialogService,
     private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
@@ -785,5 +787,13 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       'Chiudi', 
       { duration: 8000 }
     );
+  }
+
+  openMonthlyStatementDialog(): void {
+    this.dialog.open(GenerateStatementDialogComponent, {
+      width: '880px',
+      maxWidth: '95vw',
+      panelClass: 'dialog-responsive'
+    });
   }
 } 
