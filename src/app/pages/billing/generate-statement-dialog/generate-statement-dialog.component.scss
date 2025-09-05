@@ -3,27 +3,45 @@
   gap: 16px;
   padding-top: 16px;
 }
-.row {
+
+.top-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   align-items: center;
 }
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
 .rows-table {
   display: grid;
   gap: 8px;
 }
+
 .rows-table .row {
   grid-template-columns: 120px 1fr 1fr 1fr 200px 1fr;
+
 }
 .rows-table .row.header {
   font-weight: 600;
   opacity: .8;
 }
+
 .rows-table .label {
   font-weight: 600;
 }
-.unit-field { width: 120px; }
-.error { color: #d32f2f; }
+
+.unit-field { 
+  width: 120px; 
+}
+
+.error { 
+  color: #d32f2f; 
+}
 
 
