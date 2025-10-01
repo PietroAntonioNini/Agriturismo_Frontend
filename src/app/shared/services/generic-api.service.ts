@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { map, catchError, tap, shareReplay } from 'rxjs/operators';
+import { map, catchError, tap, shareReplay, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { UtilityReading, UtilityReadingCreate, MonthlyUtilityData, ApartmentUtilityData, LastReading, UtilityStatistics, UtilityTypeConfig } from '../models';
 
@@ -724,27 +724,45 @@ export class GenericApiService {
     }
     
     return this.getAll<UtilityReading>('utilities', params).pipe(
-      map((readings: UtilityReading[]) => {
+      switchMap((readings: UtilityReading[]) => {
         if (readings.length > 0) {
           const reading = readings[0];
-          return {
+          return of({
             apartmentId: reading.apartmentId,
             type: reading.type,
             lastReading: reading.currentReading,
             lastReadingDate: reading.readingDate,
             hasHistory: true,
             subtype: reading.subtype
-          } as LastReading;
+          } as LastReading);
         } else {
+          // Se non troviamo letture con il sottotipo specificato e stiamo cercando 'main',
+          // proviamo a cercare letture con subtype NULL (letture vecchie)
+          if (subtype === 'main') {
+            return this.searchForNullSubtypeReadings(apartmentId, type);
+          }
+          
+          // Per 'laundry', se non troviamo letture specifiche, restituiamo come prima lettura
+          if (subtype === 'laundry') {
+            return of({
+              apartmentId: apartmentId,
+              type: type as 'electricity' | 'water' | 'gas',
+              lastReading: 0,
+              lastReadingDate: new Date(),
+              hasHistory: false,
+              subtype: 'laundry'
+            } as LastReading);
+          }
+          
           // Nessuna lettura precedente - prima lettura
-          return {
+          return of({
             apartmentId: apartmentId,
             type: type as 'electricity' | 'water' | 'gas',
             lastReading: 0,
             lastReadingDate: new Date(),
             hasHistory: false,
             subtype: subtype
-          } as LastReading;
+          } as LastReading);
         }
       }),
       catchError(error => {
@@ -756,6 +774,60 @@ export class GenericApiService {
           lastReading: 0,
           lastReadingDate: new Date(),
           hasHistory: false
+        } as LastReading);
+      })
+    );
+  }
+
+  // Metodo helper per cercare letture con subtype NULL (letture vecchie)
+  private searchForNullSubtypeReadings(apartmentId: number, type: string): Observable<LastReading> {
+    const params: any = {
+      apartmentId: apartmentId.toString(),
+      type: type,
+      _sort: 'readingDate',
+      _order: 'desc',
+      _limit: '1'
+    };
+
+    return this.getAll<UtilityReading>('utilities', params).pipe(
+      map((readings: UtilityReading[]) => {
+        // Filtra le letture che hanno subtype NULL o undefined
+        const nullSubtypeReadings = readings.filter(reading => 
+          reading.subtype === null || reading.subtype === undefined || reading.subtype === ''
+        );
+
+        if (nullSubtypeReadings.length > 0) {
+          const reading = nullSubtypeReadings[0];
+          return {
+            apartmentId: reading.apartmentId,
+            type: reading.type,
+            lastReading: reading.currentReading,
+            lastReadingDate: reading.readingDate,
+            hasHistory: true,
+            subtype: 'main' // Tratta le letture NULL come 'main'
+          } as LastReading;
+        } else {
+          // Nessuna lettura precedente - prima lettura
+          return {
+            apartmentId: apartmentId,
+            type: type as 'electricity' | 'water' | 'gas',
+            lastReading: 0,
+            lastReadingDate: new Date(),
+            hasHistory: false,
+            subtype: 'main'
+          } as LastReading;
+        }
+      }),
+      catchError(error => {
+        console.error(`Errore durante la ricerca di letture con subtype NULL per l'appartamento ${apartmentId}`, error);
+        // In caso di errore, restituisce come prima lettura
+        return of({
+          apartmentId: apartmentId,
+          type: type as 'electricity' | 'water' | 'gas',
+          lastReading: 0,
+          lastReadingDate: new Date(),
+          hasHistory: false,
+          subtype: 'main'
         } as LastReading);
       })
     );
