@@ -709,14 +709,19 @@ export class GenericApiService {
   }
 
   // Ottiene l'ultima lettura per un appartamento e tipo di utenza (restituisce LastReading)
-  getLastUtilityReading(apartmentId: number, type: string): Observable<LastReading | null> {
-    const params = {
+  getLastUtilityReading(apartmentId: number, type: string, subtype?: string): Observable<LastReading | null> {
+    const params: any = {
       apartmentId: apartmentId.toString(),
       type: type,
       _sort: 'readingDate',
       _order: 'desc',
       _limit: '1'
     };
+
+    // Aggiungi filtro per sottotipo se specificato
+    if (subtype) {
+      params.subtype = subtype;
+    }
     
     return this.getAll<UtilityReading>('utilities', params).pipe(
       map((readings: UtilityReading[]) => {
@@ -727,7 +732,8 @@ export class GenericApiService {
             type: reading.type,
             lastReading: reading.currentReading,
             lastReadingDate: reading.readingDate,
-            hasHistory: true
+            hasHistory: true,
+            subtype: reading.subtype
           } as LastReading;
         } else {
           // Nessuna lettura precedente - prima lettura
@@ -736,7 +742,8 @@ export class GenericApiService {
             type: type as 'electricity' | 'water' | 'gas',
             lastReading: 0,
             lastReadingDate: new Date(),
-            hasHistory: false
+            hasHistory: false,
+            subtype: subtype
           } as LastReading;
         }
       }),

@@ -420,8 +420,44 @@ export class InvoiceService {
         // Aggiungi voci utenze se presenti
         return this.getUtilityReadingsForPeriod(lease.apartmentId, periodStart, periodEnd).pipe(
           map(readings => {
-            readings.forEach(reading => {
-              if (reading.type === 'electricity' && reading.totalCost > 0) {
+            // Raggruppa le letture per tipo per gestire letture speciali
+            const electricityReadings = readings.filter(r => r.type === 'electricity' && r.totalCost > 0);
+            const waterReadings = readings.filter(r => r.type === 'water' && r.totalCost > 0);
+            const gasReadings = readings.filter(r => r.type === 'gas' && r.totalCost > 0);
+
+            // Gestione speciale per l'appartamento 8 - elettricità
+            if (lease.apartmentId === 8 && electricityReadings.length > 0) {
+              const mainElectricity = electricityReadings.find(r => !r.isSpecialReading || r.subtype === 'main');
+              const laundryElectricity = electricityReadings.find(r => r.isSpecialReading && r.subtype === 'laundry');
+
+              // Elettricità principale
+              if (mainElectricity) {
+                items.push({
+                  id: 0,
+                  invoiceId: 0,
+                  description: `Utenza Elettrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                  amount: mainElectricity.totalCost,
+                  quantity: 1,
+                  unitPrice: mainElectricity.totalCost,
+                  type: 'electricity'
+                });
+              }
+
+              // Elettricità lavanderia (solo per appartamento 8)
+              if (laundryElectricity) {
+                items.push({
+                  id: 0,
+                  invoiceId: 0,
+                  description: `Elettricità Lavanderia ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                  amount: laundryElectricity.totalCost,
+                  quantity: 1,
+                  unitPrice: laundryElectricity.totalCost,
+                  type: 'other' // Usa 'other' per distinguerla dall'elettricità principale
+                });
+              }
+            } else {
+              // Gestione normale per tutti gli altri appartamenti
+              electricityReadings.forEach(reading => {
                 items.push({
                   id: 0,
                   invoiceId: 0,
@@ -431,29 +467,32 @@ export class InvoiceService {
                   unitPrice: reading.totalCost,
                   type: 'electricity'
                 });
-              }
-              if (reading.type === 'water' && reading.totalCost > 0) {
-                items.push({
-                  id: 0,
-                  invoiceId: 0,
-                  description: `Utenza Idrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
-                  amount: reading.totalCost,
-                  quantity: 1,
-                  unitPrice: reading.totalCost,
-                  type: 'water'
-                });
-              }
-              if (reading.type === 'gas' && reading.totalCost > 0) {
-                items.push({
-                  id: 0,
-                  invoiceId: 0,
-                  description: `Utenza Gas ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
-                  amount: reading.totalCost,
-                  quantity: 1,
-                  unitPrice: reading.totalCost,
-                  type: 'gas'
-                });
-              }
+              });
+            }
+
+            // Acqua e Gas (gestione normale per tutti)
+            waterReadings.forEach(reading => {
+              items.push({
+                id: 0,
+                invoiceId: 0,
+                description: `Utenza Idrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                amount: reading.totalCost,
+                quantity: 1,
+                unitPrice: reading.totalCost,
+                type: 'water'
+              });
+            });
+
+            gasReadings.forEach(reading => {
+              items.push({
+                id: 0,
+                invoiceId: 0,
+                description: `Utenza Gas ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
+                amount: reading.totalCost,
+                quantity: 1,
+                unitPrice: reading.totalCost,
+                type: 'gas'
+              });
             });
             return items;
           })

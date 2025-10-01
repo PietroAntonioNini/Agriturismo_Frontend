@@ -652,6 +652,22 @@
                 &.gas mat-icon {
                   color: #45B7D1;
                 }
+
+                &.laundry-electricity {
+                  background: linear-gradient(135deg, #FFE5B4 0%, #FFD700 100%);
+                  border: 2px solid #FFA500;
+                  position: relative;
+
+                  mat-icon {
+                    color: #FF8C00;
+                  }
+
+                  .utility-badge {
+                    position: absolute;
+                    top: -8px;
+                    right: -8px;
+                  }
+                }
               }
             }
           }
@@ -764,6 +780,24 @@
 
                 &.gas mat-icon {
                   color: #45B7D1;
+                }
+
+                &.laundry-electricity {
+                  background: linear-gradient(135deg, #FFE5B4 0%, #FFD700 100%);
+                  border: 1px solid #FFA500;
+                  border-radius: 6px;
+                  padding: 8px 12px;
+                  position: relative;
+
+                  mat-icon {
+                    color: #FF8C00;
+                  }
+
+                  .special-chip {
+                    font-size: 0.7rem;
+                    height: 20px;
+                    margin-left: 8px;
+                  }
                 }
               }
             }

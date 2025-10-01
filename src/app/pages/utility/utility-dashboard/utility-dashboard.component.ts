@@ -698,6 +698,34 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     return aptData.monthlyData.reduce((sum, month) => sum + (month.gasCost || 0), 0);
   }
 
+  // ===== METODI PER LETTURE SPECIALI =====
+
+  /**
+   * Verifica se l'appartamento è l'appartamento 8
+   */
+  isApartment8(apartmentId: number): boolean {
+    return apartmentId === 8;
+  }
+
+  /**
+   * Ottiene il costo dell'elettricità della lavanderia per l'appartamento 8
+   * TODO: Implementare quando il backend supporterà le letture speciali
+   */
+  getLaundryElectricityCostForApartment(aptData: ApartmentUtilityData): number {
+    if (!aptData || !aptData.monthlyData || !this.isApartment8(aptData.apartmentId)) {
+      return 0;
+    }
+    // Per ora restituisce 0, sarà implementato quando il backend supporterà le letture speciali
+    return 0;
+  }
+
+  /**
+   * Verifica se dovrebbe mostrare la sezione lavanderia per l'appartamento
+   */
+  shouldShowLaundrySection(apartmentId: number): boolean {
+    return this.isApartment8(apartmentId);
+  }
+
   getSelectedApartmentData(): ApartmentUtilityData | undefined {
     if (this.selectedApartmentId === null || this.apartmentUtilityData.length === 0) {
       return undefined;

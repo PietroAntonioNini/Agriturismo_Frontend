@@ -487,6 +487,23 @@ mat-form-field {
     span {
       font-weight: 500;
     }
+
+    .option-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      
+      .option-label {
+        font-weight: 500;
+        font-size: 14px;
+      }
+      
+      .option-description {
+        font-size: 12px;
+        color: #666;
+        font-style: italic;
+      }
+    }
   }
 
   .selected-utility {

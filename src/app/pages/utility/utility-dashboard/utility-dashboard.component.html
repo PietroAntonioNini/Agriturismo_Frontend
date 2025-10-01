@@ -257,27 +257,39 @@
               <div class="utility-breakdown">
                 <div class="utility-item electricity">
                   <mat-icon>bolt</mat-icon>
-                                     <div class="utility-details">
-                     <span class="utility-value">{{aptData.yearlyTotals.electricity | number:'1.0-1'}} kWh</span>
-                     <span class="utility-cost">€{{getElectricityCostForApartment(aptData) | number:'1.2-2'}}</span>
-                   </div>
-                 </div>
-                 
-                 <div class="utility-item water">
-                   <mat-icon>water_drop</mat-icon>
-                   <div class="utility-details">
-                     <span class="utility-value">{{aptData.yearlyTotals.water | number:'1.0-1'}} m³</span>
-                     <span class="utility-cost">€{{getWaterCostForApartment(aptData) | number:'1.2-2'}}</span>
-                   </div>
-                 </div>
-                 
-                 <div class="utility-item gas">
-                   <mat-icon>local_fire_department</mat-icon>
-                   <div class="utility-details">
-                     <span class="utility-value">{{aptData.yearlyTotals.gas | number:'1.0-1'}} m³</span>
-                     <span class="utility-cost">€{{getGasCostForApartment(aptData) | number:'1.2-2'}}</span>
-                   </div>
-                 </div>
+                  <div class="utility-details">
+                    <span class="utility-value">{{aptData.yearlyTotals.electricity | number:'1.0-1'}} kWh</span>
+                    <span class="utility-cost">€{{getElectricityCostForApartment(aptData) | number:'1.2-2'}}</span>
+                  </div>
+                </div>
+                
+                <!-- Sezione speciale per lavanderia - solo appartamento 8 -->
+                <div class="utility-item laundry-electricity" *ngIf="shouldShowLaundrySection(aptData.apartmentId)">
+                  <mat-icon>local_laundry_service</mat-icon>
+                  <div class="utility-details">
+                    <span class="utility-value">Lavanderia</span>
+                    <span class="utility-cost">€{{getLaundryElectricityCostForApartment(aptData) | number:'1.2-2'}}</span>
+                  </div>
+                  <div class="utility-badge">
+                    <mat-chip color="accent" selected>Speciale</mat-chip>
+                  </div>
+                </div>
+                
+                <div class="utility-item water">
+                  <mat-icon>water_drop</mat-icon>
+                  <div class="utility-details">
+                    <span class="utility-value">{{aptData.yearlyTotals.water | number:'1.0-1'}} m³</span>
+                    <span class="utility-cost">€{{getWaterCostForApartment(aptData) | number:'1.2-2'}}</span>
+                  </div>
+                </div>
+                
+                <div class="utility-item gas">
+                  <mat-icon>local_fire_department</mat-icon>
+                  <div class="utility-details">
+                    <span class="utility-value">{{aptData.yearlyTotals.gas | number:'1.0-1'}} m³</span>
+                    <span class="utility-cost">€{{getGasCostForApartment(aptData) | number:'1.2-2'}}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -307,6 +319,14 @@
                   <mat-icon>bolt</mat-icon>
                   <span>{{monthData.electricity | number:'1.0-1'}} kWh</span>
                   <span class="cost">€{{monthData.electricityCost | number:'1.2-2'}}</span>
+                </div>
+                
+                <!-- Sezione speciale per lavanderia - solo appartamento 8 -->
+                <div class="month-utility laundry-electricity" *ngIf="shouldShowLaundrySection(selectedApartmentId!)">
+                  <mat-icon>local_laundry_service</mat-icon>
+                  <span>Lavanderia</span>
+                  <span class="cost">€0.00</span>
+                  <mat-chip color="accent" selected class="special-chip">Speciale</mat-chip>
                 </div>
                 
                 <div class="month-utility water">

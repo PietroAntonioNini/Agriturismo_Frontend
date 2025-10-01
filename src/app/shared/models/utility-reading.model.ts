@@ -13,6 +13,9 @@ export interface UtilityReading {
     createdAt?: Date;
     updatedAt?: Date;
     notes?: string; // Note aggiuntive sulla lettura
+    // Nuovi campi per letture speciali
+    subtype?: string; // 'laundry' per la lavanderia, 'main' per lettura principale
+    isSpecialReading?: boolean; // flag per identificare letture speciali
     // Campi opzionali per compatibilità con il backend
     electricityConsumption?: number;
     waterConsumption?: number;
@@ -34,6 +37,9 @@ export interface UtilityReadingCreate {
     totalCost: number;
     isPaid: boolean;
     notes?: string;
+    // Nuovi campi per letture speciali
+    subtype?: string; // 'laundry' per la lavanderia, 'main' per lettura principale
+    isSpecialReading?: boolean; // flag per identificare letture speciali
     // Campi opzionali per il backend (lasciati undefined)
     electricityConsumption?: number;
     waterConsumption?: number;
@@ -49,6 +55,21 @@ export interface LastReading {
     lastReading: number;
     lastReadingDate: Date;
     hasHistory: boolean; // indica se è la prima lettura o meno
+    subtype?: string; // per distinguere tra letture principali e speciali
+}
+
+// Interfaccia per gestire letture speciali per appartamenti specifici
+export interface SpecialReadingConfig {
+    apartmentId: number;
+    apartmentName: string;
+    specialReadings: {
+        type: 'electricity' | 'water' | 'gas';
+        subtype: string;
+        label: string;
+        description: string;
+        icon: string;
+        color: string;
+    }[];
 }
 
 export interface UtilitySummary {

@@ -123,17 +123,46 @@ export class AutomaticInvoiceService {
     if (leaseData.utilityReadings) {
       return this.calculateUtilityCosts(leaseData.apartmentId, leaseData.utilityReadings).pipe(
         map(utilityCosts => {
-          // Aggiungi voci utenze se ci sono costi
-          if (utilityCosts.electricity > 0) {
-            items.push({
-              id: 0,
-              invoiceId: 0,
-              description: `Utenza Elettrica ${monthName}`,
-              amount: utilityCosts.electricity,
-              quantity: 1,
-              unitPrice: utilityCosts.electricity,
-              type: 'electricity'
-            });
+          // Gestione speciale per l'appartamento 8 - elettricità
+          if (leaseData.apartmentId === 8) {
+            // Elettricità principale
+            if (utilityCosts.electricity > 0) {
+              items.push({
+                id: 0,
+                invoiceId: 0,
+                description: `Utenza Elettrica ${monthName}`,
+                amount: utilityCosts.electricity,
+                quantity: 1,
+                unitPrice: utilityCosts.electricity,
+                type: 'electricity'
+              });
+            }
+
+            // Elettricità lavanderia (se presente)
+            if (utilityCosts.laundryElectricity && utilityCosts.laundryElectricity > 0) {
+              items.push({
+                id: 0,
+                invoiceId: 0,
+                description: `Elettricità Lavanderia ${monthName}`,
+                amount: utilityCosts.laundryElectricity,
+                quantity: 1,
+                unitPrice: utilityCosts.laundryElectricity,
+                type: 'other'
+              });
+            }
+          } else {
+            // Gestione normale per tutti gli altri appartamenti
+            if (utilityCosts.electricity > 0) {
+              items.push({
+                id: 0,
+                invoiceId: 0,
+                description: `Utenza Elettrica ${monthName}`,
+                amount: utilityCosts.electricity,
+                quantity: 1,
+                unitPrice: utilityCosts.electricity,
+                type: 'electricity'
+              });
+            }
           }
 
           if (utilityCosts.water > 0) {
@@ -171,20 +200,32 @@ export class AutomaticInvoiceService {
   /**
    * Calcola i costi delle utenze basati sulle letture iniziali
    */
-  private calculateUtilityCosts(apartmentId: number, readings: any): Observable<{ electricity: number; water: number; gas: number }> {
+  private calculateUtilityCosts(apartmentId: number, readings: any): Observable<{ electricity: number; water: number; gas: number; laundryElectricity?: number }> {
     // Per ora, calcola costi base basati sui consumi tipici
     // TODO: Integrare con il sistema di letture reali
-    const costs = {
+    const costs: { electricity: number; water: number; gas: number; laundryElectricity?: number } = {
       electricity: 0,
       water: 0,
       gas: 0
     };
+
+    // Se è l'appartamento 8, aggiungi il campo per l'elettricità della lavanderia
+    if (apartmentId === 8) {
+      costs.laundryElectricity = 0;
+    }
 
     // Calcola costi basati sui consumi tipici mensili
     if (readings.electricity !== undefined) {
       // Consumo tipico: 200-400 kWh/mese
       const consumption = readings.electricity || 300;
       costs.electricity = Math.round(consumption * 0.25 * 100) / 100; // €0.25/kWh
+    }
+
+    // Per l'appartamento 8, calcola anche l'elettricità della lavanderia
+    if (apartmentId === 8 && readings.laundryElectricity !== undefined) {
+      // Consumo tipico lavanderia: 20-50 kWh/mese
+      const consumption = readings.laundryElectricity || 35;
+      costs.laundryElectricity = Math.round(consumption * 0.25 * 100) / 100; // €0.25/kWh
     }
 
     if (readings.water !== undefined) {
