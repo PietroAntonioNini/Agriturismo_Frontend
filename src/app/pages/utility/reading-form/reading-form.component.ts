@@ -632,7 +632,17 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
    */
   isApartment8(): boolean {
     const apartmentId = this.readingForm?.get('apartmentId')?.value;
-    return apartmentId === 8;
+    const apartment = this.data.apartments.find(apt => apt.id === apartmentId);
+    
+    console.log('isApartment8 check:', {
+      apartmentId,
+      apartmentName: apartment?.name,
+      isApartment8: apartment?.name?.includes('8') || apartment?.name?.includes('App. 8')
+    });
+    
+    // TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
+    // Per ora, l'ID 11 corrisponde all'App. 8 nel database
+    return apartmentId === 11;
   }
 
   /**
@@ -654,13 +664,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
    * Verifica se dovrebbe mostrare il selettore di tipo di lettura
    */
   shouldShowReadingTypeSelector(): boolean {
-    const apartmentId = this.readingForm?.get('apartmentId')?.value;
-    const type = this.readingForm?.get('type')?.value;
-    const shouldShow = apartmentId === 8 && type === 'electricity';
+    const shouldShow = this.isApartment8() && this.isElectricityType();
     
     console.log('shouldShowReadingTypeSelector:', {
-      apartmentId,
-      type,
       shouldShow,
       isApartment8: this.isApartment8(),
       isElectricityType: this.isElectricityType()

@@ -426,7 +426,11 @@ export class InvoiceService {
             const gasReadings = readings.filter(r => r.type === 'gas' && r.totalCost > 0);
 
             // Gestione speciale per l'appartamento 8 - elettricità
-            if (lease.apartmentId === 8 && electricityReadings.length > 0) {
+            // TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
+            // Per ora, l'ID 11 corrisponde all'App. 8 nel database
+            const isApartment8 = lease.apartmentId === 11;
+            
+            if (isApartment8 && electricityReadings.length > 0) {
               const mainElectricity = electricityReadings.find(r => !r.isSpecialReading || r.subtype === 'main');
               const laundryElectricity = electricityReadings.find(r => r.isSpecialReading && r.subtype === 'laundry');
 

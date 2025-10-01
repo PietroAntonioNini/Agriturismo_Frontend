@@ -124,7 +124,11 @@ export class AutomaticInvoiceService {
       return this.calculateUtilityCosts(leaseData.apartmentId, leaseData.utilityReadings).pipe(
         map(utilityCosts => {
           // Gestione speciale per l'appartamento 8 - elettricità
-          if (leaseData.apartmentId === 8) {
+          // TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
+          // Per ora, l'ID 11 corrisponde all'App. 8 nel database
+          const isApartment8 = leaseData.apartmentId === 11;
+          
+          if (isApartment8) {
             // Elettricità principale
             if (utilityCosts.electricity > 0) {
               items.push({
@@ -209,8 +213,8 @@ export class AutomaticInvoiceService {
       gas: 0
     };
 
-    // Se è l'appartamento 8, aggiungi il campo per l'elettricità della lavanderia
-    if (apartmentId === 8) {
+    // Se è l'appartamento 8 (ID 11), aggiungi il campo per l'elettricità della lavanderia
+    if (apartmentId === 11) {
       costs.laundryElectricity = 0;
     }
 
@@ -221,8 +225,8 @@ export class AutomaticInvoiceService {
       costs.electricity = Math.round(consumption * 0.25 * 100) / 100; // €0.25/kWh
     }
 
-    // Per l'appartamento 8, calcola anche l'elettricità della lavanderia
-    if (apartmentId === 8 && readings.laundryElectricity !== undefined) {
+    // Per l'appartamento 8 (ID 11), calcola anche l'elettricità della lavanderia
+    if (apartmentId === 11 && readings.laundryElectricity !== undefined) {
       // Consumo tipico lavanderia: 20-50 kWh/mese
       const consumption = readings.laundryElectricity || 35;
       costs.laundryElectricity = Math.round(consumption * 0.25 * 100) / 100; // €0.25/kWh
