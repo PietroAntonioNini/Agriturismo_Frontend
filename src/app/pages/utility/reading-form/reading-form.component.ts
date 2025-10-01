@@ -65,6 +65,11 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
   utilityTypes: UtilityTypeConfig[] = [];
   isLoadingUtilityTypes = false;
 
+  // Proprietà cached per evitare loop infiniti
+  private _isApartment8: boolean = false;
+  private _isElectricityType: boolean = false;
+  private _shouldShowReadingTypeSelector: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private apiService: GenericApiService,
@@ -169,6 +174,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       subtype: ['main'], // 'main' per lettura principale, 'laundry' per lavanderia
       isSpecialReading: [false]
     });
+
+    // Inizializza le proprietà cached
+    this.updateCachedProperties();
   }
   
 
@@ -183,10 +191,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       )
     ).subscribe(formValue => {
       console.log('Form value changed:', formValue);
-      console.log('shouldShowReadingTypeSelector:', this.shouldShowReadingTypeSelector());
       
-      // Forza l'aggiornamento della vista
-      this.cdr.detectChanges();
+      // Aggiorna le proprietà cached
+      this.updateCachedProperties();
       
       if (formValue.apartmentId && formValue.type) {
         this.loadLastReading(formValue.apartmentId, formValue.type, formValue.subtype);
@@ -628,51 +635,43 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
   // ===== METODI PER LETTURE SPECIALI =====
 
   /**
+   * Aggiorna le proprietà cached per evitare loop infiniti
+   */
+  private updateCachedProperties(): void {
+    const apartmentId = this.readingForm?.get('apartmentId')?.value;
+    const type = this.readingForm?.get('type')?.value;
+    
+    this._isApartment8 = apartmentId === 11; // ID 11 corrisponde all'App. 8
+    this._isElectricityType = type === 'electricity';
+    this._shouldShowReadingTypeSelector = this._isApartment8 && this._isElectricityType;
+  }
+
+  /**
    * Verifica se l'appartamento selezionato è l'appartamento 8
    */
   isApartment8(): boolean {
-    const apartmentId = this.readingForm?.get('apartmentId')?.value;
-    const apartment = this.data.apartments.find(apt => apt.id === apartmentId);
-    
-    console.log('isApartment8 check:', {
-      apartmentId,
-      apartmentName: apartment?.name,
-      isApartment8: apartment?.name?.includes('8') || apartment?.name?.includes('App. 8')
-    });
-    
-    // TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
-    // Per ora, l'ID 11 corrisponde all'App. 8 nel database
-    return apartmentId === 11;
+    return this._isApartment8;
   }
 
   /**
    * Verifica se il tipo di utenza selezionato è elettricità
    */
   isElectricityType(): boolean {
-    const type = this.readingForm?.get('type')?.value;
-    return type === 'electricity';
+    return this._isElectricityType;
   }
 
   /**
    * Verifica se dovrebbe mostrare il campo per la lettura speciale della lavanderia
    */
   shouldShowLaundryElectricityField(): boolean {
-    return this.isApartment8() && this.isElectricityType();
+    return this._shouldShowReadingTypeSelector;
   }
 
   /**
    * Verifica se dovrebbe mostrare il selettore di tipo di lettura
    */
   shouldShowReadingTypeSelector(): boolean {
-    const shouldShow = this.isApartment8() && this.isElectricityType();
-    
-    console.log('shouldShowReadingTypeSelector:', {
-      shouldShow,
-      isApartment8: this.isApartment8(),
-      isElectricityType: this.isElectricityType()
-    });
-    
-    return shouldShow;
+    return this._shouldShowReadingTypeSelector;
   }
 
   /**
@@ -705,6 +704,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     this.readingForm?.patchValue({
       isSpecialReading: isSpecial
     });
+
+    // Aggiorna le proprietà cached
+    this.updateCachedProperties();
 
     // Se cambia il tipo di lettura, ricarica l'ultima lettura specifica
     const apartmentId = this.readingForm?.get('apartmentId')?.value;
