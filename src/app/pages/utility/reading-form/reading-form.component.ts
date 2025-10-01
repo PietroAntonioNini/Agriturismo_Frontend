@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, Inject, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
@@ -70,6 +70,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     private apiService: GenericApiService,
     private snackBar: MatSnackBar,
     private notificationService: NotificationService,
+    private cdr: ChangeDetectorRef,
     public dialogRef: MatDialogRef<ReadingFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { 
       apartments: Apartment[],
@@ -181,6 +182,12 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         prev.apartmentId === curr.apartmentId && prev.type === curr.type && prev.subtype === curr.subtype
       )
     ).subscribe(formValue => {
+      console.log('Form value changed:', formValue);
+      console.log('shouldShowReadingTypeSelector:', this.shouldShowReadingTypeSelector());
+      
+      // Forza l'aggiornamento della vista
+      this.cdr.detectChanges();
+      
       if (formValue.apartmentId && formValue.type) {
         this.loadLastReading(formValue.apartmentId, formValue.type, formValue.subtype);
         this.setDefaultUnitCost(formValue.type);
@@ -647,7 +654,19 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
    * Verifica se dovrebbe mostrare il selettore di tipo di lettura
    */
   shouldShowReadingTypeSelector(): boolean {
-    return this.isApartment8() && this.isElectricityType();
+    const apartmentId = this.readingForm?.get('apartmentId')?.value;
+    const type = this.readingForm?.get('type')?.value;
+    const shouldShow = apartmentId === 8 && type === 'electricity';
+    
+    console.log('shouldShowReadingTypeSelector:', {
+      apartmentId,
+      type,
+      shouldShow,
+      isApartment8: this.isApartment8(),
+      isElectricityType: this.isElectricityType()
+    });
+    
+    return shouldShow;
   }
 
   /**
