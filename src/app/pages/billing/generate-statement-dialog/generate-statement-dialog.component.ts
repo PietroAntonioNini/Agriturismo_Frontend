@@ -50,10 +50,14 @@ export class GenerateStatementDialogComponent implements OnInit {
 
   ngOnInit(): void {
     const now = new Date();
+    // Imposta il mese precedente come default
+    const previousMonth = now.getMonth() === 0 ? 12 : now.getMonth();
+    const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    
     this.form = this.fb.group({
       apartmentId: [null, Validators.required],
-      month: [now.getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]],
-      year: [now.getFullYear(), [Validators.required, Validators.min(2020)]],
+      month: [previousMonth, [Validators.required, Validators.min(1), Validators.max(12)]],
+      year: [previousYear, [Validators.required, Validators.min(2020)]],
       rent: [{ value: 0, disabled: true }],
       tari: [0],
       meterFee: [0],

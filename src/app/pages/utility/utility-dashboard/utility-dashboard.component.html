@@ -115,13 +115,13 @@
           <div class="alert-content">
             <mat-icon class="alert-icon">warning</mat-icon>
             <div class="alert-text">
-              <h3>Letture utenze</h3>
+              <h3>Letture utenze mensili mancanti</h3>
               <p *ngIf="apartmentsWithoutReadings.length <= 3">
-                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture: 
+                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture mensili: 
                 <span class="apartment-names">{{ getApartmentsWithoutReadingsNames() }}</span>
               </p>
               <p *ngIf="apartmentsWithoutReadings.length > 3">
-                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture: 
+                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture mensili: 
                 <span class="apartment-names">{{ getApartmentsWithoutReadingsNames(3) }} e altri {{ apartmentsWithoutReadings.length - 3 }}</span>
               </p>
             </div>
