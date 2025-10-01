@@ -165,10 +165,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       previousReading: [0, [Validators.min(0)]], // Campo per lettura precedente (prima lettura)
       currentReading: [0, [Validators.required, Validators.min(0)]],
       unitCost: [0, [Validators.required, Validators.min(0)]],
-      notes: [''],
-      // Nuovi campi per letture speciali
-      subtype: ['main'], // 'main' per lettura principale, 'laundry' per lavanderia
-      isSpecialReading: [false]
+      notes: ['']
+      // Campi per letture speciali temporaneamente rimossi
     });
   }
   
@@ -180,21 +178,16 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$),
       debounceTime(500), // Aumentato il debounce per ridurre le chiamate
       distinctUntilChanged((prev, curr) => 
-        prev.apartmentId === curr.apartmentId && prev.type === curr.type && prev.subtype === curr.subtype
+        prev.apartmentId === curr.apartmentId && prev.type === curr.type
       )
     ).subscribe(formValue => {
       if (formValue.apartmentId && formValue.type) {
-        this.loadLastReading(formValue.apartmentId, formValue.type, formValue.subtype);
+        this.loadLastReading(formValue.apartmentId, formValue.type);
         this.setDefaultUnitCost(formValue.type);
       }
     });
 
-    // Monitora il cambio del tipo di lettura per l'appartamento 8
-    this.readingForm.get('subtype')?.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(() => {
-      this.onReadingTypeChange();
-    });
+    // Subscription per subtype temporaneamente rimossa
     
     // Monitora cambiamenti per calcolare consumo e costo
     this.readingForm.get('currentReading')?.valueChanges.pipe(
@@ -230,10 +223,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       previousReading: reading.previousReading || 0,
       currentReading: reading.currentReading,
       unitCost: reading.unitCost,
-      notes: reading.notes || '',
-      // Nuovi campi per letture speciali
-      subtype: reading.subtype || 'main',
-      isSpecialReading: reading.isSpecialReading || false
+      notes: reading.notes || ''
+      // Campi per letture speciali temporaneamente rimossi
     });
     
     // Simula l'ultima lettura per il calcolo
@@ -248,12 +239,12 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     this.calculateConsumptionAndCost();
   }
   
-  loadLastReading(apartmentId: number, type: string, subtype?: string): void {
+  loadLastReading(apartmentId: number, type: string): void {
     this.isLoadingLastReading = true;
     this.lastReading = null;
     
     // Chiamata API centralizzata per ottenere l'ultima lettura
-    this.apiService.getLastUtilityReading(apartmentId, type, subtype).pipe(
+    this.apiService.getLastUtilityReading(apartmentId, type).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (lastReading: LastReading | null) => {
@@ -421,10 +412,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       unitCost: Number(formValue.unitCost),
       totalCost: Number(this.calculatedCost),
       isPaid: false,
-      notes: formValue.notes || '',
-      // Nuovi campi per letture speciali
-      subtype: formValue.subtype || 'main',
-      isSpecialReading: formValue.isSpecialReading || false
+      notes: formValue.notes || ''
+      // Campi per letture speciali temporaneamente rimossi
     };
 
     console.log('Sending payload to backend:', readingData);
@@ -620,107 +609,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ===== METODI PER LETTURE SPECIALI =====
-
-  /**
-   * Verifica se l'appartamento selezionato è l'appartamento 8
-   */
-  get isApartment8(): boolean {
-    if (!this.readingForm) return false;
-    const apartmentId = this.readingForm.get('apartmentId')?.value;
-    return apartmentId === 11; // ID 11 corrisponde all'App. 8
-  }
-
-  /**
-   * Verifica se il tipo di utenza selezionato è elettricità
-   */
-  get isElectricityType(): boolean {
-    if (!this.readingForm) return false;
-    const type = this.readingForm.get('type')?.value;
-    return type === 'electricity';
-  }
-
-  /**
-   * Verifica se dovrebbe mostrare il campo per la lettura speciale della lavanderia
-   */
-  get shouldShowLaundryElectricityField(): boolean {
-    return this.isApartment8 && this.isElectricityType;
-  }
-
-  /**
-   * Verifica se dovrebbe mostrare il selettore di tipo di lettura
-   */
-  get shouldShowReadingTypeSelector(): boolean {
-    return this.isApartment8 && this.isElectricityType;
-  }
-
-  /**
-   * Ottiene le opzioni per il tipo di lettura
-   */
-  getReadingTypeOptions(): { value: string; label: string; icon: string; description: string }[] {
-    return [
-      {
-        value: 'main',
-        label: 'Elettricità Principale',
-        icon: 'bolt',
-        description: 'Lettura principale dell\'elettricità dell\'appartamento'
-      },
-      {
-        value: 'laundry',
-        label: 'Elettricità Lavanderia',
-        icon: 'local_laundry_service',
-        description: 'Lettura separata per il consumo della lavanderia'
-      }
-    ];
-  }
-
-  /**
-   * Gestisce il cambio del tipo di lettura
-   */
-  onReadingTypeChange(): void {
-    const subtype = this.readingForm?.get('subtype')?.value;
-    const isSpecial = subtype === 'laundry';
-    
-    this.readingForm?.patchValue({
-      isSpecialReading: isSpecial
-    });
-
-    // Se cambia il tipo di lettura, ricarica l'ultima lettura specifica
-    const apartmentId = this.readingForm?.get('apartmentId')?.value;
-    const type = this.readingForm?.get('type')?.value;
-    
-    if (apartmentId && type) {
-      this.loadLastReading(apartmentId, type, subtype);
-    }
-  }
-
-  /**
-   * Ottiene l'etichetta per il tipo di lettura selezionato
-   */
-  getSelectedReadingTypeLabel(): string {
-    const subtype = this.readingForm?.get('subtype')?.value;
-    const options = this.getReadingTypeOptions();
-    const selected = options.find(opt => opt.value === subtype);
-    return selected?.label || 'Elettricità';
-  }
-
-  /**
-   * Ottiene l'icona per il tipo di lettura selezionato
-   */
-  getSelectedReadingTypeIcon(): string {
-    const subtype = this.readingForm?.get('subtype')?.value;
-    const options = this.getReadingTypeOptions();
-    const selected = options.find(opt => opt.value === subtype);
-    return selected?.icon || 'bolt';
-  }
-
-  /**
-   * Ottiene la descrizione per il tipo di lettura selezionato
-   */
-  getSelectedReadingTypeDescription(): string {
-    const subtype = this.readingForm?.get('subtype')?.value;
-    const options = this.getReadingTypeOptions();
-    const selected = options.find(opt => opt.value === subtype);
-    return selected?.description || '';
-  }
+  // ===== METODI PER LETTURE SPECIALI (TEMPORANEAMENTE DISABILITATI) =====
+  
+  // Tutti i metodi per la lavanderia sono stati temporaneamente disabilitati
+  // per ripristinare il funzionamento base dell'applicazione
 }

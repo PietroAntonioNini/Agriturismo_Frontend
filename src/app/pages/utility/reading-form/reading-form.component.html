@@ -122,29 +122,7 @@
             <mat-error>{{getFormControlError('type')}}</mat-error>
           </mat-form-field>
 
-          <!-- Reading Type Selection (solo per appartamento 8 e elettricità) -->
-          <mat-form-field appearance="outline" class="full-width" *ngIf="shouldShowReadingTypeSelector()">
-            <mat-label>Tipo di Lettura</mat-label>
-            <mat-icon matPrefix>{{getSelectedReadingTypeIcon()}}</mat-icon>
-            <mat-select formControlName="subtype" (selectionChange)="onReadingTypeChange()">
-              <mat-select-trigger *ngIf="readingForm && readingForm.get('subtype')?.value">
-                <div class="selected-utility">
-                  <mat-icon>{{getSelectedReadingTypeIcon()}}</mat-icon>
-                  <span>{{getSelectedReadingTypeLabel()}}</span>
-                </div>
-              </mat-select-trigger>
-              <mat-option *ngFor="let option of getReadingTypeOptions()" [value]="option.value">
-                <div class="utility-option">
-                  <mat-icon>{{option.icon}}</mat-icon>
-                  <div class="option-content">
-                    <span class="option-label">{{option.label}}</span>
-                    <span class="option-description">{{option.description}}</span>
-                  </div>
-                </div>
-              </mat-option>
-            </mat-select>
-            <mat-hint>{{getSelectedReadingTypeDescription()}}</mat-hint>
-          </mat-form-field>
+          <!-- Campo per tipo di lettura temporaneamente rimosso -->
           
           <!-- Reading Date -->
           <mat-form-field appearance="outline">
