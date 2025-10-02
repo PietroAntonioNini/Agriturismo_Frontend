@@ -701,12 +701,10 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   // ===== METODI PER LETTURE SPECIALI =====
 
   /**
-   * Verifica se l'appartamento è l'appartamento 8
-   * TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
-   * Per ora, l'ID 11 corrisponde all'App. 8 nel database
+   * Verifica se l'appartamento è l'appartamento 8 (lavanderia)
    */
   isApartment8(apartmentId: number): boolean {
-    return apartmentId === 11;
+    return apartmentId === 8;
   }
 
   /**

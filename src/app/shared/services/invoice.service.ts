@@ -15,6 +15,7 @@ import {
   Lease
 } from '../models';
 import { GenericApiService } from './generic-api.service';
+import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
@@ -25,7 +26,8 @@ export class InvoiceService {
 
   constructor(
     private http: HttpClient,
-    private apiService: GenericApiService
+    private apiService: GenericApiService,
+    private authService: AuthService
   ) { }
 
   // Operazioni CRUD per le fatture - SOLO DATI REALI
@@ -407,9 +409,11 @@ export class InvoiceService {
         const items: InvoiceItem[] = [];
         
         // Aggiungi voce affitto
+        const currentUser = this.authService.getCurrentUser();
         items.push({
           id: 0,
           invoiceId: 0,
+          userId: currentUser?.id || 0, // ← AGGIUNGI userId
           description: `Affitto ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
           amount: lease.monthlyRent,
           quantity: 1,
@@ -426,9 +430,9 @@ export class InvoiceService {
             const gasReadings = readings.filter(r => r.type === 'gas' && r.totalCost > 0);
 
             // Gestione speciale per l'appartamento 8 - elettricità
-            // TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
-            // Per ora, l'ID 11 corrisponde all'App. 8 nel database
-            const isApartment8 = lease.apartmentId === 11;
+            // Gestione speciale per l'appartamento 8 - elettricità della lavanderia
+            const currentUser = this.authService.getCurrentUser();
+            const isApartment8 = lease.apartmentId === 8;
             
             if (isApartment8 && electricityReadings.length > 0) {
               const mainElectricity = electricityReadings.find(r => !r.isSpecialReading || r.subtype === 'main');
@@ -439,6 +443,7 @@ export class InvoiceService {
                 items.push({
                   id: 0,
                   invoiceId: 0,
+                  userId: currentUser?.id || 0, // ← AGGIUNGI userId
                   description: `Utenza Elettrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
                   amount: mainElectricity.totalCost,
                   quantity: 1,
@@ -452,6 +457,7 @@ export class InvoiceService {
                 items.push({
                   id: 0,
                   invoiceId: 0,
+                  userId: currentUser?.id || 0, // ← AGGIUNGI userId
                   description: `Elettricità Lavanderia ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
                   amount: laundryElectricity.totalCost,
                   quantity: 1,
@@ -465,6 +471,7 @@ export class InvoiceService {
                 items.push({
                   id: 0,
                   invoiceId: 0,
+                  userId: currentUser?.id || 0, // ← AGGIUNGI userId
                   description: `Utenza Elettrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
                   amount: reading.totalCost,
                   quantity: 1,
@@ -479,6 +486,7 @@ export class InvoiceService {
               items.push({
                 id: 0,
                 invoiceId: 0,
+                userId: currentUser?.id || 0, // ← AGGIUNGI userId
                 description: `Utenza Idrica ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
                 amount: reading.totalCost,
                 quantity: 1,
@@ -491,6 +499,7 @@ export class InvoiceService {
               items.push({
                 id: 0,
                 invoiceId: 0,
+                userId: currentUser?.id || 0, // ← AGGIUNGI userId
                 description: `Utenza Gas ${periodStart.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`,
                 amount: reading.totalCost,
                 quantity: 1,

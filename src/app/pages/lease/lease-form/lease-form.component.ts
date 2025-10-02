@@ -33,6 +33,7 @@ import { ContractGeneratorService } from '../../../shared/services/contract-gene
 import { ContractTemplatesService } from '../../../shared/services/contract-templates.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { AutomaticInvoiceService } from '../../../shared/services/automatic-invoice.service';
+import { AuthService } from '../../../shared/services/auth.service';
 
 // Models
 import { Lease, LeaseFormData } from '../../../shared/models/lease.model';
@@ -176,6 +177,7 @@ export class LeaseFormComponent implements OnInit {
     private dateAdapter: DateAdapter<Date>,
     private notificationService: NotificationService,
     private automaticInvoiceService: AutomaticInvoiceService,
+    private authService: AuthService,
     @Optional() @Inject(MAT_DIALOG_DATA) public dialogData: any,
     @Optional() public dialogRef: MatDialogRef<LeaseFormComponent>
   ) {
@@ -436,9 +438,11 @@ export class LeaseFormComponent implements OnInit {
     
     // Rimuovo la formattazione manuale delle date. Angular HttpClient le gestirà.
     const terms = this.termsFormGroup.value;
+    const currentUser = this.authService.getCurrentUser();
     const leasePayload = {
       tenantId: tenant.id,
       apartmentId: apartment.id,
+      userId: currentUser?.id, // ← AGGIUNGI userId
       ...terms,
       startDate: this.formatDate(terms.startDate),
       endDate: this.formatDate(terms.endDate),
@@ -553,10 +557,12 @@ export class LeaseFormComponent implements OnInit {
     
     if (tenant && apartment && this.termsFormGroup.valid && this.conditionsFormGroup.valid) {
       // Crea un oggetto Lease completo per la generazione del contratto
+      const currentUser = this.authService.getCurrentUser();
       const leaseDataForContract: Lease = {
         id: this.leaseId ?? 0,
         tenantId: tenant.id,
         apartmentId: apartment.id,
+        userId: currentUser?.id || 0, // ← AGGIUNGI userId
         startDate: terms.startDate,
         endDate: terms.endDate,
         monthlyRent: terms.monthlyRent,

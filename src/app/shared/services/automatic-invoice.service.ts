@@ -4,6 +4,7 @@ import { Invoice, InvoiceItem, Lease, Tenant, Apartment, UtilityReading } from '
 import { InvoiceService } from './invoice.service';
 import { GenericApiService } from './generic-api.service';
 import { WhatsAppService } from './whatsapp.service';
+import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
 export interface AutomaticInvoiceData {
@@ -28,7 +29,8 @@ export class AutomaticInvoiceService {
   constructor(
     private invoiceService: InvoiceService,
     private apiService: GenericApiService,
-    private whatsappService: WhatsAppService
+    private whatsappService: WhatsAppService,
+    private authService: AuthService
   ) {}
 
   /**
@@ -109,9 +111,11 @@ export class AutomaticInvoiceService {
     const monthName = currentDate.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
 
     // Aggiungi voce affitto
+    const currentUser = this.authService.getCurrentUser();
     items.push({
       id: 0,
       invoiceId: 0,
+      userId: currentUser?.id || 0, // ← AGGIUNGI userId
       description: `Affitto ${monthName}`,
       amount: leaseData.monthlyRent,
       quantity: 1,
@@ -124,9 +128,9 @@ export class AutomaticInvoiceService {
       return this.calculateUtilityCosts(leaseData.apartmentId, leaseData.utilityReadings).pipe(
         map(utilityCosts => {
           // Gestione speciale per l'appartamento 8 - elettricità
-          // TODO: In futuro, implementare un sistema di configurazione per mappare ID appartamenti
-          // Per ora, l'ID 11 corrisponde all'App. 8 nel database
-          const isApartment8 = leaseData.apartmentId === 11;
+          // Gestione speciale per l'appartamento 8 - elettricità della lavanderia
+          const currentUser = this.authService.getCurrentUser();
+          const isApartment8 = leaseData.apartmentId === 8;
           
           if (isApartment8) {
             // Elettricità principale
@@ -134,6 +138,7 @@ export class AutomaticInvoiceService {
               items.push({
                 id: 0,
                 invoiceId: 0,
+                userId: currentUser?.id || 0, // ← AGGIUNGI userId
                 description: `Utenza Elettrica ${monthName}`,
                 amount: utilityCosts.electricity,
                 quantity: 1,
@@ -147,6 +152,7 @@ export class AutomaticInvoiceService {
               items.push({
                 id: 0,
                 invoiceId: 0,
+                userId: currentUser?.id || 0, // ← AGGIUNGI userId
                 description: `Elettricità Lavanderia ${monthName}`,
                 amount: utilityCosts.laundryElectricity,
                 quantity: 1,
@@ -160,6 +166,7 @@ export class AutomaticInvoiceService {
               items.push({
                 id: 0,
                 invoiceId: 0,
+                userId: currentUser?.id || 0, // ← AGGIUNGI userId
                 description: `Utenza Elettrica ${monthName}`,
                 amount: utilityCosts.electricity,
                 quantity: 1,
@@ -173,6 +180,7 @@ export class AutomaticInvoiceService {
             items.push({
               id: 0,
               invoiceId: 0,
+              userId: currentUser?.id || 0, // ← AGGIUNGI userId
               description: `Utenza Idrica ${monthName}`,
               amount: utilityCosts.water,
               quantity: 1,
@@ -185,6 +193,7 @@ export class AutomaticInvoiceService {
             items.push({
               id: 0,
               invoiceId: 0,
+              userId: currentUser?.id || 0, // ← AGGIUNGI userId
               description: `Utenza Gas ${monthName}`,
               amount: utilityCosts.gas,
               quantity: 1,
@@ -213,8 +222,8 @@ export class AutomaticInvoiceService {
       gas: 0
     };
 
-    // Se è l'appartamento 8 (ID 11), aggiungi il campo per l'elettricità della lavanderia
-    if (apartmentId === 11) {
+    // Se è l'appartamento 8 (ID 8), aggiungi il campo per l'elettricità della lavanderia
+    if (apartmentId === 8) {
       costs.laundryElectricity = 0;
     }
 
@@ -225,8 +234,8 @@ export class AutomaticInvoiceService {
       costs.electricity = Math.round(consumption * 0.25 * 100) / 100; // €0.25/kWh
     }
 
-    // Per l'appartamento 8 (ID 11), calcola anche l'elettricità della lavanderia
-    if (apartmentId === 11 && readings.laundryElectricity !== undefined) {
+    // Per l'appartamento 8 (ID 8), calcola anche l'elettricità della lavanderia
+    if (apartmentId === 8 && readings.laundryElectricity !== undefined) {
       // Consumo tipico lavanderia: 20-50 kWh/mese
       const consumption = readings.laundryElectricity || 35;
       costs.laundryElectricity = Math.round(consumption * 0.25 * 100) / 100; // €0.25/kWh

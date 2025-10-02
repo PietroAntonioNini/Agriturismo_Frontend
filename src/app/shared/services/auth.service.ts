@@ -48,6 +48,12 @@ export class AuthService {
           this.getCsrfToken().subscribe();
           return response;
         }),
+        tap(response => {
+          // Dopo aver caricato il profilo utente, salva l'utente nel localStorage
+          if (this.currentUserSubject.value) {
+            this.setCurrentUser(this.currentUserSubject.value);
+          }
+        }),
         catchError(error => {
           console.error('Login error:', error);
           return throwError(() => error);
@@ -155,6 +161,11 @@ export class AuthService {
   
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  setCurrentUser(user: User): void {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.currentUserSubject.next(user);
   }
   
   private storeTokens(response: TokenPair): void {

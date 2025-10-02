@@ -7,6 +7,7 @@ export interface Invoice {
     leaseId: number;
     tenantId: number;
     apartmentId: number;
+    userId: number; // ← AGGIUNGI
     invoiceNumber: string;
     month: number;
     year: number;
@@ -31,21 +32,27 @@ export interface Invoice {
     lease?: Lease;
     createdAt: string;
     updatedAt: string;
+    deletedAt?: string; // ← AGGIUNGI
 }
 
 export interface InvoiceItem {
     id: number;
     invoiceId: number;
+    userId: number; // ← AGGIUNGI
     description: string;
     amount: number;
     quantity: number;
     unitPrice: number;
     type: 'rent' | 'electricity' | 'water' | 'gas' | 'maintenance' | 'other';
+    createdAt?: string;
+    updatedAt?: string;
+    deletedAt?: string; // ← AGGIUNGI
 }
 
 export interface PaymentRecord {
     id: number;
     invoiceId: number;
+    userId: number; // ← AGGIUNGI
     amount: number;
     paymentDate: string;
     paymentMethod: 'cash' | 'bank_transfer' | 'credit_card' | 'check';
@@ -54,6 +61,7 @@ export interface PaymentRecord {
     status: 'completed' | 'pending' | 'failed';
     createdAt: string;
     updatedAt: string;
+    deletedAt?: string; // ← AGGIUNGI
 }
 
 // Interfacce per creazione e aggiornamento
@@ -61,6 +69,7 @@ export interface InvoiceCreate {
     leaseId: number;
     tenantId: number;
     apartmentId: number;
+    userId: number; // ← AGGIUNGI
     invoiceNumber?: string;
     month: number;
     year: number;
@@ -74,6 +83,7 @@ export interface InvoiceCreate {
 
 export interface InvoiceItemCreate {
     invoiceId?: number;
+    userId?: number; // ← AGGIUNGI
     description: string;
     amount: number;
     quantity: number;
@@ -83,6 +93,7 @@ export interface InvoiceItemCreate {
 
 export interface PaymentRecordCreate {
     invoiceId?: number;
+    userId?: number; // ← AGGIUNGI
     amount: number;
     paymentDate: string;
     paymentMethod: 'cash' | 'bank_transfer' | 'credit_card' | 'check';

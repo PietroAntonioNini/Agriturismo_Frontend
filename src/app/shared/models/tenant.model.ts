@@ -1,5 +1,6 @@
 export interface Tenant {
   id: number;
+  userId: number; // ← AGGIUNGI
   firstName: string;
   lastName: string;
   email?: string;
@@ -18,4 +19,5 @@ export interface Tenant {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt?: Date; // ← AGGIUNGI
 }

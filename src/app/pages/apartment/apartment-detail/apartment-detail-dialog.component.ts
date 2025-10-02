@@ -443,4 +443,11 @@ getAmenityIcon(amenity: string): string {
   // Icona predefinita se non ci sono corrispondenze
   return 'check_circle';
 }
+
+  /**
+   * Verifica se l'appartamento è l'appartamento 8 (lavanderia)
+   */
+  isApartment8(apartment: Apartment): boolean {
+    return apartment.id === 8; // Appartamento 8 ha elettricità separata per lavanderia
+  }
 }

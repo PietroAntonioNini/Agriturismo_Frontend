@@ -20,6 +20,7 @@ import { ImageService } from '../../../shared/services/image.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { AuthService } from '../../../shared/services/auth.service';
 
 @Component({
   selector: 'app-tenant-form',
@@ -83,7 +84,8 @@ export class TenantFormComponent implements OnInit {
     private imageService: ImageService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -614,6 +616,7 @@ export class TenantFormComponent implements OnInit {
     }
     
     // Crea un oggetto tenant con i campi necessari, includendo esplicitamente le immagini
+    const currentUser = this.authService.getCurrentUser();
     const tenantToUpdate = {
       firstName: formValues.firstName,
       lastName: formValues.lastName,
@@ -625,6 +628,7 @@ export class TenantFormComponent implements OnInit {
       address: formValues.address || "",
       communicationPreferences: formValues.communicationPreferences,
       notes: formValues.notes || "",
+      userId: currentUser?.id, // ← AGGIUNGI userId
       // Aggiungi esplicitamente gli URL delle immagini, anche se vuoti
       documentFrontImage: this.currentTenant.documentFrontImage || "",
       documentBackImage: this.currentTenant.documentBackImage || ""

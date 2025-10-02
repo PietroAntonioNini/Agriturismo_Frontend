@@ -25,6 +25,7 @@ import { ImageService } from '../../../shared/services/image.service';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { Apartment } from '../../../shared/models';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { AuthService } from '../../../shared/services/auth.service';
 
 // Definizione dell'interfaccia per i servizi comuni
 interface CommonService {
@@ -100,7 +101,8 @@ export class ApartmentFormComponent implements OnInit {
     public dialogRef: MatDialogRef<ApartmentFormComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { apartmentId?: number; apartment?: Apartment },
     private imageService: ImageService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -449,6 +451,7 @@ export class ApartmentFormComponent implements OnInit {
     this.currentApartment.images.filter(img => img && img !== '') : [];
     
     // Crea un oggetto che includa esplicitamente tutti i campi necessari
+    const currentUser = this.authService.getCurrentUser();
     const apartmentData = {
       name: this.apartmentForm.value.name,
       description: this.apartmentForm.value.description,
@@ -462,7 +465,8 @@ export class ApartmentFormComponent implements OnInit {
       status: this.apartmentForm.value.status,
       notes: this.apartmentForm.value.notes,
       amenities: this.selectedAmenities,
-      images: validImages
+      images: validImages,
+      userId: currentUser?.id // ← AGGIUNGI userId
     };
 
     if (this.isEditMode && this.apartmentId) {

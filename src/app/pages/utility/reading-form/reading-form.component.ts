@@ -26,6 +26,7 @@ import {
 } from '../../../shared/models';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { AuthService } from '../../../shared/services/auth.service';
 
 @Component({
   selector: 'app-reading-form',
@@ -72,8 +73,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private notificationService: NotificationService,
     private cdr: ChangeDetectorRef,
+    private authService: AuthService,
     public dialogRef: MatDialogRef<ReadingFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { 
+    @Inject(MAT_DIALOG_DATA) public data: {
       apartments: Apartment[],
       selectedApartmentId: number | null,
       editingReading?: UtilityReading
@@ -402,8 +404,10 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     const readingDate = new Date(formValue.readingDate);
     const dateString = readingDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
     
+    const currentUser = this.authService.getCurrentUser();
     const readingData: UtilityReadingCreate = {
       apartmentId: Number(formValue.apartmentId),
+      userId: currentUser?.id || 0, // ← AGGIUNGI userId
       type: formValue.type,
       readingDate: dateString,
       previousReading: Number(previousReading),

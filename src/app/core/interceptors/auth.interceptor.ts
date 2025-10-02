@@ -23,7 +23,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const startTime = Date.now();
-    
+
     // Aggiungi JWT token a tutte le richieste (tranne login e refresh)
     if (!request.url.includes('/auth/login') && !request.url.includes('/auth/refresh-token')) {
       request = this.addAuthToken(request);
@@ -32,6 +32,11 @@ export class AuthInterceptor implements HttpInterceptor {
     // Aggiungi CSRF token a tutte le richieste di modifica (POST/PUT/DELETE/PATCH)
     if (this.requiresCsrfToken(request.method)) {
       request = this.addCsrfToken(request);
+    }
+
+    // Aggiungi user_id a tutte le richieste API (tranne auth)
+    if (this.isApiRequest(request.url) && !request.url.includes('/auth/')) {
+      request = this.addUserId(request);
     }
 
     return next.handle(request).pipe(
@@ -146,5 +151,27 @@ export class AuthInterceptor implements HttpInterceptor {
   
   private refreshToken() {
     this.authService.refreshToken().subscribe();
+  }
+
+  private addUserId(request: HttpRequest<any>): HttpRequest<any> {
+    const currentUser = this.authService.getCurrentUser();
+
+    if (currentUser) {
+      return request.clone({
+        setParams: {
+          user_id: currentUser.id.toString()
+        }
+      });
+    }
+    return request;
+  }
+
+  private isApiRequest(url: string): boolean {
+    return url.includes('/apartments') ||
+           url.includes('/tenants') ||
+           url.includes('/leases') ||
+           url.includes('/invoices') ||
+           url.includes('/utility-readings') ||
+           url.includes('/utilities');
   }
 } 

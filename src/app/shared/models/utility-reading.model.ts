@@ -1,6 +1,7 @@
 export interface UtilityReading {
     id?: number;
     apartmentId: number;
+    userId: number; // ← AGGIUNGI
     type: 'electricity' | 'water' | 'gas';
     readingDate: Date;
     previousReading: number;
@@ -12,6 +13,7 @@ export interface UtilityReading {
     paidDate?: Date;
     createdAt?: Date;
     updatedAt?: Date;
+    deletedAt?: Date; // ← AGGIUNGI
     notes?: string; // Note aggiuntive sulla lettura
     // Nuovi campi per letture speciali
     subtype?: string; // 'laundry' per la lavanderia, 'main' per lettura principale
@@ -28,6 +30,7 @@ export interface UtilityReading {
 // Interfaccia per la creazione che corrisponde al backend schema
 export interface UtilityReadingCreate {
     apartmentId: number;
+    userId: number; // ← AGGIUNGI
     type: 'electricity' | 'water' | 'gas';
     readingDate: string; // Formato ISO date string per il backend
     previousReading: number;
@@ -159,6 +162,7 @@ export interface UtilityStatistics {
 
 export interface UtilityFormData {
     apartmentId: number;
+    userId: number; // ← AGGIUNGI
     type: 'electricity' | 'water' | 'gas';
     readingDate: Date;
     currentReading: number;
