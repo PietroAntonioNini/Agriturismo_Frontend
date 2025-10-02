@@ -74,6 +74,7 @@ export class GenericApiService {
       params: httpParams
     }).pipe(
       tap(data => {
+        console.debug(`[GenericApiService] GET ${this.apiUrl(entity)} params=`, params, '→', Array.isArray(data) ? `${data.length} items` : data);
         // Salva nella cache
         this.cache.set(cacheKey, {
           data: data,
@@ -169,6 +170,7 @@ export class GenericApiService {
       }
     ).pipe(
       tap(data => {
+        console.debug(`[GenericApiService] GET ${environment.apiUrl}/${entity}/${id} params=`, params, '→', data);
         // Salva nella cache
         this.cache.set(cacheKey, {
           data: data,
@@ -189,11 +191,12 @@ export class GenericApiService {
         if (!apartmentData.amenities) {
           apartmentData.amenities = [];
         }
-        console.log('Sending apartment data without files:', apartmentData);
+        console.debug('[GenericApiService] POST', this.apiUrl(entity), 'payload=', apartmentData);
         return this.http.post<T>(this.apiUrl(entity), apartmentData).pipe(
           tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
         );
       }
+      console.debug('[GenericApiService] POST', this.apiUrl(entity), 'payload=', data);
       return this.http.post<T>(this.apiUrl(entity), data).pipe(
         tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
       );
@@ -210,7 +213,7 @@ export class GenericApiService {
         apartmentData.amenities = [];
       }
 
-      console.log('Sending apartment data with files:', apartmentData);
+      console.debug('[GenericApiService] POST with-images', this.apiUrl(entity), 'payload=', apartmentData, 'files=', files?.length || 0);
       formData.append('apartment', JSON.stringify(apartmentData));
       
       if (files && files.length > 0) {
@@ -238,6 +241,7 @@ export class GenericApiService {
       });
     }
     
+    console.debug('[GenericApiService] POST with-images', `${this.apiUrl(entity)}with-images`, 'files=', files?.length || 0);
     return this.http.post<T>(`${this.apiUrl(entity)}with-images`, formData);
   }
 
@@ -254,6 +258,7 @@ export class GenericApiService {
             });
         }
         
+        console.debug('[GenericApiService] PUT with-images', `${environment.apiUrl}/${entity}/${id}/with-images`, 'files=', files?.length || 0);
         return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
         tap(() => {
           this.invalidateCache(entity, id); // Invalida cache dopo aggiornamento
@@ -271,7 +276,7 @@ export class GenericApiService {
         apartmentData.amenities = [];
       }
 
-      console.log('Updating apartment with amenities:', apartmentData.amenities);
+      console.debug('[GenericApiService] PUT with-images', `${environment.apiUrl}/${entity}/${id}/with-images`, 'payload=', apartmentData, 'files=', files?.length || 0);
       formData.append('apartment', JSON.stringify(apartmentData));
       
       if (files && files.length > 0) {
@@ -293,9 +298,10 @@ export class GenericApiService {
         if (!apartmentData.amenities) {
           apartmentData.amenities = [];
         }
-        console.log('Updating apartment without files:', apartmentData);
+        console.debug('[GenericApiService] PUT', `${environment.apiUrl}/${entity}/${id}`, 'payload=', apartmentData);
         return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, apartmentData);
       }
+      console.debug('[GenericApiService] PUT', `${environment.apiUrl}/${entity}/${id}`, 'payload=', data);
       return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, data);
     }
     
@@ -304,11 +310,13 @@ export class GenericApiService {
     if (files) {
       files.forEach((file, index) => formData.append(`file${index}`, file));
     }
+    console.debug('[GenericApiService] PUT with-images', `${this.apiUrl(entity)}${id}/with-images`);
     return this.http.put<T>(`${this.apiUrl(entity)}${id}/with-images`, formData);
   }
 
   // DELETE: Eliminazione elemento
   delete(entity: string, id: number | string): Observable<void> {
+    console.debug('[GenericApiService] DELETE', `${environment.apiUrl}/${entity}/${id}`);
     return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`).pipe(
       tap(() => {
         this.invalidateCache(entity, id); // Invalida cache dopo eliminazione

@@ -162,10 +162,13 @@ export class AuthService {
     const expiresAt = Number(localStorage.getItem('expires_at'));
     
     if (!token || !expiresAt) {
+      console.debug('[AuthService] isLoggedIn=false (token o expiresAt mancanti)');
       return false;
     }
     
-    return new Date().getTime() < expiresAt;
+    const valid = new Date().getTime() < expiresAt;
+    console.debug('[AuthService] isLoggedIn=', valid);
+    return valid;
   }
   
   hasRole(role: string): boolean {

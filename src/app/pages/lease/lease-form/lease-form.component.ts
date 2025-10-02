@@ -438,11 +438,16 @@ export class LeaseFormComponent implements OnInit {
     
     // Rimuovo la formattazione manuale delle date. Angular HttpClient le gestirà.
     const terms = this.termsFormGroup.value;
-    const currentUser = this.authService.getCurrentUser();
+    const currentUser = this.authService.getCurrentUser() || this.authService.getUserFromStorage?.();
+    if (!currentUser || !currentUser.id) {
+      this.isSubmitting = false;
+      this.snackBar.open('Sessione non valida. Accedi di nuovo.', 'Chiudi', { duration: 3000 });
+      return;
+    }
     const leasePayload = {
       tenantId: tenant.id,
       apartmentId: apartment.id,
-      userId: currentUser?.id, // ← AGGIUNGI userId
+      userId: currentUser.id, // ← AGGIUNGI userId
       ...terms,
       startDate: this.formatDate(terms.startDate),
       endDate: this.formatDate(terms.endDate),

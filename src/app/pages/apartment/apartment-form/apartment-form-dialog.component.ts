@@ -451,7 +451,12 @@ export class ApartmentFormComponent implements OnInit {
     this.currentApartment.images.filter(img => img && img !== '') : [];
     
     // Crea un oggetto che includa esplicitamente tutti i campi necessari
-    const currentUser = this.authService.getCurrentUser();
+    const currentUser = this.authService.getCurrentUser() || this.authService.getUserFromStorage?.();
+    if (!currentUser || !currentUser.id) {
+      this.isLoading = false;
+      this.errorMessage = 'Sessione non valida. Accedi nuovamente per creare/modificare l\'appartamento.';
+      return;
+    }
     const apartmentData = {
       name: this.apartmentForm.value.name,
       description: this.apartmentForm.value.description,
@@ -466,7 +471,7 @@ export class ApartmentFormComponent implements OnInit {
       notes: this.apartmentForm.value.notes,
       amenities: this.selectedAmenities,
       images: validImages,
-      userId: currentUser?.id // ← AGGIUNGI userId
+      userId: currentUser.id // ← AGGIUNGI userId
     };
 
     if (this.isEditMode && this.apartmentId) {

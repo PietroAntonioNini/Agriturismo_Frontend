@@ -33,6 +33,7 @@ export class InvoiceService {
   // Operazioni CRUD per le fatture - SOLO DATI REALI
   getAllInvoices(params?: any): Observable<Invoice[]> {
     return this.apiService.getAll<Invoice>('invoices', params).pipe(
+      tap(list => console.debug('[InvoiceService] getAllInvoices →', Array.isArray(list) ? list.length : 'n/a')),
       catchError(error => {
         console.error('Errore nel recupero delle fatture:', error);
         return throwError(() => new Error('Impossibile recuperare le fatture dal database'));
@@ -50,6 +51,7 @@ export class InvoiceService {
   }
 
   createInvoice(invoice: Partial<Invoice>): Observable<Invoice> {
+    console.debug('[InvoiceService] createInvoice payload=', invoice);
     return this.apiService.create<Invoice>('invoices', invoice).pipe(
       tap(() => {
         // Invalida la cache delle fatture
