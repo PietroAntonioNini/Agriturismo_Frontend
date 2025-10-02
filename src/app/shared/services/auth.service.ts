@@ -205,7 +205,22 @@ export class AuthService {
       .subscribe({
         next: user => {
           console.log('Profilo utente caricato con successo da verify-token:', user);
-          this.setCurrentUser(user);
+          // Alcuni backend non includono l'id in verify-token: fallback a /users/me
+          if ((user as any)?.id === undefined || (user as any)?.id === null) {
+            this.http.get<User>(`${this.apiUrl}/users/me`, { headers })
+              .subscribe({
+                next: me => {
+                  console.log('Profilo utente (completo) da /users/me:', me);
+                  this.setCurrentUser(me);
+                },
+                error: err => {
+                  console.error('Errore nel recupero di /users/me dopo verify-token OK:', err);
+                  this.setCurrentUser(user); // salva comunque il profilo parziale
+                }
+              });
+          } else {
+            this.setCurrentUser(user);
+          }
         },
         error: error => {
           console.error('Errore con verify-token, provo /users/me:', error);

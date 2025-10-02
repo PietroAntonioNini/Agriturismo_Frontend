@@ -624,6 +624,8 @@ export class TenantFormComponent implements OnInit {
     })();
 
     if (!currentUser || !currentUser.id) {
+      // Prova a forzare un caricamento del profilo utente (potrebbe essere stato appena loggato)
+      console.warn('[TenantForm] currentUser assente: blocco submit e chiedo di autenticarsi di nuovo');
       this.isLoading = false;
       this.errorMessage = 'Sessione non valida. Accedi nuovamente per creare un inquilino.';
       return;

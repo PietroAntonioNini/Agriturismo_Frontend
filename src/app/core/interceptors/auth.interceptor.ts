@@ -36,7 +36,11 @@ export class AuthInterceptor implements HttpInterceptor {
 
     // Aggiungi user_id a tutte le richieste API (tranne auth)
     if (this.isApiRequest(request.url) && !request.url.includes('/auth/')) {
+      const beforeUrl = request.urlWithParams;
       request = this.addUserId(request);
+      if (beforeUrl !== request.urlWithParams) {
+        console.debug('[AuthInterceptor]', request.method, request.urlWithParams);
+      }
     }
 
     return next.handle(request).pipe(
