@@ -615,8 +615,21 @@ export class TenantFormComponent implements OnInit {
       formValues.documentExpiryDate = dateObj.toISOString().split('T')[0];
     }
     
+    // Assicuriamoci di avere l'utente corrente (fallback a localStorage per evitare race)
+    const currentUser = this.authService.getCurrentUser() || (() => {
+      try {
+        const s = localStorage.getItem('currentUser');
+        return s ? JSON.parse(s) : null;
+      } catch { return null; }
+    })();
+
+    if (!currentUser || !currentUser.id) {
+      this.isLoading = false;
+      this.errorMessage = 'Sessione non valida. Accedi nuovamente per creare un inquilino.';
+      return;
+    }
+
     // Crea un oggetto tenant con i campi necessari, includendo esplicitamente le immagini
-    const currentUser = this.authService.getCurrentUser();
     const tenantToUpdate = {
       firstName: formValues.firstName,
       lastName: formValues.lastName,
@@ -628,7 +641,7 @@ export class TenantFormComponent implements OnInit {
       address: formValues.address || "",
       communicationPreferences: formValues.communicationPreferences,
       notes: formValues.notes || "",
-      userId: currentUser?.id, // ← AGGIUNGI userId
+      userId: currentUser.id, // ← AGGIUNGI userId
       // Aggiungi esplicitamente gli URL delle immagini, anche se vuoti
       documentFrontImage: this.currentTenant.documentFrontImage || "",
       documentBackImage: this.currentTenant.documentBackImage || ""

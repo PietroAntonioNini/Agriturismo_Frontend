@@ -68,6 +68,16 @@ export class AuthService {
         })
       );
   }
+
+  // Recupera l'utente dal localStorage se presente (utility in più punti)
+  getUserFromStorage(): User | null {
+    try {
+      const s = localStorage.getItem('currentUser');
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  }
   
   register(user: any): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/auth/register`, user);

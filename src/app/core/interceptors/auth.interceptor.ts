@@ -154,7 +154,7 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private addUserId(request: HttpRequest<any>): HttpRequest<any> {
-    const currentUser = this.authService.getCurrentUser();
+    const currentUser = this.authService.getCurrentUser() || this.authService.getUserFromStorage?.();
 
     if (currentUser) {
       return request.clone({
