@@ -678,6 +678,7 @@ export class TenantFormComponent implements OnInit {
     });
     
     // Gestione più intelligente dell'endpoint da utilizzare
+    console.debug('[TenantForm] submit payload=', tenantToUpdate);
     let saveObservable;
     
     if (this.isEditMode && this.tenantId) {
