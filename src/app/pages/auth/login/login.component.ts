@@ -42,7 +42,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     
     // Reindirizza alla dashboard se già loggato
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/']);
     }
     
     // Inizializza il form di login con validazione
@@ -64,8 +64,8 @@ export class LoginComponent implements OnInit, OnDestroy {
       validator: passwordMatchValidator('password', 'confirmPassword')
     });
     
-    // Ottieni l'URL di ritorno dai parametri o usa '/dashboard' come predefinito
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+    // Ottieni l'URL di ritorno dai parametri o usa '/' come predefinito
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
   }
 
   ngOnInit(): void {
@@ -309,7 +309,7 @@ export class LoginComponent implements OnInit, OnDestroy {
           this.authService.login(userData.username, userData.password)
             .subscribe({
               next: () => {
-                this.router.navigate(['/dashboard']);
+                this.router.navigate(['/']);
               },
               error: error => {
                 // Registrazione completata ma login fallito, torna alla schermata di login

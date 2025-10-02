@@ -15,6 +15,16 @@ export class AuthGuard implements CanActivate {
     state: RouterStateSnapshot
   ): boolean {
     if (this.authService.isLoggedIn()) {
+      // Se non abbiamo ancora popolato currentUser da localStorage, prova a farlo rapidamente
+      if (!this.authService.getCurrentUser()) {
+        try {
+          const userStr = localStorage.getItem('currentUser');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            (this.authService as any).setCurrentUser?.(user);
+          }
+        } catch {}
+      }
       // Verifica ruolo se richiesto
       const requiredRole = route.data['role'];
       if (requiredRole && !this.authService.hasRole(requiredRole)) {

@@ -28,6 +28,14 @@ export class AuthService {
     this.checkToken();
     // Richiedi un token CSRF all'avvio se l'utente è autenticato
     if (this.isLoggedIn()) {
+      // Pre-carica eventuale utente salvato per evitare race-condition su interceptor
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr) as User;
+          this.currentUserSubject.next(user);
+        } catch {}
+      }
       this.getCsrfToken().subscribe();
     }
   }
@@ -184,7 +192,7 @@ export class AuthService {
       .subscribe({
         next: user => {
           console.log('Profilo utente caricato con successo da verify-token:', user);
-          this.currentUserSubject.next(user);
+          this.setCurrentUser(user);
         },
         error: error => {
           console.error('Errore con verify-token, provo /users/me:', error);
@@ -194,7 +202,7 @@ export class AuthService {
             .subscribe({
               next: user => {
                 console.log('Profilo utente caricato con successo da /users/me:', user);
-                this.currentUserSubject.next(user);
+                this.setCurrentUser(user);
               },
               error: secondError => {
                 console.error('Failed to load user profile from both endpoints', secondError);
