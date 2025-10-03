@@ -50,6 +50,24 @@
         </div>
         <div>{{ (r.consumption * r.unitCost) | number:'1.2-2' }} €</div>
       </div>
+      
+      <!-- Riga lavanderia solo per Appartamento 8 -->
+      <div class="row laundry-row" *ngIf="isApartment8()">
+        <div class="label">
+          <mat-icon class="laundry-icon">local_laundry_service</mat-icon>
+          {{ laundryRow.label }}
+        </div>
+        <div>{{ laundryRow.previous ?? '-' }}</div>
+        <div>{{ laundryRow.current ?? '-' }}</div>
+        <div>{{ laundryRow.consumption }} {{ laundryRow.unit }}</div>
+        <div>
+          <mat-form-field appearance="outline" class="unit-field">
+            <input matInput type="number" [(ngModel)]="laundryRow.unitCost" [ngModelOptions]="{standalone: true}">
+          </mat-form-field>
+          €/{{ laundryRow.unit }}
+        </div>
+        <div>{{ (laundryRow.consumption * laundryRow.unitCost) | number:'1.2-2' }} €</div>
+      </div>
     </div>
 
     <mat-divider></mat-divider>
