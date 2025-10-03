@@ -71,7 +71,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
       unit: 'kWh',
       icon: 'bolt',
       color: '#FFC107',
-      defaultCost: 0.22
+      defaultCost: 0.75
     },
     {
       type: 'water',
@@ -79,7 +79,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
       unit: 'm³',
       icon: 'water_drop',
       color: '#2196F3',
-      defaultCost: 2.50
+      defaultCost: 3.40
     },
     {
       type: 'gas',
@@ -87,7 +87,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
       unit: 'm³',
       icon: 'local_fire_department',
       color: '#FF5722',
-      defaultCost: 1.20
+      defaultCost: 4.45
     }
   ];
 

@@ -125,7 +125,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
             unit: 'kWh',
             icon: 'bolt',
             color: '#FF6B6B',
-            defaultCost: 0.25
+            defaultCost: 0.75
           },
           {
             type: 'water',
@@ -133,7 +133,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
             unit: 'm³',
             icon: 'water_drop',
             color: '#4ECDC4',
-            defaultCost: 1.50
+            defaultCost: 3.40
           },
           {
             type: 'gas',
@@ -141,7 +141,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
             unit: 'm³',
             icon: 'local_fire_department',
             color: '#45B7D1',
-            defaultCost: 0.80
+            defaultCost: 4.45
           }
         ];
         
