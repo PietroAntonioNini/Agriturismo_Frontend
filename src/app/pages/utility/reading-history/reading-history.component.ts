@@ -244,6 +244,11 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
   
   processReadings(readings: UtilityReading[]): void {
+    // ⭐ Debug per verificare i dati subtype
+    console.log('🔍 Letture ricevute dal backend:', readings);
+    const laundryReadings = readings.filter(r => r.subtype === 'laundry');
+    console.log('🧺 Letture lavanderia trovate:', laundryReadings);
+    
     // Aggiungi nome appartamento
     this.allReadings = readings.map(reading => {
       const apartment = this.data.apartments.find(apt => apt.id === reading.apartmentId);

@@ -269,6 +269,13 @@
                             matTooltip="Lavanderia Comune">
                     local_laundry_service
                   </mat-icon>
+                  <!-- ⭐ Fallback per isSpecialReading -->
+                  <mat-icon *ngIf="reading.isSpecialReading && reading.subtype !== 'laundry'" 
+                            class="subtype-badge" 
+                            style="color: #FFA726; font-size: 18px; margin-left: 4px"
+                            matTooltip="Lettura Speciale">
+                    star
+                  </mat-icon>
                 </div>
               </td>
             </ng-container>
@@ -487,6 +494,12 @@
                       <div class="reading-info">
                         <mat-icon [style.color]="getUtilityTypeConfig(reading.type).color">
                           {{getUtilityTypeConfig(reading.type).icon}}
+                        </mat-icon>
+                        <!-- ⭐ Badge lavanderia anche nella vista raggruppata -->
+                        <mat-icon *ngIf="reading.subtype === 'laundry'" 
+                                  style="color: #FFA726; font-size: 16px; margin-left: 4px"
+                                  matTooltip="Lavanderia Comune">
+                          local_laundry_service
                         </mat-icon>
                         <span class="reading-date">{{formatDate(reading.readingDate)}}</span>
                         <span class="reading-consumption">{{reading.consumption | number:'1.0-3'}} {{getUtilityTypeConfig(reading.type).unit}}</span>
