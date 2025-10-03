@@ -24,6 +24,10 @@ export class AuthService {
   private refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
   constructor(private http: HttpClient, private router: Router) {
+  }
+
+  // Metodo di inizializzazione chiamato dopo che HttpClient è pronto
+  initialize(): void {
     // Verifica il token all'avvio dell'applicazione
     this.checkToken();
     // Richiedi un token CSRF all'avvio se l'utente è autenticato
