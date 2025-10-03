@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 export interface StatementDefaultsPayload {
   tari?: number;
   meterFee?: number;
-  unitCosts?: { electricity?: number; water?: number; gas?: number };
+  unitCosts?: { electricity?: number; water?: number; gas?: number; laundry?: number };
 }
 
 @Injectable({ providedIn: 'root' })

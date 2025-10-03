@@ -108,6 +108,10 @@ export class GenerateStatementDialogComponent implements OnInit {
           const key = r.type;
           r.unitCost = Number(defaults.unitCosts?.[key] ?? r.unitCost ?? 0);
         }
+        // Costo lavanderia (usa lo stesso costo dell'elettricità se non specificato)
+        if (this.laundryRow) {
+          this.laundryRow.unitCost = Number(defaults.unitCosts?.['laundry'] ?? defaults.unitCosts?.['electricity'] ?? this.laundryRow.unitCost ?? 0);
+        }
       } else {
         // fallback da utilityTypes
         for (const r of this.rows) {
@@ -115,6 +119,14 @@ export class GenerateStatementDialogComponent implements OnInit {
           if (cfg) {
             r.unit = cfg.unit || r.unit;
             r.unitCost = Number(cfg.defaultCost ?? 0);
+          }
+        }
+        // Costo lavanderia (usa lo stesso costo dell'elettricità)
+        if (this.laundryRow) {
+          const elecCfg = (utilityTypes || []).find((u: any) => u.type === 'electricity');
+          if (elecCfg) {
+            this.laundryRow.unit = elecCfg.unit || this.laundryRow.unit;
+            this.laundryRow.unitCost = Number(elecCfg.defaultCost ?? 0);
           }
         }
       }
@@ -165,7 +177,7 @@ export class GenerateStatementDialogComponent implements OnInit {
       requests.lastLaundry = this.api.getLastUtilityReading(apartmentId, 'electricity', 'laundry').pipe(catchError(_ => of(null)));
     }
 
-    forkJoin(requests).subscribe(res => {
+    forkJoin(requests).subscribe((res: any) => {
       this.fillRow('gas', res.gas, res.lastGas);
       this.fillRow('electricity', res.electricity, res.lastElec);
       this.fillRow('water', res.water, res.lastWater);
@@ -240,7 +252,8 @@ export class GenerateStatementDialogComponent implements OnInit {
         unitCosts: {
           electricity: Number(this.rows.find(r => r.type === 'electricity')?.unitCost || 0),
           water: Number(this.rows.find(r => r.type === 'water')?.unitCost || 0),
-          gas: Number(this.rows.find(r => r.type === 'gas')?.unitCost || 0)
+          gas: Number(this.rows.find(r => r.type === 'gas')?.unitCost || 0),
+          laundry: Number(this.laundryRow.unitCost || 0)
         }
       }).subscribe();
     }

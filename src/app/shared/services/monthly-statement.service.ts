@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 
 export interface StatementUtilityRow {
-  label: 'GAS' | 'LUCE' | 'ACQUA';
-  type: 'gas' | 'electricity' | 'water';
+  label: 'GAS' | 'LUCE' | 'ACQUA' | 'LAVANDERIA';
+  type: 'gas' | 'electricity' | 'water' | 'laundry';
   unit: string;
   previous: number | null;
   current: number | null;
