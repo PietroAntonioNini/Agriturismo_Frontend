@@ -127,6 +127,14 @@
             <mat-label>Tipo Contatore</mat-label>
             <mat-icon matPrefix>electrical_services</mat-icon>
             <mat-select formControlName="subtype" [disabled]="!!data.editingReading">
+              <mat-select-trigger *ngIf="readingForm && readingForm.get('subtype')?.value">
+                <div class="selected-utility">
+                  <mat-icon [style.color]="readingForm.get('subtype')?.value === 'laundry' ? '#FFA726' : '#FF6B6B'">
+                    {{readingForm.get('subtype')?.value === 'laundry' ? 'local_laundry_service' : 'bolt'}}
+                  </mat-icon>
+                  <span>{{readingForm.get('subtype')?.value === 'laundry' ? 'Elettricità Lavanderia' : 'Elettricità Principale'}}</span>
+                </div>
+              </mat-select-trigger>
               <mat-option value="main">
                 <div class="utility-option">
                   <mat-icon style="color: #FF6B6B">bolt</mat-icon>
@@ -136,7 +144,7 @@
               <mat-option value="laundry">
                 <div class="utility-option">
                   <mat-icon style="color: #FFA726">local_laundry_service</mat-icon>
-                  <span>Elettricità Lavanderia Comune</span>
+                  <span>Elettricità Lavanderia</span>
                 </div>
               </mat-option>
             </mat-select>
