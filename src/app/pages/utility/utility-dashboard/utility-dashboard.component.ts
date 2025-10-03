@@ -50,6 +50,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('comparisonChartCanvas') comparisonChartCanvas!: ElementRef<HTMLCanvasElement>;
   
   apartments: Apartment[] = [];
+  data: { apartments: Apartment[] } = { apartments: [] };
   selectedApartmentId: number | null = null;
   selectedYear: number = new Date().getFullYear();
   selectedView: 'consumption' | 'costs' | 'comparison' = 'consumption';
@@ -149,6 +150,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     }).subscribe({
       next: (result) => {
         this.apartments = result.apartments || [];
+        this.data.apartments = result.apartments || [];
         
         // Sposta l'elaborazione pesante fuori dal thread principale per migliorare la reattività
         setTimeout(() => {
@@ -236,6 +238,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     console.log('📊 Dati aggiornati con lavanderia:', this.allApartmentsData);
 
     // Rielabora i dati con i nuovi valori
+    console.log('🔄 Rielaborando dati con lavanderia...');
     this.reprocessDataWithLaundry();
   }
 
@@ -858,7 +861,15 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
    * Verifica se l'appartamento è l'appartamento 8 (lavanderia)
    */
   isApartment8(apartmentId: number): boolean {
-    return apartmentId === 8;
+    if (!this.data?.apartments) return false;
+    const apartment = this.data.apartments.find(apt => apt.id === apartmentId);
+    if (!apartment) return false;
+    const name = apartment.name.toLowerCase();
+    return name.includes('appartamento 8') || 
+           name.includes('appartamento8') || 
+           name === 'appartamento 8' || 
+           name === 'apt 8' || 
+           name === 'apt. 8';
   }
 
   /**
