@@ -163,33 +163,50 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     this.readingForm = this.fb.group({
       apartmentId: [this.data.selectedApartmentId || '', Validators.required],
       type: ['', Validators.required],
+      subtype: ['main'], // ⭐ Campo per distinguere main/laundry
+      isSpecialReading: [false], // ⭐ Flag per letture speciali
       readingDate: [today, Validators.required],
       previousReading: [0, [Validators.min(0)]], // Campo per lettura precedente (prima lettura)
       currentReading: [0, [Validators.required, Validators.min(0)]],
       unitCost: [0, [Validators.required, Validators.min(0)]],
       notes: ['']
-      // Campi per letture speciali temporaneamente rimossi
     });
   }
   
 
 
   setupFormSubscriptions(): void {
-    // Monitora cambiamenti in appartamento e tipo per caricare l'ultima lettura
+    // Monitora cambiamenti in appartamento, tipo e subtype per caricare l'ultima lettura
     this.readingForm.valueChanges.pipe(
       takeUntil(this.destroy$),
       debounceTime(500), // Aumentato il debounce per ridurre le chiamate
       distinctUntilChanged((prev, curr) => 
-        prev.apartmentId === curr.apartmentId && prev.type === curr.type
+        prev.apartmentId === curr.apartmentId && 
+        prev.type === curr.type && 
+        prev.subtype === curr.subtype
       )
     ).subscribe(formValue => {
       if (formValue.apartmentId && formValue.type) {
-        this.loadLastReading(formValue.apartmentId, formValue.type);
+        // ⭐ Passa il subtype solo se è Appartamento 8 e tipo electricity
+        const isApt8 = this.isApartment8Selected();
+        const subtype = (isApt8 && formValue.type === 'electricity') 
+          ? formValue.subtype 
+          : undefined;
+        this.loadLastReading(formValue.apartmentId, formValue.type, subtype);
         this.setDefaultUnitCost(formValue.type);
       }
     });
 
-    // Subscription per subtype temporaneamente rimossa
+    // ⭐ Monitora cambi di subtype per aggiornare isSpecialReading
+    this.readingForm.get('subtype')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(subtype => {
+      if (subtype === 'laundry') {
+        this.readingForm.patchValue({ isSpecialReading: true }, { emitEvent: false });
+      } else {
+        this.readingForm.patchValue({ isSpecialReading: false }, { emitEvent: false });
+      }
+    });
     
     // Monitora cambiamenti per calcolare consumo e costo
     this.readingForm.get('currentReading')?.valueChanges.pipe(
@@ -221,18 +238,20 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     this.readingForm.patchValue({
       apartmentId: reading.apartmentId,
       type: reading.type,
+      subtype: reading.subtype || 'main', // ⭐ Carica subtype
+      isSpecialReading: reading.isSpecialReading || false, // ⭐ Carica flag
       readingDate: new Date(reading.readingDate),
       previousReading: reading.previousReading || 0,
       currentReading: reading.currentReading,
       unitCost: reading.unitCost,
       notes: reading.notes || ''
-      // Campi per letture speciali temporaneamente rimossi
     });
     
     // Simula l'ultima lettura per il calcolo
     this.lastReading = {
       apartmentId: reading.apartmentId,
       type: reading.type,
+      subtype: reading.subtype, // ⭐ Include subtype
       lastReading: reading.previousReading,
       lastReadingDate: new Date(reading.readingDate),
       hasHistory: true
@@ -241,12 +260,12 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     this.calculateConsumptionAndCost();
   }
   
-  loadLastReading(apartmentId: number, type: string): void {
+  loadLastReading(apartmentId: number, type: string, subtype?: string): void {
     this.isLoadingLastReading = true;
     this.lastReading = null;
     
-    // Chiamata API centralizzata per ottenere l'ultima lettura
-    this.apiService.getLastUtilityReading(apartmentId, type).pipe(
+    // ⭐ Chiamata API con supporto subtype
+    this.apiService.getLastUtilityReading(apartmentId, type, subtype).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (lastReading: LastReading | null) => {
@@ -412,8 +431,10 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     }
     const readingData: UtilityReadingCreate = {
       apartmentId: Number(formValue.apartmentId),
-      userId: currentUser.id, // ← AGGIUNGI userId
+      userId: currentUser.id,
       type: formValue.type,
+      subtype: formValue.subtype || 'main', // ⭐ Include subtype
+      isSpecialReading: formValue.isSpecialReading || false, // ⭐ Include flag speciale
       readingDate: dateString,
       previousReading: Number(previousReading),
       currentReading: Number(formValue.currentReading),
@@ -422,7 +443,6 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       totalCost: Number(this.calculatedCost),
       isPaid: false,
       notes: formValue.notes || ''
-      // Campi per letture speciali temporaneamente rimossi
     };
 
     console.log('Sending payload to backend:', readingData);
@@ -457,6 +477,8 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
               ...this.data.editingReading, // Mantieni ID e altri campi non modificabili
               apartmentId: Number(formValue.apartmentId),
               type: formValue.type,
+              subtype: formValue.subtype || 'main', // ⭐ Include subtype
+              isSpecialReading: formValue.isSpecialReading || false, // ⭐ Include flag
               readingDate: new Date(formValue.readingDate),
               previousReading: Number(previousReading),
               currentReading: Number(formValue.currentReading),
@@ -618,8 +640,61 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ===== METODI PER LETTURE SPECIALI (TEMPORANEAMENTE DISABILITATI) =====
+  // ===== METODI PER LETTURE SPECIALI =====
   
-  // Tutti i metodi per la lavanderia sono stati temporaneamente disabilitati
-  // per ripristinare il funzionamento base dell'applicazione
+  /**
+   * ⭐ Verifica se l'appartamento selezionato è "Appartamento 8"
+   * Usa il NOME dell'appartamento invece dell'ID per maggiore flessibilità
+   */
+  isApartment8Selected(): boolean {
+    if (!this.readingForm) return false;
+    
+    const apartmentId = this.readingForm.get('apartmentId')?.value;
+    if (!apartmentId) return false;
+    
+    const apartment = this.data.apartments.find(apt => apt.id === apartmentId);
+    if (!apartment) return false;
+    
+    // Verifica se il nome contiene "8" o "Appartamento 8" (case-insensitive)
+    const name = apartment.name.toLowerCase();
+    return name.includes('appartamento 8') || 
+           name.includes('appartamento8') ||
+           name === 'appartamento 8' ||
+           name === 'apt 8' ||
+           name === 'apt. 8';
+  }
+
+  /**
+   * ⭐ Determina se mostrare il campo subtype (solo per Appartamento 8 con elettricità)
+   */
+  shouldShowSubtypeField(): boolean {
+    if (!this.readingForm) return false;
+    
+    const type = this.readingForm.get('type')?.value;
+    
+    // Mostra solo per Appartamento 8 e tipo 'electricity'
+    return this.isApartment8Selected() && type === 'electricity';
+  }
+
+  /**
+   * ⭐ Alias per retrocompatibilità
+   */
+  isApartment8(): boolean {
+    return this.isApartment8Selected();
+  }
+
+  /**
+   * ⭐ Ottiene la label per il tipo di lettura corrente
+   */
+  getSubtypeLabel(): string {
+    if (!this.readingForm) return '';
+    
+    const subtype = this.readingForm.get('subtype')?.value;
+    
+    if (subtype === 'laundry') {
+      return '🧺 Lavanderia Comune';
+    } else {
+      return '⚡ Elettricità Principale';
+    }
+  }
 }

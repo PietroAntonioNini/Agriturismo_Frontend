@@ -122,7 +122,26 @@
             <mat-error>{{getFormControlError('type')}}</mat-error>
           </mat-form-field>
 
-          <!-- Campo per tipo di lettura temporaneamente rimosso -->
+          <!-- ⭐ SUBTYPE - SOLO PER APPARTAMENTO 8 CON ELETTRICITÀ -->
+          <mat-form-field appearance="outline" class="full-width" *ngIf="shouldShowSubtypeField()">
+            <mat-label>Tipo Contatore</mat-label>
+            <mat-icon matPrefix>electrical_services</mat-icon>
+            <mat-select formControlName="subtype" [disabled]="!!data.editingReading">
+              <mat-option value="main">
+                <div class="utility-option">
+                  <mat-icon style="color: #FF6B6B">bolt</mat-icon>
+                  <span>Elettricità Principale</span>
+                </div>
+              </mat-option>
+              <mat-option value="laundry">
+                <div class="utility-option">
+                  <mat-icon style="color: #FFA726">local_laundry_service</mat-icon>
+                  <span>Elettricità Lavanderia Comune</span>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-hint><strong>{{getSelectedApartmentName()}}</strong> ha due contatori elettrici separati</mat-hint>
+          </mat-form-field>
           
           <!-- Reading Date -->
           <mat-form-field appearance="outline">

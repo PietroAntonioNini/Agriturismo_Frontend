@@ -624,4 +624,26 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       panelClass: ['info-snackbar']
     });
   }
+
+  // ===== METODI PER LETTURE SPECIALI =====
+  
+  /**
+   * ⭐ Ottiene la label per il tipo di lettura (con supporto subtype)
+   */
+  getReadingTypeLabel(reading: ReadingWithApartmentName): string {
+    if (reading.subtype === 'laundry') {
+      return '🧺 Lavanderia';
+    } else if (reading.subtype === 'main') {
+      return '⚡ Principale';
+    } else {
+      return this.getUtilityTypeConfig(reading.type).label;
+    }
+  }
+
+  /**
+   * ⭐ Determina se la lettura è speciale (lavanderia)
+   */
+  isSpecialReading(reading: ReadingWithApartmentName): boolean {
+    return reading.isSpecialReading === true || reading.subtype === 'laundry';
+  }
 }

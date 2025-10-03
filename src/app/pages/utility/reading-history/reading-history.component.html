@@ -262,6 +262,13 @@
                     {{getUtilityTypeConfig(reading.type).icon}}
                   </mat-icon>
                   <span class="utility-label">{{getUtilityTypeConfig(reading.type).label}}</span>
+                  <!-- ⭐ Badge per lettura lavanderia -->
+                  <mat-icon *ngIf="reading.subtype === 'laundry'" 
+                            class="subtype-badge" 
+                            style="color: #FFA726; font-size: 18px; margin-left: 4px"
+                            matTooltip="Lavanderia Comune">
+                    local_laundry_service
+                  </mat-icon>
                 </div>
               </td>
             </ng-container>
