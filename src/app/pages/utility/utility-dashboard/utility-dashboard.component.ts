@@ -214,6 +214,12 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
         const mainElectricity = Math.max(0, apartmentData.electricity - laundryInfo.electricity);
         const mainElectricityCost = Math.max(0, apartmentData.electricityCost - laundryInfo.electricityCost);
         
+        console.log(`🔧 Aggiornando dati per ${key}:`, {
+          original: { electricity: apartmentData.electricity, electricityCost: apartmentData.electricityCost },
+          laundry: laundryInfo,
+          new: { electricity: mainElectricity, electricityCost: mainElectricityCost }
+        });
+        
         return {
           ...apartmentData,
           electricity: mainElectricity,
@@ -227,14 +233,19 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       return apartmentData;
     });
 
+    console.log('📊 Dati aggiornati con lavanderia:', this.allApartmentsData);
+
     // Rielabora i dati con i nuovi valori
     this.reprocessDataWithLaundry();
   }
 
   // ⭐ Rielabora i dati includendo la lavanderia
   reprocessDataWithLaundry(): void {
+    console.log('🔄 Rielaborando dati con lavanderia...');
+    
     // Assicurati che gli appartamenti siano definiti
     if (!this.apartments || this.apartments.length === 0) {
+      console.log('❌ Nessun appartamento disponibile');
       this.apartmentSpecificData = [];
       this.apartmentUtilityData = [];
       this.calculateStatistics();
@@ -304,6 +315,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       };
     });
 
+    console.log('✅ Dati rielaborati con lavanderia:', this.apartmentSpecificData);
     this.calculateStatistics();
   }
   
@@ -1109,7 +1121,9 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
    * ⭐ Ottiene il costo lavanderia per un mese specifico
    */
   getLaundryElectricityCostForMonth(monthData: any): number {
-    return monthData.laundryElectricityCost || 0;
+    const cost = monthData.laundryElectricityCost || 0;
+    console.log('💰 Costo lavanderia per mese:', monthData, 'Costo:', cost);
+    return cost;
   }
 
   /**
