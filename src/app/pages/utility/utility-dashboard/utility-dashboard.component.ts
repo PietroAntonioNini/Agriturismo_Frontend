@@ -202,17 +202,19 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
           totalCost: 0
         };
         
-        return {
-          month: index + 1,
-          monthName: this.months[index],
-          electricity: monthData.electricity || 0,
-          water: monthData.water || 0,
-          gas: monthData.gas || 0,
-          electricityCost: monthData.electricityCost || 0,
-          waterCost: monthData.waterCost || 0,
-          gasCost: monthData.gasCost || 0,
-          totalCost: monthData.totalCost || 0
-        };
+         return {
+           month: index + 1,
+           monthName: this.months[index],
+           electricity: monthData.electricity || 0,
+           water: monthData.water || 0,
+           gas: monthData.gas || 0,
+           electricityCost: monthData.electricityCost || 0,
+           waterCost: monthData.waterCost || 0,
+           gasCost: monthData.gasCost || 0,
+           laundryElectricity: monthData.laundryElectricity || 0,
+           laundryElectricityCost: monthData.laundryElectricityCost || 0,
+           totalCost: monthData.totalCost || 0
+         };
       });
 
       // Calcola i totali annuali
@@ -220,8 +222,17 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
         electricity: totals.electricity + month.electricity,
         water: totals.water + month.water,
         gas: totals.gas + month.gas,
+        laundryElectricity: totals.laundryElectricity + month.laundryElectricity,
+        laundryElectricityCost: totals.laundryElectricityCost + month.laundryElectricityCost,
         totalCost: totals.totalCost + month.totalCost
-      }), { electricity: 0, water: 0, gas: 0, totalCost: 0 });
+      }), { 
+        electricity: 0, 
+        water: 0, 
+        gas: 0, 
+        laundryElectricity: 0,
+        laundryElectricityCost: 0,
+        totalCost: 0 
+      });
       
       return {
         apartmentId: apartment.id!,
@@ -718,8 +729,7 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     if (!aptData || !aptData.monthlyData || !this.isApartment8(aptData.apartmentId)) {
       return 0;
     }
-    // ⭐ Calcola il costo totale lavanderia dall'anno
-    return (aptData.yearlyTotals as any)?.laundryElectricityCost || 0;
+    return aptData.yearlyTotals.laundryElectricityCost || 0;
   }
 
   /**

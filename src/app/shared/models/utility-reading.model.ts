@@ -103,12 +103,14 @@ export interface MonthlyUtilityData {
     year: number;
     apartmentId: number;
     apartmentName: string;
-    electricity: number;
+    electricity: number; // Solo elettricità principale
     water: number;
     gas: number;
-    electricityCost: number;
+    electricityCost: number; // Solo costo elettricità principale
     waterCost: number;
     gasCost: number;
+    laundryElectricity?: number; // Elettricità lavanderia
+    laundryElectricityCost?: number; // Costo elettricità lavanderia
     totalCost: number;
 }
 
@@ -124,12 +126,16 @@ export interface ApartmentUtilityData {
         electricityCost: number;
         waterCost: number;
         gasCost: number;
+        laundryElectricity?: number; // Elettricità lavanderia
+        laundryElectricityCost?: number; // Costo elettricità lavanderia
         totalCost: number;
     }[];
     yearlyTotals: {
         electricity: number;
         water: number;
         gas: number;
+        laundryElectricity?: number; // Elettricità lavanderia
+        laundryElectricityCost?: number; // Costo elettricità lavanderia
         totalCost: number;
     };
 }
