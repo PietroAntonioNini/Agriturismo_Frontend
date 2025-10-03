@@ -325,7 +325,7 @@
                 <div class="month-utility laundry-electricity" *ngIf="shouldShowLaundrySection(selectedApartmentId!)">
                   <mat-icon>local_laundry_service</mat-icon>
                   <span>Lavanderia</span>
-                  <span class="cost">€0.00</span>
+                  <span class="cost">€{{getLaundryElectricityCostForMonth(monthData) | number:'1.2-2'}}</span>
                   <mat-chip color="accent" selected class="special-chip">Speciale</mat-chip>
                 </div>
                 

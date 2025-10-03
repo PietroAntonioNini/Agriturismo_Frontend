@@ -167,10 +167,152 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
       }
     });
   }
+
+  // ⭐ Carica le letture individuali per separare lavanderia
+  loadIndividualReadingsForLaundry(): void {
+    this.apiService.getAllUtilityReadings({ year: this.selectedYear }).subscribe({
+      next: (readings) => {
+        console.log('🔍 Letture individuali caricate per lavanderia:', readings);
+        this.processLaundryData(readings);
+      },
+      error: (error) => {
+        console.error('Errore nel caricamento letture individuali:', error);
+      }
+    });
+  }
+
+  // ⭐ Processa i dati lavanderia separatamente
+  processLaundryData(readings: any[]): void {
+    // Raggruppa per appartamento e mese
+    const laundryData = new Map<string, { electricity: number; electricityCost: number; }>();
+    
+    readings.forEach(reading => {
+      if (reading.subtype === 'laundry' && reading.type === 'electricity') {
+        const readingDate = new Date(reading.readingDate);
+        const month = readingDate.getMonth() + 1;
+        const key = `${reading.apartmentId}-${month}`;
+        
+        if (!laundryData.has(key)) {
+          laundryData.set(key, { electricity: 0, electricityCost: 0 });
+        }
+        
+        const data = laundryData.get(key)!;
+        data.electricity += reading.consumption || 0;
+        data.electricityCost += reading.totalCost || 0;
+      }
+    });
+
+    console.log('🧺 Dati lavanderia processati:', laundryData);
+
+    // Aggiorna i dati esistenti con i dati lavanderia separati
+    this.allApartmentsData = this.allApartmentsData.map(apartmentData => {
+      const key = `${apartmentData.apartmentId}-${apartmentData.month}`;
+      const laundryInfo = laundryData.get(key);
+      
+      if (laundryInfo) {
+        // Sottrai i dati lavanderia dall'elettricità principale
+        const mainElectricity = Math.max(0, apartmentData.electricity - laundryInfo.electricity);
+        const mainElectricityCost = Math.max(0, apartmentData.electricityCost - laundryInfo.electricityCost);
+        
+        return {
+          ...apartmentData,
+          electricity: mainElectricity,
+          electricityCost: mainElectricityCost,
+          // Aggiungi i dati lavanderia come proprietà separate
+          laundryElectricity: laundryInfo.electricity,
+          laundryElectricityCost: laundryInfo.electricityCost
+        };
+      }
+      
+      return apartmentData;
+    });
+
+    // Rielabora i dati con i nuovi valori
+    this.reprocessDataWithLaundry();
+  }
+
+  // ⭐ Rielabora i dati includendo la lavanderia
+  reprocessDataWithLaundry(): void {
+    // Assicurati che gli appartamenti siano definiti
+    if (!this.apartments || this.apartments.length === 0) {
+      this.apartmentSpecificData = [];
+      this.apartmentUtilityData = [];
+      this.calculateStatistics();
+      return;
+    }
+    
+    // Organizza i dati per appartamento (con lavanderia separata)
+    this.apartmentSpecificData = this.apartments.map(apartment => {
+      const apartmentData = this.allApartmentsData.filter(item => item.apartmentId === apartment.id);
+      
+      const monthlyData = this.months.map((_, index) => {
+        const monthData = apartmentData.find(item => item.month === index + 1) || {
+          month: index + 1,
+          year: this.selectedYear,
+          apartmentId: apartment.id!,
+          apartmentName: apartment.name,
+          electricity: 0,
+          water: 0,
+          gas: 0,
+          electricityCost: 0,
+          waterCost: 0,
+          gasCost: 0,
+          totalCost: 0,
+          laundryElectricity: 0,
+          laundryElectricityCost: 0
+        };
+        
+        return {
+          month: index + 1,
+          monthName: this.months[index],
+          electricity: monthData.electricity || 0,
+          water: monthData.water || 0,
+          gas: monthData.gas || 0,
+          electricityCost: monthData.electricityCost || 0,
+          waterCost: monthData.waterCost || 0,
+          gasCost: monthData.gasCost || 0,
+          totalCost: monthData.totalCost || 0,
+          // ⭐ Aggiungi dati lavanderia
+          laundryElectricity: (monthData as any).laundryElectricity || 0,
+          laundryElectricityCost: (monthData as any).laundryElectricityCost || 0
+        };
+      });
+
+      // Calcola i totali annuali (inclusa lavanderia)
+      const yearlyTotals = monthlyData.reduce((totals, month) => ({
+        electricity: totals.electricity + month.electricity,
+        water: totals.water + month.water,
+        gas: totals.gas + month.gas,
+        totalCost: totals.totalCost + month.totalCost,
+        // ⭐ Aggiungi totali lavanderia
+        laundryElectricity: totals.laundryElectricity + month.laundryElectricity,
+        laundryElectricityCost: totals.laundryElectricityCost + month.laundryElectricityCost
+      }), {
+        electricity: 0,
+        water: 0,
+        gas: 0,
+        totalCost: 0,
+        laundryElectricity: 0,
+        laundryElectricityCost: 0
+      });
+
+      return {
+        apartmentId: apartment.id!,
+        apartmentName: apartment.name,
+        monthlyData,
+        yearlyTotals
+      };
+    });
+
+    this.calculateStatistics();
+  }
   
   processUtilityData(data: MonthlyUtilityData[]): void {
     // Elabora i dati per il grafico
     this.allApartmentsData = data || [];
+    
+    // ⭐ Carica le letture individuali per separare lavanderia
+    this.loadIndividualReadingsForLaundry();
     
     // Assicurati che gli appartamenti siano definiti
     if (!this.apartments || this.apartments.length === 0) {
@@ -709,14 +851,13 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
 
   /**
    * Ottiene il costo dell'elettricità della lavanderia per l'appartamento 8
-   * TODO: Implementare quando il backend supporterà le letture speciali
    */
   getLaundryElectricityCostForApartment(aptData: ApartmentUtilityData): number {
     if (!aptData || !aptData.monthlyData || !this.isApartment8(aptData.apartmentId)) {
       return 0;
     }
-    // Per ora restituisce 0, sarà implementato quando il backend supporterà le letture speciali
-    return 0;
+    // ⭐ Calcola il costo totale lavanderia dall'anno
+    return (aptData.yearlyTotals as any)?.laundryElectricityCost || 0;
   }
 
   /**
@@ -962,5 +1103,19 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     });
 
     console.log('Grafico di confronto creato:', this.comparisonChart);
+  }
+
+  /**
+   * ⭐ Ottiene il costo lavanderia per un mese specifico
+   */
+  getLaundryElectricityCostForMonth(monthData: any): number {
+    return monthData.laundryElectricityCost || 0;
+  }
+
+  /**
+   * ⭐ Ottiene il consumo lavanderia per un mese specifico
+   */
+  getLaundryElectricityConsumptionForMonth(monthData: any): number {
+    return monthData.laundryElectricity || 0;
   }
 }
