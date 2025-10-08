@@ -34,17 +34,17 @@ export class MonthlyStatementService {
     doc.text(title, 300, y, { align: 'center' }); y += 26;
 
     doc.setFontSize(12); doc.setFont('helvetica','normal');
-    doc.text(`Appartamento N. ${data.apartmentName}`, margin, y); y += 18;
-    doc.text(`Mese di ${monthNames[data.month-1]} ${data.year}`, margin, y); y += 12;
+    doc.text(`${data.apartmentName}`, margin, y); y += 20;
+    doc.text(`Mese di ${monthNames[data.month-1]} ${data.year}`, margin, y); y += 16;
 
-    y += 12; doc.setDrawColor(200); doc.line(margin, y, 595 - margin, y); y += 16;
+    y += 16; doc.setDrawColor(200); doc.line(margin, y, 595 - margin, y); y += 20;
 
     doc.setFont('helvetica','bold');
     doc.text('DETTAGLIO CONSUMI', margin, y);
     const headers = ['CONSUMO/COSTO','IMPORTO'];
     doc.text(headers[0], 330, y);
     doc.text(headers[1], 500, y, { align: 'right' });
-    y += 12; doc.setDrawColor(230); doc.line(margin, y, 595 - margin, y); y += 10;
+    y += 16; doc.setDrawColor(230); doc.line(margin, y, 595 - margin, y); y += 14;
 
     const money = (n: number) => `${n.toFixed(2).replace('.',',')} €`;
     const printRow = (label: string, prev: string, curr: string, cons: string, unitCost: string, amount: string) => {
@@ -54,11 +54,11 @@ export class MonthlyStatementService {
       doc.text(curr, margin + 160, y);
       doc.text(`${cons}  x  ${unitCost}`, 330, y);
       doc.text(amount, 500, y, { align: 'right' });
-      y += 18;
+      y += 22;
     };
 
     doc.setFont('helvetica','normal');
-    doc.text('A=Attuale  P=Precedente', margin, y); y += 16;
+    doc.text('A=Attuale  P=Precedente', margin, y); y += 20;
 
     data.rows.forEach(r => {
       const cons = (r.consumption ?? ((r.current ?? 0) - (r.previous ?? 0))) || 0;
@@ -74,13 +74,13 @@ export class MonthlyStatementService {
     });
 
     printRow('AFFITTO', '', '', '', '', money(data.rent || 0));
-    y += 6; doc.setDrawColor(230); doc.line(margin, y, 595 - margin, y); y += 14;
+    y += 8; doc.setDrawColor(230); doc.line(margin, y, 595 - margin, y); y += 18;
 
-    doc.setFont('helvetica','bold'); doc.text('COSTI FISSI', margin, y); y += 16;
+    doc.setFont('helvetica','bold'); doc.text('COSTI FISSI', margin, y); y += 20;
     doc.setFont('helvetica','normal');
     printRow('TARI (N. Urbana)', '', '', '', '', money(data.tari || 0));
     printRow('Contatori', '', '', '', '', money(data.meterFee || 0));
-    y += 6; doc.setDrawColor(230); doc.line(margin, y, 595 - margin, y); y += 14;
+    y += 8; doc.setDrawColor(230); doc.line(margin, y, 595 - margin, y); y += 18;
 
     const utilitiesTotal = data.rows.reduce((s, r) => {
       const cons = (r.consumption ?? ((r.current ?? 0) - (r.previous ?? 0))) || 0;
@@ -89,23 +89,29 @@ export class MonthlyStatementService {
     const subtotalUtenze = utilitiesTotal + (data.meterFee || 0);
     const totale = subtotalUtenze + (data.tari || 0) + (data.rent || 0);
 
-    doc.setDrawColor(60, 90, 150);
-    doc.setFillColor(232, 238, 248);
-    doc.roundedRect(margin, y, 595 - margin*2, 60, 6, 6, 'FD');
+    doc.setDrawColor(0, 0, 0);
+    doc.setFillColor(240, 240, 240);
+    doc.roundedRect(margin, y, 595 - margin*2, 70, 6, 6, 'FD');
+
+    // Add a border line inside the box for better separation
+    doc.setDrawColor(180, 180, 180);
+    doc.line(300, y + 5, 300, y + 65);
 
     doc.setFont('helvetica','bold'); doc.setFontSize(12);
-    doc.text('SUBTOTALE UTENZE', margin + 14, y + 20);
-    doc.text(money(subtotalUtenze), margin + 14, y + 40);
+    doc.text('SUBTOTALE UTENZE', margin + 16, y + 22);
+    doc.setFontSize(14);
+    doc.text(money(subtotalUtenze), margin + 16, y + 45);
 
-    doc.text('TOTALE DA PAGARE', 595 - margin - 14, y + 20, { align: 'right' });
+    doc.setFontSize(12);
+    doc.text('TOTALE DA PAGARE', 595 - margin - 16, y + 22, { align: 'right' });
     doc.setFontSize(16);
-    doc.text(money(totale), 595 - margin - 14, y + 44, { align: 'right' });
-    y += 84;
+    doc.text(money(totale), 595 - margin - 16, y + 48, { align: 'right' });
+    y += 90;
 
     const due = new Date(data.year, data.month, 10);
     const dueLabel = due.toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.setFont('helvetica','normal'); doc.setFontSize(11);
-    doc.text(`Scadenza: ${dueLabel}`, 300, y, { align: 'center' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(12);
+    doc.text(`Scadenza: ${dueLabel}`, 300, y + 10, { align: 'center' });
 
     const filename = `prospetto-${data.apartmentName}-${String(data.month).padStart(2,'0')}-${data.year}.pdf`.replace(/\s+/g,'_');
     doc.save(filename);
