@@ -34,15 +34,6 @@ export class AuthInterceptor implements HttpInterceptor {
       request = this.addCsrfToken(request);
     }
 
-    // Aggiungi user_id a tutte le richieste API (tranne auth)
-    if (this.isApiRequest(request.url) && !request.url.includes('/auth/')) {
-      const beforeUrl = request.urlWithParams;
-      request = this.addUserId(request);
-      if (beforeUrl !== request.urlWithParams) {
-        console.debug('[AuthInterceptor]', request.method, request.urlWithParams);
-      }
-    }
-
     return next.handle(request).pipe(
       tap((event: HttpEvent<any>) => {
         // Registra la performance solo per le risposte HTTP complete
@@ -156,26 +147,4 @@ export class AuthInterceptor implements HttpInterceptor {
   private refreshToken() {
     this.authService.refreshToken().subscribe();
   }
-
-  private addUserId(request: HttpRequest<any>): HttpRequest<any> {
-    const currentUser = this.authService.getCurrentUser() || this.authService.getUserFromStorage?.();
-
-    if (currentUser) {
-      return request.clone({
-        setParams: {
-          user_id: currentUser.id.toString()
-        }
-      });
-    }
-    return request;
-  }
-
-  private isApiRequest(url: string): boolean {
-    return url.includes('/apartments') ||
-           url.includes('/tenants') ||
-           url.includes('/leases') ||
-           url.includes('/invoices') ||
-           url.includes('/utility-readings') ||
-           url.includes('/utilities');
-  }
-} 
+}

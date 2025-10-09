@@ -20,21 +20,6 @@ export class GenericApiService {
 
   constructor(private http: HttpClient) { }
 
-  private getUserIdFromStorage(): string | null {
-    try {
-      const s = localStorage.getItem('currentUser');
-      if (!s) return null;
-      const u = JSON.parse(s);
-      return u?.id != null ? String(u.id) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private shouldAttachUserId(entity: string): boolean {
-    return ['apartments', 'tenants', 'leases', 'invoices', 'utilities'].includes(entity);
-  }
-
   private apiUrl(entity: string): string {
     return `${environment.apiUrl}/${entity}/`;
   }
@@ -199,13 +184,6 @@ export class GenericApiService {
 
   // POST: Creazione elemento (anche con immagini opzionali)
   create<T>(entity: string, data: Partial<T>, files?: File[], fileFieldPrefix?: string): Observable<T> {
-    let forcedParams = new HttpParams();
-    if (this.shouldAttachUserId(entity)) {
-      const uid = this.getUserIdFromStorage();
-      if (uid) {
-        forcedParams = forcedParams.set('user_id', uid);
-      }
-    }
     if (!files || files.length === 0) {
       // Se è un'entità apartment, assicuriamoci che amenities sia sempre un array
       if (entity === 'apartments') {
@@ -214,12 +192,12 @@ export class GenericApiService {
           apartmentData.amenities = [];
         }
         console.debug('[GenericApiService] POST', this.apiUrl(entity), 'payload=', apartmentData);
-        return this.http.post<T>(this.apiUrl(entity), apartmentData, { params: forcedParams }).pipe(
+        return this.http.post<T>(this.apiUrl(entity), apartmentData).pipe(
           tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
         );
       }
       console.debug('[GenericApiService] POST', this.apiUrl(entity), 'payload=', data);
-      return this.http.post<T>(this.apiUrl(entity), data, { params: forcedParams }).pipe(
+      return this.http.post<T>(this.apiUrl(entity), data).pipe(
         tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
       );
     }
@@ -264,18 +242,11 @@ export class GenericApiService {
     }
     
     console.debug('[GenericApiService] POST with-images', `${this.apiUrl(entity)}with-images`, 'files=', files?.length || 0);
-    return this.http.post<T>(`${this.apiUrl(entity)}with-images`, formData, { params: forcedParams });
+    return this.http.post<T>(`${this.apiUrl(entity)}with-images`, formData);
   }
 
   // PUT: Aggiornamento elemento (anche con immagini opzionali)
   update<T>(entity: string, id: number | string, data: Partial<T>, files?: File[]): Observable<T> {
-    let forcedParams = new HttpParams();
-    if (this.shouldAttachUserId(entity)) {
-      const uid = this.getUserIdFromStorage();
-      if (uid) {
-        forcedParams = forcedParams.set('user_id', uid);
-      }
-    }
     if (entity === 'tenants') {
         const formData = new FormData();
         formData.append('tenants', JSON.stringify(data));
@@ -288,7 +259,7 @@ export class GenericApiService {
         }
         
         console.debug('[GenericApiService] PUT with-images', `${environment.apiUrl}/${entity}/${id}/with-images`, 'files=', files?.length || 0);
-        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData, { params: forcedParams }).pipe(
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
         tap(() => {
           this.invalidateCache(entity, id); // Invalida cache dopo aggiornamento
           // Ottimizzazione: se è un tenant, invalida anche la cache dei contratti attivi
@@ -315,7 +286,7 @@ export class GenericApiService {
           });
       }
       
-      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData, { params: forcedParams }).pipe(
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
         tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo aggiornamento
       );
     } 
@@ -328,10 +299,10 @@ export class GenericApiService {
           apartmentData.amenities = [];
         }
         console.debug('[GenericApiService] PUT', `${environment.apiUrl}/${entity}/${id}`, 'payload=', apartmentData);
-        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, apartmentData, { params: forcedParams });
+        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, apartmentData);
       }
       console.debug('[GenericApiService] PUT', `${environment.apiUrl}/${entity}/${id}`, 'payload=', data);
-      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, data, { params: forcedParams });
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, data);
     }
     
     const formData = new FormData();
@@ -340,20 +311,13 @@ export class GenericApiService {
       files.forEach((file, index) => formData.append(`file${index}`, file));
     }
     console.debug('[GenericApiService] PUT with-images', `${this.apiUrl(entity)}${id}/with-images`);
-    return this.http.put<T>(`${this.apiUrl(entity)}${id}/with-images`, formData, { params: forcedParams });
+    return this.http.put<T>(`${this.apiUrl(entity)}${id}/with-images`, formData);
   }
 
   // DELETE: Eliminazione elemento
   delete(entity: string, id: number | string): Observable<void> {
-    let forcedParams = new HttpParams();
-    if (this.shouldAttachUserId(entity)) {
-      const uid = this.getUserIdFromStorage();
-      if (uid) {
-        forcedParams = forcedParams.set('user_id', uid);
-      }
-    }
     console.debug('[GenericApiService] DELETE', `${environment.apiUrl}/${entity}/${id}`);
-    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`, { params: forcedParams }).pipe(
+    return this.http.delete<void>(`${environment.apiUrl}/${entity}/${id}`).pipe(
       tap(() => {
         this.invalidateCache(entity, id); // Invalida cache dopo eliminazione
         // Ottimizzazione: se è un tenant, invalida anche la cache dei contratti attivi
