@@ -923,7 +923,7 @@ export class GenericApiService {
 
   // Aggiorna una lettura utility con payload specifico per il backend
   updateUtilityReadingWithCorrectFormat(id: number, reading: UtilityReadingCreate): Observable<UtilityReading | null> {
-    return this.http.put<UtilityReading>(`${this.apiUrl('utilities')}/${id}`, reading).pipe(
+    return this.http.put<UtilityReading>(`${environment.apiUrl}/utilities/${id}`, reading).pipe(
       catchError(error => {
         console.error(`Errore durante l'aggiornamento della lettura utility con ID ${id}`, error);
         return of(null);
