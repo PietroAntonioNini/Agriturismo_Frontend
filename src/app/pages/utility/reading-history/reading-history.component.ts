@@ -441,6 +441,13 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
             apartmentName: reading.apartmentName
           };
           
+          // Ricalcola consumo e costo rispetto alla LETTURA PRECEDENTE (penultima)
+          this.recalculateConsumptionsForChain(
+            updatedReading.apartmentId,
+            updatedReading.type,
+            updatedReading.subtype
+          );
+
           // Aggiorna immediatamente la vista
           this.updateGroupedData();
           this.applyFilters();
@@ -628,6 +635,34 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       duration: 3000,
       panelClass: ['info-snackbar']
     });
+  }
+
+  // Ricalcola consumi e costi per la catena (ordinata per data) di letture
+  // di uno stesso appartamento/tipo/sottotipo, sempre rispetto alla lettura precedente
+  private recalculateConsumptionsForChain(apartmentId: number, type: 'electricity' | 'water' | 'gas', subtype?: string): void {
+    const targetSubtype = subtype || 'main';
+    const chain = this.allReadings
+      .filter(r => r.apartmentId === apartmentId && r.type === type && (r.subtype || 'main') === targetSubtype)
+      .sort((a, b) => new Date(a.readingDate).getTime() - new Date(b.readingDate).getTime());
+
+    for (let i = 0; i < chain.length; i++) {
+      const current = chain[i];
+      const previous = i > 0 ? chain[i - 1] : null;
+      const previousValue = previous ? Number(previous.currentReading) : 0;
+      const currentValue = Number(current.currentReading);
+      const newConsumption = previous ? Math.max(0, currentValue - previousValue) : 0;
+      const newTotalCost = Number((newConsumption * Number(current.unitCost)).toFixed(2));
+
+      // Aggiorna l'oggetto nella lista principale
+      const idx = this.allReadings.findIndex(r => r.id === current.id);
+      if (idx !== -1) {
+        this.allReadings[idx] = {
+          ...this.allReadings[idx],
+          consumption: newConsumption,
+          totalCost: newTotalCost
+        };
+      }
+    }
   }
 
   // ===== METODI PER LETTURE SPECIALI =====
