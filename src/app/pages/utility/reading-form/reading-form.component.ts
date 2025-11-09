@@ -191,6 +191,12 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         prev.subtype === curr.subtype
       )
     ).subscribe(formValue => {
+      // In modalità modifica evitiamo di ricaricare "ultima lettura" standard,
+      // perché mostriamo la penultima relativa alla lettura in editing
+      if (this.data.editingReading) {
+        return;
+      }
+
       if (formValue.apartmentId && formValue.type) {
         // ⭐ Passa il subtype solo se è Appartamento 8 e tipo electricity
         const isApt8 = this.isApartment8Selected();
@@ -253,17 +259,52 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       notes: reading.notes || ''
     });
     
-    // Simula l'ultima lettura per il calcolo
-    this.lastReading = {
-      apartmentId: reading.apartmentId,
-      type: reading.type,
-      subtype: reading.subtype, // ⭐ Include subtype
-      lastReading: reading.previousReading,
-      lastReadingDate: new Date(reading.readingDate),
-      hasHistory: true
-    };
-    
-    this.calculateConsumptionAndCost();
+    // In modalità modifica, recupera la penultima lettura (valore e data reali)
+    this.loadPreviousReadingForEditing();
+  }
+
+  private loadPreviousReadingForEditing(): void {
+    if (!this.data.editingReading) return;
+    const reading = this.data.editingReading;
+    const beforeDate = new Date(reading.readingDate);
+    this.isLoadingLastReading = true;
+
+    this.apiService.getPreviousUtilityReading(
+      reading.apartmentId,
+      reading.type,
+      beforeDate,
+      reading.subtype
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (prev: LastReading | null) => {
+        // Usa sempre il valore previousReading della lettura in modifica per il calcolo;
+        // per la data mostra quella della penultima lettura reale se disponibile.
+        this.lastReading = {
+          apartmentId: reading.apartmentId,
+          type: reading.type,
+          subtype: reading.subtype,
+          lastReading: reading.previousReading || prev?.lastReading || 0,
+          lastReadingDate: prev?.lastReadingDate || new Date(beforeDate),
+          hasHistory: (prev?.hasHistory ?? (reading.previousReading > 0))
+        };
+        this.isLoadingLastReading = false;
+        this.calculateConsumptionAndCost();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Errore nel recupero della penultima lettura:', error);
+        // Fallback: mantieni i valori ma senza data precedente affidabile
+        this.lastReading = {
+          apartmentId: reading.apartmentId,
+          type: reading.type,
+          subtype: reading.subtype,
+          lastReading: reading.previousReading || 0,
+          lastReadingDate: new Date(beforeDate),
+          hasHistory: reading.previousReading > 0
+        };
+        this.isLoadingLastReading = false;
+        this.calculateConsumptionAndCost();
+      }
+    });
   }
   
   loadLastReading(apartmentId: number, type: string, subtype?: string): void {

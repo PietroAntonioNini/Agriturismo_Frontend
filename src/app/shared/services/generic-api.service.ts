@@ -787,6 +787,48 @@ export class GenericApiService {
     );
   }
 
+  // Ottiene la lettura immediatamente precedente rispetto a una data (penultima), filtrando per appartamento/tipo/sottotipo
+  getPreviousUtilityReading(
+    apartmentId: number,
+    type: 'electricity' | 'water' | 'gas',
+    beforeDate: Date,
+    subtype?: string
+  ): Observable<LastReading | null> {
+    const params: any = {
+      apartmentId: apartmentId.toString(),
+      type: type,
+      endDate: beforeDate.toISOString().split('T')[0],
+      _sort: 'readingDate',
+      _order: 'desc',
+      _limit: '1'
+    };
+
+    if (subtype) {
+      params.subtype = subtype;
+    }
+
+    return this.getAll<UtilityReading>('utilities', params).pipe(
+      map((readings: UtilityReading[]) => {
+        if (readings.length > 0) {
+          const r = readings[0];
+          return {
+            apartmentId: r.apartmentId,
+            type: r.type as 'electricity' | 'water' | 'gas',
+            lastReading: r.currentReading,
+            lastReadingDate: r.readingDate,
+            hasHistory: true,
+            subtype: r.subtype
+          } as LastReading;
+        }
+        return null;
+      }),
+      catchError(error => {
+        console.error(`Errore nel recupero della lettura precedente per app=${apartmentId}, type=${type}`, error);
+        return of(null);
+      })
+    );
+  }
+
   // Metodo helper per cercare letture con subtype NULL (letture vecchie)
   private searchForNullSubtypeReadings(apartmentId: number, type: string): Observable<LastReading> {
     const params: any = {
