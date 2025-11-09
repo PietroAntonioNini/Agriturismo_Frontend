@@ -515,7 +515,10 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         console.error('Error status:', error.status);
         
         // Gestione dettagliata degli errori
-        if (error.status === 422) {
+        if (error.status === 409) {
+          // Conflitto di monotonicità: la lettura aggiornata rompe la sequenza
+          this.errorMessage = error.error?.detail || 'La lettura aggiornata rompe la sequenza. Verifica le letture successive o la data.';
+        } else if (error.status === 422) {
           this.errorMessage = 'Dati non validi. Controlla i campi inseriti.';
           if (error.error?.detail) {
             this.errorMessage += ` Dettagli: ${error.error.detail}`;

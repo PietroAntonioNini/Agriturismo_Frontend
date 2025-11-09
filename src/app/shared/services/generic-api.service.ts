@@ -675,9 +675,9 @@ export class GenericApiService {
     );
   }
 
-  // Ottiene tutte le letture delle utilities
-  getAllUtilityReadings(params?: { [key: string]: any }): Observable<UtilityReading[]> {
-    return this.getAll<UtilityReading>('utilities', params).pipe(
+  // Ottiene tutte le letture delle utilities (con supporto forceRefresh)
+  getAllUtilityReadings(params?: { [key: string]: any }, forceRefresh: boolean = false): Observable<UtilityReading[]> {
+    return this.getAll<UtilityReading>('utilities', params, forceRefresh).pipe(
       catchError(error => {
         console.error('Errore durante il recupero delle letture utility', error);
         return of([]);

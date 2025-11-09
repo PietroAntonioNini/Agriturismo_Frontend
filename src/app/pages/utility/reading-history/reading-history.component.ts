@@ -429,41 +429,23 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && result.updatedReading) {
-        // Aggiornamento ISTANTANEO dell'array locale - NO chiamata server
         const updatedReading = result.updatedReading;
-        
-        // Trova e aggiorna l'elemento nell'array principale
-        const readingIndex = this.allReadings.findIndex(r => r.id === reading.id);
-        if (readingIndex !== -1) {
-          // Mantieni il nome dell'appartamento
-          this.allReadings[readingIndex] = {
-            ...updatedReading,
-            apartmentName: reading.apartmentName
-          };
-          
-          // Ricalcola consumo e costo rispetto alla LETTURA PRECEDENTE (penultima)
-          this.recalculateConsumptionsForChain(
-            updatedReading.apartmentId,
-            updatedReading.type,
-            updatedReading.subtype
-          );
+        const targetSubtype = (updatedReading.subtype || 'main');
 
-          // Aggiorna immediatamente la vista
-          this.updateGroupedData();
-          this.applyFilters();
-          
-          // Aggiungi notifica
-          this.notificationService.notifyUtilityReading(
-            'updated', 
-            reading.apartmentName, 
-            updatedReading.type, 
-            updatedReading.id
-          );
-          
-          this.showSuccessSnackBar('Lettura aggiornata con successo');
-        }
+        // Dopo PUT: ricarica la catena dal backend per riflettere il ricalcolo a cascata
+        this.refreshChainFromServer(updatedReading.apartmentId, updatedReading.type, targetSubtype);
+
+        // Notifica
+        this.notificationService.notifyUtilityReading(
+          'updated', 
+          reading.apartmentName, 
+          updatedReading.type, 
+          updatedReading.id
+        );
+        
+        this.showSuccessSnackBar('Lettura aggiornata con successo');
       } else if (result === true) {
-        // Fallback: se il form non restituisce la lettura aggiornata, ricarica dal server
+        // Fallback: ricarica tutte le letture dal server
         this.loadReadings();
         this.showSuccessSnackBar('Lettura aggiornata con successo');
       }
@@ -637,32 +619,40 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     });
   }
 
-  // Ricalcola consumi e costi per la catena (ordinata per data) di letture
-  // di uno stesso appartamento/tipo/sottotipo, sempre rispetto alla lettura precedente
-  private recalculateConsumptionsForChain(apartmentId: number, type: 'electricity' | 'water' | 'gas', subtype?: string): void {
+  // Ricarica dal backend la catena di letture per lo stesso appartamento/tipo/subtipo
+  private refreshChainFromServer(apartmentId: number, type: 'electricity' | 'water' | 'gas', subtype?: string): void {
     const targetSubtype = subtype || 'main';
-    const chain = this.allReadings
-      .filter(r => r.apartmentId === apartmentId && r.type === type && (r.subtype || 'main') === targetSubtype)
-      .sort((a, b) => new Date(a.readingDate).getTime() - new Date(b.readingDate).getTime());
+    const params: any = {
+      apartmentId: apartmentId.toString(),
+      type: type,
+      subtype: targetSubtype
+    };
 
-    for (let i = 0; i < chain.length; i++) {
-      const current = chain[i];
-      const previous = i > 0 ? chain[i - 1] : null;
-      const previousValue = previous ? Number(previous.currentReading) : 0;
-      const currentValue = Number(current.currentReading);
-      const newConsumption = previous ? Math.max(0, currentValue - previousValue) : 0;
-      const newTotalCost = Number((newConsumption * Number(current.unitCost)).toFixed(2));
+    this.apiService.getAll<UtilityReading>('utilities', params, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (chain) => {
+          const apartment = this.data.apartments.find(apt => apt.id === apartmentId);
+          const mapped = chain.map(r => ({
+            ...r,
+            apartmentName: apartment?.name || `Appartamento #${apartmentId}`
+          }));
 
-      // Aggiorna l'oggetto nella lista principale
-      const idx = this.allReadings.findIndex(r => r.id === current.id);
-      if (idx !== -1) {
-        this.allReadings[idx] = {
-          ...this.allReadings[idx],
-          consumption: newConsumption,
-          totalCost: newTotalCost
-        };
-      }
-    }
+          // Sostituisci nel dataset locale solo la catena interessata
+          this.allReadings = this.allReadings.filter(r => 
+            !(r.apartmentId === apartmentId && r.type === type && (r.subtype || 'main') === targetSubtype)
+          );
+          this.allReadings = [...this.allReadings, ...mapped];
+
+          // Aggiorna la vista
+          this.updateGroupedData();
+          this.applyFilters();
+        },
+        error: (error) => {
+          console.error('Errore nel refresh della catena dal server:', error);
+          this.showInfoSnackBar('Errore nel ricaricare i dati dal server');
+        }
+      });
   }
 
   // ===== METODI PER LETTURE SPECIALI =====
