@@ -84,11 +84,6 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadUtilityTypes();
-    
-    // Se abbiamo dati di editing, configura il form
-    if (this.data.editingReading) {
-      this.populateFormForEditing();
-    }
   }
   
   ngOnDestroy(): void {
@@ -112,6 +107,11 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         
         // Setup delle subscription dopo l'inizializzazione del form
         this.setupFormSubscriptions();
+
+        // Prefill del form SOLO dopo l'inizializzazione quando siamo in modalità modifica
+        if (this.data.editingReading) {
+          this.populateFormForEditing();
+        }
       },
       error: (error) => {
         console.error('Errore nel caricamento dei tipi utility:', error);
@@ -153,6 +153,11 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
         
         // Setup delle subscription dopo l'inizializzazione del form
         this.setupFormSubscriptions();
+
+        // Prefill del form SOLO dopo l'inizializzazione quando siamo in modalità modifica
+        if (this.data.editingReading) {
+          this.populateFormForEditing();
+        }
       }
     });
   }
@@ -233,6 +238,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
   
   populateFormForEditing(): void {
     if (!this.data.editingReading) return;
+    if (!this.readingForm) return;
     
     const reading = this.data.editingReading;
     this.readingForm.patchValue({
