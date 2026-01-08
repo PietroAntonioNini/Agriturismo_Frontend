@@ -5,7 +5,7 @@
       <h1>Gestione Utenze <span class="counter" *ngIf="apartments.length">{{apartments.length}}</span></h1>
       <p class="subtitle">Monitora e gestisci i consumi di elettricità, acqua e gas</p>
     </div>
-    
+
     <div class="header-actions">
       <button mat-flat-button color="primary" class="action-button new-reading-button" (click)="openReadingForm()">
         <mat-icon>add</mat-icon>
@@ -42,7 +42,7 @@
 
   <!-- Main Content -->
   <div *ngIf="!isLoading && !errorMessage" class="main-content">
-    
+
     <!-- Statistics Cards -->
     <div class="statistics-section" *ngIf="utilityStatistics">
       <div class="stats-grid">
@@ -64,7 +64,12 @@
               <mat-icon>bolt</mat-icon>
             </div>
             <div class="stat-details">
-              <span class="stat-value">{{utilityStatistics.totalConsumption.electricity | number:'1.0-1'}} kWh</span>
+              <div class="value-container">
+                <span class="stat-value">{{utilityStatistics.totalConsumption.electricity | number:'1.0-1'}} kWh</span>
+                <span class="cost-badge"
+                  *ngIf="utilityStatistics.totalCosts.electricity > 0">€{{utilityStatistics.totalCosts.electricity |
+                  number:'1.2-2'}}</span>
+              </div>
               <span class="stat-label">Elettricità Totale</span>
             </div>
           </div>
@@ -76,7 +81,12 @@
               <mat-icon>water_drop</mat-icon>
             </div>
             <div class="stat-details">
-              <span class="stat-value">{{utilityStatistics.totalConsumption.water | number:'1.0-1'}} m³</span>
+              <div class="value-container">
+                <span class="stat-value">{{utilityStatistics.totalConsumption.water | number:'1.0-1'}} m³</span>
+                <span class="cost-badge"
+                  *ngIf="utilityStatistics.totalCosts.water > 0">€{{utilityStatistics.totalCosts.water |
+                  number:'1.2-2'}}</span>
+              </div>
               <span class="stat-label">Acqua Totale</span>
             </div>
           </div>
@@ -88,7 +98,12 @@
               <mat-icon>local_fire_department</mat-icon>
             </div>
             <div class="stat-details">
-              <span class="stat-value">{{utilityStatistics.totalConsumption.gas | number:'1.0-1'}} m³</span>
+              <div class="value-container">
+                <span class="stat-value">{{utilityStatistics.totalConsumption.gas | number:'1.0-1'}} m³</span>
+                <span class="cost-badge"
+                  *ngIf="utilityStatistics.totalCosts.gas > 0">€{{utilityStatistics.totalCosts.gas |
+                  number:'1.2-2'}}</span>
+              </div>
               <span class="stat-label">Gas Totale</span>
             </div>
           </div>
@@ -117,18 +132,18 @@
             <div class="alert-text">
               <h3>Letture utenze mensili mancanti</h3>
               <p *ngIf="apartmentsWithoutReadings.length <= 3">
-                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture mensili: 
+                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span
+                  *ngIf="utilityAlerts === 1">appartamento</span> senza letture mensili:
                 <span class="apartment-names">{{ getApartmentsWithoutReadingsNames() }}</span>
               </p>
               <p *ngIf="apartmentsWithoutReadings.length > 3">
-                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span *ngIf="utilityAlerts === 1">appartamento</span> senza letture mensili: 
-                <span class="apartment-names">{{ getApartmentsWithoutReadingsNames(3) }} e altri {{ apartmentsWithoutReadings.length - 3 }}</span>
+                {{ utilityAlerts }} <span *ngIf="utilityAlerts > 1">appartamenti</span><span
+                  *ngIf="utilityAlerts === 1">appartamento</span> senza letture mensili:
+                <span class="apartment-names">{{ getApartmentsWithoutReadingsNames(3) }} e altri {{
+                  apartmentsWithoutReadings.length - 3 }}</span>
               </p>
             </div>
-            <button mat-button 
-                    color="warn" 
-                    (click)="openReadingForm()"
-                    class="alert-action">
+            <button mat-button color="warn" (click)="openReadingForm()" class="alert-action">
               Aggiungi Letture
             </button>
           </div>
@@ -140,14 +155,25 @@
     <div class="controls-section">
       <mat-card class="controls-card">
         <div class="controls-content">
-          
+
           <div class="control-group">
             <!-- Year Selector -->
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="selector-field">
               <mat-label>Anno</mat-label>
               <mat-select [value]="selectedYear" (selectionChange)="onYearChange($event.value)">
                 <mat-option *ngFor="let year of availableYears" [value]="year">
                   {{year}}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <!-- Month Selector -->
+            <mat-form-field appearance="outline" class="month-selector-field">
+              <mat-label>Mese</mat-label>
+              <mat-select [value]="selectedMonth" (selectionChange)="onMonthChange($event.value)">
+                <mat-option [value]="null">Tutto l'anno</mat-option>
+                <mat-option *ngFor="let month of months; let i = index" [value]="i + 1">
+                  {{month}}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -167,19 +193,16 @@
           <!-- View Toggle -->
           <div class="control-group view-toggle">
             <div class="utility-view-toggle">
-              <button mat-raised-button color="primary"
-                [ngClass]="{'active': selectedView === 'consumption'}"
+              <button mat-raised-button color="primary" [ngClass]="{'active': selectedView === 'consumption'}"
                 (click)="onViewChange('consumption')">
                 <mat-icon>bar_chart</mat-icon> Consumi
               </button>
-              <button mat-raised-button color="accent"
-                [ngClass]="{'active': selectedView === 'costs'}"
+              <button mat-raised-button color="accent" [ngClass]="{'active': selectedView === 'costs'}"
                 (click)="onViewChange('costs')">
                 <mat-icon>euro</mat-icon> Costi
               </button>
               <button mat-raised-button color="warn" *ngIf="selectedApartmentId === null"
-                [ngClass]="{'active': selectedView === 'comparison'}"
-                (click)="onViewChange('comparison')">
+                [ngClass]="{'active': selectedView === 'comparison'}" (click)="onViewChange('comparison')">
                 <mat-icon>trending_up</mat-icon> Andamento
               </button>
             </div>
@@ -196,7 +219,8 @@
           <mat-card-title>
             <div class="chart-header">
               <div class="chart-title">
-                <mat-icon>{{selectedView === 'consumption' ? 'bar_chart' : selectedView === 'costs' ? 'euro' : 'trending_up'}}</mat-icon>
+                <mat-icon>{{selectedView === 'consumption' ? 'bar_chart' : selectedView === 'costs' ? 'euro' :
+                  'trending_up'}}</mat-icon>
                 <span>
                   {{selectedView === 'consumption' ? 'Consumi' : selectedView === 'costs' ? 'Costi' : 'Andamento'}}
                   {{selectedApartmentId ? '' : 'per Appartamento'}}
@@ -246,14 +270,13 @@
         </mat-card-header>
         <mat-card-content>
           <div class="apartments-grid">
-            <div class="apartment-summary" *ngFor="let aptData of sortedApartmentUtilityData" 
-                 (click)="onApartmentChange(aptData.apartmentId)" 
-                 [class.selectable]="true">
+            <div class="apartment-summary" *ngFor="let aptData of sortedApartmentUtilityData"
+              (click)="onApartmentChange(aptData.apartmentId)" [class.selectable]="true">
               <div class="apartment-header">
                 <h4>{{aptData.apartmentName}}</h4>
                 <div class="apartment-total">€{{aptData.yearlyTotals.totalCost | number:'1.2-2'}}</div>
               </div>
-              
+
               <div class="utility-breakdown">
                 <div class="utility-item electricity">
                   <mat-icon>bolt</mat-icon>
@@ -262,16 +285,17 @@
                     <span class="utility-cost">€{{getElectricityCostForApartment(aptData) | number:'1.2-2'}}</span>
                   </div>
                 </div>
-                
+
                 <!-- Sezione speciale per lavanderia - solo appartamento 8 -->
                 <div class="utility-item laundry-electricity" *ngIf="shouldShowLaundrySection(aptData.apartmentId)">
                   <mat-icon>local_laundry_service</mat-icon>
                   <div class="utility-details">
                     <span class="utility-value">Lavanderia</span>
-                    <span class="utility-cost">€{{getLaundryElectricityCostForApartment(aptData) | number:'1.2-2'}}</span>
+                    <span class="utility-cost">€{{getLaundryElectricityCostForApartment(aptData) |
+                      number:'1.2-2'}}</span>
                   </div>
                 </div>
-                
+
                 <div class="utility-item water">
                   <mat-icon>water_drop</mat-icon>
                   <div class="utility-details">
@@ -279,7 +303,7 @@
                     <span class="utility-cost">€{{getWaterCostForApartment(aptData) | number:'1.2-2'}}</span>
                   </div>
                 </div>
-                
+
                 <div class="utility-item gas">
                   <mat-icon>local_fire_department</mat-icon>
                   <div class="utility-details">
@@ -304,33 +328,33 @@
           </mat-card-title>
         </mat-card-header>
         <mat-card-content>
-                     <div class="months-grid">
-             <div class="month-card" *ngFor="let monthData of getSelectedApartmentData()?.monthlyData || []">
+          <div class="months-grid">
+            <div class="month-card" *ngFor="let monthData of getSelectedApartmentData()?.monthlyData || []">
               <div class="month-header">
                 <h5>{{monthData.monthName}}</h5>
                 <div class="month-total">€{{monthData.totalCost | number:'1.2-2'}}</div>
               </div>
-              
+
               <div class="month-utilities">
                 <div class="month-utility electricity">
                   <mat-icon>bolt</mat-icon>
                   <span>{{monthData.electricity | number:'1.0-1'}} kWh</span>
                   <span class="cost">€{{monthData.electricityCost | number:'1.2-2'}}</span>
                 </div>
-                
+
                 <!-- Sezione speciale per lavanderia - solo appartamento 8 -->
                 <div class="month-utility laundry-electricity" *ngIf="shouldShowLaundrySection(selectedApartmentId!)">
                   <mat-icon>local_laundry_service</mat-icon>
                   <span>Lavanderia</span>
                   <span class="cost">€{{getLaundryElectricityCostForMonth(monthData) | number:'1.2-2'}}</span>
                 </div>
-                
+
                 <div class="month-utility water">
                   <mat-icon>water_drop</mat-icon>
                   <span>{{monthData.water | number:'1.0-1'}} m³</span>
                   <span class="cost">€{{monthData.waterCost | number:'1.2-2'}}</span>
                 </div>
-                
+
                 <div class="month-utility gas">
                   <mat-icon>local_fire_department</mat-icon>
                   <span>{{monthData.gas | number:'1.0-1'}} m³</span>

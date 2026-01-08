@@ -923,3 +923,41 @@
     }
   }
 }
+
+// Styles for Cost Badges and new Selectors
+.value-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cost-badge {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: #555;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.stat-card.electricity .cost-badge {
+  background-color: rgba(255, 206, 86, 0.2);
+  color: #b8860b;
+}
+
+.stat-card.water .cost-badge {
+  background-color: rgba(54, 162, 235, 0.2);
+  color: #0d47a1;
+}
+
+.stat-card.gas .cost-badge {
+  background-color: rgba(255, 99, 132, 0.2);
+  color: #c62828;
+}
+
+.month-selector-field {
+  min-width: 150px;
+}
