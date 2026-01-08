@@ -353,19 +353,25 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
 
     if (this.selectedView === 'consumption') {
       // Grafico dei consumi
+      // Grafico dei consumi
       const electricityData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.electricity || 0), 0) : 0;
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
+        // Include laundry electricity if applicable, similar to statistics
+        let electricity = aptData ? aptData.yearlyTotals.electricity : 0;
+        if (aptData && this.shouldShowLaundrySection(aptData.apartmentId)) {
+          electricity += (aptData.yearlyTotals.laundryElectricity || 0);
+        }
+        return electricity;
       });
 
       const waterData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.water || 0), 0) : 0;
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.yearlyTotals.water : 0;
       });
 
       const gasData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.gas || 0), 0) : 0;
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
+        return aptData ? aptData.yearlyTotals.gas : 0;
       });
 
       datasets = [
@@ -397,19 +403,25 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
 
     } else if (this.selectedView === 'costs') {
       // Grafico dei costi
+      // Grafico dei costi
       const electricityCostData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.electricityCost || 0), 0) : 0;
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
+        // Include laundry cost if applicable
+        let electricityCost = this.getElectricityCostForApartment(aptData!);
+        if (aptData && this.shouldShowLaundrySection(aptData.apartmentId)) {
+          electricityCost += this.getLaundryElectricityCostForApartment(aptData);
+        }
+        return electricityCost;
       });
 
       const waterCostData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.waterCost || 0), 0) : 0;
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
+        return this.getWaterCostForApartment(aptData!);
       });
 
       const gasCostData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
-        return aptData ? aptData.monthlyData.reduce((sum, month) => sum + (month.gasCost || 0), 0) : 0;
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
+        return this.getGasCostForApartment(aptData!);
       });
 
       datasets = [
@@ -441,8 +453,9 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
 
     } else if (this.selectedView === 'comparison') {
       // Grafico di confronto totale
+      // Grafico di confronto totale
       const totalCostData = sortedApartments.map(apt => {
-        const aptData = this.apartmentSpecificData.find(data => data.apartmentId === apt.id);
+        const aptData = this.apartmentUtilityData.find(data => data.apartmentId === apt.id);
         return aptData ? aptData.yearlyTotals.totalCost : 0;
       });
 
@@ -732,23 +745,37 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   }
 
   getElectricityCostForApartment(aptData: ApartmentUtilityData): number {
-    if (!aptData || !aptData.monthlyData) {
-      return 0;
+    if (!aptData || !aptData.monthlyData) return 0;
+
+    // Se c'è un mese selezionato, restituisci solo il costo di quel mese
+    if (this.selectedMonth !== null) {
+      const monthData = aptData.monthlyData.find(m => m.month === this.selectedMonth);
+      return monthData ? (monthData.electricityCost || 0) : 0;
     }
+
+    // Altrimenti somma annuale
     return aptData.monthlyData.reduce((sum, month) => sum + (month.electricityCost || 0), 0);
   }
 
   getWaterCostForApartment(aptData: ApartmentUtilityData): number {
-    if (!aptData || !aptData.monthlyData) {
-      return 0;
+    if (!aptData || !aptData.monthlyData) return 0;
+
+    if (this.selectedMonth !== null) {
+      const monthData = aptData.monthlyData.find(m => m.month === this.selectedMonth);
+      return monthData ? (monthData.waterCost || 0) : 0;
     }
+
     return aptData.monthlyData.reduce((sum, month) => sum + (month.waterCost || 0), 0);
   }
 
   getGasCostForApartment(aptData: ApartmentUtilityData): number {
-    if (!aptData || !aptData.monthlyData) {
-      return 0;
+    if (!aptData || !aptData.monthlyData) return 0;
+
+    if (this.selectedMonth !== null) {
+      const monthData = aptData.monthlyData.find(m => m.month === this.selectedMonth);
+      return monthData ? (monthData.gasCost || 0) : 0;
     }
+
     return aptData.monthlyData.reduce((sum, month) => sum + (month.gasCost || 0), 0);
   }
 
@@ -776,6 +803,12 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
     if (!aptData || !aptData.monthlyData || !this.isApartment8(aptData.apartmentId)) {
       return 0;
     }
+
+    if (this.selectedMonth !== null) {
+      const monthData = aptData.monthlyData.find(m => m.month === this.selectedMonth);
+      return monthData ? (monthData.laundryElectricityCost || 0) : 0;
+    }
+
     return aptData.yearlyTotals.laundryElectricityCost || 0;
   }
 
