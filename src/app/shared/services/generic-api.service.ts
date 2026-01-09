@@ -47,15 +47,15 @@ export class GenericApiService {
   // GET: Tutti gli elementi con cache intelligente
   getAll<T>(entity: string, params?: any, forceRefresh: boolean = false): Observable<T[]> {
     const cacheKey = this.getCacheKey(entity, params);
-    
+
     // Pulisci cache scaduta
     this.clearExpiredCache();
-    
+
     // Se non è richiesto un refresh e la cache è valida, usa la cache
     if (!forceRefresh && this.isCacheValid(cacheKey)) {
       return of(this.cache.get(cacheKey)!.data);
     }
-    
+
     // Se c'è già una richiesta in corso per questa chiave, riutilizzala
     if (this.pendingRequests.has(cacheKey)) {
       return this.pendingRequests.get(cacheKey)!;
@@ -70,7 +70,7 @@ export class GenericApiService {
       });
     }
 
-    const request = this.http.get<T[]>(this.apiUrl(entity), { 
+    const request = this.http.get<T[]>(this.apiUrl(entity), {
       params: httpParams
     }).pipe(
       tap(data => {
@@ -89,7 +89,7 @@ export class GenericApiService {
 
     // Salva la richiesta pendente
     this.pendingRequests.set(cacheKey, request);
-    
+
     return request;
   }
 
@@ -99,6 +99,14 @@ export class GenericApiService {
       // Invalida cache per un elemento specifico
       const cacheKey = this.getCacheKey(`${entity}_${id}`);
       this.cache.delete(cacheKey);
+
+      // ⭐ FIX: Invalida ANCHE tutte le liste relative a questa entità
+      // (altrimenti le ricerche precedenti rimangono in cache con dati vecchi)
+      for (const key of this.cache.keys()) {
+        if (key.startsWith(entity + '_')) {
+          this.cache.delete(key);
+        }
+      }
     } else {
       // Invalida tutta la cache per un'entità
       for (const key of this.cache.keys()) {
@@ -107,7 +115,7 @@ export class GenericApiService {
         }
       }
     }
-    
+
     // Ottimizzazione: invalida anche le richieste pendenti per questa entità
     for (const [key, request] of this.pendingRequests.entries()) {
       if (key.startsWith(entity + '_')) {
@@ -120,7 +128,7 @@ export class GenericApiService {
   invalidateCacheWithParams(entity: string, params?: any): void {
     const cacheKey = this.getCacheKey(entity, params);
     this.cache.delete(cacheKey);
-    
+
     // Invalida anche le richieste pendenti per questa chiave
     this.pendingRequests.delete(cacheKey);
   }
@@ -145,10 +153,10 @@ export class GenericApiService {
   // GET: Elemento singolo per ID con cache
   getById<T>(entity: string, id: number | string, params?: any, forceRefresh: boolean = false): Observable<T> {
     const cacheKey = this.getCacheKey(`${entity}_${id}`, params);
-    
+
     // Pulisci cache scaduta
     this.clearExpiredCache();
-    
+
     // Se non è richiesto un refresh e la cache è valida, usa la cache
     if (!forceRefresh && this.isCacheValid(cacheKey)) {
       return of(this.cache.get(cacheKey)!.data);
@@ -162,10 +170,10 @@ export class GenericApiService {
         }
       });
     }
-    
+
     return this.http.get<T>(
-      `${environment.apiUrl}/${entity}/${id}`, 
-      { 
+      `${environment.apiUrl}/${entity}/${id}`,
+      {
         params: httpParams
       }
     ).pipe(
@@ -180,14 +188,14 @@ export class GenericApiService {
       })
     );
   }
-  
+
 
   // POST: Creazione elemento (anche con immagini opzionali)
   create<T>(entity: string, data: Partial<T>, files?: File[], fileFieldPrefix?: string): Observable<T> {
     if (!files || files.length === 0) {
       // Se è un'entità apartment, assicuriamoci che amenities sia sempre un array
       if (entity === 'apartments') {
-        const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+        const apartmentData = { ...data } as Partial<T> & { amenities?: string[] };
         if (!apartmentData.amenities) {
           apartmentData.amenities = [];
         }
@@ -201,12 +209,12 @@ export class GenericApiService {
         tap(() => this.invalidateCache(entity)) // Invalida cache dopo creazione
       );
     }
-  
+
     const formData = new FormData();
-    
+
     // Use 'apartment' key for apartment entity, not the entity name
     if (entity === 'apartments') {
-      const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+      const apartmentData = { ...data } as Partial<T> & { amenities?: string[] };
 
       // This ensures it's always included in the JSON data
       if (!apartmentData.amenities) {
@@ -215,7 +223,7 @@ export class GenericApiService {
 
       console.debug('[GenericApiService] POST with-images', this.apiUrl(entity), 'payload=', apartmentData, 'files=', files?.length || 0);
       formData.append('apartment', JSON.stringify(apartmentData));
-      
+
       if (files && files.length > 0) {
         files.forEach(file => {
           formData.append('files', file);
@@ -224,7 +232,7 @@ export class GenericApiService {
     } else if (entity === 'tenants') {
       // Per i tenant, usiamo un formato specifico richiesto dal backend
       formData.append('tenants', JSON.stringify(data));
-      
+
       // Aggiungiamo i file con i nomi specifici richiesti dal backend
       if (files && files.length > 0) {
         files.forEach((file, index) => {
@@ -240,7 +248,7 @@ export class GenericApiService {
         formData.append(fieldName, file);
       });
     }
-    
+
     console.debug('[GenericApiService] POST with-images', `${this.apiUrl(entity)}with-images`, 'files=', files?.length || 0);
     return this.http.post<T>(`${this.apiUrl(entity)}with-images`, formData);
   }
@@ -248,18 +256,18 @@ export class GenericApiService {
   // PUT: Aggiornamento elemento (anche con immagini opzionali)
   update<T>(entity: string, id: number | string, data: Partial<T>, files?: File[]): Observable<T> {
     if (entity === 'tenants') {
-        const formData = new FormData();
-        formData.append('tenants', JSON.stringify(data));
-        
-        if (files && files.length > 0) {
-            files.forEach((file, index) => {
-                const fieldName = `document${index}`;
-                formData.append(fieldName, file);
-            });
-        }
-        
-        console.debug('[GenericApiService] PUT with-images', `${environment.apiUrl}/${entity}/${id}/with-images`, 'files=', files?.length || 0);
-        return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
+      const formData = new FormData();
+      formData.append('tenants', JSON.stringify(data));
+
+      if (files && files.length > 0) {
+        files.forEach((file, index) => {
+          const fieldName = `document${index}`;
+          formData.append(fieldName, file);
+        });
+      }
+
+      console.debug('[GenericApiService] PUT with-images', `${environment.apiUrl}/${entity}/${id}/with-images`, 'files=', files?.length || 0);
+      return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
         tap(() => {
           this.invalidateCache(entity, id); // Invalida cache dopo aggiornamento
           // Ottimizzazione: se è un tenant, invalida anche la cache dei contratti attivi
@@ -269,7 +277,7 @@ export class GenericApiService {
     } else if (entity === 'apartments') {
       const formData = new FormData();
 
-      const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+      const apartmentData = { ...data } as Partial<T> & { amenities?: string[] };
 
       // This ensures it's always included in the JSON data
       if (!apartmentData.amenities) {
@@ -278,23 +286,23 @@ export class GenericApiService {
 
       console.debug('[GenericApiService] PUT with-images', `${environment.apiUrl}/${entity}/${id}/with-images`, 'payload=', apartmentData, 'files=', files?.length || 0);
       formData.append('apartment', JSON.stringify(apartmentData));
-      
+
       if (files && files.length > 0) {
-          // Usa nomi file specifici come richiesto dal backend
-          files.forEach(file => {
-            formData.append('files', file);
-          });
+        // Usa nomi file specifici come richiesto dal backend
+        files.forEach(file => {
+          formData.append('files', file);
+        });
       }
-      
+
       return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}/with-images`, formData).pipe(
         tap(() => this.invalidateCache(entity, id)) // Invalida cache dopo aggiornamento
       );
-    } 
-    
+    }
+
     if (!files || files.length === 0) {
       // Se è un'entità apartment, assicuriamoci che amenities sia sempre un array
       if (entity === 'apartments') {
-        const apartmentData = {...data} as Partial<T> & { amenities?: string[] };
+        const apartmentData = { ...data } as Partial<T> & { amenities?: string[] };
         if (!apartmentData.amenities) {
           apartmentData.amenities = [];
         }
@@ -304,7 +312,7 @@ export class GenericApiService {
       console.debug('[GenericApiService] PUT', `${environment.apiUrl}/${entity}/${id}`, 'payload=', data);
       return this.http.put<T>(`${environment.apiUrl}/${entity}/${id}`, data);
     }
-    
+
     const formData = new FormData();
     formData.append(entity, JSON.stringify(data));
     if (files) {
@@ -332,13 +340,13 @@ export class GenericApiService {
   uploadFile(entity: string, id: number | string, path: string, file: File): Observable<{ imageUrl: string }> {
     const formData = new FormData();
     formData.append('image', file);
-    
+
     // Aggiungi timestamp per evitare la cache
     const timestamp = Date.now();
     const url = `${environment.apiUrl}/${entity}/${id}/${path}?_=${timestamp}`;
-    
+
     return this.http.post<{ imageUrl: string }>(
-      url, 
+      url,
       formData,
       { headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } }
     ).pipe(
@@ -354,7 +362,7 @@ export class GenericApiService {
     // Aggiungi timestamp per evitare la cache
     const timestamp = Date.now();
     const url = `${environment.apiUrl}/${entity}/${id}/${path}?_=${timestamp}`;
-    
+
     return this.http.delete<void>(
       url,
       { headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } }
@@ -369,7 +377,10 @@ export class GenericApiService {
 
   // PATCH: Aggiornamento parziale di un elemento
   patch<T>(entity: string, id: number | string, data: Partial<T>): Observable<T> {
-    return this.http.patch<T>(`${environment.apiUrl}/${entity}/${id}`, data);
+    console.debug('[GenericApiService] PATCH', `${environment.apiUrl}/${entity}/${id}`, 'payload=', data);
+    return this.http.patch<T>(`${environment.apiUrl}/${entity}/${id}`, data).pipe(
+      tap(() => this.invalidateCache(entity, id))
+    );
   }
 
   // GET: Elementi per chiave-valore
@@ -403,9 +414,9 @@ export class GenericApiService {
   getActiveEntities<T>(entity: string): Observable<T[]> {
     return this.getAll<T>(entity, { isActive: true });
   }
-  
+
   getExpiringSoonEntities<T>(entity: string, daysThreshold: number = 30): Observable<T[]> {
-    return this.getAll<T>(entity, { 
+    return this.getAll<T>(entity, {
       isActive: true,
       expiringWithin: daysThreshold
     });
@@ -457,11 +468,11 @@ export class GenericApiService {
 
   // Aggiorna le preferenze di comunicazione di un inquilino
   updateCommunicationPreferences<T>(
-    tenantId: number, 
+    tenantId: number,
     preferences: { email: boolean; sms: boolean; whatsapp: boolean }
   ): Observable<T> {
     return this.http.patch<T>(
-      `${environment.apiUrl}/tenants/${tenantId}/communication-preferences`, 
+      `${environment.apiUrl}/tenants/${tenantId}/communication-preferences`,
       preferences
     );
   }
@@ -478,63 +489,63 @@ export class GenericApiService {
   // Calcola il costo totale di una lettura
   calculateUtilityTotalCost(reading: any): number {
     let totalCost = 0;
-    
+
     // Calcola il costo per ogni tipo di utenza
     if (reading.electricityConsumption && reading.electricityCost) {
       totalCost += reading.electricityConsumption * reading.electricityCost;
     } else if (reading.type === 'electricity' && reading.consumption) {
       totalCost += reading.consumption * (reading.unitCost || 0);
     }
-    
+
     if (reading.waterConsumption && reading.waterCost) {
       totalCost += reading.waterConsumption * reading.waterCost;
     } else if (reading.type === 'water' && reading.consumption) {
       totalCost += reading.consumption * (reading.unitCost || 0);
     }
-    
+
     if (reading.gasConsumption && reading.gasCost) {
       totalCost += reading.gasConsumption * reading.gasCost;
     } else if (reading.type === 'gas' && reading.consumption) {
       totalCost += reading.consumption * (reading.unitCost || 0);
     }
-    
+
     return totalCost;
   }
 
   // Processa i dati delle letture per i grafici
   processReadingsForChart(readings: any[], year: number): MonthlyUtilityData[] {
     const result: MonthlyUtilityData[] = [];
-    
+
     // Raggruppa le letture per appartamento e mese
     const groupedReadings = new Map<string, any[]>();
-    
+
     readings.forEach(reading => {
       const readingDate = new Date(reading.readingDate);
       if (readingDate.getFullYear() === year) {
         const month = readingDate.getMonth() + 1;
         const key = `${reading.apartmentId}-${month}`;
-        
+
         if (!groupedReadings.has(key)) {
           groupedReadings.set(key, []);
         }
-        
+
         groupedReadings.get(key)?.push(reading);
       }
     });
-    
+
     // Calcola i consumi mensili per ogni appartamento
     groupedReadings.forEach((apartmentReadings, key) => {
       const [apartmentIdStr, monthStr] = key.split('-');
       const apartmentId = parseInt(apartmentIdStr);
       const month = parseInt(monthStr);
-      
+
       let electricity = 0;
       let water = 0;
       let gas = 0;
       let electricityCost = 0;
       let waterCost = 0;
       let gasCost = 0;
-      
+
       apartmentReadings.forEach(reading => {
         // Check for specific consumption properties first, then fall back to type-based logic
         if (reading.electricityConsumption) {
@@ -544,7 +555,7 @@ export class GenericApiService {
           electricity += reading.consumption;
           electricityCost += reading.totalCost || 0;
         }
-        
+
         if (reading.waterConsumption) {
           water += reading.waterConsumption;
           waterCost += reading.waterCost || 0;
@@ -552,7 +563,7 @@ export class GenericApiService {
           water += reading.consumption;
           waterCost += reading.totalCost || 0;
         }
-        
+
         if (reading.gasConsumption) {
           gas += reading.gasConsumption;
           gasCost += reading.gasCost || 0;
@@ -561,9 +572,9 @@ export class GenericApiService {
           gasCost += reading.totalCost || 0;
         }
       });
-      
+
       const totalCost = electricityCost + waterCost + gasCost;
-      
+
       // Aggiungi i dati al risultato
       result.push({
         month,
@@ -579,7 +590,7 @@ export class GenericApiService {
         totalCost
       });
     });
-    
+
     return result;
   }
 
@@ -587,27 +598,27 @@ export class GenericApiService {
   getFormattedChartData(data: MonthlyUtilityData[]): ApartmentUtilityData[] {
     // Raggruppa i dati per appartamento
     const apartmentMap = new Map<number, MonthlyUtilityData[]>();
-    
+
     data.forEach(item => {
       if (!apartmentMap.has(item.apartmentId)) {
         apartmentMap.set(item.apartmentId, []);
       }
       apartmentMap.get(item.apartmentId)?.push(item);
     });
-    
+
     // Array dei nomi dei mesi
     const monthNames = [
       'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
       'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'
     ];
-    
+
     // Formatta i dati per ogni appartamento
     const result: ApartmentUtilityData[] = [];
-    
+
     apartmentMap.forEach((monthlyData, apartmentId) => {
       // Ordina i dati per mese
       monthlyData.sort((a, b) => a.month - b.month);
-      
+
       // Calcola i totali annuali
       const yearlyTotals = {
         electricity: monthlyData.reduce((sum, item) => sum + item.electricity, 0),
@@ -615,7 +626,7 @@ export class GenericApiService {
         gas: monthlyData.reduce((sum, item) => sum + item.gas, 0),
         totalCost: monthlyData.reduce((sum, item) => sum + item.totalCost, 0)
       };
-      
+
       result.push({
         apartmentId,
         apartmentName: monthlyData[0]?.apartmentName || `Appartamento ${apartmentId}`,
@@ -633,7 +644,7 @@ export class GenericApiService {
         yearlyTotals
       });
     });
-    
+
     return result;
   }
 
@@ -730,7 +741,7 @@ export class GenericApiService {
     if (subtype) {
       params.subtype = subtype;
     }
-    
+
     return this.getAll<UtilityReading>('utilities', params).pipe(
       switchMap((readings: UtilityReading[]) => {
         if (readings.length > 0) {
@@ -745,11 +756,11 @@ export class GenericApiService {
           } as LastReading);
         } else {
           // Se non troviamo letture con il sottotipo specificato e stiamo cercando 'main',
-          // proviamo a cercare letture con subtype NULL (letture vecchie)
+          // proviamo a cercare letture con subtype NULL (letture vecchie) O undefined O stringa vuota
           if (subtype === 'main') {
             return this.searchForNullSubtypeReadings(apartmentId, type);
           }
-          
+
           // Per 'laundry', se non troviamo letture specifiche, restituiamo come prima lettura
           if (subtype === 'laundry') {
             return of({
@@ -761,7 +772,7 @@ export class GenericApiService {
               subtype: 'laundry'
             } as LastReading);
           }
-          
+
           // Nessuna lettura precedente - prima lettura
           return of({
             apartmentId: apartmentId,
@@ -842,7 +853,7 @@ export class GenericApiService {
     return this.getAll<UtilityReading>('utilities', params).pipe(
       map((readings: UtilityReading[]) => {
         // Filtra le letture che hanno subtype NULL o undefined
-        const nullSubtypeReadings = readings.filter(reading => 
+        const nullSubtypeReadings = readings.filter(reading =>
           reading.subtype === null || reading.subtype === undefined || reading.subtype === ''
         );
 
@@ -885,11 +896,11 @@ export class GenericApiService {
 
   // Toggle stato pagamento di una lettura
   toggleUtilityPaymentStatus(id: number, isPaid: boolean): Observable<UtilityReading | null> {
-    const updateData = { 
+    const updateData = {
       isPaid: isPaid,
       paidDate: isPaid ? new Date() : undefined
     };
-    
+
     return this.patch<UtilityReading>('utilities', id, updateData).pipe(
       catchError(error => {
         console.error(`Errore durante l'aggiornamento dello stato pagamento per ID ${id}`, error);
@@ -904,7 +915,7 @@ export class GenericApiService {
       apartmentId: apartmentId.toString(),
       year: year.toString()
     };
-    
+
     return this.getAll<UtilityReading>('utilities', params).pipe(
       catchError(error => {
         console.error(`Errore durante il recupero delle letture per appartamento ${apartmentId} anno ${year}`, error);
@@ -926,13 +937,13 @@ export class GenericApiService {
   // Ottiene dati mensili per appartamenti (per grafici)
   getMonthlyUtilityData(year: number, forceRefresh: boolean = false): Observable<MonthlyUtilityData[]> {
     let url = `${environment.apiUrl}/utilities/statistics/${year}`;
-    
+
     // Aggiunge timestamp per forzare il refresh ed evitare cache
     if (forceRefresh) {
       const timestamp = new Date().getTime();
       url += `?_refresh=${timestamp}`;
     }
-    
+
     return this.http.get<MonthlyUtilityData[]>(url, {
       headers: forceRefresh ? { 'Cache-Control': 'no-cache, no-store, must-revalidate' } : {}
     }).pipe(
@@ -956,6 +967,7 @@ export class GenericApiService {
   // Crea una nuova lettura utility con payload specifico per il backend
   createUtilityReadingWithCorrectFormat(reading: UtilityReadingCreate): Observable<UtilityReading | null> {
     return this.http.post<UtilityReading>(`${this.apiUrl('utilities')}`, reading).pipe(
+      tap(() => this.invalidateCache('utilities')),
       catchError(error => {
         console.error('Errore durante la creazione della lettura utility', error);
         return of(null);
@@ -966,6 +978,7 @@ export class GenericApiService {
   // Aggiorna una lettura utility con payload specifico per il backend
   updateUtilityReadingWithCorrectFormat(id: number, reading: UtilityReadingCreate): Observable<UtilityReading | null> {
     return this.http.put<UtilityReading>(`${environment.apiUrl}/utilities/${id}`, reading).pipe(
+      tap(() => this.invalidateCache('utilities', id)),
       catchError(error => {
         console.error(`Errore durante l'aggiornamento della lettura utility con ID ${id}`, error);
         return of(null);
@@ -986,8 +999,8 @@ export class GenericApiService {
       });
     }
 
-    return this.http.post<T>(`${environment.apiUrl}/${url}`, data, { 
-      params: httpParams 
+    return this.http.post<T>(`${environment.apiUrl}/${url}`, data, {
+      params: httpParams
     }).pipe(
       catchError(error => {
         console.error(`Errore nella chiamata POST a ${url}:`, error);
@@ -1007,7 +1020,7 @@ export class GenericApiService {
       });
     }
 
-    return this.http.get(`${environment.apiUrl}/${url}`, { 
+    return this.http.get(`${environment.apiUrl}/${url}`, {
       params: httpParams,
       responseType: 'blob'
     }).pipe(
@@ -1021,15 +1034,15 @@ export class GenericApiService {
   // Metodo per chiamate GET a endpoint specifici con cache
   getAllWithCache<T>(url: string, params?: any, forceRefresh: boolean = false): Observable<T[]> {
     const cacheKey = this.getCacheKey(url, params);
-    
+
     // Pulisci cache scaduta
     this.clearExpiredCache();
-    
+
     // Se non è richiesto un refresh e la cache è valida, usa la cache
     if (!forceRefresh && this.isCacheValid(cacheKey)) {
       return of(this.cache.get(cacheKey)!.data);
     }
-    
+
     // Se c'è già una richiesta in corso per questa chiave, riutilizzala
     if (this.pendingRequests.has(cacheKey)) {
       return this.pendingRequests.get(cacheKey)!;
@@ -1044,7 +1057,7 @@ export class GenericApiService {
       });
     }
 
-    const request = this.http.get<T[]>(`${environment.apiUrl}/${url}`, { 
+    const request = this.http.get<T[]>(`${environment.apiUrl}/${url}`, {
       params: httpParams
     }).pipe(
       tap(data => {
@@ -1062,7 +1075,7 @@ export class GenericApiService {
 
     // Salva la richiesta pendente
     this.pendingRequests.set(cacheKey, request);
-    
+
     return request;
   }
 }

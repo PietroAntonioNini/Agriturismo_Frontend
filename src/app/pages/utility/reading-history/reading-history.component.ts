@@ -25,11 +25,12 @@ import { takeUntil, debounceTime } from 'rxjs/operators';
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { ReadingFormComponent } from '../reading-form/reading-form.component';
-import { 
-  UtilityReading, 
-  Apartment, 
+import {
+  UtilityReading,
+  UtilityReadingCreate,
+  Apartment,
   UtilityTypeConfig,
-  UtilitySummary 
+  UtilitySummary
 } from '../../../shared/models';
 
 interface ReadingWithApartmentName extends UtilityReading {
@@ -76,42 +77,42 @@ interface ReadingGroupedData {
 })
 export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroy$ = new Subject<void>();
-  
+
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  
+
   // Display configurations
   displayedColumns: string[] = [
-    'apartmentName', 
-    'type', 
-    'readingDate', 
+    'apartmentName',
+    'type',
+    'readingDate',
     'currentReading',
-    'consumption', 
+    'consumption',
     'totalCost',
     'isPaid',
     'actions'
   ];
-  
+
   // Data sources
   dataSource = new MatTableDataSource<ReadingWithApartmentName>([]);
   allReadings: ReadingWithApartmentName[] = [];
   groupedData: ReadingGroupedData[] = [];
-  
+
   // UI states
   isLoading = true;
   errorMessage: string | null = null;
   viewMode: 'table' | 'grouped' = 'table';
-  
+
   // Flip card states - track which cards are flipped
   flippedCards: Set<number> = new Set();
-  
+
   // Filters
   filterForm!: FormGroup;
-  
+
   // Configuration (caricata dal backend)
   utilityTypes: UtilityTypeConfig[] = [];
   isLoadingUtilityTypes = false;
-  
+
   constructor(
     private fb: FormBuilder,
     private apiService: GenericApiService,
@@ -119,11 +120,11 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     public dialogRef: MatDialogRef<ReadingHistoryComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { 
+    @Inject(MAT_DIALOG_DATA) public data: {
       apartments: Apartment[],
       selectedApartmentId: number | null
     }
-  ) { 
+  ) {
     this.initFilterForm();
   }
 
@@ -138,7 +139,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       this.updateDataSourceConfig();
     }
   }
-  
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -146,7 +147,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
 
   loadUtilityTypes(): void {
     this.isLoadingUtilityTypes = true;
-    
+
     this.apiService.getUtilityTypes().pipe(
       takeUntil(this.destroy$)
     ).subscribe({
@@ -154,14 +155,14 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         this.utilityTypes = types || [];
         this.isLoadingUtilityTypes = false;
 
-        
+
         // Carica le letture dopo aver caricato i tipi di utenza
         this.loadReadings();
       },
       error: (error) => {
         console.error('Errore nel caricamento dei tipi utility:', error);
         this.isLoadingUtilityTypes = false;
-        
+
         // Inizializza con i tipi predefiniti in caso di errore
         this.utilityTypes = [
           {
@@ -189,16 +190,16 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
             defaultCost: 4.45
           }
         ];
-        
+
         // Mostra un messaggio meno invasivo
         this.showInfoSnackBar('Utilizzando configurazione predefinita per i tipi di utenza');
-        
+
         // Carica le letture anche in caso di errore (con fallback)
         this.loadReadings();
       }
     });
   }
-  
+
   initFilterForm(): void {
     this.filterForm = this.fb.group({
       search: [''],
@@ -209,7 +210,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       isPaid: ['']
     });
   }
-  
+
   setupFilterSubscriptions(): void {
     this.filterForm.valueChanges.pipe(
       takeUntil(this.destroy$),
@@ -222,7 +223,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   loadReadings(): void {
     this.isLoading = true;
     this.errorMessage = null;
-    
+
     // Chiamata API centralizzata per le utility readings
     this.apiService.getAllUtilityReadings()
       .pipe(takeUntil(this.destroy$))
@@ -242,13 +243,13 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         }
       });
   }
-  
+
   processReadings(readings: UtilityReading[]): void {
     // ⭐ Debug per verificare i dati subtype
     console.log('🔍 Letture ricevute dal backend:', readings);
     const laundryReadings = readings.filter(r => r.subtype === 'laundry');
     console.log('🧺 Letture lavanderia trovate:', laundryReadings);
-    
+
     // Aggiungi nome appartamento
     this.allReadings = readings.map(reading => {
       const apartment = this.data.apartments.find(apt => apt.id === reading.apartmentId);
@@ -257,22 +258,22 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         apartmentName: apartment?.name || `Appartamento #${reading.apartmentId}`
       };
     });
-    
+
     this.updateGroupedData();
     this.applyFilters();
-    
+
     // Assicurati che il paginatore sia configurato dopo il caricamento iniziale
     setTimeout(() => {
       this.updateDataSourceConfig();
     }, 100);
   }
-  
+
   updateGroupedData(): void {
     const grouped = new Map<number, ReadingGroupedData>();
-    
+
     this.allReadings.forEach(reading => {
       const apartmentId = reading.apartmentId;
-      
+
       if (!grouped.has(apartmentId)) {
         grouped.set(apartmentId, {
           apartment: reading.apartmentName,
@@ -286,24 +287,24 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
           }
         });
       }
-      
+
       const group = grouped.get(apartmentId)!;
       group.readings.push(reading);
-      
+
       // Aggiorna totali
       group.totals[reading.type].consumption += reading.consumption;
       group.totals[reading.type].cost += reading.totalCost;
       group.totals.total += reading.totalCost;
     });
-    
+
     this.groupedData = Array.from(grouped.values())
       .sort((a, b) => a.apartment.localeCompare(b.apartment));
   }
-  
+
   applyFilters(): void {
     const filters = this.filterForm.value;
     let filteredReadings = [...this.allReadings];
-    
+
     // Filtro per testo
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -313,21 +314,21 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         (reading.notes && reading.notes.toLowerCase().includes(searchLower))
       );
     }
-    
+
     // Filtro per appartamento
     if (filters.apartmentId) {
       filteredReadings = filteredReadings.filter(reading =>
         reading.apartmentId === filters.apartmentId
       );
     }
-    
+
     // Filtro per tipo utenza
     if (filters.utilityType) {
       filteredReadings = filteredReadings.filter(reading =>
         reading.type === filters.utilityType
       );
     }
-    
+
     // Filtro per data inizio
     if (filters.startDate) {
       const startDate = new Date(filters.startDate);
@@ -335,7 +336,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         new Date(reading.readingDate) >= startDate
       );
     }
-    
+
     // Filtro per data fine
     if (filters.endDate) {
       const endDate = new Date(filters.endDate);
@@ -344,7 +345,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         new Date(reading.readingDate) <= endDate
       );
     }
-    
+
     // Filtro per stato pagamento
     if (filters.isPaid !== '') {
       const isPaid = filters.isPaid === 'true';
@@ -352,21 +353,21 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         reading.isPaid === isPaid
       );
     }
-    
+
     this.dataSource.data = filteredReadings;
-    
+
     // Forza l'aggiornamento del paginatore dopo il cambio dati
     setTimeout(() => {
       this.updateDataSourceConfig();
     }, 0);
   }
-  
+
   updateDataSourceConfig(): void {
     // Configura il sort
     if (this.sort) {
       this.dataSource.sort = this.sort;
     }
-    
+
     // Configura il paginatore con pageSize fisso a 5
     if (this.paginator) {
       this.paginator.pageSize = 5;
@@ -374,7 +375,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       this.paginator.firstPage();
     }
   }
-  
+
   clearFilters(): void {
     this.filterForm.reset({
       search: '',
@@ -385,23 +386,23 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       isPaid: ''
     });
   }
-  
+
   toggleViewMode(): void {
     this.viewMode = this.viewMode === 'table' ? 'grouped' : 'table';
   }
-  
+
   setViewMode(mode: 'table' | 'grouped'): void {
     this.viewMode = mode;
-    
+
     // Se passiamo alla vista raggruppata, aggiorna i dati
     if (mode === 'grouped') {
       this.updateGroupedData();
     }
-    
+
     // Reset flip states when changing view
     this.flippedCards.clear();
   }
-  
+
   toggleCardFlip(apartmentId: number): void {
     if (this.flippedCards.has(apartmentId)) {
       this.flippedCards.delete(apartmentId);
@@ -409,11 +410,11 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       this.flippedCards.add(apartmentId);
     }
   }
-  
+
   isCardFlipped(apartmentId: number): boolean {
     return this.flippedCards.has(apartmentId);
   }
-  
+
   editReading(reading: ReadingWithApartmentName): void {
     const dialogRef = this.dialog.open(ReadingFormComponent, {
       width: '600px',
@@ -432,18 +433,18 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         const updatedReading = result.updatedReading;
         const targetSubtype = (updatedReading.subtype || 'main');
 
-        // Dopo PUT: ricarica la catena dal backend per riflettere il ricalcolo a cascata
-        this.refreshChainFromServer(updatedReading.apartmentId, updatedReading.type, targetSubtype);
+        // Dopo PUT: propaga la modifica alla lettura successiva per mantenere la continuità
+        this.updateSubsequentReading(updatedReading, targetSubtype);
 
         // Notifica
         this.notificationService.notifyUtilityReading(
-          'updated', 
-          reading.apartmentName, 
-          updatedReading.type, 
+          'updated',
+          reading.apartmentName,
+          updatedReading.type,
           updatedReading.id
         );
-        
-        this.showSuccessSnackBar('Lettura aggiornata con successo');
+
+        this.showSuccessSnackBar('Lettura aggiornata con successo (in attesa di propagazione...)');
       } else if (result === true) {
         // Fallback: ricarica tutte le letture dal server
         this.loadReadings();
@@ -451,21 +452,21 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       }
     });
   }
-  
+
   deleteReading(reading: ReadingWithApartmentName): void {
     const confirmed = confirm(
       `Sei sicuro di voler eliminare la lettura ${this.getUtilityTypeConfig(reading.type).label} del ${this.formatDate(reading.readingDate)}?`
     );
-    
+
     if (confirmed && reading.id) {
       this.performDeleteReading(reading.id);
     }
   }
-  
+
   performDeleteReading(id: number): void {
     // Trova la lettura prima di eliminarla per la notifica
     const readingToDelete = this.allReadings.find(r => r.id === id);
-    
+
     this.apiService.deleteUtilityReading(id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -474,17 +475,17 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
             this.allReadings = this.allReadings.filter(r => r.id !== id);
             this.updateGroupedData();
             this.applyFilters();
-            
+
             // Aggiungi notifica
             if (readingToDelete) {
               this.notificationService.notifyUtilityReading(
-                'deleted', 
-                readingToDelete.apartmentName, 
-                readingToDelete.type, 
+                'deleted',
+                readingToDelete.apartmentName,
+                readingToDelete.type,
                 readingToDelete.id
               );
             }
-            
+
             this.showSuccessSnackBar('Lettura eliminata con successo');
           } else {
             this.showInfoSnackBar('Errore durante l\'eliminazione della lettura');
@@ -496,10 +497,10 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         }
       });
   }
-  
+
   togglePaymentStatus(reading: ReadingWithApartmentName): void {
     if (!reading.id) return;
-    
+
     const newStatus = !reading.isPaid;
     this.apiService.toggleUtilityPaymentStatus(reading.id, newStatus)
       .pipe(takeUntil(this.destroy$))
@@ -521,24 +522,24 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         }
       });
   }
-  
+
   exportData(): void {
     // TODO: Implementare esportazione dati
     this.showInfoSnackBar('Funzionalità di export in sviluppo');
   }
-  
+
   // Utility methods
   formatDate(date: Date | string): string {
     return new Date(date).toLocaleDateString('it-IT');
   }
-  
+
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('it-IT', {
       style: 'currency',
       currency: 'EUR'
     }).format(amount);
   }
-  
+
   getUtilityTypeConfig(type: string): UtilityTypeConfig {
     // Fallback predefinito per i tipi di utenza
     const defaultConfigs: { [key: string]: UtilityTypeConfig } = {
@@ -577,41 +578,41 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     // Se non trova o l'array è vuoto, usa il fallback predefinito
     return defaultConfigs[type] || defaultConfigs['electricity'];
   }
-  
+
   getFilteredApartments(): Apartment[] {
     if (!this.filterForm.get('apartmentId')?.value) {
       return this.data.apartments;
     }
-    return this.data.apartments.filter(apt => 
+    return this.data.apartments.filter(apt =>
       apt.id === this.filterForm.get('apartmentId')?.value
     );
   }
-  
+
   getActiveFiltersCount(): number {
     const filters = this.filterForm.value;
     let count = 0;
-    
+
     if (filters.search && filters.search.trim() !== '') count++;
     if (filters.apartmentId && filters.apartmentId !== this.data.selectedApartmentId) count++;
     if (filters.utilityType && filters.utilityType !== '') count++;
     if (filters.startDate && filters.startDate !== '') count++;
     if (filters.endDate && filters.endDate !== '') count++;
     if (filters.isPaid !== '' && filters.isPaid !== null && filters.isPaid !== undefined) count++;
-    
+
     return count;
   }
-  
+
   onClose(): void {
     this.dialogRef.close();
   }
-  
+
   private showSuccessSnackBar(message: string): void {
     this.snackBar.open(message, 'Chiudi', {
       duration: 3000,
       panelClass: ['success-snackbar']
     });
   }
-  
+
   private showInfoSnackBar(message: string): void {
     this.snackBar.open(message, 'Chiudi', {
       duration: 3000,
@@ -639,7 +640,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
           }));
 
           // Sostituisci nel dataset locale solo la catena interessata
-          this.allReadings = this.allReadings.filter(r => 
+          this.allReadings = this.allReadings.filter(r =>
             !(r.apartmentId === apartmentId && r.type === type && (r.subtype || 'main') === targetSubtype)
           );
           this.allReadings = [...this.allReadings, ...mapped];
@@ -655,8 +656,81 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       });
   }
 
+  // ⭐ Implementazione Propagazione Modifiche
+  private updateSubsequentReading(currentReading: UtilityReading, subtype: string): void {
+    // 1. Cerca la lettura successiva (cronologicamente)
+    // Usiamo getAll con sort per data, filtrando per quelle DOPO la data corrente
+    const params: any = {
+      apartmentId: currentReading.apartmentId.toString(),
+      type: currentReading.type,
+      subtype: subtype || 'main',
+      readingDate_gte: currentReading.readingDate, // Prendiamo da questa data in poi
+      _sort: 'readingDate',
+      _order: 'asc'
+    };
+
+    this.apiService.getAll<UtilityReading>('utilities', params, true)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(readings => {
+        // Filtriamo client-side per essere sicuri di prendere quella vera successiva (ID diverso)
+        // e con data strettamente maggiore (o stessa data ma creata dopo, ma semplifichiamo a data maggiore/uguale e skip current)
+        const subsequentReadings = readings.filter(r => r.id !== currentReading.id && new Date(r.readingDate) >= new Date(currentReading.readingDate));
+        const nextReading = subsequentReadings.length > 0 ? subsequentReadings[0] : null;
+
+        if (nextReading) {
+          // Controlla se c'è discrepanza
+          if (nextReading.previousReading !== currentReading.currentReading) {
+            console.log(`🔄 Propagazione necessaria: aggiornamento lettura ID ${nextReading.id} (Prec: ${nextReading.previousReading} -> ${currentReading.currentReading})`);
+
+            // Calcola nuovi valori
+            const newPrevious = currentReading.currentReading;
+            const newConsumption = Math.max(0, nextReading.currentReading - newPrevious);
+            const newTotalCost = newConsumption * nextReading.unitCost;
+
+            const updatePayload: UtilityReadingCreate = {
+              apartmentId: nextReading.apartmentId,
+              userId: nextReading.userId,
+              type: nextReading.type,
+              readingDate: nextReading.readingDate.toString(), // o .toISOString() se è oggetto Date
+              previousReading: newPrevious,
+              currentReading: nextReading.currentReading,
+              consumption: newConsumption,
+              unitCost: nextReading.unitCost,
+              totalCost: newTotalCost,
+              isPaid: nextReading.isPaid,
+              notes: nextReading.notes,
+              subtype: nextReading.subtype,
+              isSpecialReading: nextReading.isSpecialReading
+            };
+
+            // Esegui update
+            this.apiService.updateUtilityReadingWithCorrectFormat(nextReading.id!, updatePayload)
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: () => {
+                  console.log('✅ Propagazione completata con successo');
+                  // Ricarica tutto alla fine
+                  this.refreshChainFromServer(currentReading.apartmentId, currentReading.type, subtype);
+                  this.showSuccessSnackBar('Lettura aggiornata e modifica propagata alla lettura successiva!');
+                },
+                error: (err) => {
+                  console.error('Errore propagazione:', err);
+                  this.refreshChainFromServer(currentReading.apartmentId, currentReading.type, subtype); // Reload anyway
+                }
+              });
+          } else {
+            // Nessuna modifica necessaria
+            this.refreshChainFromServer(currentReading.apartmentId, currentReading.type, subtype);
+          }
+        } else {
+          // Nessuna lettura successiva
+          this.refreshChainFromServer(currentReading.apartmentId, currentReading.type, subtype);
+        }
+      });
+  }
+
   // ===== METODI PER LETTURE SPECIALI =====
-  
+
   /**
    * ⭐ Ottiene la label per il tipo di lettura (con supporto subtype)
    */

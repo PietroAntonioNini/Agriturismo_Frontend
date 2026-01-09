@@ -46,15 +46,15 @@ export class GenerateStatementDialogComponent implements OnInit {
   ];
 
   // Riga lavanderia (solo per Appartamento 8)
-  laundryRow: StatementUtilityRow = { 
-    label: 'LAVANDERIA', 
-    type: 'laundry', 
-    unit: 'kWh', 
-    previous: null, 
-    current: null, 
-    consumption: 0, 
-    unitCost: 0, 
-    amount: 0 
+  laundryRow: StatementUtilityRow = {
+    label: 'LAVANDERIA',
+    type: 'laundry',
+    unit: 'kWh',
+    previous: null,
+    current: null,
+    consumption: 0,
+    unitCost: 0,
+    amount: 0
   };
 
   loading = false;
@@ -67,11 +67,11 @@ export class GenerateStatementDialogComponent implements OnInit {
     const apartment = this.apartments.find(apt => apt.id === apartmentId);
     if (!apartment) return false;
     const name = apartment.name.toLowerCase();
-    return name.includes('appartamento 8') || 
-           name.includes('appartamento8') || 
-           name === 'appartamento 8' || 
-           name === 'apt 8' || 
-           name === 'apt. 8';
+    return name.includes('appartamento 8') ||
+      name.includes('appartamento8') ||
+      name === 'appartamento 8' ||
+      name === 'apt 8' ||
+      name === 'apt. 8';
   }
 
   ngOnInit(): void {
@@ -79,7 +79,7 @@ export class GenerateStatementDialogComponent implements OnInit {
     // Imposta il mese precedente come default
     const previousMonth = now.getMonth() === 0 ? 12 : now.getMonth();
     const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-    
+
     this.form = this.fb.group({
       apartmentId: [null, Validators.required],
       month: [previousMonth, [Validators.required, Validators.min(1), Validators.max(12)]],
@@ -151,45 +151,60 @@ export class GenerateStatementDialogComponent implements OnInit {
     const apt = this.apartments.find(a => a.id === apartmentId);
     this.form.get('rent')!.setValue(apt?.monthlyRent || 0);
 
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0);
-    const startIso = start.toISOString().split('T')[0];
-    const endIso = end.toISOString().split('T')[0];
+    // Calcola finestra di ricerca estesa: dal 15 del mese corrente al 20 del mese successivo
+    // Target ideale: 1° del mese successivo (chiusura mensile)
+    const targetDate = new Date(year, month, 1); // Nota: month è 1-based, quindi new Date(y, m, 1) è 1° del mese SUCCESSIVO (se m=12, y++, m=0)
+    // Correzione: month form value 1-12. Date ctor month 0-11.
+    // Se form.month = 12 (dicembre), new Date(year, 12, 1) = 1 Gennaio anno dopo.
+    // Se form.month = 1 (gennaio), new Date(year, 1, 1) = 1 Febbraio.
+    // Quindi 'month' usato direttamente nel costruttore Date funziona come "prossimo mese"
+
+    // Finestra ampia per catturare la lettura di chiusura
+    const searchStart = new Date(year, month - 1, 15); // Metà mese corrente
+    const searchEnd = new Date(year, month, 25); // 25 del mese successivo
+
+    const startIso = searchStart.toISOString().split('T')[0];
+    const endIso = searchEnd.toISOString().split('T')[0];
 
     const requests: any = {
       gas: this.api.getAllUtilityReadings({ apartmentId, type: 'gas', start_date: startIso, end_date: endIso }).pipe(catchError(_ => of([]))),
       electricity: this.api.getAllUtilityReadings({ apartmentId, type: 'electricity', start_date: startIso, end_date: endIso }).pipe(catchError(_ => of([]))),
       water: this.api.getAllUtilityReadings({ apartmentId, type: 'water', start_date: startIso, end_date: endIso }).pipe(catchError(_ => of([]))),
       lastGas: this.api.getLastUtilityReading(apartmentId, 'gas').pipe(catchError(_ => of(null))),
-      lastElec: this.api.getLastUtilityReading(apartmentId, 'electricity').pipe(catchError(_ => of(null))),
+      // FIX: Richiedi esplicitamente 'main' per l'elettricità principale (il service gestirà il fallback su null)
+      lastElec: this.api.getLastUtilityReading(apartmentId, 'electricity', 'main').pipe(catchError(_ => of(null))),
       lastWater: this.api.getLastUtilityReading(apartmentId, 'water').pipe(catchError(_ => of(null)))
     };
 
     // Aggiungi richiesta lavanderia solo per Appartamento 8
     if (this.isApartment8()) {
-      requests.laundry = this.api.getAllUtilityReadings({ 
-        apartmentId, 
-        type: 'electricity', 
+      requests.laundry = this.api.getAllUtilityReadings({
+        apartmentId,
+        type: 'electricity',
         subtype: 'laundry',
-        start_date: startIso, 
-        end_date: endIso 
+        start_date: startIso,
+        end_date: endIso
       }).pipe(catchError(_ => of([])));
       requests.lastLaundry = this.api.getLastUtilityReading(apartmentId, 'electricity', 'laundry').pipe(catchError(_ => of(null)));
     }
 
     forkJoin(requests).subscribe((res: any) => {
-      this.fillRow('gas', res.gas, res.lastGas);
-      this.fillRow('electricity', res.electricity, res.lastElec);
-      this.fillRow('water', res.water, res.lastWater);
-      
+      // FIX: Filtra le letture elettricità per escludere quelle della lavanderia (che vanno nella riga separata)
+      // Mantiene sia 'main' che eventuali null/undefined (vecchio formato)
+      const mainElectricityReadings = (res.electricity || []).filter((r: any) => r.subtype !== 'laundry');
+
+      this.fillRow('gas', res.gas, res.lastGas, targetDate);
+      this.fillRow('electricity', mainElectricityReadings, res.lastElec, targetDate);
+      this.fillRow('water', res.water, res.lastWater, targetDate);
+
       // Carica dati lavanderia se è Appartamento 8
       if (this.isApartment8() && res.laundry) {
-        this.fillLaundryRow(res.laundry, res.lastLaundry);
+        this.fillLaundryRow(res.laundry, res.lastLaundry, targetDate);
       } else {
         // Reset lavanderia se non è Appartamento 8
         this.resetLaundryRow();
       }
-      
+
       this.loading = false;
     }, _ => {
       this.error = 'Errore nel caricamento delle letture';
@@ -197,17 +212,35 @@ export class GenerateStatementDialogComponent implements OnInit {
     });
   }
 
-  private fillRow(type: 'gas'|'electricity'|'water', monthReadings: any[], lastReading: any | null): void {
+  // Trova la lettura più vicina alla data target (es. 1° del mese successivo)
+  private findClosestReading(readings: any[], targetDate: Date): any {
+    if (!readings || readings.length === 0) return null;
+
+    return readings.reduce((prev, curr) => {
+      const prevDiff = Math.abs(new Date(prev.readingDate).getTime() - targetDate.getTime());
+      const currDiff = Math.abs(new Date(curr.readingDate).getTime() - targetDate.getTime());
+      return currDiff < prevDiff ? curr : prev;
+    });
+  }
+
+  private fillRow(type: 'gas' | 'electricity' | 'water', readings: any[], lastReading: any | null, targetDate: Date): void {
     const row = this.rows.find(r => r.type === type)!;
-    if (monthReadings && monthReadings.length > 0) {
-      const latest = monthReadings.sort((a,b) => new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime())[0];
-      row.previous = Number(latest.previousReading ?? 0);
-      row.current = Number(latest.currentReading ?? 0);
+
+    // Cerchiamo la lettura più rappresentativa per la chiusura del mese
+    // (tipicamente quella più vicina al 1° del mese successivo)
+    const bestReading = this.findClosestReading(readings, targetDate);
+
+    if (bestReading) {
+      row.previous = Number(bestReading.previousReading ?? 0);
+      row.current = Number(bestReading.currentReading ?? 0);
       const fallbackConsumption = (row.current ?? 0) - (row.previous ?? 0);
-      row.consumption = Number((latest.consumption ?? fallbackConsumption) ?? 0);
-      row.unitCost = Number(latest.unitCost ?? (row.unitCost ?? 0));
-      row.amount = Number((latest.totalCost ?? (row.consumption * row.unitCost)) ?? 0);
+      row.consumption = Number((bestReading.consumption ?? fallbackConsumption) ?? 0);
+      row.unitCost = Number(bestReading.unitCost ?? (row.unitCost ?? 0));
+      row.amount = Number((bestReading.totalCost ?? (row.consumption * row.unitCost)) ?? 0);
     } else {
+      // Se non c'è lettura nel periodo, usiamo l'ultima lettura disponibile come "precedente"
+      // Questo è corretto solo se stiamo generando il mese corrente/futuro.
+      // Se è un mese passato senza letture, il comportamento è best-effort.
       row.previous = Number(lastReading?.lastReading ?? 0);
       row.current = null;
       row.consumption = 0;
@@ -215,15 +248,16 @@ export class GenerateStatementDialogComponent implements OnInit {
     }
   }
 
-  private fillLaundryRow(monthReadings: any[], lastReading: any | null): void {
-    if (monthReadings && monthReadings.length > 0) {
-      const latest = monthReadings.sort((a,b) => new Date(b.readingDate).getTime() - new Date(a.readingDate).getTime())[0];
-      this.laundryRow.previous = Number(latest.previousReading ?? 0);
-      this.laundryRow.current = Number(latest.currentReading ?? 0);
+  private fillLaundryRow(readings: any[], lastReading: any | null, targetDate: Date): void {
+    const bestReading = this.findClosestReading(readings, targetDate);
+
+    if (bestReading) {
+      this.laundryRow.previous = Number(bestReading.previousReading ?? 0);
+      this.laundryRow.current = Number(bestReading.currentReading ?? 0);
       const fallbackConsumption = (this.laundryRow.current ?? 0) - (this.laundryRow.previous ?? 0);
-      this.laundryRow.consumption = Number((latest.consumption ?? fallbackConsumption) ?? 0);
-      this.laundryRow.unitCost = Number(latest.unitCost ?? (this.laundryRow.unitCost ?? 0));
-      this.laundryRow.amount = Number((latest.totalCost ?? (this.laundryRow.consumption * this.laundryRow.unitCost)) ?? 0);
+      this.laundryRow.consumption = Number((bestReading.consumption ?? fallbackConsumption) ?? 0);
+      this.laundryRow.unitCost = Number(bestReading.unitCost ?? (this.laundryRow.unitCost ?? 0));
+      this.laundryRow.amount = Number((bestReading.totalCost ?? (this.laundryRow.consumption * this.laundryRow.unitCost)) ?? 0);
     } else {
       this.laundryRow.previous = Number(lastReading?.lastReading ?? 0);
       this.laundryRow.current = null;
