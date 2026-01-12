@@ -263,60 +263,30 @@ export class AuthService {
   }
 
   forgotPassword(username: string, email: string): Observable<any> {
-    // Inizia provando con FormData
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('email', email);
+    console.log("Inviando recupero password con JSON:", { username, email });
     
-    console.log("Inviando recupero password con FormData:", { username, email });
-    
-    return this.http.post(`${this.apiUrl}/auth/forgot-password`, formData)
+    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { username, email })
       .pipe(
         tap(response => console.log("Risposta recupero password:", response)),
         catchError(error => {
-          console.error('Errore con FormData:', error);
-          
-          // Se fallisce con FormData, prova con JSON
-          console.log("Riprovo con JSON");
-          return this.http.post(`${this.apiUrl}/auth/forgot-password`, { username, email })
-            .pipe(
-              tap(response => console.log("Risposta recupero password (JSON):", response)),
-              catchError(jsonError => {
-                console.error('Errore anche con JSON:', jsonError);
-                return throwError(() => jsonError);
-              })
-            );
+          console.error('Errore recupero password:', error);
+          return throwError(() => error);
         })
       );
   }
 
   resetPassword(token: string, newPassword: string): Observable<any> {
-    // Inizia provando con FormData
-    const formData = new FormData();
-    formData.append('token', token);
-    formData.append('new_password', newPassword);
+    console.log("Inviando reset password con JSON");
     
-    console.log("Inviando reset password con FormData");
-    
-    return this.http.post(`${this.apiUrl}/auth/reset-password`, formData)
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { 
+      token: token, 
+      new_password: newPassword 
+    })
       .pipe(
         tap(response => console.log("Risposta reset password:", response)),
         catchError(error => {
-          console.error('Errore con FormData:', error);
-          
-          // Se fallisce con FormData, prova con JSON
-          console.log("Riprovo con JSON");
-          return this.http.post(`${this.apiUrl}/auth/reset-password`, { 
-            token: token, 
-            new_password: newPassword 
-          })
-            .pipe(
-              tap(response => console.log("Risposta reset password (JSON):", response)),
-              catchError(jsonError => {
-                console.error('Errore anche con JSON:', jsonError);
-                return throwError(() => jsonError);
-              })
-            );
+          console.error('Errore reset password:', error);
+          return throwError(() => error);
         })
       );
   }
