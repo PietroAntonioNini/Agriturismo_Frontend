@@ -67,16 +67,18 @@
             <div class="notification-content">
               <div class="notification-title">{{ notification.title }}</div>
               <div class="notification-subtitle" *ngIf="notification.subtitle">{{ notification.subtitle }}</div>
-              <div class="notification-details" *ngIf="notification.category === 'reading' && notification.metadata?.apartmentNames">
-                <div class="apartments-list">
-                  <span *ngFor="let name of notification.metadata.apartmentNames.slice(0, 3); let last = last">
-                    {{ name }}<span *ngIf="!last">, </span>
-                  </span>
-                  <span *ngIf="(notification.metadata.apartmentNames?.length || 0) > 3">
-                    e altri {{ (notification.metadata.apartmentNames?.length || 0) - 3 }}
-                  </span>
+              <ng-container *ngIf="notification.category === 'reading' && notification.metadata?.apartmentNames">
+                <div class="notification-details">
+                  <div class="apartments-list">
+                    <span *ngFor="let name of (notification.metadata!.apartmentNames || []).slice(0, 3); let last = last">
+                      {{ name }}<span *ngIf="!last">, </span>
+                    </span>
+                    <span *ngIf="(notification.metadata?.apartmentNames?.length || 0) > 3">
+                      e altri {{ (notification.metadata?.apartmentNames?.length || 0) - 3 }}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </ng-container>
               <div class="notification-time">{{ getRelativeTime(notification.timestamp) }}</div>
             </div>
             <button 
