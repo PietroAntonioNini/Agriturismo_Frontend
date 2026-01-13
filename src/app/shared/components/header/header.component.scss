@@ -295,23 +295,6 @@
       }
     }
   }
-  
-  // Personalizza posizione e dimensioni del menu overlay
-  ::ng-deep .cdk-overlay-connected-position-bounding-box {
-    top: 65px !important;        // Distanza dal top
-    left: auto !important;       // Posizione orizzontale (auto = allineato al trigger)
-    right: 20px !important;      // Oppure usa right per posizionare da destra
-    height: auto !important;     // Altezza automatica
-    max-height: 600px !important; // Altezza massima
-    width: 400px !important;     // Larghezza fissa (sovrascrive min-width/max-width)
-  }
-  
-  // Alternativa: usa mat-menu-panel per controllare dimensioni
-  ::ng-deep .mat-mdc-menu-panel {
-    max-height: 600px !important;
-    min-width: 400px !important;
-    max-width: 450px !important;
-  }
 
   .notifications-menu {
     min-width: 380px;
