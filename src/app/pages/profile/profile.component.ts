@@ -75,18 +75,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Ricarica il profilo per assicurarsi di avere i dati più aggiornati
+    this.isLoading = true;
+    this.authService.refreshUserProfile();
+
     // Sottoscrizione all'utente corrente
     this.userSubscription = this.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user) {
         this.loadUserData(user);
+        this.isLoading = false;
       } else {
-        // Se non c'è utente, prova a caricarlo
-        this.isLoading = true;
+        // Se non c'è utente, prova a caricarlo dal localStorage
         const storedUser = this.authService.getUserFromStorage();
         if (storedUser) {
           this.currentUser = storedUser;
           this.loadUserData(storedUser);
+          this.isLoading = false;
+        } else {
+          this.isLoading = false;
+          this.errorMessage = 'Impossibile caricare i dati del profilo';
         }
       }
     });
@@ -177,14 +185,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
 
     // Prova ad aggiornare il profilo tramite API
-    this.http.put<User>(`${this.apiUrl}/users/me`, {
-      firstName: formValue.firstName,
-      lastName: formValue.lastName,
+    // Il backend si aspetta snake_case
+    this.http.put<any>(`${this.apiUrl}/users/me`, {
+      first_name: formValue.firstName,
+      last_name: formValue.lastName,
       email: formValue.email
     }, { headers }).subscribe({
       next: (updatedUser) => {
-        this.authService.setCurrentUser(updatedUser);
-        this.currentUser = updatedUser;
+        // Mappa la risposta da snake_case a camelCase
+        const mappedUser = this.mapSnakeCaseToCamelCase(updatedUser);
+        this.authService.setCurrentUser(mappedUser);
+        this.currentUser = mappedUser;
         this.isEditing = false;
         this.isLoading = false;
         this.snackBar.open('Profilo aggiornato con successo!', 'Chiudi', { duration: 3000 });
@@ -214,6 +225,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   get f() {
     return this.profileForm.controls;
+  }
+
+  /**
+   * Converte i dati utente da snake_case (API) a camelCase (modello User)
+   */
+  private mapSnakeCaseToCamelCase(apiUser: any): User {
+    return {
+      id: apiUser.id,
+      username: apiUser.username || apiUser.user_name || '',
+      email: apiUser.email || '',
+      firstName: apiUser.firstName || apiUser.first_name || '',
+      lastName: apiUser.lastName || apiUser.last_name || '',
+      role: apiUser.role || 'staff',
+      isActive: apiUser.isActive !== undefined ? apiUser.isActive : (apiUser.is_active !== undefined ? apiUser.is_active : true),
+      lastLogin: apiUser.lastLogin ? new Date(apiUser.lastLogin) : (apiUser.last_login ? new Date(apiUser.last_login) : undefined),
+      createdAt: apiUser.createdAt ? new Date(apiUser.createdAt) : (apiUser.created_at ? new Date(apiUser.created_at) : new Date()),
+      updatedAt: apiUser.updatedAt ? new Date(apiUser.updatedAt) : (apiUser.updated_at ? new Date(apiUser.updated_at) : new Date())
+    };
   }
 }
 

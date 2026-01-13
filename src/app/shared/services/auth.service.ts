@@ -192,6 +192,24 @@ export class AuthService {
     localStorage.setItem('currentUser', JSON.stringify(user));
     this.currentUserSubject.next(user);
   }
+
+  /**
+   * Converte i dati utente da snake_case (API) a camelCase (modello User)
+   */
+  private mapSnakeCaseToCamelCase(apiUser: any): User {
+    return {
+      id: apiUser.id,
+      username: apiUser.username || apiUser.user_name || '',
+      email: apiUser.email || '',
+      firstName: apiUser.firstName || apiUser.first_name || '',
+      lastName: apiUser.lastName || apiUser.last_name || '',
+      role: apiUser.role || 'staff',
+      isActive: apiUser.isActive !== undefined ? apiUser.isActive : (apiUser.is_active !== undefined ? apiUser.is_active : true),
+      lastLogin: apiUser.lastLogin ? new Date(apiUser.lastLogin) : (apiUser.last_login ? new Date(apiUser.last_login) : undefined),
+      createdAt: apiUser.createdAt ? new Date(apiUser.createdAt) : (apiUser.created_at ? new Date(apiUser.created_at) : new Date()),
+      updatedAt: apiUser.updatedAt ? new Date(apiUser.updatedAt) : (apiUser.updated_at ? new Date(apiUser.updated_at) : new Date())
+    };
+  }
   
   private storeTokens(response: TokenPair): void {
     localStorage.setItem('access_token', response.accessToken);
@@ -205,17 +223,18 @@ export class AuthService {
     });
     
     // Prima prova /auth/verify-token
-    this.http.get<User>(`${this.apiUrl}/auth/verify-token`, { headers })
+    this.http.get<any>(`${this.apiUrl}/auth/verify-token`, { headers })
       .subscribe({
         next: user => {
           console.log('Profilo utente caricato con successo da verify-token:', user);
           // Alcuni backend non includono l'id in verify-token: fallback a /users/me
           if ((user as any)?.id === undefined || (user as any)?.id === null) {
-            this.http.get<User>(`${this.apiUrl}/users/me`, { headers })
+            this.http.get<any>(`${this.apiUrl}/users/me`, { headers })
               .subscribe({
                 next: me => {
                   console.log('Profilo utente (completo) da /users/me:', me);
-                  this.setCurrentUser(me);
+                  const mappedUser = this.mapSnakeCaseToCamelCase(me);
+                  this.setCurrentUser(mappedUser);
                 },
                 error: err => {
                   console.error('Errore nel recupero di /users/me dopo verify-token OK:', err);
@@ -223,18 +242,20 @@ export class AuthService {
                 }
               });
           } else {
-            this.setCurrentUser(user);
+            const mappedUser = this.mapSnakeCaseToCamelCase(user);
+            this.setCurrentUser(mappedUser);
           }
         },
         error: error => {
           console.error('Errore con verify-token, provo /users/me:', error);
           
           // Se fallisce, prova /users/me
-          this.http.get<User>(`${this.apiUrl}/users/me`, { headers })
+          this.http.get<any>(`${this.apiUrl}/users/me`, { headers })
             .subscribe({
               next: user => {
                 console.log('Profilo utente caricato con successo da /users/me:', user);
-                this.setCurrentUser(user);
+                const mappedUser = this.mapSnakeCaseToCamelCase(user);
+                this.setCurrentUser(mappedUser);
               },
               error: secondError => {
                 console.error('Failed to load user profile from both endpoints', secondError);
@@ -257,6 +278,15 @@ export class AuthService {
   }
   
   private checkToken(): void {
+    if (this.isLoggedIn()) {
+      this.loadUserProfile();
+    }
+  }
+
+  /**
+   * Metodo pubblico per ricaricare il profilo utente
+   */
+  refreshUserProfile(): void {
     if (this.isLoggedIn()) {
       this.loadUserProfile();
     }
