@@ -1,0 +1,256 @@
+<div class="profile-container">
+  <!-- Loading spinner -->
+  <div *ngIf="isLoading && !currentUser" class="loading-container">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p class="loading-text">Caricamento profilo...</p>
+  </div>
+
+  <!-- Messaggio di errore -->
+  <div *ngIf="errorMessage" class="error-message">
+    <mat-icon>error</mat-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Contenuto principale -->
+  <ng-container *ngIf="currentUser && !isLoading">
+    <!-- Header con Avatar -->
+    <div class="profile-header">
+      <mat-card class="profile-header-card">
+        <div class="header-content">
+          <div class="avatar-container">
+            <div class="profile-avatar">
+              {{ getUserInitials(currentUser) }}
+            </div>
+          </div>
+          <div class="header-info">
+            <h1 class="profile-name">
+              {{ currentUser.firstName }} {{ currentUser.lastName }}
+            </h1>
+            <div class="profile-meta">
+              <mat-chip [color]="getRoleColor(currentUser.role)" highlighted>
+                <mat-icon>badge</mat-icon>
+                {{ getUserRoleLabel(currentUser.role) }}
+              </mat-chip>
+              <mat-chip [color]="currentUser.isActive ? 'primary' : 'warn'" highlighted>
+                <mat-icon>{{ currentUser.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+                {{ currentUser.isActive ? 'Attivo' : 'Inattivo' }}
+              </mat-chip>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button 
+              *ngIf="!isEditing"
+              mat-raised-button 
+              color="primary" 
+              (click)="toggleEdit()"
+              matTooltip="Modifica profilo">
+              <mat-icon>edit</mat-icon>
+              Modifica
+            </button>
+            <div *ngIf="isEditing" class="edit-actions">
+              <button 
+                mat-button 
+                (click)="toggleEdit()"
+                matTooltip="Annulla modifiche">
+                <mat-icon>close</mat-icon>
+                Annulla
+              </button>
+              <button 
+                mat-raised-button 
+                color="primary" 
+                (click)="saveProfile()"
+                [disabled]="profileForm.invalid || isLoading"
+                matTooltip="Salva modifiche">
+                <mat-icon>save</mat-icon>
+                Salva
+              </button>
+            </div>
+          </div>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <mat-card class="profile-content-card">
+      <mat-tab-group animationDuration="300ms">
+        <!-- Tab Informazioni Personali -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="me-1">person</mat-icon>
+            <span>Informazioni Personali</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="info-section">
+              <div class="info-grid">
+                <!-- Username -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>account_circle</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Username</div>
+                    <div class="info-value">{{ currentUser.username }}</div>
+                  </div>
+                </div>
+
+                <!-- Nome -->
+                <div class="info-item" [class.editing]="isEditing">
+                  <div class="info-icon">
+                    <mat-icon>person</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Nome</div>
+                    <div *ngIf="!isEditing" class="info-value">{{ currentUser.firstName }}</div>
+                    <mat-form-field *ngIf="isEditing" appearance="outline" class="full-width">
+                      <mat-label>Nome</mat-label>
+                      <input matInput formControlName="firstName" required>
+                      <mat-error *ngIf="f['firstName'].hasError('required')">Il nome è obbligatorio</mat-error>
+                      <mat-error *ngIf="f['firstName'].hasError('minlength')">Il nome deve contenere almeno 2 caratteri</mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Cognome -->
+                <div class="info-item" [class.editing]="isEditing">
+                  <div class="info-icon">
+                    <mat-icon>person_outline</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Cognome</div>
+                    <div *ngIf="!isEditing" class="info-value">{{ currentUser.lastName }}</div>
+                    <mat-form-field *ngIf="isEditing" appearance="outline" class="full-width">
+                      <mat-label>Cognome</mat-label>
+                      <input matInput formControlName="lastName" required>
+                      <mat-error *ngIf="f['lastName'].hasError('required')">Il cognome è obbligatorio</mat-error>
+                      <mat-error *ngIf="f['lastName'].hasError('minlength')">Il cognome deve contenere almeno 2 caratteri</mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Email -->
+                <div class="info-item" [class.editing]="isEditing">
+                  <div class="info-icon">
+                    <mat-icon>email</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Email</div>
+                    <div *ngIf="!isEditing" class="info-value">{{ currentUser.email }}</div>
+                    <mat-form-field *ngIf="isEditing" appearance="outline" class="full-width">
+                      <mat-label>Email</mat-label>
+                      <input matInput type="email" formControlName="email" required>
+                      <mat-error *ngIf="f['email'].hasError('required')">L'email è obbligatoria</mat-error>
+                      <mat-error *ngIf="f['email'].hasError('email')">Inserisci un'email valida</mat-error>
+                    </mat-form-field>
+                  </div>
+                </div>
+
+                <!-- Ruolo -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>badge</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Ruolo</div>
+                    <div class="info-value">{{ getUserRoleLabel(currentUser.role) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab Account -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="me-1">account_box</mat-icon>
+            <span>Account</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="info-section">
+              <div class="info-grid">
+                <!-- Data Creazione -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>calendar_today</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Data Creazione</div>
+                    <div class="info-value">{{ formatDate(currentUser.createdAt) }}</div>
+                  </div>
+                </div>
+
+                <!-- Ultimo Aggiornamento -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>update</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Ultimo Aggiornamento</div>
+                    <div class="info-value">{{ formatDate(currentUser.updatedAt) }}</div>
+                  </div>
+                </div>
+
+                <!-- Ultimo Accesso -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>login</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Ultimo Accesso</div>
+                    <div class="info-value">{{ formatDate(currentUser.lastLogin) }}</div>
+                  </div>
+                </div>
+
+                <!-- Stato Account -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>{{ currentUser.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Stato Account</div>
+                    <div class="info-value">
+                      <mat-chip [color]="currentUser.isActive ? 'primary' : 'warn'" highlighted>
+                        {{ currentUser.isActive ? 'Attivo' : 'Inattivo' }}
+                      </mat-chip>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab Sicurezza -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="me-1">lock</mat-icon>
+            <span>Sicurezza</span>
+          </ng-template>
+          <div class="tab-content">
+            <div class="security-section">
+              <div class="security-card">
+                <div class="security-header">
+                  <mat-icon>lock</mat-icon>
+                  <h3>Password</h3>
+                </div>
+                <p class="security-description">
+                  Modifica la tua password per mantenere il tuo account sicuro. 
+                  Dopo il cambio password, dovrai effettuare nuovamente il login.
+                </p>
+                <button 
+                  mat-raised-button 
+                  color="primary" 
+                  (click)="navigateToChangePassword()"
+                  class="security-button">
+                  <mat-icon>key</mat-icon>
+                  Cambia Password
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+  </ng-container>
+</div>
+
