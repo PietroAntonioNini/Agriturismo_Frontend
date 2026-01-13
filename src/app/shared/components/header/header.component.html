@@ -33,29 +33,66 @@
       </button>
 
       <!-- Notifiche -->
-      <div class="action-button notifications" [matMenuTriggerFor]="notificationsMenu">
-        <mat-icon [matBadge]="notificationsCount" [matBadgeHidden]="notificationsCount === 0">notifications</mat-icon>
+      <div class="action-button notifications" [matMenuTriggerFor]="notificationsMenu" (click)="loadReadingNotifications(false)">
+        <mat-icon [matBadge]="notificationsCount" [matBadgeHidden]="notificationsCount === 0" [matBadgeColor]="notificationsCount > 0 ? 'warn' : 'primary'">notifications</mat-icon>
       </div>
       <mat-menu #notificationsMenu="matMenu" class="notifications-menu">
         <div class="notifications-header">
           <h3>Notifiche</h3>
-          <button mat-button color="primary" *ngIf="notificationsCount > 0">Segna tutto come letto</button>
+          <button 
+            mat-button 
+            color="primary" 
+            *ngIf="notificationsCount > 0" 
+            (click)="markAllAsRead()"
+            class="mark-all-read-btn">
+            Segna tutto come letto
+          </button>
         </div>
-        <div class="notifications-list" *ngIf="notificationsCount > 0">
-          <!-- Lista notifiche qui (da implementare) -->
-          <div class="notification-item">
-            <div class="notification-icon success">
-              <mat-icon>check_circle</mat-icon>
+        <div class="notifications-list" *ngIf="notifications.length > 0">
+          <div 
+            *ngFor="let notification of notifications" 
+            class="notification-item"
+            [class.unread]="!notification.isRead"
+            [class.reading-notification]="notification.category === 'reading'"
+            (click)="notification.category === 'reading' ? navigateToUtility(notification, $event) : null"
+            [class.clickable]="notification.category === 'reading'">
+            <div class="notification-icon" [ngClass]="{
+              'warning': notification.color === '#f59e0b',
+              'info': notification.color === '#3b82f6',
+              'success': notification.color === '#10b981',
+              'error': notification.color === '#ef4444'
+            }">
+              <mat-icon>{{ notification.icon }}</mat-icon>
             </div>
             <div class="notification-content">
-              <div class="notification-title">Nuovo contratto aggiunto</div>
-              <div class="notification-time">10 minuti fa</div>
+              <div class="notification-title">{{ notification.title }}</div>
+              <div class="notification-subtitle" *ngIf="notification.subtitle">{{ notification.subtitle }}</div>
+              <div class="notification-details" *ngIf="notification.category === 'reading' && notification.metadata?.apartmentNames">
+                <div class="apartments-list">
+                  <span *ngFor="let name of notification.metadata.apartmentNames.slice(0, 3); let last = last">
+                    {{ name }}<span *ngIf="!last">, </span>
+                  </span>
+                  <span *ngIf="(notification.metadata.apartmentNames?.length || 0) > 3">
+                    e altri {{ (notification.metadata.apartmentNames?.length || 0) - 3 }}
+                  </span>
+                </div>
+              </div>
+              <div class="notification-time">{{ getRelativeTime(notification.timestamp) }}</div>
             </div>
+            <button 
+              mat-icon-button 
+              class="mark-read-btn"
+              (click)="markAsRead(notification.id, $event)"
+              *ngIf="!notification.isRead"
+              matTooltip="Segna come letto">
+              <mat-icon>check</mat-icon>
+            </button>
           </div>
         </div>
-        <div class="notifications-empty" *ngIf="notificationsCount === 0">
+        <div class="notifications-empty" *ngIf="notifications.length === 0">
           <mat-icon>notifications_off</mat-icon>
           <p>Nessuna notifica</p>
+          <p class="empty-subtitle">Tutte le letture sono aggiornate</p>
         </div>
       </mat-menu>
 

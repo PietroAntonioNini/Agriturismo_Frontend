@@ -1,5 +1,10 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { GenericApiService } from './generic-api.service';
+import { Apartment } from '../models/apartment.model';
+import { Lease } from '../models/lease.model';
+import { UtilityReading } from '../models/utility-reading.model';
 
 export interface ActivityNotification {
   id: string;
@@ -12,18 +17,38 @@ export interface ActivityNotification {
   color: string;
   entityId?: number;
   entityName?: string;
+  isRead?: boolean;
+  category?: 'activity' | 'reading';
+  metadata?: {
+    apartmentIds?: number[];
+    apartmentNames?: string[];
+    missingTypes?: ('electricity' | 'water' | 'gas')[];
+    [key: string]: any;
+  };
+}
+
+export interface ReadingNotificationData {
+  apartmentsWithoutReadings: Array<{ id: number; name: string }>;
+  apartmentsWithIncompleteReadings: Array<{
+    id: number;
+    name: string;
+    missingTypes: ('electricity' | 'water' | 'gas')[];
+  }>;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
-  private readonly MAX_NOTIFICATIONS = 7;
+  private readonly MAX_NOTIFICATIONS = 50;
   private notificationsSubject = new BehaviorSubject<ActivityNotification[]>([]);
+  private readingNotificationsCache: ReadingNotificationData | null = null;
+  private lastReadingCheck: Date | null = null;
+  private readonly READING_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minuti
   
   public notifications$ = this.notificationsSubject.asObservable();
 
-  constructor() {
+  constructor(private apiService: GenericApiService) {
     // Carica le notifiche dal localStorage se disponibili
     this.loadNotifications();
   }
@@ -35,11 +60,19 @@ export class NotificationService {
     const newNotification: ActivityNotification = {
       ...notification,
       id: this.generateId(),
-      timestamp: new Date()
+      timestamp: new Date(),
+      isRead: notification.isRead ?? false,
+      category: notification.category ?? 'activity'
     };
 
     const currentNotifications = this.notificationsSubject.value;
-    const updatedNotifications = [newNotification, ...currentNotifications].slice(0, this.MAX_NOTIFICATIONS);
+    // Rimuovi notifiche duplicate basate su title e category
+    const filteredNotifications = currentNotifications.filter(n => 
+      !(n.title === newNotification.title && 
+        n.category === newNotification.category &&
+        n.category === 'reading')
+    );
+    const updatedNotifications = [newNotification, ...filteredNotifications].slice(0, this.MAX_NOTIFICATIONS);
     
     this.notificationsSubject.next(updatedNotifications);
     this.saveNotifications(updatedNotifications);
@@ -157,6 +190,242 @@ export class NotificationService {
   }
 
   /**
+   * Segna una notifica come letta
+   */
+  markAsRead(notificationId: string): void {
+    const currentNotifications = this.notificationsSubject.value;
+    const updatedNotifications = currentNotifications.map(n => 
+      n.id === notificationId ? { ...n, isRead: true } : n
+    );
+    
+    this.notificationsSubject.next(updatedNotifications);
+    this.saveNotifications(updatedNotifications);
+  }
+
+  /**
+   * Segna tutte le notifiche come lette
+   */
+  markAllAsRead(): void {
+    const currentNotifications = this.notificationsSubject.value;
+    const updatedNotifications = currentNotifications.map(n => ({ ...n, isRead: true }));
+    
+    this.notificationsSubject.next(updatedNotifications);
+    this.saveNotifications(updatedNotifications);
+  }
+
+  /**
+   * Ottiene il numero di notifiche non lette
+   */
+  getUnreadCount(): number {
+    return this.notificationsSubject.value.filter(n => !n.isRead).length;
+  }
+
+  /**
+   * Ottiene le notifiche sulle letture
+   */
+  getReadingNotifications(): ActivityNotification[] {
+    return this.notificationsSubject.value.filter(n => n.category === 'reading');
+  }
+
+  /**
+   * Verifica le letture mancanti o incomplete per gli appartamenti occupati
+   */
+  checkMissingReadings(forceRefresh: boolean = false): Observable<ReadingNotificationData> {
+    const now = Date.now();
+    
+    // Usa cache se disponibile e non è scaduta
+    if (!forceRefresh && 
+        this.readingNotificationsCache && 
+        this.lastReadingCheck && 
+        (now - this.lastReadingCheck.getTime()) < this.READING_CHECK_INTERVAL) {
+      return of(this.readingNotificationsCache);
+    }
+
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    // Recupera appartamenti occupati e letture in parallelo
+    return forkJoin({
+      apartments: this.apiService.getAll<Apartment>('apartments').pipe(
+        catchError(() => of([]))
+      ),
+      leases: this.apiService.getAll<Lease>('leases', { status: 'active' }).pipe(
+        catchError(() => of([]))
+      ),
+      readings: this.apiService.getAll<UtilityReading>('utilities').pipe(
+        catchError(() => of([]))
+      )
+    }).pipe(
+      map(({ apartments, leases, readings }) => {
+        // Estrai ID appartamenti occupati
+        const occupiedApartmentIds = new Set(
+          leases.map(lease => lease.apartmentId)
+        );
+
+        // Filtra solo appartamenti occupati
+        const occupiedApartments = apartments.filter(apt => 
+          occupiedApartmentIds.has(apt.id)
+        );
+
+        // Filtra letture del mese corrente
+        const currentMonthReadings = readings.filter(reading => {
+          const readingDate = new Date(reading.readingDate);
+          return readingDate.getMonth() === currentMonth && 
+                 readingDate.getFullYear() === currentYear;
+        });
+
+        // Raggruppa letture per appartamento e tipo
+        const readingsByApartment = new Map<number, Set<'electricity' | 'water' | 'gas'>>();
+        
+        currentMonthReadings.forEach(reading => {
+          if (!readingsByApartment.has(reading.apartmentId)) {
+            readingsByApartment.set(reading.apartmentId, new Set());
+          }
+          readingsByApartment.get(reading.apartmentId)!.add(reading.type);
+        });
+
+        // Identifica appartamenti senza letture
+        const apartmentsWithoutReadings: Array<{ id: number; name: string }> = [];
+        const apartmentsWithIncompleteReadings: Array<{
+          id: number;
+          name: string;
+          missingTypes: ('electricity' | 'water' | 'gas')[];
+        }> = [];
+
+        // Tipi di utenze standard
+        const standardTypes: ('electricity' | 'water' | 'gas')[] = ['electricity', 'water', 'gas'];
+
+        occupiedApartments.forEach(apartment => {
+          const apartmentReadings = readingsByApartment.get(apartment.id) || new Set();
+          
+          if (apartmentReadings.size === 0) {
+            // Nessuna lettura per questo appartamento
+            apartmentsWithoutReadings.push({
+              id: apartment.id,
+              name: apartment.name
+            });
+          } else if (apartmentReadings.size < standardTypes.length) {
+            // Letture incomplete
+            const missingTypes = standardTypes.filter(type => !apartmentReadings.has(type));
+            apartmentsWithIncompleteReadings.push({
+              id: apartment.id,
+              name: apartment.name,
+              missingTypes
+            });
+          }
+        });
+
+        const result: ReadingNotificationData = {
+          apartmentsWithoutReadings,
+          apartmentsWithIncompleteReadings
+        };
+
+        // Aggiorna cache
+        this.readingNotificationsCache = result;
+        this.lastReadingCheck = new Date();
+
+        // Genera notifiche
+        this.generateReadingNotifications(result);
+
+        return result;
+      })
+    );
+  }
+
+  /**
+   * Genera notifiche basate sui dati delle letture mancanti
+   */
+  private generateReadingNotifications(data: ReadingNotificationData): void {
+    const currentNotifications = this.notificationsSubject.value;
+    
+    // Rimuovi vecchie notifiche sulle letture
+    const filteredNotifications = currentNotifications.filter(n => n.category !== 'reading');
+
+    // Notifica per appartamenti senza letture
+    if (data.apartmentsWithoutReadings.length > 0) {
+      const apartmentNames = data.apartmentsWithoutReadings
+        .slice(0, 3)
+        .map(a => a.name)
+        .join(', ');
+      const remaining = data.apartmentsWithoutReadings.length - 3;
+      const subtitle = remaining > 0 
+        ? `${apartmentNames}${remaining > 0 ? ` e altri ${remaining}` : ''}`
+        : apartmentNames;
+
+      this.addNotification({
+        type: 'utility',
+        action: 'created',
+        title: data.apartmentsWithoutReadings.length === 1
+          ? '1 appartamento senza letture mensili'
+          : `${data.apartmentsWithoutReadings.length} appartamenti senza letture mensili`,
+        subtitle,
+        icon: 'warning',
+        color: '#f59e0b', // Arancione per warning
+        category: 'reading',
+        isRead: false,
+        metadata: {
+          apartmentIds: data.apartmentsWithoutReadings.map(a => a.id),
+          apartmentNames: data.apartmentsWithoutReadings.map(a => a.name)
+        }
+      });
+    }
+
+    // Notifica per appartamenti con letture incomplete
+    if (data.apartmentsWithIncompleteReadings.length > 0) {
+      const apartmentNames = data.apartmentsWithIncompleteReadings
+        .slice(0, 3)
+        .map(a => a.name)
+        .join(', ');
+      const remaining = data.apartmentsWithIncompleteReadings.length - 3;
+      const subtitle = remaining > 0 
+        ? `${apartmentNames}${remaining > 0 ? ` e altri ${remaining}` : ''}`
+        : apartmentNames;
+
+      // Determina tipi mancanti più comuni
+      const missingTypesCount = new Map<string, number>();
+      data.apartmentsWithIncompleteReadings.forEach(apt => {
+        apt.missingTypes.forEach(type => {
+          missingTypesCount.set(type, (missingTypesCount.get(type) || 0) + 1);
+        });
+      });
+
+      const mostCommonMissing = Array.from(missingTypesCount.entries())
+        .sort((a, b) => b[1] - a[1])[0]?.[0];
+
+      const missingTypeName = mostCommonMissing 
+        ? this.getUtilityTypeName(mostCommonMissing)
+        : 'utilities';
+
+      this.addNotification({
+        type: 'utility',
+        action: 'created',
+        title: data.apartmentsWithIncompleteReadings.length === 1
+          ? `1 appartamento con letture incomplete (manca ${missingTypeName})`
+          : `${data.apartmentsWithIncompleteReadings.length} appartamenti con letture incomplete`,
+        subtitle,
+        icon: 'info',
+        color: '#3b82f6', // Blu per info
+        category: 'reading',
+        isRead: false,
+        metadata: {
+          apartmentIds: data.apartmentsWithIncompleteReadings.map(a => a.id),
+          apartmentNames: data.apartmentsWithIncompleteReadings.map(a => a.name),
+          missingTypes: data.apartmentsWithIncompleteReadings.flatMap(a => a.missingTypes)
+        }
+      });
+    }
+  }
+
+  /**
+   * Invalida la cache delle letture (da chiamare quando vengono aggiunte nuove letture)
+   */
+  invalidateReadingCache(): void {
+    this.readingNotificationsCache = null;
+    this.lastReadingCheck = null;
+  }
+
+  /**
    * Pulisce tutte le notifiche
    */
   clearAllNotifications(): void {
@@ -197,7 +466,9 @@ export class NotificationService {
     try {
       const notificationsToSave = notifications.map(n => ({
         ...n,
-        timestamp: n.timestamp.toISOString()
+        timestamp: n.timestamp.toISOString(),
+        isRead: n.isRead ?? false,
+        category: n.category ?? 'activity'
       }));
       localStorage.setItem('dashboard_notifications', JSON.stringify(notificationsToSave));
     } catch (error) {
@@ -214,7 +485,9 @@ export class NotificationService {
       if (saved) {
         const notifications = JSON.parse(saved).map((n: any) => ({
           ...n,
-          timestamp: new Date(n.timestamp)
+          timestamp: new Date(n.timestamp),
+          isRead: n.isRead ?? false,
+          category: n.category ?? 'activity'
         }));
         this.notificationsSubject.next(notifications);
       }

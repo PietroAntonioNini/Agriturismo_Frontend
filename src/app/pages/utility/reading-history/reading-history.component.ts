@@ -443,6 +443,9 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
           updatedReading.type,
           updatedReading.id
         );
+        
+        // Invalida la cache delle notifiche sulle letture
+        this.notificationService.invalidateReadingCache();
 
         this.showSuccessSnackBar('Lettura aggiornata con successo (in attesa di propagazione...)');
       } else if (result === true) {
@@ -484,6 +487,9 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
                 readingToDelete.type,
                 readingToDelete.id
               );
+              
+              // Invalida la cache delle notifiche sulle letture
+              this.notificationService.invalidateReadingCache();
             }
 
             this.showSuccessSnackBar('Lettura eliminata con successo');

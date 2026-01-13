@@ -297,44 +297,119 @@
   }
   
   .notifications-menu {
-    min-width: 320px;
-    max-width: 360px;
+    min-width: 380px;
+    max-width: 420px;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08) !important;
     
     .notifications-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: var(--spacing-xs) var(--spacing-md);
-      background: linear-gradient(145deg, rgba(var(--primary-color-rgb), 0.05), rgba(var(--primary-color-rgb), 0.1));
-      border-bottom: 1px solid rgba(var(--primary-color-rgb), 0.1);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: linear-gradient(145deg, rgba(var(--primary-color-rgb), 0.08), rgba(var(--primary-color-rgb), 0.12));
+      border-bottom: 1px solid rgba(var(--primary-color-rgb), 0.15);
       
       h3 {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 600;
         margin: 0;
+        color: var(--text-primary);
+      }
+
+      .mark-all-read-btn {
+        font-size: 12px;
+        padding: 4px 12px;
+        min-width: auto;
+        line-height: 1.4;
       }
     }
     
     .notifications-list {
-      max-height: 360px;
+      max-height: 480px;
       overflow-y: auto;
+      overflow-x: hidden;
+
+      // Scrollbar personalizzata
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background: rgba(var(--primary-color-rgb), 0.05);
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: rgba(var(--primary-color-rgb), 0.2);
+        border-radius: 3px;
+
+        &:hover {
+          background: rgba(var(--primary-color-rgb), 0.3);
+        }
+      }
     }
     
     .notification-item {
       display: flex;
-      padding: var(--spacing-md);
-      border-bottom: 1px solid var(--border-color);
-      transition: background-color var(--transition-fast);
-      
-      &:hover {
-        background-color: rgba(var(--primary-color-rgb), 0.05);
+      align-items: flex-start;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid rgba(var(--primary-color-rgb), 0.08);
+      transition: all var(--transition-fast);
+      position: relative;
+      cursor: default;
+
+      &.unread {
+        background-color: rgba(var(--primary-color-rgb), 0.03);
+        border-left: 3px solid var(--primary-color);
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background-color: var(--primary-color);
+        }
+      }
+
+      &.clickable {
+        cursor: pointer;
+
+        &:hover {
+          background-color: rgba(var(--primary-color-rgb), 0.08);
+        }
+      }
+
+      &.reading-notification {
+        &:hover {
+          background-color: rgba(var(--primary-color-rgb), 0.06);
+        }
       }
       
       &:last-child {
         border-bottom: none;
+      }
+
+      .mark-read-btn {
+        opacity: 0;
+        transition: opacity var(--transition-fast);
+        width: 32px;
+        height: 32px;
+        margin-left: var(--spacing-xs);
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      &:hover .mark-read-btn {
+        opacity: 1;
       }
     }
     
@@ -342,45 +417,83 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: var(--border-radius-circle);
       margin-right: var(--spacing-md);
+      flex-shrink: 0;
+      transition: transform var(--transition-fast);
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
       
       &.success {
-        background-color: rgba(16, 185, 129, 0.1);
+        background-color: rgba(16, 185, 129, 0.15);
         color: #10b981;
       }
       
       &.warning {
-        background-color: rgba(245, 158, 11, 0.1);
+        background-color: rgba(245, 158, 11, 0.15);
         color: #f59e0b;
       }
       
       &.error {
-        background-color: rgba(239, 68, 68, 0.1);
+        background-color: rgba(239, 68, 68, 0.15);
         color: #ef4444;
       }
       
       &.info {
-        background-color: rgba(59, 130, 246, 0.1);
+        background-color: rgba(59, 130, 246, 0.15);
         color: #3b82f6;
       }
+    }
+
+    .notification-item:hover .notification-icon {
+      transform: scale(1.1);
     }
     
     .notification-content {
       flex: 1;
+      min-width: 0;
     }
     
     .notification-title {
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       margin-bottom: 4px;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .notification-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .notification-details {
+      margin: 6px 0;
+      
+      .apartments-list {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        padding: 6px 10px;
+        background-color: rgba(var(--primary-color-rgb), 0.05);
+        border-radius: 6px;
+        display: inline-block;
+      }
     }
     
     .notification-time {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
     }
     
     .notifications-empty {
@@ -388,19 +501,27 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: var(--spacing-xl);
+      padding: var(--spacing-xxl) var(--spacing-xl);
       color: var(--text-muted);
+      text-align: center;
       
       mat-icon {
-        font-size: 48px;
-        width: 48px;
-        height: 48px;
+        font-size: 56px;
+        width: 56px;
+        height: 56px;
         margin-bottom: var(--spacing-md);
-        opacity: 0.5;
+        opacity: 0.4;
       }
       
       p {
         font-size: 14px;
+        margin: 0;
+
+        &.empty-subtitle {
+          font-size: 12px;
+          margin-top: 4px;
+          opacity: 0.7;
+        }
       }
     }
   }

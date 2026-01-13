@@ -512,6 +512,9 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
           const action = this.data.editingReading ? 'updated' : 'created';
           this.notificationService.notifyUtilityReading(action, apartmentName, formValue.type, result.id);
           
+          // Invalida la cache delle notifiche sulle letture per forzare il refresh
+          this.notificationService.invalidateReadingCache();
+          
           this.showSuccessSnackBar(
             this.data.editingReading 
               ? 'Lettura aggiornata con successo' 
