@@ -81,10 +81,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
   z-index: 10;
   position: relative;
   
-  @media (max-width: 480px) {
-    margin: 1rem;
-  }
-  
   &.flipped {
     .card-front {
       transform: rotateY(180deg);
@@ -114,10 +110,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  
-  @media (max-width: 480px) {
-    padding: 1.5rem;
-  }
 }
 
 .register-card {
@@ -149,10 +141,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
     font-weight: 700;
     margin-bottom: 1rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    
-    @media (max-width: 768px) {
-      font-size: 1.8rem;
-    }
   }
   
   p {
@@ -161,10 +149,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
     margin: 0;
     opacity: 0.9;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    
-    @media (max-width: 768px) {
-      font-size: 1rem;
-    }
   }
 }
 
@@ -195,15 +179,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
     top: 15%;
     left: 10%;
     animation-delay: 0s;
-    
-    @media (max-width: 1400px) {
-      top: 10%;
-      left: 5%;
-    }
-    
-    @media (max-width: 768px) {
-      display: none;
-    }
   }
   
   // Inquilini card - bottom right
@@ -211,15 +186,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
     bottom: 20%;
     right: 10%;
     animation-delay: 2s;
-    
-    @media (max-width: 1400px) {
-      bottom: 15%;
-      right: 5%;
-    }
-    
-    @media (max-width: 768px) {
-      display: none;
-    }
   }
   
   // Fatturazione card - top right
@@ -227,15 +193,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
     top: 15%;
     right: 10%;
     animation-delay: 4s;
-    
-    @media (max-width: 1400px) {
-      top: 10%;
-      right: 5%;
-    }
-    
-    @media (max-width: 768px) {
-      display: none;
-    }
   }
   
   // Contratti card - bottom left
@@ -243,15 +200,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
     bottom: 20%;
     left: 10%;
     animation-delay: 3s;
-    
-    @media (max-width: 1400px) {
-      bottom: 15%;
-      left: 5%;
-    }
-    
-    @media (max-width: 768px) {
-      display: none;
-    }
   }
 }
 
@@ -355,12 +303,6 @@ $accent-gradient: linear-gradient(135deg, #2d7d46 0%, #1e5e34 100%);
   letter-spacing: -0.025em;
 }
 
-.login-subtitle {
-  color: $text-secondary;
-  font-size: 0.9rem;
-  margin: 0;
-}
-
 // Form elements
 form {
   margin-bottom: 1rem;
@@ -371,12 +313,6 @@ form {
   display: flex;
   gap: 0.8rem;
   margin-bottom: 0.8rem;
-  
-  @media (max-width: 480px) {
-    flex-direction: column;
-    gap: 0;
-    margin-bottom: 0;
-  }
   
   .form-group {
     flex: 1;
@@ -411,17 +347,16 @@ form {
 
 label {
   display: block;
-  margin-bottom: 0.4rem;
   font-size: 0.85rem;
   font-weight: 600;
   color: $text-primary;
+  margin-bottom: 0.4rem;
 }
 
 .label-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.4rem;
 }
 
 .input-wrapper {
@@ -720,33 +655,6 @@ label {
   }
 }
 
-// Footer
-.login-footer {
-  text-align: center;
-  width: 100%;
-  padding: 0.8rem;
-  margin-top: 2rem;
-  position: relative;
-  z-index: 20;
-  
-  p {
-    color: $white;
-    font-size: 0.75rem;
-    margin: 0;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-  
-  @media (max-width: 1024px) {
-    position: relative;
-    padding: 1rem 0;
-    
-    p {
-      color: $text-secondary;
-      text-shadow: none;
-    }
-  }
-}
-
 // Step registration
 .registration-step {
   display: none;
@@ -823,4 +731,204 @@ label {
     background-color: $background-light;
     border-color: $primary-color;
   }
+}
+
+// ============================================
+// MEDIA QUERIES
+// ============================================
+
+// Portatili (max-width: 1300px)
+@media screen and (max-width: 1600px) {
+
+  .feature-item {
+    // Proprietà card - top left
+    &:nth-child(1) {
+      left: 5%;
+    }
+    
+    // Inquilini card - bottom right
+    &:nth-child(2) {
+      right: 5%;
+    }
+    
+    // Fatturazione card - top right
+    &:nth-child(3) {
+      right: 5%;
+    }
+    
+    // Contratti card - bottom left
+    &:nth-child(4) {
+      left: 5%;
+    }
+  }
+
+  .login-panel {
+    padding: 1rem 0 0;
+  }
+
+  // Card container with flip effect
+  .card-container {
+    min-height: 400px;
+  }
+
+  .register-card {
+    min-height: 500px;
+  }
+
+  // Main headline - now above form
+  .main-headline {
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      font-size: 0.9rem;
+    }
+  }
+
+  .login-card, .register-card {
+    width: 490px;
+    padding: 1rem 2rem;
+    margin: auto;
+  }
+
+  // Logo and header section
+  .login-header, .card-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .logo-container {
+    margin-bottom: 0.5rem;
+  }
+
+  .logo {
+    width: 40px;
+    height: 40px;
+    
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .welcome-text {
+    font-size: 1.3rem;
+  }
+
+  // Form elements
+  form {
+    margin-bottom: 0;
+  }
+
+  // Form row (for two columns)
+  .form-row {
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+    
+    .form-group {
+      margin-bottom: 0.2rem;
+      
+      .form-control {
+        width: 100%;
+        padding: 0.6rem 0.6rem 0.6rem 2.4rem;
+      }
+    }
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  label {
+    margin-bottom: 0.2rem;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 0.8rem;
+    color: $text-secondary;
+    pointer-events: none;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.8rem 0.8rem 0.8rem 2.4rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    border: 1px solid $border-color;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    color: $text-primary;
+    background-color: $white;
+    
+    &::placeholder {
+      color: color.adjust($text-secondary, $lightness: 15%);
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      box-shadow: 0 0 0 4px rgba(45, 125, 70, 0.15);
+    }
+    
+    &.is-invalid {
+      border-color: $error-color;
+      
+      &:focus {
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+      }
+    }
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 0.8rem;
+    cursor: pointer;
+    color: $text-secondary;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      color: $primary-color;
+    }
+    
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .invalid-feedback {
+    margin-top: 0;
+  }
+
+  // Remember me
+  .remember-me {
+    margin-bottom: 1.2rem;
+  }
+
+  .step-title {
+    margin-bottom: 1rem;
+  }
+}
+
+// Tablet (max-width: 768px)
+@media screen and (max-width: 768px) {
+}
+
+// Mobile (max-width: 480px)
+@media screen and (max-width: 480px) {
 }
