@@ -2,7 +2,7 @@
   <!-- Header Section -->
   <div class="header-section">
     <div class="title-area">
-      <h1>Gestione Utenze <span class="counter" *ngIf="apartments.length">{{apartments.length}}</span></h1>
+      <h1>Gestione Utenze</h1>
       <p class="subtitle">Monitora e gestisci i consumi di elettricità, acqua e gas</p>
     </div>
 
@@ -46,18 +46,7 @@
     <!-- Statistics Cards -->
     <div class="statistics-section" *ngIf="utilityStatistics">
       <div class="stats-grid">
-        <mat-card class="stat-card primary">
-          <div class="stat-content">
-            <div class="stat-icon">
-              <mat-icon>home</mat-icon>
-            </div>
-            <div class="stat-details">
-              <span class="stat-value">{{utilityStatistics.totalApartments}}</span>
-              <span class="stat-label">Appartamenti</span>
-            </div>
-          </div>
-        </mat-card>
-
+        
         <mat-card class="stat-card electricity">
           <div class="stat-content">
             <div class="stat-icon">

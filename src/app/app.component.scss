@@ -15,7 +15,11 @@
 }
 
 .fixed-sidenav {
-  width: 240px; /* Larghezza fissa per la sidenav */
+  @if (max-width: 1600px) {
+    width: 190px;
+  } @else {
+    width: 240px;
+  }
   position: fixed;
   left: 0;
   top: 64px;
@@ -25,9 +29,12 @@
 
 .main-content {
   flex: 1;
+  @if (max-width: 1600px) {
+    margin-left: 190px;
+  } @else {
+    margin-left: 240px;
+  }
   width: calc(100% - 240px);
-  margin-left: 240px; /* Stessa larghezza della sidenav */
-  padding: 20px;
   overflow-y: auto;
   min-height: calc(100vh - 64px);
 }

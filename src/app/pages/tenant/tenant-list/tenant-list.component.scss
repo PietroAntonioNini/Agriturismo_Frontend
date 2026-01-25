@@ -1017,3 +1017,36 @@ $transition-speed: var(--transition-normal);
     }
   }
 }
+
+// ============================================
+// MEDIA QUERIES
+// ============================================
+
+// Portatili (max-width: 1300px)
+@media screen and (max-width: 1600px) {
+  
+  .tenants-grid {
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 20px;
+  }
+
+  .avatar-cell {
+    width: 70px !important;
+  }
+
+  .contact-cell {
+    width: 180px !important;
+  }
+
+  .document-cell {
+    width: 180px !important;
+  }
+}
+
+// Tablet (max-width: 768px)
+@media screen and (max-width: 768px) {
+}
+
+// Mobile (max-width: 480px)
+@media screen and (max-width: 480px) {
+}

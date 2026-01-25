@@ -107,27 +107,18 @@
     .title-area {
       h1 {
         margin: 0;
-        font-size: 2.2rem;
+        font-size: 2rem;
         font-weight: 600;
         color: #2c3e50;
         display: flex;
         align-items: center;
         gap: 12px;
-
-        .counter {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
       }
 
       .subtitle {
         margin: 8px 0 0 0;
         color: #666;
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 400;
       }
     }
@@ -400,6 +391,10 @@
       .controls-content {
         padding: 24px;
         display: flex;
+        @if (max-width: 1600px) {
+          flex-direction: column-reverse;
+          gap: 35px !important;
+        }
         justify-content: space-between;
         gap: 20px;
         align-items: center;
@@ -408,12 +403,22 @@
           display: flex;
           gap: 20px;
 
+          .mat-mdc-form-field {
+            width: 100%;
+            @if (max-width: 1600px) {
+              flex-direction: row;
+            }
+          }
+
           &.view-toggle {
             // Stili per i pulsanti di cambio vista utenze (identici alla dashboard)
             .utility-view-toggle {
               display: flex;
               gap: 12px;
               margin-bottom: 16px;
+              @if (max-width: 1600px) {
+                margin-bottom: 0;
+              }
               
               button {
                 display: flex;
@@ -565,7 +570,11 @@
 
         .apartments-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          @if (max-width: 1600px) {
+            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+          } @else {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          }
           gap: 20px;
 
           .apartment-summary {
@@ -960,4 +969,33 @@
 
 .month-selector-field {
   min-width: 150px;
+}
+
+// ============================================
+// MEDIA QUERIES
+// ============================================
+
+// Portatili (max-width: 1300px)
+@media screen and (max-width: 1600px) {
+  .stat-content {
+    padding: 10px !important;
+    gap: 15px !important;
+
+    .stat-icon {
+      width: 55px !important;
+      height: 55px !important;
+    }
+
+    .stat-value {
+      font-size: 1.5rem !important;
+    }
+  }
+}
+
+// Tablet (max-width: 768px)
+@media screen and (max-width: 768px) {
+}
+
+// Mobile (max-width: 480px)
+@media screen and (max-width: 480px) {
 }

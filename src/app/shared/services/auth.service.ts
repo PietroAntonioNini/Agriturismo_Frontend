@@ -166,12 +166,10 @@ export class AuthService {
     const expiresAt = Number(localStorage.getItem('expires_at'));
     
     if (!token || !expiresAt) {
-      console.debug('[AuthService] isLoggedIn=false (token o expiresAt mancanti)');
       return false;
     }
     
     const valid = new Date().getTime() < expiresAt;
-    console.debug('[AuthService] isLoggedIn=', valid);
     return valid;
   }
   
@@ -226,13 +224,11 @@ export class AuthService {
     this.http.get<any>(`${this.apiUrl}/auth/verify-token`, { headers })
       .subscribe({
         next: user => {
-          console.log('Profilo utente caricato con successo da verify-token:', user);
           // Alcuni backend non includono l'id in verify-token: fallback a /users/me
           if ((user as any)?.id === undefined || (user as any)?.id === null) {
             this.http.get<any>(`${this.apiUrl}/users/me`, { headers })
               .subscribe({
                 next: me => {
-                  console.log('Profilo utente (completo) da /users/me:', me);
                   const mappedUser = this.mapSnakeCaseToCamelCase(me);
                   this.setCurrentUser(mappedUser);
                 },
@@ -253,7 +249,6 @@ export class AuthService {
           this.http.get<any>(`${this.apiUrl}/users/me`, { headers })
             .subscribe({
               next: user => {
-                console.log('Profilo utente caricato con successo da /users/me:', user);
                 const mappedUser = this.mapSnakeCaseToCamelCase(user);
                 this.setCurrentUser(mappedUser);
               },
@@ -293,7 +288,6 @@ export class AuthService {
   }
 
   forgotPassword(username: string, email: string): Observable<any> {
-    console.log("Inviando recupero password con JSON:", { username, email });
     
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { username, email })
       .pipe(
@@ -306,7 +300,6 @@ export class AuthService {
   }
 
   resetPassword(token: string, newPassword: string): Observable<any> {
-    console.log("Inviando reset password con JSON");
     
     return this.http.post(`${this.apiUrl}/auth/reset-password`, { 
       token: token, 

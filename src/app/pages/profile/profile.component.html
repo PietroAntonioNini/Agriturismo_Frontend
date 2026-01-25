@@ -82,17 +82,6 @@
           <div class="tab-content">
             <div class="info-section">
               <div class="info-grid">
-                <!-- Username -->
-                <div class="info-item">
-                  <div class="info-icon">
-                    <mat-icon>account_circle</mat-icon>
-                  </div>
-                  <div class="info-content">
-                    <div class="info-label">Username</div>
-                    <div class="info-value">{{ currentUser.username }}</div>
-                  </div>
-                </div>
-
                 <!-- Nome -->
                 <div class="info-item" [class.editing]="isEditing">
                   <div class="info-icon">
@@ -127,6 +116,17 @@
                   </div>
                 </div>
 
+                <!-- Username -->
+                <div class="info-item">
+                  <div class="info-icon">
+                    <mat-icon>account_circle</mat-icon>
+                  </div>
+                  <div class="info-content">
+                    <div class="info-label">Username</div>
+                    <div class="info-value">{{ currentUser.username }}</div>
+                  </div>
+                </div>
+
                 <!-- Email -->
                 <div class="info-item" [class.editing]="isEditing">
                   <div class="info-icon">
@@ -141,17 +141,6 @@
                       <mat-error *ngIf="f['email'].hasError('required')">L'email è obbligatoria</mat-error>
                       <mat-error *ngIf="f['email'].hasError('email')">Inserisci un'email valida</mat-error>
                     </mat-form-field>
-                  </div>
-                </div>
-
-                <!-- Ruolo -->
-                <div class="info-item">
-                  <div class="info-icon">
-                    <mat-icon>badge</mat-icon>
-                  </div>
-                  <div class="info-content">
-                    <div class="info-label">Ruolo</div>
-                    <div class="info-value">{{ getUserRoleLabel(currentUser.role) }}</div>
                   </div>
                 </div>
               </div>
@@ -198,21 +187,6 @@
                   <div class="info-content">
                     <div class="info-label">Ultimo Accesso</div>
                     <div class="info-value">{{ formatDate(currentUser.lastLogin) }}</div>
-                  </div>
-                </div>
-
-                <!-- Stato Account -->
-                <div class="info-item">
-                  <div class="info-icon">
-                    <mat-icon>{{ currentUser.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
-                  </div>
-                  <div class="info-content">
-                    <div class="info-label">Stato Account</div>
-                    <div class="info-value">
-                      <mat-chip [color]="currentUser.isActive ? 'primary' : 'warn'" highlighted>
-                        {{ currentUser.isActive ? 'Attivo' : 'Inattivo' }}
-                      </mat-chip>
-                    </div>
                   </div>
                 </div>
               </div>

@@ -816,12 +816,10 @@ label {
     font-size: 1.3rem;
   }
 
-  // Form elements
   form {
     margin-bottom: 0;
   }
 
-  // Form row (for two columns)
   .form-row {
     gap: 0.4rem;
     margin-bottom: 0.2rem;
@@ -830,7 +828,6 @@ label {
       margin-bottom: 0.2rem;
       
       .form-control {
-        width: 100%;
         padding: 0.6rem 0.6rem 0.6rem 2.4rem;
       }
     }
@@ -844,78 +841,10 @@ label {
     margin-bottom: 0.2rem;
   }
 
-  .input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .input-icon {
-    position: absolute;
-    left: 0.8rem;
-    color: $text-secondary;
-    pointer-events: none;
-    
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  .form-control {
-    width: 100%;
-    padding: 0.8rem 0.8rem 0.8rem 2.4rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    border: 1px solid $border-color;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    color: $text-primary;
-    background-color: $white;
-    
-    &::placeholder {
-      color: color.adjust($text-secondary, $lightness: 15%);
-    }
-    
-    &:focus {
-      outline: none;
-      border-color: $primary-color;
-      box-shadow: 0 0 0 4px rgba(45, 125, 70, 0.15);
-    }
-    
-    &.is-invalid {
-      border-color: $error-color;
-      
-      &:focus {
-        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
-      }
-    }
-  }
-
-  .password-toggle {
-    position: absolute;
-    right: 0.8rem;
-    cursor: pointer;
-    color: $text-secondary;
-    display: flex;
-    align-items: center;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      color: $primary-color;
-    }
-    
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
   .invalid-feedback {
     margin-top: 0;
   }
 
-  // Remember me
   .remember-me {
     margin-bottom: 1.2rem;
   }

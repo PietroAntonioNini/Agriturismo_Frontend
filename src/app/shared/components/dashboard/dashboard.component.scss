@@ -735,3 +735,34 @@
   }
 }
 
+// ============================================
+// MEDIA QUERIES
+// ============================================
+
+// Portatili (max-width: 1300px)
+@media screen and (max-width: 1600px) {
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .main-content {
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .quick-action-btn {
+    gap: 4px;
+    padding: 10px 10px;
+    font-size: 13px;
+  }
+}
+
+// Tablet (max-width: 768px)
+@media screen and (max-width: 768px) {
+}
+
+// Mobile (max-width: 480px)
+@media screen and (max-width: 480px) {
+}

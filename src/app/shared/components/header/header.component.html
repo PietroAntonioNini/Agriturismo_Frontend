@@ -34,7 +34,7 @@
 
       <!-- Notifiche -->
       <div class="action-button notifications" [matMenuTriggerFor]="notificationsMenu" (click)="loadReadingNotifications(false)">
-        <mat-icon [matBadge]="notificationsCount" [matBadgeHidden]="notificationsCount === 0" [matBadgeColor]="notificationsCount > 0 ? 'warn' : 'primary'">notifications</mat-icon>
+        <mat-icon [matBadge]="notificationsCount" [matBadgeHidden]="notificationsCount === 0" [matBadgeColor]="notificationsCount > 0 ? 'warn' : 'primary'" aria-hidden="false">notifications</mat-icon>
       </div>
       <mat-menu #notificationsMenu="matMenu" class="notifications-menu">
         <div class="notifications-header">

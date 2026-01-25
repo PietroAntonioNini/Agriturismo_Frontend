@@ -10,7 +10,11 @@
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  width: vars.$sidenav-width-expanded;
+  @if (max-width: 1600px) {
+    width: 190px;
+  } @else {
+    width: vars.$sidenav-width-expanded;
+  }
   box-shadow: var(--shadow-light);
   overflow: hidden;
   height: calc(100vh - 64px);

@@ -196,8 +196,8 @@
                 
                 <mat-card class="inner-card">
                   <mat-card-content>
-                    <div class="form-grid">
-                      <mat-form-field appearance="outline" floatLabel="always" class="full-width-field">
+                    <div class="form-grid money-grid">
+                      <mat-form-field appearance="outline" floatLabel="always">
                         <mat-label>Canone Mensile</mat-label>
                         <input matInput type="number" formControlName="monthlyRent" min="0" placeholder="Es. 500">
                         <span matTextPrefix>€&nbsp;</span>
@@ -366,14 +366,9 @@
               <ng-template matStepLabel>Letture Utenze</ng-template>
               
               <div class="step-content">
-                <div class="section-title">
-                  <mat-icon>bolt</mat-icon>
-                  <h3>Letture Utenze Iniziali</h3>
-                </div>
-                
                 <mat-card class="inner-card">
                   <mat-card-content>
-                    <div class="utilities-info">
+                    <div class="utilities-info" *ngIf="selectedApartment">
                       <mat-icon>info</mat-icon>
                       <p>Inserisci le letture iniziali delle utenze per il contratto di consegna dell'appartamento.</p>
                     </div>
