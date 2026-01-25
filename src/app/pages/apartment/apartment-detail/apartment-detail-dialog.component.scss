@@ -42,39 +42,13 @@
 
 :host { display: block; }
 
-.dialog-container { min-width: 800px; max-width: 90vw; }
-.dialog-actions { 
-  display: flex; 
-  justify-content: flex-end; 
-  padding: 5px 24px; 
+.dialog-container { 
+  min-width: 800px; 
+  max-width: 90vw; 
+  min-height: 80vh;
   
-  button {
-    background: none !important;
-    color: var(--text-color);
-    margin-left: 8px;
-    
-    &[color="warn"] {
-      color: var(--error-color);
-    }
-    
-    &:hover {
-      background-color: rgba(var(--primary-color-rgb), 0.08) !important;
-    }
-    
-    ::ng-deep {
-      .mdc-icon-button {
-        padding: 0;
-        width: auto;
-        height: auto;
-        --mdc-icon-button-state-layer-size: 0;
-      }
-
-      .mdc-icon-button__ripple,
-      .mat-mdc-focus-indicator,
-      .mat-ripple {
-        display: none !important;
-      }
-    }
+  .dialog-content {
+    min-height: 80vh;
   }
 }
 
@@ -84,6 +58,43 @@
   border: none;
   user-select: none;
   mat-card-header { margin: auto; }
+  position: relative;
+
+  .dialog-actions { 
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 15px 10px; 
+    
+    button {
+      background: none !important;
+      color: var(--text-color);
+      margin-left: 8px;
+      
+      &[color="warn"] {
+        color: var(--error-color);
+      }
+      
+      &:hover {
+        background-color: rgba(var(--primary-color-rgb), 0.08) !important;
+      }
+      
+      ::ng-deep {
+        .mdc-icon-button {
+          padding: 0;
+          width: auto;
+          height: auto;
+          --mdc-icon-button-state-layer-size: 0;
+        }
+
+        .mdc-icon-button__ripple,
+        .mat-mdc-focus-indicator,
+        .mat-ripple {
+          display: none !important;
+        }
+      }
+    }
+  }
 }
 
 .apartment-header {
@@ -321,7 +332,7 @@ mat-tab-group {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  width: 110px;
+  width: 120px;
   padding: 16px 8px;
   border-radius: 8px;
   background-color: var(--app-background);

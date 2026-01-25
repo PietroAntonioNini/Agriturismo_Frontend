@@ -150,8 +150,8 @@
                     <mat-icon>{{ getServiceIcon(amenity) }}</mat-icon>
                     <span>{{ amenity }}</span>
                   </div>
-                  <button mat-icon-button color="warn" (click)="removeAmenity(amenity)" 
-                          matTooltip="Rimuovi servizio">
+                    <button mat-icon-button color="warn" type="button" (click)="removeAmenity(amenity)" 
+                      matTooltip="Rimuovi servizio">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -197,7 +197,7 @@
               <div class="image-preview">
                 <img [src]="preview" alt="Immagine appartamento {{i+1}}">
                 <div class="image-actions">
-                  <button mat-mini-fab color="warn" (click)="removeImage(i)" matTooltip="Elimina immagine">
+                  <button mat-mini-fab color="warn" type="button" (click)="removeImage(i)" matTooltip="Elimina immagine">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>

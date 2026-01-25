@@ -11,21 +11,20 @@
   </div>
 
   <ng-container *ngIf="tenant && !isLoading">
-    <div class="dialog-actions">
-      <button mat-icon-button (click)="editTenant()" matTooltip="Modifica">
-        <mat-icon>edit</mat-icon>
-      </button>
-      <button mat-icon-button color="warn" (click)="deleteTenant()" matTooltip="Elimina">
-        <mat-icon>delete</mat-icon>
-      </button>
-      <button mat-icon-button (click)="close()" matTooltip="Chiudi">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    
-
     <mat-dialog-content class="dialog-content">
       <mat-card class="tenant-card">
+        <div class="dialog-actions">
+        <button mat-icon-button (click)="editTenant()" matTooltip="Modifica">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteTenant()" matTooltip="Elimina">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <button mat-icon-button (click)="close()" matTooltip="Chiudi">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
         <mat-card-header>
           <div class="tenant-header">
             <div class="avatar-container mb-3">

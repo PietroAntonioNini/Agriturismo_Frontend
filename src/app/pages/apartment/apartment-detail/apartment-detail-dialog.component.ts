@@ -248,7 +248,10 @@ export class ApartmentDetailDialogComponent implements OnInit {
   // Metodo per ottenere solo le immagini valide
   getValidImages(): string[] {
     if (!this.apartment?.images) return [];
-    return this.apartment.images.filter(img => img && img !== '' && !img.includes('undefined'));
+    // Filtra le immagini invalide quindi costruisce l'URL assoluto tramite getImageUrl()
+    return this.apartment.images
+      .filter(img => img && img !== '' && !img.includes('undefined'))
+      .map(img => this.getImageUrl(img));
   }
 
   close(): void {
