@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { User } from '../models';
+import { NotificationService } from './notification.service';
 import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
 
@@ -23,7 +24,7 @@ export class AuthService {
   private refreshTokenInProgress = false;
   private refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private notificationService: NotificationService) {
   }
 
   // Metodo di inizializzazione chiamato dopo che HttpClient è pronto
@@ -268,6 +269,12 @@ export class AuthService {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('expires_at');
     localStorage.removeItem('csrf_token');
+    // Rimuovi anche dati specifici dell'utente
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('dashboard_notifications');
+    try {
+      this.notificationService.clearAllNotifications();
+    } catch {}
     this.currentUserSubject.next(null);
     this.router.navigate(['/auth/login']);
   }

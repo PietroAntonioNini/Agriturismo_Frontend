@@ -6,6 +6,7 @@ import { SharedModule } from '../shared/shared.module';
 
 // Interceptors
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { CacheControlInterceptor } from './interceptors/cache-control.interceptor';
 
 // Guards
 import { AuthGuard } from './guards/auth.guard';
@@ -25,6 +26,7 @@ import { AdminGuard } from './guards/admin.guard';
     AuthGuard,
     AdminGuard,
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+    ,{ provide: HTTP_INTERCEPTORS, useClass: CacheControlInterceptor, multi: true }
   ]
 })
 export class CoreModule {
