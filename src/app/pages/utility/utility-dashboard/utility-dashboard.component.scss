@@ -232,7 +232,7 @@
 
   // Statistics Section
   .statistics-section {
-    margin-bottom: 32px;
+    margin-bottom: 25px;
 
     .stats-grid {
       display: grid;
@@ -391,11 +391,6 @@
       .controls-content {
         padding: 24px;
         display: flex;
-        @if (max-width: 1600px) {
-          flex-direction: column-reverse;
-          gap: 35px !important;
-        }
-        justify-content: space-between;
         gap: 20px;
         align-items: center;
 
@@ -407,52 +402,6 @@
             width: 100%;
             @if (max-width: 1600px) {
               flex-direction: row;
-            }
-          }
-
-          &.view-toggle {
-            // Stili per i pulsanti di cambio vista utenze (identici alla dashboard)
-            .utility-view-toggle {
-              display: flex;
-              gap: 12px;
-              margin-bottom: 16px;
-              @if (max-width: 1600px) {
-                margin-bottom: 0;
-              }
-              
-              button {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 16px;
-                border-radius: 8px;
-                font-weight: 500;
-                transition: all 0.3s ease;
-                
-                mat-icon {
-                  font-size: 18px;
-                  height: 18px;
-                  width: 18px;
-                }
-                
-                &.active {
-                  background-color: var(--primary-color) !important;
-                  color: white !important;
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-                  transform: translateY(-1px);
-                }
-                
-                &:not(.active) {
-                  background-color: #f5f5f5 !important;
-                  color: var(--text-color) !important;
-                  border: 1px solid #e0e0e0;
-                  
-                  &:hover {
-                    background-color: #eeeeee !important;
-                    transform: translateY(-1px);
-                  }
-                }
-              }
             }
           }
 
@@ -490,9 +439,10 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            margin-right: 20px;
             
             mat-icon {
-              color: #667eea;
+              color: var(--primary-color);
             }
 
             span {
@@ -504,17 +454,52 @@
 
           .chart-info {
             mat-chip {
-              background: #f8f9fa;
-              color: #495057;
-              font-weight: 500;
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              
               mat-icon {
                 font-size: 16px;
                 width: 16px;
                 height: 16px;
+              }
+            }
+          }
+
+          .view-toggle {
+            .utility-view-toggle {
+              display: flex;
+              gap: 12px;
+              margin-left: 170px;
+
+              button {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                
+                mat-icon {
+                  font-size: 18px;
+                  height: 18px;
+                  width: 18px;
+                }
+                
+                &.active {
+                  background-color: var(--primary-color) !important;
+                  color: white !important;
+                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                  transform: translateY(-1px);
+                }
+                
+                &:not(.active) {
+                  background-color: #f5f5f5 !important;
+                  color: var(--text-color) !important;
+                  border: 1px solid #e0e0e0;
+                  
+                  &:hover {
+                    background-color: #eeeeee !important;
+                    transform: translateY(-1px);
+                  }
+                }
               }
             }
           }

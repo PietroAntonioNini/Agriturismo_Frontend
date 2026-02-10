@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -51,7 +51,7 @@ interface UtilityReadingData {
   templateUrl: './base-contract-utilities.component.html',
   styleUrls: ['./base-contract-utilities.component.scss']
 })
-export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
+export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChanges {
   @Input() apartment: Apartment | null = null;
   @Input() isReadOnly = false;
   @Output() utilitiesChange = new EventEmitter<UtilityReadingForm>();
@@ -98,12 +98,18 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private apiService: GenericApiService,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.initializeForm();
     this.setupFormSubscriptions();
     this.initializeUtilityData();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['apartment'] && !changes['apartment'].firstChange) {
+      this.refreshLastReadings();
+    }
   }
 
   ngOnDestroy(): void {
@@ -177,7 +183,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
           if (utilityIndex >= 0) {
             this.utilityData[utilityIndex].lastReading = reading || undefined;
             this.utilityData[utilityIndex].isLoading = false;
-            
+
             // Pre-compila il form con l'ultima lettura se disponibile
             if (reading && reading.hasHistory) {
               this.utilitiesForm.patchValue({
@@ -186,14 +192,14 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
             }
           }
         });
-        
+
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Errore nel caricamento delle ultime letture:', error);
         this.errorMessage = 'Errore nel caricamento delle ultime letture delle utenze.';
         this.isLoading = false;
-        
+
         // Reset dello stato di loading per tutte le utenze
         this.utilityData.forEach(u => u.isLoading = false);
       }
@@ -257,8 +263,8 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
   areAllReadingsComplete(): boolean {
     const values = this.utilitiesForm.value;
     return (values.electricity !== null && values.electricity >= 0) &&
-           (values.water !== null && values.water >= 0) &&
-           (values.gas !== null && values.gas >= 0);
+      (values.water !== null && values.water >= 0) &&
+      (values.gas !== null && values.gas >= 0);
   }
 
   /**
@@ -268,15 +274,15 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy {
     if (!this.apartment) {
       return 'Seleziona prima un appartamento per visualizzare le letture utenze.';
     }
-    
+
     const missingReadings = this.utilityData
       .filter(u => this.utilitiesForm.get(u.type)?.value === null)
       .map(u => u.label);
-    
+
     if (missingReadings.length === 0) {
       return 'Tutte le letture sono state inserite.';
     }
-    
+
     return `Mancano le letture per: ${missingReadings.join(', ')}`;
   }
 } 

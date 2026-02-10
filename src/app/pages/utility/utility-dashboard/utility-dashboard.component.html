@@ -144,7 +144,6 @@
     <div class="controls-section">
       <mat-card class="controls-card">
         <div class="controls-content">
-
           <div class="control-group">
             <!-- Year Selector -->
             <mat-form-field appearance="outline" class="selector-field">
@@ -178,25 +177,6 @@
               </mat-select>
             </mat-form-field>
           </div>
-
-          <!-- View Toggle -->
-          <div class="control-group view-toggle">
-            <div class="utility-view-toggle">
-              <button mat-raised-button color="primary" [ngClass]="{'active': selectedView === 'consumption'}"
-                (click)="onViewChange('consumption')">
-                <mat-icon>bar_chart</mat-icon> Consumi
-              </button>
-              <button mat-raised-button color="accent" [ngClass]="{'active': selectedView === 'costs'}"
-                (click)="onViewChange('costs')">
-                <mat-icon>euro</mat-icon> Costi
-              </button>
-              <button mat-raised-button color="warn" *ngIf="selectedApartmentId === null"
-                [ngClass]="{'active': selectedView === 'comparison'}" (click)="onViewChange('comparison')">
-                <mat-icon>trending_up</mat-icon> Andamento
-              </button>
-            </div>
-          </div>
-
         </div>
       </mat-card>
     </div>
@@ -207,6 +187,7 @@
         <mat-card-header>
           <mat-card-title>
             <div class="chart-header">
+              
               <div class="chart-title">
                 <mat-icon>{{selectedView === 'consumption' ? 'bar_chart' : selectedView === 'costs' ? 'euro' :
                   'trending_up'}}</mat-icon>
@@ -215,8 +196,27 @@
                   {{selectedApartmentId ? '' : 'per Appartamento'}}
                 </span>
               </div>
+
               <div class="chart-info" *ngIf="selectedApartmentId">
                 <mat-chip>{{getSelectedApartmentName()}}</mat-chip>
+              </div>
+
+              <!-- View Toggle -->
+              <div class="control-group view-toggle">
+                <div class="utility-view-toggle">
+                  <button mat-raised-button color="primary" [ngClass]="{'active': selectedView === 'consumption'}"
+                    (click)="onViewChange('consumption')">
+                    <mat-icon>bar_chart</mat-icon> Consumi
+                  </button>
+                  <button mat-raised-button color="accent" [ngClass]="{'active': selectedView === 'costs'}"
+                    (click)="onViewChange('costs')">
+                    <mat-icon>euro</mat-icon> Costi
+                  </button>
+                  <button mat-raised-button color="warn" *ngIf="selectedApartmentId === null"
+                    [ngClass]="{'active': selectedView === 'comparison'}" (click)="onViewChange('comparison')">
+                    <mat-icon>trending_up</mat-icon> Andamento
+                  </button>
+                </div>
               </div>
             </div>
           </mat-card-title>

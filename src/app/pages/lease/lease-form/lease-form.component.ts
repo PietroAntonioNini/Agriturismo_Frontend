@@ -139,7 +139,7 @@ class ItalianDateAdapter extends NativeDateAdapter {
   ]
 })
 export class LeaseFormComponent implements OnInit {
-    @ViewChild('stepper') stepper!: MatStepper;
+  @ViewChild('stepper') stepper!: MatStepper;
 
   // Gruppi di form per lo stepper
   currentStepIndex = 0;
@@ -147,22 +147,22 @@ export class LeaseFormComponent implements OnInit {
   termsFormGroup!: FormGroup;
   conditionsFormGroup!: FormGroup;
   utilitiesFormGroup!: FormGroup;
-  
+
   isLoading = false;
   isSubmitting = false;
   isEditMode = false;
   leaseId: number | null = null;
   errorMessage: string | null = null;
-  
+
   // Proprietà per gestire dialog vs pagina normale
   isDialogMode = false;
-  
+
   tenants: Tenant[] = [];
   apartments: Apartment[] = [];
-  
+
   filteredTenants!: Observable<Tenant[]>;
   filteredApartments!: Observable<Apartment[]>;
-  
+
 
 
   constructor(
@@ -183,10 +183,10 @@ export class LeaseFormComponent implements OnInit {
   ) {
     // Configura il locale italiano per i datepicker
     this.dateAdapter.setLocale('it-IT');
-    
+
     // Determina se siamo in modalità dialog
     this.isDialogMode = !!this.dialogRef;
-    
+
     // Se siamo in modalità dialog e abbiamo dati, configura l'edit mode
     if (this.isDialogMode && this.dialogData?.leaseId) {
       this.isEditMode = true;
@@ -202,19 +202,31 @@ export class LeaseFormComponent implements OnInit {
     // Può essere sia dalla rotta che dai dati del dialog
     const routeId = this.route.snapshot.paramMap.get('id');
     const dialogLeaseId = this.dialogData?.leaseId;
-    
+
     if (routeId || dialogLeaseId) {
       this.isEditMode = true;
       this.leaseId = dialogLeaseId || +routeId!;
     }
-    
+
     // Date validation
     this.termsFormGroup.get('endDate')?.valueChanges.subscribe(() => {
       this.termsFormGroup.get('endDate')?.updateValueAndValidity();
     });
-    
+
     this.termsFormGroup.get('startDate')?.valueChanges.subscribe(() => {
       this.termsFormGroup.get('endDate')?.updateValueAndValidity();
+    });
+
+    // Sottoscrizione per auto-popolamento canone e deposito al cambio appartamento
+    this.partiesFormGroup.get('apartment')?.valueChanges.subscribe(apartment => {
+      if (apartment && typeof apartment !== 'string') {
+        const monthlyRent = apartment.monthlyRent || 0;
+        this.termsFormGroup.patchValue({
+          monthlyRent: monthlyRent,
+          securityDeposit: monthlyRent * 2,
+          paymentDueDay: 5
+        });
+      }
     });
   }
 
@@ -224,44 +236,44 @@ export class LeaseFormComponent implements OnInit {
       tenant: ['', Validators.required],
       apartment: ['', Validators.required]
     });
-    
+
     // Gruppo di form per step 2: Durata e canone
     this.termsFormGroup = this.fb.group({
-      startDate: ['', Validators.required],
-      endDate: ['', [Validators.required, this.endDateValidator]],
+      startDate: [new Date(), Validators.required],
+      endDate: ['', [this.endDateValidator]],
       monthlyRent: ['', [Validators.required, Validators.min(0)]],
       securityDeposit: ['', [Validators.required, Validators.min(0)]],
       paymentDueDay: ['', [Validators.required, Validators.min(1), Validators.max(31)]],
     });
-    
+
     // Gruppo di form per step 3: Termini e condizioni
     this.conditionsFormGroup = this.fb.group({
       termsAndConditions: ['', Validators.required],
       specialClauses: [''],
       notes: ['']
     });
-    
+
     // Gruppo di form per step 5: Utenze
     this.utilitiesFormGroup = this.fb.group({
       electricity: [null, [Validators.min(0)]],
       water: [null, [Validators.min(0)]],
       gas: [null, [Validators.min(0)]]
     });
-    
+
 
   }
-  
+
   // Validatore per la data di fine che deve essere successiva alla data di inizio
   endDateValidator = (control: AbstractControl): ValidationErrors | null => {
     if (!control.parent) return null;
-    
+
     const startDate = control.parent.get('startDate')?.value;
     const endDate = control.value;
-    
+
     if (!startDate || !endDate) return null;
-    
-    return new Date(endDate) <= new Date(startDate) 
-      ? { dateInvalid: true } 
+
+    return new Date(endDate) <= new Date(startDate)
+      ? { dateInvalid: true }
       : null;
   }
 
@@ -276,14 +288,14 @@ export class LeaseFormComponent implements OnInit {
 
   private _filterTenants(value: string | Tenant): Tenant[] {
     const filterValue = (typeof value === 'string' ? value : `${value.firstName} ${value.lastName}`).toLowerCase();
-    return this.tenants.filter(tenant => 
+    return this.tenants.filter(tenant =>
       `${tenant.firstName} ${tenant.lastName}`.toLowerCase().includes(filterValue)
     );
   }
 
   private _filterApartments(value: string | Apartment): Apartment[] {
     const filterValue = (typeof value === 'string' ? value : value?.description)?.toLowerCase() || '';
-    return this.apartments.filter(apartment => 
+    return this.apartments.filter(apartment =>
       apartment.description?.toLowerCase().includes(filterValue)
     );
   }
@@ -334,7 +346,7 @@ export class LeaseFormComponent implements OnInit {
       }
     });
   }
-  
+
   setupTenantAutocomplete(): void {
     this.filteredTenants = this.partiesFormGroup.get('tenant')!.valueChanges.pipe(
       startWith(''),
@@ -351,7 +363,7 @@ export class LeaseFormComponent implements OnInit {
 
 
   loadLease(id: number): void {
-    if(!this.isLoading) this.isLoading = true;
+    if (!this.isLoading) this.isLoading = true;
     this.apiService.getById<Lease>('leases', id).subscribe({
       next: (lease) => {
         // Trova l'oggetto tenant e apartment corrispondente
@@ -363,7 +375,7 @@ export class LeaseFormComponent implements OnInit {
           tenant: tenant,
           apartment: apartment
         });
-        
+
         this.termsFormGroup.patchValue({
           startDate: new Date(lease.startDate),
           endDate: new Date(lease.endDate),
@@ -371,15 +383,15 @@ export class LeaseFormComponent implements OnInit {
           securityDeposit: lease.securityDeposit,
           paymentDueDay: lease.paymentDueDay
         });
-        
+
         this.conditionsFormGroup.patchValue({
           termsAndConditions: lease.termsAndConditions,
           specialClauses: lease.specialClauses || '',
           notes: lease.notes || ''
         });
-        
 
-        
+
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -392,16 +404,30 @@ export class LeaseFormComponent implements OnInit {
 
   get selectedTenant(): Tenant | null {
     const tenantControl = this.partiesFormGroup.get('tenant');
-    return tenantControl && tenantControl.value && typeof tenantControl.value !== 'string' 
-      ? tenantControl.value 
+    return tenantControl && tenantControl.value && typeof tenantControl.value !== 'string'
+      ? tenantControl.value
       : null;
   }
 
   get selectedApartment(): Apartment | null {
     const apartmentControl = this.partiesFormGroup.get('apartment');
-    return apartmentControl && apartmentControl.value && typeof apartmentControl.value !== 'string' 
-      ? apartmentControl.value 
+    return apartmentControl && apartmentControl.value && typeof apartmentControl.value !== 'string'
+      ? apartmentControl.value
       : null;
+  }
+
+  get summaryEndDate(): Date | null {
+    const startDate = this.termsFormGroup.get('startDate')?.value;
+    const endDate = this.termsFormGroup.get('endDate')?.value;
+    if (endDate) return new Date(endDate);
+    if (startDate) return this.calculateDefaultEndDate(startDate);
+    return null;
+  }
+
+  private calculateDefaultEndDate(startDate: any): Date {
+    const date = new Date(startDate);
+    date.setFullYear(date.getFullYear() + 2);
+    return date;
   }
 
   // Rimosse le funzioni loadTenants e loadApartments separate
@@ -435,7 +461,7 @@ export class LeaseFormComponent implements OnInit {
       this.isSubmitting = false;
       return;
     }
-    
+
     // Rimuovo la formattazione manuale delle date. Angular HttpClient le gestirà.
     const terms = this.termsFormGroup.value;
     const currentUser = this.authService.getCurrentUser() || this.authService.getUserFromStorage?.();
@@ -444,14 +470,18 @@ export class LeaseFormComponent implements OnInit {
       this.snackBar.open('Sessione non valida. Accedi di nuovo.', 'Chiudi', { duration: 3000 });
       return;
     }
+    const finalEndDate = terms.endDate ? new Date(terms.endDate) : this.calculateDefaultEndDate(terms.startDate);
+
     const leasePayload = {
       tenantId: tenant.id,
       apartmentId: apartment.id,
       userId: currentUser.id, // ← AGGIUNGI userId
       ...terms,
       startDate: this.formatDate(terms.startDate),
-      endDate: this.formatDate(terms.endDate),
-      ...this.conditionsFormGroup.value
+      endDate: this.formatDate(finalEndDate),
+      ...this.conditionsFormGroup.value,
+      propertyCondition: 'ottimo',
+      boilerCondition: 'ottimo'
     };
 
     if (this.isEditMode && this.leaseId) {
@@ -459,14 +489,14 @@ export class LeaseFormComponent implements OnInit {
         next: () => {
           this.snackBar.open('Contratto aggiornato con successo', 'Chiudi', { duration: 3000 });
           this.isSubmitting = false;
-          
+
           // Aggiungi notifica
           const apartment = this.apartments.find(a => a.id === this.partiesFormGroup.get('apartment')?.value?.id);
           const tenant = this.tenants.find(t => t.id === this.partiesFormGroup.get('tenant')?.value?.id);
           const apartmentName = apartment?.name || 'Appartamento';
           const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
           this.notificationService.notifyLease('updated', apartmentName, tenantName, this.leaseId || undefined);
-          
+
           this.closeDialog(true);
         },
         error: (error) => {
@@ -479,7 +509,7 @@ export class LeaseFormComponent implements OnInit {
       this.apiService.create<Lease>('leases', leasePayload).subscribe({
         next: (createdLease) => {
           this.snackBar.open('Contratto creato con successo', 'Chiudi', { duration: 3000 });
-          
+
           // Genera automaticamente la fattura
           this.generateAutomaticInvoice(createdLease, leasePayload);
         },
@@ -559,17 +589,19 @@ export class LeaseFormComponent implements OnInit {
     const apartment = this.partiesFormGroup.get('apartment')?.value;
     const terms = this.termsFormGroup.value;
     const conditions = this.conditionsFormGroup.value;
-    
+
     if (tenant && apartment && this.termsFormGroup.valid && this.conditionsFormGroup.valid) {
       // Crea un oggetto Lease completo per la generazione del contratto
       const currentUser = this.authService.getCurrentUser();
+      const finalEndDate = terms.endDate ? new Date(terms.endDate) : this.calculateDefaultEndDate(terms.startDate);
+
       const leaseDataForContract: Lease = {
         id: this.leaseId ?? 0,
         tenantId: tenant.id,
         apartmentId: apartment.id,
         userId: currentUser?.id || 0, // ← AGGIUNGI userId
         startDate: terms.startDate,
-        endDate: terms.endDate,
+        endDate: finalEndDate,
         monthlyRent: terms.monthlyRent,
         securityDeposit: terms.securityDeposit,
         paymentDueDay: terms.paymentDueDay,
@@ -598,14 +630,14 @@ export class LeaseFormComponent implements OnInit {
               newWindow.document.write(htmlContent);
               newWindow.document.close();
               newWindow.focus();
-              
+
               // Mostra messaggio di successo
-              this.snackBar.open('Contratto generato con successo! Apri la finestra per stamparlo.', 'Chiudi', { 
+              this.snackBar.open('Contratto generato con successo! Apri la finestra per stamparlo.', 'Chiudi', {
                 duration: 5000,
                 panelClass: ['success-snackbar']
               });
             } else {
-              this.snackBar.open('Impossibile aprire la finestra del contratto. Controlla i popup blocker.', 'Chiudi', { 
+              this.snackBar.open('Impossibile aprire la finestra del contratto. Controlla i popup blocker.', 'Chiudi', {
                 duration: 5000,
                 panelClass: ['error-snackbar']
               });
@@ -613,7 +645,7 @@ export class LeaseFormComponent implements OnInit {
           },
           error: (error) => {
             console.error('Errore nella generazione del contratto:', error);
-            this.snackBar.open('Errore nella generazione del contratto. Riprova.', 'Chiudi', { 
+            this.snackBar.open('Errore nella generazione del contratto. Riprova.', 'Chiudi', {
               duration: 5000,
               panelClass: ['error-snackbar']
             });
@@ -644,7 +676,7 @@ export class LeaseFormComponent implements OnInit {
   private generateAutomaticInvoice(createdLease: Lease, leasePayload: any): void {
     // Ottieni i dati delle utenze dal form
     const utilitiesData = this.utilitiesFormGroup.value;
-    
+
     const invoiceData = {
       leaseId: createdLease.id,
       tenantId: leasePayload.tenantId,
@@ -663,7 +695,7 @@ export class LeaseFormComponent implements OnInit {
     this.automaticInvoiceService.generateInvoiceFromLease(invoiceData).subscribe({
       next: (invoice) => {
         console.log('Fattura generata automaticamente:', invoice);
-        
+
         // Ottieni i dati dell'inquilino per l'invio WhatsApp
         const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
         if (tenant?.phone) {
@@ -683,31 +715,31 @@ export class LeaseFormComponent implements OnInit {
         const apartmentName = apartment?.name || 'Appartamento';
         const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
         this.notificationService.notifyLease('created', apartmentName, tenantName);
-        
+
         this.snackBar.open(
-          `Contratto creato e fattura generata automaticamente. Totale: €${invoice.total.toFixed(2)}`, 
-          'Chiudi', 
+          `Contratto creato e fattura generata automaticamente. Totale: €${invoice.total.toFixed(2)}`,
+          'Chiudi',
           { duration: 5000 }
         );
-        
+
         this.isSubmitting = false;
         this.closeDialog(true);
       },
       error: (error) => {
         console.error('Errore nella generazione automatica della fattura:', error);
         this.snackBar.open(
-          'Contratto creato ma errore nella generazione della fattura automatica', 
-          'Chiudi', 
+          'Contratto creato ma errore nella generazione della fattura automatica',
+          'Chiudi',
           { duration: 5000 }
         );
-        
+
         // Aggiungi notifica comunque
         const apartment = this.apartments.find(a => a.id === leasePayload.apartmentId);
         const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
         const apartmentName = apartment?.name || 'Appartamento';
         const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
         this.notificationService.notifyLease('created', apartmentName, tenantName);
-        
+
         this.isSubmitting = false;
         this.closeDialog(true);
       }
