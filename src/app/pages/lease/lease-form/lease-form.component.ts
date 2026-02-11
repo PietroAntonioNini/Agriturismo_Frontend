@@ -256,8 +256,13 @@ export class LeaseFormComponent implements OnInit {
     // Gruppo di form per step 5: Utenze
     this.utilitiesFormGroup = this.fb.group({
       electricity: [null, [Validators.min(0)]],
+      electricityId: [null],
+      electricityLaundry: [null, [Validators.min(0)]],
+      electricityLaundryId: [null],
       water: [null, [Validators.min(0)]],
-      gas: [null, [Validators.min(0)]]
+      waterId: [null],
+      gas: [null, [Validators.min(0)]],
+      gasId: [null]
     });
 
 
@@ -481,7 +486,13 @@ export class LeaseFormComponent implements OnInit {
       endDate: this.formatDate(finalEndDate),
       ...this.conditionsFormGroup.value,
       propertyCondition: 'ottimo',
-      boilerCondition: 'ottimo'
+      boilerCondition: 'ottimo',
+      initialReadings: {
+        electricityReadingId: this.utilitiesFormGroup.get('electricityId')?.value,
+        electricityLaundryReadingId: this.utilitiesFormGroup.get('electricityLaundryId')?.value,
+        waterReadingId: this.utilitiesFormGroup.get('waterId')?.value,
+        gasReadingId: this.utilitiesFormGroup.get('gasId')?.value
+      }
     };
 
     if (this.isEditMode && this.leaseId) {
@@ -489,6 +500,9 @@ export class LeaseFormComponent implements OnInit {
         next: () => {
           this.snackBar.open('Contratto aggiornato con successo', 'Chiudi', { duration: 3000 });
           this.isSubmitting = false;
+
+          // Invalida cache fatture (nel caso in cui il backend abbia fatto cambiamenti)
+          this.apiService.invalidateCache('invoices');
 
           // Aggiungi notifica
           const apartment = this.apartments.find(a => a.id === this.partiesFormGroup.get('apartment')?.value?.id);
@@ -510,8 +524,18 @@ export class LeaseFormComponent implements OnInit {
         next: (createdLease) => {
           this.snackBar.open('Contratto creato con successo', 'Chiudi', { duration: 3000 });
 
-          // Genera automaticamente la fattura
-          this.generateAutomaticInvoice(createdLease, leasePayload);
+          // Invalida cache fatture (importante perché il backend genera auto-invoice)
+          this.apiService.invalidateCache('invoices');
+
+          // Aggiungi notifica di creazione contratto
+          const apartment = this.apartments.find(a => a.id === leasePayload.apartmentId);
+          const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
+          const apartmentName = apartment?.name || 'Appartamento';
+          const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
+          this.notificationService.notifyLease('created', apartmentName, tenantName);
+
+          this.isSubmitting = false;
+          this.closeDialog(true);
         },
         error: (error) => {
           console.error('Errore durante la creazione del contratto', error);
@@ -599,9 +623,9 @@ export class LeaseFormComponent implements OnInit {
         id: this.leaseId ?? 0,
         tenantId: tenant.id,
         apartmentId: apartment.id,
-        userId: currentUser?.id || 0, // ← AGGIUNGI userId
-        startDate: terms.startDate,
-        endDate: finalEndDate,
+        userId: currentUser?.id || 0,
+        startDate: this.formatDate(new Date(terms.startDate)),
+        endDate: this.formatDate(finalEndDate),
         monthlyRent: terms.monthlyRent,
         securityDeposit: terms.securityDeposit,
         paymentDueDay: terms.paymentDueDay,
@@ -609,15 +633,26 @@ export class LeaseFormComponent implements OnInit {
         specialClauses: conditions.specialClauses || '',
         notes: conditions.notes || '',
         isActive: true, // Valore di default
-        createdAt: new Date(), // Valore di default
-        updatedAt: new Date()  // Valore di default
+        status: 'active', // Valore di default
+        createdAt: this.formatDate(new Date()),
+        updatedAt: this.formatDate(new Date()),
+        // Baseline IDs dal form delle utenze
+        electricityReadingId: this.utilitiesFormGroup.get('electricityId')?.value ?? null,
+        electricityLaundryReadingId: this.utilitiesFormGroup.get('electricityLaundryId')?.value ?? null,
+        waterReadingId: this.utilitiesFormGroup.get('waterId')?.value ?? null,
+        gasReadingId: this.utilitiesFormGroup.get('gasId')?.value ?? null
       };
 
       // Prepara eventuali letture manuali inserite nello step Utenze
       const manualUtilities = {
         electricity: this.utilitiesFormGroup.get('electricity')?.value ?? null,
+        electricityId: this.utilitiesFormGroup.get('electricityId')?.value ?? null,
+        electricityLaundry: this.utilitiesFormGroup.get('electricityLaundry')?.value ?? null,
+        electricityLaundryId: this.utilitiesFormGroup.get('electricityLaundryId')?.value ?? null,
         water: this.utilitiesFormGroup.get('water')?.value ?? null,
-        gas: this.utilitiesFormGroup.get('gas')?.value ?? null
+        waterId: this.utilitiesFormGroup.get('waterId')?.value ?? null,
+        gas: this.utilitiesFormGroup.get('gas')?.value ?? null,
+        gasId: this.utilitiesFormGroup.get('gasId')?.value ?? null
       };
 
       // Genera il contratto HTML dettagliato con priorità alle letture manuali
@@ -657,92 +692,21 @@ export class LeaseFormComponent implements OnInit {
   }
 
   onUtilitiesChange(utilitiesData: any): void {
-    // Aggiorna i valori nel form group
+    // Aggiorna i valori nel form group incluse le ID delle letture
     this.utilitiesFormGroup.patchValue({
       electricity: utilitiesData.electricity,
+      electricityId: utilitiesData.electricityId,
+      electricityLaundry: utilitiesData.electricityLaundry,
+      electricityLaundryId: utilitiesData.electricityLaundryId,
       water: utilitiesData.water,
-      gas: utilitiesData.gas
+      waterId: utilitiesData.waterId,
+      gas: utilitiesData.gas,
+      gasId: utilitiesData.gasId
     });
   }
 
   onUtilitiesValidationChange(isValid: boolean): void {
     // Gestisce la validazione del form delle utilities
     console.log('Utilities validation changed:', isValid);
-  }
-
-  /**
-   * Genera automaticamente una fattura quando viene creato un contratto
-   */
-  private generateAutomaticInvoice(createdLease: Lease, leasePayload: any): void {
-    // Ottieni i dati delle utenze dal form
-    const utilitiesData = this.utilitiesFormGroup.value;
-
-    const invoiceData = {
-      leaseId: createdLease.id,
-      tenantId: leasePayload.tenantId,
-      apartmentId: leasePayload.apartmentId,
-      monthlyRent: leasePayload.monthlyRent,
-      paymentDueDay: leasePayload.paymentDueDay,
-      startDate: new Date(leasePayload.startDate),
-      endDate: new Date(leasePayload.endDate),
-      utilityReadings: {
-        electricity: utilitiesData.electricity || undefined,
-        water: utilitiesData.water || undefined,
-        gas: utilitiesData.gas || undefined
-      }
-    };
-
-    this.automaticInvoiceService.generateInvoiceFromLease(invoiceData).subscribe({
-      next: (invoice) => {
-        console.log('Fattura generata automaticamente:', invoice);
-
-        // Ottieni i dati dell'inquilino per l'invio WhatsApp
-        const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
-        if (tenant?.phone) {
-          // Invia la fattura via WhatsApp
-          this.automaticInvoiceService.sendInvoiceViaWhatsApp(invoice.id, tenant.phone).subscribe({
-            next: (result) => {
-              console.log('Fattura inviata via WhatsApp:', result);
-            },
-            error: (error) => {
-              console.error('Errore nell\'invio WhatsApp:', error);
-            }
-          });
-        }
-
-        // Aggiungi notifica
-        const apartment = this.apartments.find(a => a.id === leasePayload.apartmentId);
-        const apartmentName = apartment?.name || 'Appartamento';
-        const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
-        this.notificationService.notifyLease('created', apartmentName, tenantName);
-
-        this.snackBar.open(
-          `Contratto creato e fattura generata automaticamente. Totale: €${invoice.total.toFixed(2)}`,
-          'Chiudi',
-          { duration: 5000 }
-        );
-
-        this.isSubmitting = false;
-        this.closeDialog(true);
-      },
-      error: (error) => {
-        console.error('Errore nella generazione automatica della fattura:', error);
-        this.snackBar.open(
-          'Contratto creato ma errore nella generazione della fattura automatica',
-          'Chiudi',
-          { duration: 5000 }
-        );
-
-        // Aggiungi notifica comunque
-        const apartment = this.apartments.find(a => a.id === leasePayload.apartmentId);
-        const tenant = this.tenants.find(t => t.id === leasePayload.tenantId);
-        const apartmentName = apartment?.name || 'Appartamento';
-        const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Inquilino';
-        this.notificationService.notifyLease('created', apartmentName, tenantName);
-
-        this.isSubmitting = false;
-        this.closeDialog(true);
-      }
-    });
   }
 }

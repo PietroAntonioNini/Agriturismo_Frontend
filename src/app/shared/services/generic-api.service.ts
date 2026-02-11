@@ -161,6 +161,11 @@ export class GenericApiService {
       return of(this.cache.get(cacheKey)!.data);
     }
 
+    // Se c'è già una richiesta in corso per questa chiave, riutilizzala
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey)!;
+    }
+
     let httpParams = new HttpParams();
     if (params) {
       Object.keys(params).forEach(key => {
@@ -170,7 +175,7 @@ export class GenericApiService {
       });
     }
 
-    return this.http.get<T>(
+    const request = this.http.get<T>(
       `${environment.apiUrl}/${entity}/${id}`,
       {
         params: httpParams
@@ -183,8 +188,16 @@ export class GenericApiService {
           timestamp: Date.now(),
           expiresAt: Date.now() + this.cacheTimeout
         });
-      })
+        // Rimuovi dalla lista delle richieste pendenti
+        this.pendingRequests.delete(cacheKey);
+      }),
+      shareReplay(1)
     );
+
+    // Salva la richiesta pendente
+    this.pendingRequests.set(cacheKey, request);
+
+    return request;
   }
 
 
@@ -734,6 +747,7 @@ export class GenericApiService {
         if (readings.length > 0) {
           const reading = readings[0];
           return of({
+            id: reading.id,
             apartmentId: reading.apartmentId,
             type: reading.type,
             lastReading: reading.currentReading,

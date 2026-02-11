@@ -124,7 +124,7 @@
                     <span> di ogni mese</span>
                   </div>
                 </div>
-                
+
                 <div class="payment-methods">
                   <h4>Metodi di pagamento accettati</h4>
                   <div class="methods-container">
@@ -161,7 +161,7 @@
               <h3>Termini e Condizioni Generali</h3>
               <div class="terms-content" [innerHTML]="lease.termsAndConditions || 'Nessun termine disponibile'"></div>
             </div>
-            
+
             <div class="terms-section special-clauses" *ngIf="lease.specialClauses">
               <h3>Clausole Speciali</h3>
               <div class="terms-content" [innerHTML]="lease.specialClauses"></div>
@@ -206,7 +206,7 @@
             <span>Storico Pagamenti</span>
           </ng-template>
           <div class="tab-content">
-            <div *ngIf="lease.paymentHistory && lease.paymentHistory.length > 0; else noPayments">
+            <div *ngIf="lease.payments && lease.payments.length > 0; else noPayments">
               <div class="payments-table">
                 <div class="table-header">
                   <div class="header-cell">Data</div>
@@ -215,7 +215,7 @@
                   <div class="header-cell">Riferimento</div>
                   <div class="header-cell">Note</div>
                 </div>
-                <div class="table-row" *ngFor="let payment of lease.paymentHistory">
+                <div class="table-row" *ngFor="let payment of lease.payments">
                   <div class="table-cell date">{{formatDate(payment.paymentDate)}}</div>
                   <div class="table-cell amount">{{formatCurrency(payment.amount)}}</div>
                   <div class="table-cell method">

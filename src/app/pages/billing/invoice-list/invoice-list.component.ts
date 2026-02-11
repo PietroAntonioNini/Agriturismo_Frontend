@@ -26,8 +26,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
-import { Observable, Subject, combineLatest, of } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith, map } from 'rxjs/operators';
+import { Observable, Subject, combineLatest, of, forkJoin } from 'rxjs';
+import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith, map, tap, catchError, finalize, shareReplay } from 'rxjs/operators';
 
 import { Invoice, InvoiceItem, PaymentRecord } from '../../../shared/models';
 import { GenerateStatementDialogComponent } from '../generate-statement-dialog/generate-statement-dialog.component';
@@ -47,8 +47,9 @@ interface InvoiceKPI {
 interface InvoiceFilter {
   status: 'all' | 'paid' | 'unpaid' | 'overdue';
   period: 'all' | 'this_month' | 'last_month' | 'this_year' | 'custom';
-  tenantId?: number;
-  apartmentId?: number;
+  tenantId: number | 'all';
+  apartmentId: number | 'all';
+  type: string;
   searchText: string;
   startDate?: Date;
   endDate?: Date;
@@ -113,11 +114,14 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
 
   // View mode
   viewMode: 'grid' | 'list' = 'grid';
-  
+
   // Filters
   filter: InvoiceFilter = {
     status: 'all',
     period: 'all',
+    tenantId: 'all',
+    apartmentId: 'all',
+    type: 'all',
     searchText: ''
   };
 
@@ -125,10 +129,20 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   searchControl = new FormControl('');
   statusFilterControl = new FormControl('all');
   periodFilterControl = new FormControl('all');
-  tenantFilterControl = new FormControl<number | null>(null);
-  apartmentFilterControl = new FormControl<number | null>(null);
+  tenantFilterControl = new FormControl<number | 'all'>('all');
+  apartmentFilterControl = new FormControl<number | 'all'>('all');
+  typeFilterControl = new FormControl('all');
   startDateControl = new FormControl<Date | null>(null);
   endDateControl = new FormControl<Date | null>(null);
+
+  // Lists for dropdowns
+  allTenants: { id: number, name: string }[] = [];
+  allApartments: { id: number, name: string }[] = [];
+  invoiceTypes = [
+    { value: 'all', label: 'Tutti i tipi' },
+    { value: 'rent', label: 'Canone d\'affitto' },
+    { value: 'entry', label: 'Caparra/Ingresso' }
+  ];
 
   // Bulk actions
   selectedInvoices: Set<number> = new Set();
@@ -156,6 +170,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   // Cache per nomi di inquilini e appartamenti
   private tenantNames: { [id: number]: string } = {};
   private apartmentNames: { [id: number]: string } = {};
+  private pendingTenants = new Set<number>();
+  private pendingApartments = new Set<number>();
 
   constructor(
     private invoiceService: InvoiceService,
@@ -166,10 +182,10 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    this.initializeData();
+    this.initializeData(true);
     this.setupFilters();
   }
 
@@ -181,23 +197,73 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   /**
    * Inizializza i dati e le osservazioni
    */
-  private initializeData(): void {
+  private initializeData(forceRefresh: boolean = false): void {
     this.isLoading = true;
     this.cdr.detectChanges();
-    
+
+    // Carica liste per i filtri
+    this.invoiceService.getActiveTenants().subscribe(tenants => {
+      this.allTenants = tenants.map(t => ({ id: t.id, name: `${t.firstName} ${t.lastName}` }));
+      this.cdr.detectChanges();
+    });
+
+    this.invoiceService.getOccupiedApartments().subscribe(apartments => {
+      this.allApartments = apartments.map(a => ({ id: a.id, name: a.name || `Appartamento ${a.id}` }));
+      this.cdr.detectChanges();
+    });
+
     // Carica le fatture
-    this.invoices$ = this.invoiceService.getAllInvoices();
-    
+    const invoicesStream$ = this.invoiceService.getAllInvoices(undefined, forceRefresh).pipe(
+      takeUntil(this.destroy$),
+      shareReplay(1)
+    );
+
+    this.invoices$ = invoicesStream$;
+
     // Calcola i KPI
     this.kpi$ = this.invoices$.pipe(
       map(invoices => this.calculateKPI(invoices))
     );
 
-    // Setup del data source
+    // Setup del data source e attesa di TUTTI i dati (inclusi i nomi)
     this.invoices$.pipe(
-      takeUntil(this.destroy$)
+      switchMap(invoices => {
+        if (!invoices || invoices.length === 0) {
+          return of({ invoices, namesLoaded: true });
+        }
+
+        // Estrai ID unici per evitare chiamate ridondanti
+        const tenantIds = [...new Set(invoices.map(i => i.tenantId))];
+        const apartmentIds = [...new Set(invoices.map(i => i.apartmentId))];
+
+        // Crea le richieste per i nomi che non abbiamo ancora in cache
+        const nameRequests: Observable<any>[] = [
+          ...tenantIds.map(id => this.invoiceService.getTenantName(id).pipe(
+            tap(name => this.tenantNames[id] = name),
+            catchError(() => of(null))
+          )),
+          ...apartmentIds.map(id => this.invoiceService.getApartmentName(id).pipe(
+            tap(name => this.apartmentNames[id] = name),
+            catchError(() => of(null))
+          ))
+        ];
+
+        // Se non ci sono nomi da caricare, procedi subito
+        if (nameRequests.length === 0) {
+          return of({ invoices, namesLoaded: true });
+        }
+
+        // Aspetta che TUTTE le richieste dei nomi siano completate
+        return forkJoin(nameRequests).pipe(
+          map(() => ({ invoices, namesLoaded: true }))
+        );
+      }),
+      finalize(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      })
     ).subscribe({
-      next: (invoices) => {
+      next: ({ invoices }) => {
         this.dataSource.data = invoices;
         this.setupTable();
         this.dataSource.filter = ' ';
@@ -206,8 +272,6 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       },
       error: (error) => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
         this.showError('Errore nel caricamento delle fatture');
         console.error('Errore caricamento fatture:', error);
       }
@@ -221,7 +285,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     // Ricerca con debounce
     this.searchControl.valueChanges.pipe(
       takeUntil(this.destroy$),
-      debounceTime(300),
+      debounceTime(150),
       distinctUntilChanged()
     ).subscribe(searchText => {
       this.filter.searchText = searchText || '';
@@ -241,6 +305,28 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(period => {
       this.filter.period = (period as 'all' | 'this_month' | 'last_month' | 'this_year' | 'custom') || 'all';
+      this.applyFilters();
+    });
+
+    // Filtri per inquilino, appartamento e tipo
+    this.tenantFilterControl.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(tenantId => {
+      this.filter.tenantId = tenantId || 'all';
+      this.applyFilters();
+    });
+
+    this.apartmentFilterControl.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(apartmentId => {
+      this.filter.apartmentId = apartmentId || 'all';
+      this.applyFilters();
+    });
+
+    this.typeFilterControl.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(type => {
+      this.filter.type = type || 'all';
       this.applyFilters();
     });
 
@@ -265,17 +351,32 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   private setupTable(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
-    
+
     // Filtro personalizzato che gestisce tutti i tipi di filtri
     this.dataSource.filterPredicate = (invoice: Invoice, filter: string) => {
       // Filtro di ricerca testuale
-      const searchText = filter.toLowerCase();
-      const matchesSearch = !searchText || 
+      const searchText = this.filter.searchText.toLowerCase();
+      const tenantName = this.tenantNames[invoice.tenantId]?.toLowerCase() || '';
+      const apartmentName = this.apartmentNames[invoice.apartmentId]?.toLowerCase() || '';
+
+      const matchesSearch = !searchText ||
         invoice.invoiceNumber.toLowerCase().includes(searchText) ||
-        this.getTenantName(invoice.tenantId).toLowerCase().includes(searchText) ||
-        this.getApartmentName(invoice.apartmentId).toLowerCase().includes(searchText);
+        tenantName.includes(searchText) ||
+        apartmentName.includes(searchText);
 
       if (!matchesSearch) return false;
+
+      // Filtro per inquilino
+      if (this.filter.tenantId !== 'all' && invoice.tenantId !== this.filter.tenantId) return false;
+
+      // Filtro per appartamento
+      if (this.filter.apartmentId !== 'all' && invoice.apartmentId !== this.filter.apartmentId) return false;
+
+      // Filtro per tipo
+      if (this.filter.type !== 'all') {
+        const hasType = invoice.items.some(item => item.type === this.filter.type);
+        if (!hasType) return false;
+      }
 
       // Filtro per stato
       if (this.filter.status !== 'all') {
@@ -298,7 +399,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
-        
+
         switch (this.filter.period) {
           case 'this_month':
             if (invoice.month !== currentMonth + 1 || invoice.year !== currentYear) return false;
@@ -347,10 +448,10 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     const paidInvoices = invoices.filter(invoice => invoice.isPaid);
     const totalPaid = paidInvoices.reduce((sum, invoice) => sum + invoice.total, 0);
     const totalUnpaid = totalInvoiced - totalPaid;
-    const overdueInvoices = invoices.filter(invoice => 
+    const overdueInvoices = invoices.filter(invoice =>
       !invoice.isPaid && new Date(invoice.dueDate) < today
     ).length;
-    const thisMonthInvoices = invoices.filter(invoice => 
+    const thisMonthInvoices = invoices.filter(invoice =>
       invoice.month === currentMonth && invoice.year === currentYear
     ).length;
 
@@ -363,8 +464,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         return (paymentDate.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24);
       });
 
-    const averagePaymentTime = paymentTimes.length > 0 
-      ? paymentTimes.reduce((sum, time) => sum + time, 0) / paymentTimes.length 
+    const averagePaymentTime = paymentTimes.length > 0
+      ? paymentTimes.reduce((sum, time) => sum + time, 0) / paymentTimes.length
       : 0;
 
     return {
@@ -391,17 +492,21 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.filter = {
       status: 'all',
       period: 'all',
+      tenantId: 'all',
+      apartmentId: 'all',
+      type: 'all',
       searchText: ''
     };
-    
+
     this.searchControl.setValue('');
     this.statusFilterControl.setValue('all');
     this.periodFilterControl.setValue('all');
-    this.tenantFilterControl.setValue(null);
-    this.apartmentFilterControl.setValue(null);
+    this.tenantFilterControl.setValue('all');
+    this.apartmentFilterControl.setValue('all');
+    this.typeFilterControl.setValue('all');
     this.startDateControl.setValue(null);
     this.endDateControl.setValue(null);
-    
+
     this.dataSource.filter = '';
   }
 
@@ -428,7 +533,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     } else {
       this.selectedInvoices.add(invoiceId);
     }
-    
+
     // Aggiorna lo stato "seleziona tutto"
     this.selectAll = this.selectedInvoices.size === this.dataSource.filteredData.length;
   }
@@ -461,7 +566,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     if (confirmed) {
       this.isLoading = true;
       this.cdr.detectChanges();
-      
+
       const promises = Array.from(this.selectedInvoices).map(invoiceId =>
         this.invoiceService.markInvoiceAsPaid(invoiceId, new Date(), 'bank_transfer').toPromise()
       );
@@ -473,7 +578,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         // Ricarica i dati
         this.invoices$ = this.invoiceService.getAllInvoices();
         this.showSuccess(`${promises.length} fattura/e marcate come pagate`);
-        
+
         // Notifica
         this.notificationService.addNotification({
           type: 'lease',
@@ -511,7 +616,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     if (confirmed) {
       this.isLoading = true;
       this.cdr.detectChanges();
-      
+
       const promises = Array.from(this.selectedInvoices).map(invoiceId =>
         this.invoiceService.sendInvoiceReminder(invoiceId).toPromise()
       );
@@ -519,7 +624,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       try {
         await Promise.all(promises);
         this.showSuccess(`Promemoria inviati per ${promises.length} fattura/e`);
-        
+
         // Notifica
         this.notificationService.addNotification({
           type: 'lease',
@@ -569,7 +674,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
           // Ricarica i dati
           this.invoices$ = this.invoiceService.getAllInvoices();
           this.showSuccess('Fattura eliminata con successo');
-          
+
           // Notifica
           this.notificationService.addNotification({
             type: 'lease',
@@ -653,63 +758,99 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Utility methods
+   * Prefetch dei nomi per evitare troppi refresh della UI
    */
+  private prefetchNames(invoices: Invoice[]): void {
+    const tenantIds = [...new Set(invoices.map(i => i.tenantId))];
+    const apartmentIds = [...new Set(invoices.map(i => i.apartmentId))];
+
+    tenantIds.forEach(id => this.getTenantName(id));
+    apartmentIds.forEach(id => this.getApartmentName(id));
+  }
+
   getTenantName(tenantId: number): string {
-    // Cache locale per i nomi dei tenant
-    if (!this.tenantNames[tenantId]) {
-      this.invoiceService.getTenantName(tenantId).subscribe(name => {
-        this.tenantNames[tenantId] = name;
-      });
-      return `Inquilino ${tenantId}`;
+    // Se il nome è già in cache, restituiscilo
+    if (this.tenantNames[tenantId]) {
+      return this.tenantNames[tenantId];
     }
-    return this.tenantNames[tenantId];
+
+    // Se non è in cache e non abbiamo ancora una richiesta in corso
+    if (!this.pendingTenants.has(tenantId)) {
+      this.pendingTenants.add(tenantId);
+      this.invoiceService.getTenantName(tenantId).subscribe({
+        next: (name) => {
+          this.tenantNames[tenantId] = name;
+          this.pendingTenants.delete(tenantId);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.pendingTenants.delete(tenantId);
+        }
+      });
+    }
+
+    // Mentre carica, restituisci l'ID con prefisso
+    return `Inquilino ${tenantId}`;
   }
 
   getApartmentName(apartmentId: number): string {
-    // Cache locale per i nomi degli appartamenti
-    if (!this.apartmentNames[apartmentId]) {
-      this.invoiceService.getApartmentName(apartmentId).subscribe(name => {
-        this.apartmentNames[apartmentId] = name;
-      });
-      return `Appartamento ${apartmentId}`;
+    // Se il nome è già in cache, restituiscilo
+    if (this.apartmentNames[apartmentId]) {
+      return this.apartmentNames[apartmentId];
     }
-    return this.apartmentNames[apartmentId];
+
+    // Se non è in cache e non abbiamo ancora una richiesta in corso
+    if (!this.pendingApartments.has(apartmentId)) {
+      this.pendingApartments.add(apartmentId);
+      this.invoiceService.getApartmentName(apartmentId).subscribe({
+        next: (name) => {
+          this.apartmentNames[apartmentId] = name;
+          this.pendingApartments.delete(apartmentId);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.pendingApartments.delete(apartmentId);
+        }
+      });
+    }
+
+    // Mentre carica, restituisci l'ID con prefisso
+    return `Appartamento ${apartmentId}`;
   }
 
   getStatusClass(invoice: Invoice): string {
     if (invoice.isPaid) return 'status-paid';
-    
+
     const today = new Date();
     const dueDate = new Date(invoice.dueDate);
-    
+
     if (dueDate < today) return 'status-overdue';
     if (dueDate.getTime() - today.getTime() < 7 * 24 * 60 * 60 * 1000) return 'status-due-soon';
-    
+
     return 'status-unpaid';
   }
 
   getStatusLabel(invoice: Invoice): string {
     if (invoice.isPaid) return 'Pagata';
-    
+
     const today = new Date();
     const dueDate = new Date(invoice.dueDate);
-    
+
     if (dueDate < today) return 'Scaduta';
     if (dueDate.getTime() - today.getTime() < 7 * 24 * 60 * 60 * 1000) return 'In Scadenza';
-    
+
     return 'Non Pagata';
   }
 
   getStatusIcon(invoice: Invoice): string {
     if (invoice.isPaid) return 'check_circle';
-    
+
     const today = new Date();
     const dueDate = new Date(invoice.dueDate);
-    
+
     if (dueDate < today) return 'warning';
     if (dueDate.getTime() - today.getTime() < 7 * 24 * 60 * 60 * 1000) return 'schedule';
-    
+
     return 'pending';
   }
 
@@ -783,8 +924,8 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   showAutomaticInvoiceInfo(): void {
     this.snackBar.open(
       'Le fatture vengono generate automaticamente quando crei un nuovo contratto. ' +
-      'Includono affitto mensile e costi utenze calcolati dalle letture dei contatori.', 
-      'Chiudi', 
+      'Includono affitto mensile e costi utenze calcolati dalle letture dei contatori.',
+      'Chiudi',
       { duration: 8000 }
     );
   }

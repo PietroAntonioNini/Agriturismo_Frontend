@@ -9,8 +9,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { Apartment, UtilityReading, UtilityTypeConfig, LastReading } from '../../../shared/models';
@@ -18,12 +19,17 @@ import { GenericApiService } from '../../../shared/services/generic-api.service'
 
 interface UtilityReadingForm {
   electricity: number | null;
+  electricityId?: number;
+  electricityLaundry: number | null;
+  electricityLaundryId?: number;
   water: number | null;
+  waterId?: number;
   gas: number | null;
+  gasId?: number;
 }
 
 interface UtilityReadingData {
-  type: 'electricity' | 'water' | 'gas';
+  type: 'electricity' | 'water' | 'gas' | 'electricityLaundry';
   label: string;
   icon: string;
   color: string;
@@ -46,7 +52,8 @@ interface UtilityReadingData {
     MatIconModule,
     MatChipsModule,
     MatTooltipModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatDividerModule
   ],
   templateUrl: './base-contract-utilities.component.html',
   styleUrls: ['./base-contract-utilities.component.scss']
@@ -108,7 +115,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['apartment'] && !changes['apartment'].firstChange) {
-      this.refreshLastReadings();
+      this.initializeUtilityData();
     }
   }
 
@@ -120,6 +127,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
   private initializeForm(): void {
     this.utilitiesForm = this.fb.group({
       electricity: [null, [Validators.min(0)]],
+      electricityLaundry: [null, [Validators.min(0)]],
       water: [null, [Validators.min(0)]],
       gas: [null, [Validators.min(0)]]
     });
@@ -129,17 +137,30 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
     // Monitora i cambiamenti nel form
     this.utilitiesForm.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(values => {
-        // Emetti i valori delle utenze
-        this.utilitiesChange.emit({
-          electricity: values.electricity,
-          water: values.water,
-          gas: values.gas
-        });
+      .subscribe(() => {
+        // Emetti i valori e gli ID delle utenze
+        this.utilitiesChange.emit(this.getEmittedValue());
 
         // Emetti lo stato di validazione
         this.validationChange.emit(this.utilitiesForm.valid);
       });
+  }
+
+  /**
+   * Genera l'oggetto da emettere con valori e ID delle letture
+   */
+  private getEmittedValue(): any {
+    const values = this.utilitiesForm.value;
+    return {
+      electricity: values.electricity,
+      electricityId: this.getUtilityData('electricity')?.lastReading?.id,
+      electricityLaundry: values.electricityLaundry,
+      electricityLaundryId: this.getUtilityData('electricityLaundry')?.lastReading?.id,
+      water: values.water,
+      waterId: this.getUtilityData('water')?.lastReading?.id,
+      gas: values.gas,
+      gasId: this.getUtilityData('gas')?.lastReading?.id
+    };
   }
 
   private initializeUtilityData(): void {
@@ -155,6 +176,17 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
 
     // Carica le ultime letture se abbiamo un appartamento
     if (this.apartment?.id) {
+      if (Number(this.apartment.id) === 8) {
+        this.utilityData.push({
+          type: 'electricityLaundry',
+          label: 'Elettricità Lavanderia',
+          icon: 'local_laundry_service',
+          color: '#FFC107',
+          unit: 'kWh',
+          value: null,
+          isLoading: false
+        });
+      }
       this.loadLastReadings();
     }
   }
@@ -176,8 +208,16 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
         .pipe(takeUntil(this.destroy$));
     });
 
-    forkJoin(readingRequests).subscribe({
-      next: (lastReadings) => {
+    // Aggiungi la richiesta speciale per la lavanderia se l'appartamento è l'8
+    const laundryRequest = Number(this.apartment.id) === 8
+      ? this.apiService.getLastUtilityReading(this.apartment.id, 'electricity', 'laundry').pipe(takeUntil(this.destroy$))
+      : of(null);
+
+    forkJoin([...readingRequests, laundryRequest]).subscribe({
+      next: (results) => {
+        const lastReadings = results.slice(0, readingRequests.length) as (LastReading | null)[];
+        const laundryReading = results[results.length - 1] as LastReading | null;
+
         lastReadings.forEach((reading, index) => {
           const utilityIndex = this.utilityData.findIndex(u => u.type === this.utilityTypes[index].type);
           if (utilityIndex >= 0) {
@@ -188,11 +228,26 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
             if (reading && reading.hasHistory) {
               this.utilitiesForm.patchValue({
                 [this.utilityTypes[index].type]: reading.lastReading
-              });
+              }, { emitEvent: false });
             }
           }
         });
 
+        // Gestione lettura lavanderia
+        const laundryIndex = this.utilityData.findIndex(u => u.type === 'electricityLaundry');
+        if (laundryIndex >= 0) {
+          this.utilityData[laundryIndex].lastReading = laundryReading || undefined;
+          this.utilityData[laundryIndex].isLoading = false;
+
+          if (laundryReading && laundryReading.hasHistory) {
+            this.utilitiesForm.patchValue({
+              electricityLaundry: laundryReading.lastReading
+            }, { emitEvent: false });
+          }
+        }
+
+        // Emetti i valori iniziali dopo aver caricato tutto (incluso gli ID)
+        this.utilitiesChange.emit(this.getEmittedValue());
         this.isLoading = false;
       },
       error: (error) => {
@@ -209,14 +264,14 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
   /**
    * Ottiene i dati di configurazione per un tipo di utenza
    */
-  getUtilityConfig(type: 'electricity' | 'water' | 'gas'): UtilityTypeConfig | undefined {
+  getUtilityConfig(type: 'electricity' | 'water' | 'gas' | 'electricityLaundry'): UtilityTypeConfig | undefined {
     return this.utilityTypes.find(u => u.type === type);
   }
 
   /**
    * Ottiene i dati di una specifica utenza
    */
-  getUtilityData(type: 'electricity' | 'water' | 'gas'): UtilityReadingData | undefined {
+  getUtilityData(type: 'electricity' | 'water' | 'gas' | 'electricityLaundry'): UtilityReadingData | undefined {
     return this.utilityData.find(u => u.type === type);
   }
 
@@ -253,7 +308,7 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
    */
   refreshLastReadings(): void {
     if (this.apartment?.id) {
-      this.loadLastReadings();
+      this.initializeUtilityData();
     }
   }
 
@@ -262,9 +317,14 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
    */
   areAllReadingsComplete(): boolean {
     const values = this.utilitiesForm.value;
-    return (values.electricity !== null && values.electricity >= 0) &&
+    const basicComplete = (values.electricity !== null && values.electricity >= 0) &&
       (values.water !== null && values.water >= 0) &&
       (values.gas !== null && values.gas >= 0);
+
+    if (this.apartment?.id && Number(this.apartment.id) === 8) {
+      return basicComplete && (values.electricityLaundry !== null && values.electricityLaundry >= 0);
+    }
+    return basicComplete;
   }
 
   /**

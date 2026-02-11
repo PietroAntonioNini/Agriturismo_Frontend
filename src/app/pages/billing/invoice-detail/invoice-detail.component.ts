@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,8 +16,8 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { Observable, Subject, of } from 'rxjs';
-import { takeUntil, switchMap, catchError } from 'rxjs/operators';
+import { Observable, Subject, of, forkJoin } from 'rxjs';
+import { takeUntil, switchMap, catchError, shareReplay, tap, finalize } from 'rxjs/operators';
 
 import { Invoice, InvoiceItem, PaymentRecord } from '../../../shared/models';
 import { InvoiceService } from '../../../shared/services/invoice.service';
@@ -85,8 +85,9 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private router: Router,
     private route: ActivatedRoute,
-    private dialog: MatDialog
-  ) {}
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.loadInvoiceData();
@@ -101,37 +102,55 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
    * Carica i dati della fattura
    */
   private loadInvoiceData(): void {
-    this.isLoading = true;
-
+    // Carica le fatture in base ai parametri della rotta
     this.invoice$ = this.route.params.pipe(
       takeUntil(this.destroy$),
+      tap(() => {
+        this.isLoading = true;
+        this.cdr.markForCheck();
+      }),
       switchMap(params => {
         const invoiceId = +params['id'];
         return this.invoiceService.getInvoiceById(invoiceId).pipe(
+          tap(() => {
+            this.isLoading = false;
+            this.cdr.markForCheck();
+          }),
           catchError(error => {
             console.error('Errore caricamento fattura:', error);
             this.showError('Errore nel caricamento della fattura');
+            this.isLoading = false;
+            this.cdr.markForCheck();
             return of(null);
           })
         );
-      })
+      }),
+      shareReplay(1)
     );
 
     // Carica i record di pagamento
     this.paymentRecords$ = this.invoice$.pipe(
       takeUntil(this.destroy$),
       switchMap(invoice => {
-        if (invoice) {
-          this.isLoadingPayments = true;
-          return this.invoiceService.getPaymentRecords(invoice.id).pipe(
-            catchError(error => {
-              console.error('Errore caricamento pagamenti:', error);
-              return of([]);
-            })
-          );
-        }
-        return of([]);
-      })
+        if (!invoice) return of([]);
+
+        this.isLoadingPayments = true;
+        this.cdr.markForCheck();
+
+        return this.invoiceService.getPaymentRecords(invoice.id).pipe(
+          tap(() => {
+            this.isLoadingPayments = false;
+            this.cdr.markForCheck();
+          }),
+          catchError(error => {
+            console.error('Errore caricamento pagamenti:', error);
+            this.isLoadingPayments = false;
+            this.cdr.markForCheck();
+            return of([]);
+          })
+        );
+      }),
+      shareReplay(1)
     );
 
     // Genera timeline
@@ -142,22 +161,14 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
           return of(this.generateTimeline(invoice));
         }
         return of([]);
-      })
+      }),
+      shareReplay(1)
     );
 
-    // Gestisce il loading
-    this.invoice$.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: () => {
-        this.isLoading = false;
-        this.isLoadingPayments = false;
-      },
-      error: () => {
-        this.isLoading = false;
-        this.isLoadingPayments = false;
-      }
-    });
+    // Forza la sottoscrizione per attivare i tap e gestire i loading flags
+    // (L'async pipe nel template farà il resto, ma shareReplay assicurerà una sola chiamata)
+    this.invoice$.pipe(takeUntil(this.destroy$)).subscribe();
+    this.paymentRecords$.pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   /**
@@ -246,7 +257,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
         next: () => {
           this.showSuccess('Fattura eliminata con successo');
           this.router.navigate(['/billing/list']);
-          
+
           // Notifica
           this.notificationService.addNotification({
             type: 'lease',
@@ -282,7 +293,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
         next: (updatedInvoice) => {
           this.showSuccess('Fattura marcata come pagata');
           this.loadInvoiceData(); // Ricarica i dati
-          
+
           // Notifica
           this.notificationService.addNotification({
             type: 'lease',
@@ -309,7 +320,7 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
         if (result.success) {
           this.showSuccess('Promemoria inviato con successo');
           this.loadInvoiceData(); // Ricarica i dati
-          
+
           // Notifica
           this.notificationService.addNotification({
             type: 'lease',
@@ -365,37 +376,37 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
 
   getStatusClass(invoice: Invoice): string {
     if (invoice.isPaid) return 'status-paid';
-    
+
     const today = new Date();
     const dueDate = new Date(invoice.dueDate);
-    
+
     if (dueDate < today) return 'status-overdue';
     if (dueDate.getTime() - today.getTime() < 7 * 24 * 60 * 60 * 1000) return 'status-due-soon';
-    
+
     return 'status-unpaid';
   }
 
   getStatusLabel(invoice: Invoice): string {
     if (invoice.isPaid) return 'Pagata';
-    
+
     const today = new Date();
     const dueDate = new Date(invoice.dueDate);
-    
+
     if (dueDate < today) return 'Scaduta';
     if (dueDate.getTime() - today.getTime() < 7 * 24 * 60 * 60 * 1000) return 'In Scadenza';
-    
+
     return 'Non Pagata';
   }
 
   getStatusIcon(invoice: Invoice): string {
     if (invoice.isPaid) return 'check_circle';
-    
+
     const today = new Date();
     const dueDate = new Date(invoice.dueDate);
-    
+
     if (dueDate < today) return 'warning';
     if (dueDate.getTime() - today.getTime() < 7 * 24 * 60 * 60 * 1000) return 'schedule';
-    
+
     return 'pending';
   }
 

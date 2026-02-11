@@ -415,6 +415,9 @@ $transition-speed: var(--transition-normal);
             .item-description {
               font-size: 0.9rem;
               color: $text-primary;
+              word-break: break-word;
+              overflow-wrap: break-word;
+              line-height: 1.4;
             }
           }
           

@@ -53,6 +53,7 @@ export interface UtilityReadingCreate {
 }
 
 export interface LastReading {
+    id?: number;
     apartmentId: number;
     type: 'electricity' | 'water' | 'gas';
     lastReading: number;

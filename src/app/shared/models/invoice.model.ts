@@ -43,7 +43,7 @@ export interface InvoiceItem {
     amount: number;
     quantity: number;
     unitPrice: number;
-    type: 'rent' | 'electricity' | 'water' | 'gas' | 'maintenance' | 'other';
+    type: 'rent' | 'electricity' | 'water' | 'gas' | 'electricity_laundry' | 'tari' | 'meter_fee' | 'entry' | 'maintenance' | 'other';
     createdAt?: string;
     updatedAt?: string;
     deletedAt?: string; // ← AGGIUNGI
@@ -88,7 +88,7 @@ export interface InvoiceItemCreate {
     amount: number;
     quantity: number;
     unitPrice: number;
-    type: 'rent' | 'electricity' | 'water' | 'gas' | 'maintenance' | 'other';
+    type: 'rent' | 'electricity' | 'water' | 'gas' | 'electricity_laundry' | 'tari' | 'meter_fee' | 'entry' | 'maintenance' | 'other';
 }
 
 export interface PaymentRecordCreate {

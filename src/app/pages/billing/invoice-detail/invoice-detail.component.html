@@ -130,16 +130,13 @@
               <mat-card-content>
                 <div class="financial-grid">
                   <div class="financial-item subtotal">
-                    <label>Subtotale</label>
+                    <label>Subtotale Utenze</label>
                     <span class="amount">{{formatCurrency(invoice.subtotal)}}</span>
                   </div>
-                  <div class="financial-item tax">
-                    <label>IVA</label>
-                    <span class="amount">{{formatCurrency(invoice.tax)}}</span>
-                  </div>
+                  <!-- IVA nascosta per requisiti backend -->
                   <mat-divider></mat-divider>
                   <div class="financial-item total">
-                    <label>Totale</label>
+                    <label>Totale Fattura</label>
                     <span class="amount">{{formatCurrency(invoice.total)}}</span>
                   </div>
                 </div>

@@ -1,80 +1,71 @@
-export interface Lease {
-    id: number;
+export interface InitialReadings {
+    electricityReadingId: number | null;
+    waterReadingId: number | null;
+    gasReadingId: number | null;
+    electricityLaundryReadingId: number | null;
+}
+
+export interface LeaseCreate {
     tenantId: number;
     apartmentId: number;
-    userId: number; // ← AGGIUNGI
-    startDate: Date;
-    endDate: Date;
+    userId: number;
+    startDate: string;
+    endDate: string;
     monthlyRent: number;
     securityDeposit: number;
-    isActive: boolean;
     paymentDueDay: number;
     termsAndConditions: string;
     specialClauses?: string;
     notes?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    deletedAt?: Date; // ← AGGIUNGI
-    documents?: LeaseDocument[];
-    paymentHistory?: LeasePayment[];
-    // Campi per il contratto base
-    initialUtilityReadings?: {
-        electricity?: number;
-        water?: number;
-        gas?: number;
-    };
+    initialReadings?: InitialReadings;
+    // Campi aggiuntivi opzionali per compatibilità UI
     propertyDescription?: string;
     propertyCondition?: string;
     boilerCondition?: string;
 }
 
+export interface Lease extends LeaseCreate {
+    id: number;
+    isActive: boolean;
+    status: 'active' | 'terminated';
+    createdAt: string;
+    updatedAt: string;
+    deletedAt?: string;
+    // Baseline IDs (flat nella risposta del backend)
+    electricityReadingId: number | null;
+    waterReadingId: number | null;
+    gasReadingId: number | null;
+    electricityLaundryReadingId: number | null;
+    documents?: LeaseDocument[];
+    payments?: LeasePayment[];
+}
 
 export interface LeaseDocument {
     id: number;
     leaseId: number;
-    userId: number; // ← AGGIUNGI
+    userId: number;
     name: string;
     type: string;
     url: string;
-    uploadDate: Date;
-    createdAt?: Date;
-    updatedAt?: Date;
-    deletedAt?: Date; // ← AGGIUNGI
+    uploadDate: string;
+    createdAt?: string;
+    updatedAt?: string;
+    deletedAt?: string;
 }
 
 export interface LeasePayment {
     id: number;
     leaseId: number;
-    userId: number; // ← AGGIUNGI
+    userId: number;
     amount: number;
-    paymentDate: Date;
+    paymentDate: string;
     paymentType: string;
     reference: string;
     notes?: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-    deletedAt?: Date; // ← AGGIUNGI
+    createdAt?: string;
+    updatedAt?: string;
+    deletedAt?: string;
 }
 
-export interface LeaseFormData {
-    tenantId: number;
-    apartmentId: number;
-    userId: number; // ← AGGIUNGI
-    startDate: Date;
-    endDate: Date;
-    monthlyRent: number;
-    securityDeposit: number;
-    paymentDueDay: number;
-    termsAndConditions: string;
-    specialClauses?: string;
-    notes?: string;
-    // Aggiunti per il contratto base
-    initialUtilityReadings?: {
-        electricity?: number;
-        water?: number;
-        gas?: number;
-    };
-    propertyDescription?: string;
-    propertyCondition?: string;
-    boilerCondition?: string;
-}
+// Per semplicità e coerenza con il backend, LeaseFormData può estendere LeaseCreate
+export type LeaseFormData = LeaseCreate;

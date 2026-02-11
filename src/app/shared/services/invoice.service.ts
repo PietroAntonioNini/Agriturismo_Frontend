@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, map, catchError, switchMap, tap, throwError } from 'rxjs';
-import { 
-  Invoice, 
-  InvoiceItem, 
-  PaymentRecord, 
-  InvoiceCreate, 
-  InvoiceItemCreate, 
+import {
+  Invoice,
+  InvoiceItem,
+  PaymentRecord,
+  InvoiceCreate,
+  InvoiceItemCreate,
   PaymentRecordCreate,
   InvoiceFilters,
   InvoiceStatistics,
@@ -31,9 +31,9 @@ export class InvoiceService {
   ) { }
 
   // Operazioni CRUD per le fatture - SOLO DATI REALI
-  getAllInvoices(params?: any): Observable<Invoice[]> {
-    return this.apiService.getAll<Invoice>('invoices', params).pipe(
-      tap(list => console.debug('[InvoiceService] getAllInvoices →', Array.isArray(list) ? list.length : 'n/a')), 
+  getAllInvoices(params?: any, forceRefresh: boolean = false): Observable<Invoice[]> {
+    return this.apiService.getAll<Invoice>('invoices', params, forceRefresh).pipe(
+      tap(list => console.debug('[InvoiceService] getAllInvoices →', Array.isArray(list) ? list.length : 'n/a')),
       catchError(error => {
         console.error('Errore nel recupero delle fatture:', error);
         return throwError(() => new Error('Impossibile recuperare le fatture dal database'));
@@ -225,7 +225,7 @@ export class InvoiceService {
 
   sendInvoiceReminder(invoiceId: number, reminderData?: any): Observable<{ success: boolean; message: string }> {
     const data = reminderData || { send_via: 'whatsapp' };
-    
+
     return this.apiService.post<any>(`${this.apiUrl}/${invoiceId}/send-reminder`, data).pipe(
       tap(() => {
         // Invalida la cache della fattura
@@ -259,7 +259,7 @@ export class InvoiceService {
       include_utilities: options?.include_utilities ?? true,
       send_notifications: options?.send_notifications ?? false
     };
-    
+
     return this.apiService.post<any>(`${this.apiUrl}/generate-monthly`, data).pipe(
       tap(() => {
         // Invalida la cache delle fatture
@@ -273,10 +273,18 @@ export class InvoiceService {
   }
 
   // Metodo per calcolare il totale della fattura
-  calculateInvoiceTotal(items: InvoiceItem[], taxRate: number = 0): { subtotal: number; tax: number; total: number } {
-    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
-    const tax = subtotal * taxRate;
-    const total = subtotal + tax;
+  calculateInvoiceTotal(items: InvoiceItem[]): { subtotal: number; tax: number; total: number } {
+    // Il subtotale rappresenta ora solo le utenze
+    const subtotal = items
+      .filter(item => ['electricity', 'water', 'gas', 'other', 'utility'].includes(item.type))
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    // L'IVA è forzata a 0
+    const tax = 0;
+
+    // Il totale comprende tutte le voci
+    const total = items.reduce((sum, item) => sum + item.amount, 0);
+
     return { subtotal, tax, total };
   }
 
@@ -392,7 +400,7 @@ export class InvoiceService {
       startDate: startDate.toISOString().split('T')[0],
       endDate: endDate.toISOString().split('T')[0]
     };
-    
+
     return this.apiService.getAll<any>('utilities', params).pipe(
       catchError(error => {
         console.error('Errore nel recupero delle letture utility:', error);
@@ -408,7 +416,7 @@ export class InvoiceService {
     return this.apiService.getById<any>('leases', leaseId).pipe(
       switchMap(lease => {
         const items: InvoiceItem[] = [];
-        
+
         // Aggiungi voce affitto
         const currentUser = this.authService.getCurrentUser();
         items.push({
@@ -434,7 +442,7 @@ export class InvoiceService {
             // Gestione speciale per l'appartamento 8 - elettricità della lavanderia
             const currentUser = this.authService.getCurrentUser();
             const isApartment8 = lease.apartmentId === 8;
-            
+
             if (isApartment8 && electricityReadings.length > 0) {
               const mainElectricity = electricityReadings.find(r => !r.isSpecialReading || r.subtype === 'main');
               const laundryElectricity = electricityReadings.find(r => r.isSpecialReading && r.subtype === 'laundry');
@@ -530,7 +538,7 @@ export class InvoiceService {
       include_utilities: true,
       custom_items: customItems || []
     };
-    
+
     return this.apiService.post<any>(`${this.apiUrl}/generate-from-lease`, data).pipe(
       tap(() => {
         // Invalida la cache delle fatture
@@ -567,7 +575,7 @@ export class InvoiceService {
       template: options?.template || 'overdue_reminder',
       custom_message: options?.custom_message
     };
-    
+
     return this.apiService.post<any>(`${this.apiUrl}/send-bulk-reminders`, data).pipe(
       tap(() => {
         // Invalida la cache delle fatture

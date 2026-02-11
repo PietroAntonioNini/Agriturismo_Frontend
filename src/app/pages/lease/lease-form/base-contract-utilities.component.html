@@ -28,7 +28,7 @@
 
   <!-- Form principale -->
   <form [formGroup]="utilitiesForm" *ngIf="!isLoading">
-    
+
     <!-- Sezione letture utenze -->
     <mat-card class="utilities-card">
       <mat-card-header>
@@ -40,11 +40,12 @@
           {{ getHelpMessage() }}
         </mat-card-subtitle>
       </mat-card-header>
-      
+
       <mat-card-content>
         <div class="utilities-grid">
-          <!-- Elettricità -->
-          <div class="utility-item" *ngFor="let utility of utilityData">
+          <!-- Utenze -->
+          <div class="utility-item" *ngFor="let utility of utilityData"
+            [hidden]="utility.type === 'electricityLaundry'">
             <div class="utility-header">
               <div class="utility-icon" [style.background-color]="utility.color + '20'">
                 <mat-icon [style.color]="utility.color">{{ utility.icon }}</mat-icon>
@@ -54,14 +55,15 @@
                 <span class="utility-unit">{{ utility.unit }}</span>
               </div>
             </div>
-            
+
             <div class="utility-content">
               <!-- Ultima lettura -->
               <div class="last-reading-info" *ngIf="utility.lastReading && utility.lastReading.hasHistory">
                 <div class="info-row">
                   <mat-icon class="info-icon">history</mat-icon>
                   <span class="info-label">Ultima lettura:</span>
-                  <span class="info-value">{{ utility.lastReading.lastReading | number:'1.0-3' }} {{ utility.unit }}</span>
+                  <span class="info-value">{{ utility.lastReading.lastReading | number:'1.0-3' }} {{ utility.unit
+                    }}</span>
                 </div>
                 <div class="info-row">
                   <mat-icon class="info-icon">event</mat-icon>
@@ -69,36 +71,66 @@
                   <span class="info-value">{{ formatDate(utility.lastReading.lastReadingDate) }}</span>
                 </div>
               </div>
-              
+
               <!-- Messaggio prima lettura -->
               <div class="first-reading-info" *ngIf="!utility.lastReading || !utility.lastReading.hasHistory">
                 <mat-icon class="info-icon">new_releases</mat-icon>
                 <span>Prima lettura per {{ utility.label.toLowerCase() }}</span>
               </div>
-              
+
               <!-- Campo input -->
               <div class="d-flex align-items-center gap-2">
                 <mat-form-field appearance="outline" class="utility-input">
                   <!-- <mat-label>{{ utility.unit }}</mat-label> -->
-                  <input 
-                    matInput 
-                    type="number" 
-                    [formControlName]="utility.type"
-                    [placeholder]="'Inserisci lettura'"
-                    min="0" 
-                    step="1"
-                    [readonly]="isReadOnly">
-                    <mat-error *ngIf="utilitiesForm.get(utility.type)?.hasError('min')">
-                      La lettura deve essere positiva
-                    </mat-error>
+                  <input matInput type="number" [formControlName]="utility.type" [placeholder]="'Inserisci lettura'"
+                    min="0" step="1" [readonly]="isReadOnly">
+                  <mat-error *ngIf="utilitiesForm.get(utility.type)?.hasError('min')">
+                    La lettura deve essere positiva
+                  </mat-error>
                 </mat-form-field>
                 <span matSuffix>{{ utility.unit }}</span>
               </div>
-              
+
               <!-- Spinner per caricamento -->
               <div class="utility-loading" *ngIf="utility.isLoading">
                 <mat-spinner diameter="20"></mat-spinner>
               </div>
+
+              <!-- Sezione Lavanderia (solo dentro Elettricità) -->
+              <ng-container *ngIf="utility.type === 'electricity' && apartment?.id?.toString() === '8'">
+                <mat-divider class="my-3"></mat-divider>
+
+                <div class="laundry-section" *ngIf="getUtilityData('electricityLaundry') as laundry">
+                  <div class="utility-header mb-2">
+                    <div class="utility-info">
+                      <h4 class="d-flex align-items-center gap-2">
+                        <mat-icon
+                          style="font-size: 18px; width: 18px; height: 18px; color: #FFC107">local_laundry_service</mat-icon>
+                        {{ laundry.label }}
+                      </h4>
+                    </div>
+                  </div>
+
+                  <!-- Ultima lettura lavanderia -->
+                  <div class="last-reading-info" *ngIf="laundry.lastReading && laundry.lastReading.hasHistory">
+                    <div class="info-row">
+                      <mat-icon class="info-icon">history</mat-icon>
+                      <span class="info-label">Ultima lettura:</span>
+                      <span class="info-value">{{ laundry.lastReading.lastReading | number:'1.0-3' }} {{ laundry.unit
+                        }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Campo input lavanderia -->
+                  <div class="d-flex align-items-center gap-2">
+                    <mat-form-field appearance="outline" class="utility-input">
+                      <input matInput type="number" formControlName="electricityLaundry"
+                        [placeholder]="'Inserisci lettura lavanderia'" min="0" step="1" [readonly]="isReadOnly">
+                    </mat-form-field>
+                    <span matSuffix>{{ laundry.unit }}</span>
+                  </div>
+                </div>
+              </ng-container>
             </div>
           </div>
         </div>
@@ -110,24 +142,21 @@
     <!-- Info e azioni -->
     <div class="actions-section" *ngIf="!isReadOnly">
       <div class="completion-status">
-        <mat-icon [style.color]="areAllReadingsComplete() ? '#2D7D46' : null" [color]="!areAllReadingsComplete() ? 'warn' : null">
+        <mat-icon [style.color]="areAllReadingsComplete() ? '#2D7D46' : null"
+          [color]="!areAllReadingsComplete() ? 'warn' : null">
           {{ areAllReadingsComplete() ? 'check_circle' : 'warning' }}
         </mat-icon>
         <span>
           {{ areAllReadingsComplete() ? 'Tutte le letture sono complete' : 'Alcune letture sono mancanti' }}
         </span>
       </div>
-      
+
       <div class="action-buttons">
-        <button 
-          mat-button 
-          color="primary" 
-          (click)="refreshLastReadings()"
-          [disabled]="!apartment">
+        <button mat-button color="primary" (click)="refreshLastReadings()" [disabled]="!apartment">
           <mat-icon>refresh</mat-icon>
           Ricarica Letture
         </button>
       </div>
     </div>
   </form>
-</div> 
+</div>

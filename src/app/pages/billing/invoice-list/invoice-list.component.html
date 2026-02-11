@@ -5,7 +5,7 @@
       <h1>Gestione Fatture <span class="counter">{{dataSource.data.length}}</span></h1>
       <p class="subtitle">Visualizza e gestisci tutte le fatture e i pagamenti</p>
     </div>
-    
+
     <button mat-flat-button color="primary" class="new-invoice-button" (click)="showAutomaticInvoiceInfo()">
       <mat-icon>info</mat-icon>
       Info Fatture Automatiche
@@ -27,7 +27,7 @@
         <div class="kpi-label">Totale Fatturato</div>
       </div>
     </div>
-    
+
     <div class="kpi-card total-paid">
       <div class="kpi-icon">
         <mat-icon>payments</mat-icon>
@@ -37,7 +37,7 @@
         <div class="kpi-label">Totale Incassato</div>
       </div>
     </div>
-    
+
     <div class="kpi-card total-unpaid">
       <div class="kpi-icon">
         <mat-icon>pending_actions</mat-icon>
@@ -47,7 +47,7 @@
         <div class="kpi-label">Da Incassare</div>
       </div>
     </div>
-    
+
     <div class="kpi-card overdue-invoices">
       <div class="kpi-icon">
         <mat-icon>warning</mat-icon>
@@ -57,7 +57,7 @@
         <div class="kpi-label">Fatture Scadute</div>
       </div>
     </div>
-    
+
     <div class="kpi-card this-month">
       <div class="kpi-icon">
         <mat-icon>calendar_month</mat-icon>
@@ -65,16 +65,6 @@
       <div class="kpi-content">
         <div class="kpi-value">{{(kpi$ | async)?.thisMonthInvoices}}</div>
         <div class="kpi-label">Fatture Questo Mese</div>
-      </div>
-    </div>
-    
-    <div class="kpi-card avg-payment-time">
-      <div class="kpi-icon">
-        <mat-icon>schedule</mat-icon>
-      </div>
-      <div class="kpi-content">
-        <div class="kpi-value">{{(kpi$ | async)?.averagePaymentTime | number:'1.0-0'}} giorni</div>
-        <div class="kpi-label">Tempo Medio Pagamento</div>
       </div>
     </div>
   </div>
@@ -85,40 +75,37 @@
       <mat-form-field appearance="outline" class="search-field">
         <mat-icon matPrefix>search</mat-icon>
         <input matInput placeholder="Cerca fattura, inquilino, appartamento..." [formControl]="searchControl">
-        <button *ngIf="searchControl.value" matSuffix mat-icon-button aria-label="Clear" (click)="searchControl.setValue('')">
+        <button *ngIf="searchControl.value" matSuffix mat-icon-button aria-label="Clear"
+          (click)="searchControl.setValue('')">
           <mat-icon>close</mat-icon>
         </button>
       </mat-form-field>
-      
+
       <div class="filter-chips">
         <div class="custom-button-group">
-          <button class="custom-toggle-button" 
-                  [class.active]="statusFilterControl.value === 'all'"
-                  (click)="statusFilterControl.setValue('all')">
+          <button class="custom-toggle-button" [class.active]="statusFilterControl.value === 'all'"
+            (click)="statusFilterControl.setValue('all')">
             <span class="check-icon" *ngIf="statusFilterControl.value === 'all'">✓</span>
             Tutte
           </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="statusFilterControl.value === 'paid'"
-                  (click)="statusFilterControl.setValue('paid')">
+          <button class="custom-toggle-button" [class.active]="statusFilterControl.value === 'paid'"
+            (click)="statusFilterControl.setValue('paid')">
             <span class="check-icon green" *ngIf="statusFilterControl.value === 'paid'">✓</span>
             Pagate
           </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="statusFilterControl.value === 'unpaid'"
-                  (click)="statusFilterControl.setValue('unpaid')">
+          <button class="custom-toggle-button" [class.active]="statusFilterControl.value === 'unpaid'"
+            (click)="statusFilterControl.setValue('unpaid')">
             <span class="check-icon yellow" *ngIf="statusFilterControl.value === 'unpaid'">✓</span>
             Non Pagate
           </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="statusFilterControl.value === 'overdue'"
-                  (click)="statusFilterControl.setValue('overdue')">
+          <button class="custom-toggle-button" [class.active]="statusFilterControl.value === 'overdue'"
+            (click)="statusFilterControl.setValue('overdue')">
             <span class="check-icon red" *ngIf="statusFilterControl.value === 'overdue'">✓</span>
             Scadute
           </button>
         </div>
-        
-        <div class="period-filters">
+
+        <div class="extra-filters">
           <mat-form-field appearance="outline" class="period-select">
             <mat-label>Periodo</mat-label>
             <mat-select [formControl]="periodFilterControl">
@@ -129,36 +116,45 @@
               <mat-option value="custom">Periodo personalizzato</mat-option>
             </mat-select>
           </mat-form-field>
-          
-          <div class="date-filters" *ngIf="periodFilterControl.value === 'custom'">
-            <mat-form-field appearance="outline" class="date-field">
-              <mat-label>Data inizio</mat-label>
-              <input matInput [matDatepicker]="startPicker" [formControl]="startDateControl">
-              <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
-              <mat-datepicker #startPicker></mat-datepicker>
-            </mat-form-field>
-            
-            <mat-form-field appearance="outline" class="date-field">
-              <mat-label>Data fine</mat-label>
-              <input matInput [matDatepicker]="endPicker" [formControl]="endDateControl">
-              <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-              <mat-datepicker #endPicker></mat-datepicker>
-            </mat-form-field>
-          </div>
+
+          <mat-form-field appearance="outline" class="filter-select">
+            <mat-label>Appartamento</mat-label>
+            <mat-select [formControl]="apartmentFilterControl">
+              <mat-option value="all">Tutti gli appartamenti</mat-option>
+              <mat-option *ngFor="let apt of allApartments" [value]="apt.id">{{apt.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-select">
+            <mat-label>Inquilino</mat-label>
+            <mat-select [formControl]="tenantFilterControl">
+              <mat-option value="all">Tutti gli inquilini</mat-option>
+              <mat-option *ngFor="let tenant of allTenants" [value]="tenant.id">{{tenant.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-select">
+            <mat-label>Tipo Voce</mat-label>
+            <mat-select [formControl]="typeFilterControl">
+              <mat-option *ngFor="let type of invoiceTypes" [value]="type.value">{{type.label}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button class="custom-toggle-button reset-filters" (click)="resetFilters()">
+            <mat-icon>filter_alt</mat-icon>
+            Reset Filtri
+          </button>
         </div>
-        
-        <button class="custom-toggle-button reset-filters" (click)="resetFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          Reset Filtri
-        </button>
       </div>
     </div>
-    
+
     <div class="view-options">
-      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
+      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')"
+        matTooltip="Vista griglia">
         <mat-icon>grid_view</mat-icon>
       </button>
-      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
+      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')"
+        matTooltip="Vista lista">
         <mat-icon>view_list</mat-icon>
       </button>
     </div>
@@ -170,7 +166,7 @@
       <mat-icon>check_circle</mat-icon>
       <span>{{selectedInvoices.size}} fattura/e selezionata/e</span>
     </div>
-    
+
     <div class="bulk-buttons">
       <button mat-button color="primary" (click)="markSelectedAsPaid()" [disabled]="isLoading">
         <mat-icon>payments</mat-icon>
@@ -213,7 +209,7 @@
           {{getStatusLabel(invoice)}}
         </div>
       </div>
-      
+
       <!-- Contenuto principale -->
       <div class="invoice-content">
         <!-- Sezione principale con inquilino e appartamento -->
@@ -228,7 +224,7 @@
             </div>
             <div class="info-value">{{getTenantName(invoice.tenantId)}}</div>
           </div>
-          
+
           <!-- Appartamento -->
           <div class="invoice-info-section">
             <div class="info-label">
@@ -240,7 +236,7 @@
             <div class="info-value">{{getApartmentName(invoice.apartmentId)}}</div>
           </div>
         </div>
-        
+
         <!-- Sezione finanziaria -->
         <div class="invoice-financial-section">
           <div class="info-label">
@@ -255,7 +251,7 @@
             <span>{{getPeriodLabel(invoice)}}</span>
           </div>
         </div>
-        
+
         <!-- Sezione date -->
         <div class="invoice-dates-section">
           <div class="date-column">
@@ -268,7 +264,7 @@
               <div class="full-date">{{formatDate(invoice.issueDate)}}</div>
             </div>
           </div>
-          
+
           <div class="date-column">
             <div class="date-label">Scadenza</div>
             <div class="date-value">
@@ -298,7 +294,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Footer con azioni -->
       <div class="invoice-actions">
         <button mat-icon-button color="primary" matTooltip="Visualizza dettagli" (click)="viewInvoice(invoice.id)">
@@ -323,11 +319,13 @@
       <!-- Checkbox Column -->
       <ng-container matColumnDef="select">
         <th mat-header-cell *matHeaderCellDef>
-          <mat-checkbox (change)="toggleSelectAll()" [checked]="selectAll" [indeterminate]="selectedInvoices.size > 0 && !selectAll">
+          <mat-checkbox (change)="toggleSelectAll()" [checked]="selectAll"
+            [indeterminate]="selectedInvoices.size > 0 && !selectAll">
           </mat-checkbox>
         </th>
         <td mat-cell *matCellDef="let invoice">
-          <mat-checkbox (click)="$event.stopPropagation()" (change)="toggleInvoiceSelection(invoice.id)" [checked]="isInvoiceSelected(invoice.id)">
+          <mat-checkbox (click)="$event.stopPropagation()" (change)="toggleInvoiceSelection(invoice.id)"
+            [checked]="isInvoiceSelected(invoice.id)">
           </mat-checkbox>
         </td>
       </ng-container>
@@ -380,7 +378,7 @@
 
       <!-- Total Column -->
       <ng-container matColumnDef="total">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Totale</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Totale Fattura</th>
         <td mat-cell *matCellDef="let invoice">
           <div class="total-cell">
             <span class="total-amount">{{formatCurrency(invoice.total)}}</span>
@@ -440,9 +438,8 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
-          [class.overdue-row]="isOverdue(row)"
-          [class.paid-row]="row.isPaid">
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" [class.overdue-row]="isOverdue(row)"
+        [class.paid-row]="row.isPaid">
       </tr>
     </table>
   </div>
@@ -454,4 +451,4 @@
     </div>
     <mat-paginator [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
   </div>
-</div> 
+</div>
