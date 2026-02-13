@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ViewChild, ChangeDetectorRef, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelect, MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatChipsModule } from '@angular/material/chips';
@@ -34,6 +34,7 @@ import { GenerateStatementDialogComponent } from '../generate-statement-dialog/g
 import { InvoiceService } from '../../../shared/services/invoice.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
+import { MonthlyStatementService } from '../../../shared/services/monthly-statement.service';
 
 interface InvoiceKPI {
   totalInvoiced: number;
@@ -92,6 +93,11 @@ interface InvoiceFilter {
 export class InvoiceListComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild('advancedFiltersWrapper') advancedFiltersWrapper?: ElementRef<HTMLElement>;
+  @ViewChild('periodSelectRef') periodSelect?: MatSelect;
+  @ViewChild('apartmentSelectRef') apartmentSelect?: MatSelect;
+  @ViewChild('tenantSelectRef') tenantSelect?: MatSelect;
+  @ViewChild('typeSelectRef') typeSelect?: MatSelect;
 
   // Esposizione di Math per il template
   Math = Math;
@@ -114,6 +120,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
 
   // View mode
   viewMode: 'grid' | 'list' = 'grid';
+  isAdvancedFiltersOpen = false;
 
   // Filters
   filter: InvoiceFilter = {
@@ -177,6 +184,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     private invoiceService: InvoiceService,
     private notificationService: NotificationService,
     private confirmationDialog: ConfirmationDialogService,
+    private monthlyStatementService: MonthlyStatementService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private router: Router,
@@ -485,6 +493,68 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.viewMode = mode;
   }
 
+  toggleAdvancedFilters(event?: MouseEvent): void {
+    event?.stopPropagation();
+    this.isAdvancedFiltersOpen = !this.isAdvancedFiltersOpen;
+    this.cdr.markForCheck();
+  }
+
+  closeAdvancedFilters(): void {
+    if (!this.isAdvancedFiltersOpen) {
+      return;
+    }
+
+    this.closeAllAdvancedSelects();
+    this.isAdvancedFiltersOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  hasActiveAdvancedFilters(): boolean {
+    return this.periodFilterControl.value !== 'all'
+      || this.apartmentFilterControl.value !== 'all'
+      || this.tenantFilterControl.value !== 'all'
+      || this.typeFilterControl.value !== 'all';
+  }
+
+  onAdvancedSelectOpened(opened: boolean, current: 'period' | 'apartment' | 'tenant' | 'type'): void {
+    if (!opened) {
+      return;
+    }
+
+    this.closeAllAdvancedSelects(current);
+  }
+
+  private closeAllAdvancedSelects(except?: 'period' | 'apartment' | 'tenant' | 'type'): void {
+    if (except !== 'period') this.periodSelect?.close();
+    if (except !== 'apartment') this.apartmentSelect?.close();
+    if (except !== 'tenant') this.tenantSelect?.close();
+    if (except !== 'type') this.typeSelect?.close();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.isAdvancedFiltersOpen) {
+      return;
+    }
+
+    const wrapper = this.advancedFiltersWrapper?.nativeElement;
+    const clickTarget = event.target as Node | null;
+    const targetElement = event.target as HTMLElement | null;
+
+    if (targetElement?.closest('.cdk-overlay-container')) {
+      return;
+    }
+
+    if (wrapper && clickTarget && !wrapper.contains(clickTarget)) {
+      this.closeAdvancedFilters();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePress(): void {
+    this.closeAdvancedFilters();
+  }
+
   /**
    * Resetta tutti i filtri
    */
@@ -508,6 +578,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.endDateControl.setValue(null);
 
     this.dataSource.filter = '';
+    this.cdr.markForCheck();
   }
 
   /**
@@ -739,22 +810,20 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   }
 
   printInvoice(invoiceId: number): void {
-    // Genera e scarica il PDF direttamente
-    this.invoiceService.generateInvoicePdf(invoiceId).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `fattura-${invoiceId}.pdf`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        this.showSuccess('PDF della fattura scaricato con successo');
-      },
-      error: (error) => {
-        console.error('Errore nella generazione del PDF:', error);
-        this.showError('Errore nella generazione del PDF');
-      }
-    });
+    const invoice = this.dataSource.data.find(i => i.id === invoiceId);
+    if (!invoice) {
+      this.showError('Fattura non trovata');
+      return;
+    }
+    const tenantName = this.tenantNames[invoice.tenantId] || 'Inquilino';
+    const apartmentName = this.apartmentNames[invoice.apartmentId] || 'Appartamento';
+    try {
+      this.monthlyStatementService.generateFromInvoice(invoice, tenantName, apartmentName);
+      this.showSuccess('PDF del prospetto scaricato con successo');
+    } catch (error) {
+      console.error('Errore nella generazione del PDF:', error);
+      this.showError('Errore nella generazione del PDF');
+    }
   }
 
   /**

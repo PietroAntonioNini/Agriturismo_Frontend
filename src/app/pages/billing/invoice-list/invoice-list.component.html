@@ -81,7 +81,7 @@
         </button>
       </mat-form-field>
 
-      <div class="filter-chips">
+      <div class="filter-chips" #advancedFiltersWrapper>
         <div class="custom-button-group">
           <button class="custom-toggle-button" [class.active]="statusFilterControl.value === 'all'"
             (click)="statusFilterControl.setValue('all')">
@@ -103,47 +103,62 @@
             <span class="check-icon red" *ngIf="statusFilterControl.value === 'overdue'">✓</span>
             Scadute
           </button>
+          <button class="custom-toggle-button filters-trigger"
+            [class.active]="isAdvancedFiltersOpen || hasActiveAdvancedFilters()"
+            (click)="toggleAdvancedFilters($event)">
+            <mat-icon>filter_alt</mat-icon>
+            Filtri
+          </button>
         </div>
 
-        <div class="extra-filters">
-          <mat-form-field appearance="outline" class="period-select">
-            <mat-label>Periodo</mat-label>
-            <mat-select [formControl]="periodFilterControl">
-              <mat-option value="all">Tutti i periodi</mat-option>
-              <mat-option value="this_month">Questo mese</mat-option>
-              <mat-option value="last_month">Mese scorso</mat-option>
-              <mat-option value="this_year">Questo anno</mat-option>
-              <mat-option value="custom">Periodo personalizzato</mat-option>
-            </mat-select>
-          </mat-form-field>
+        <div class="advanced-filters-panel" *ngIf="isAdvancedFiltersOpen">
+          <div class="advanced-filters-header">
+            <h4>Filtri avanzati</h4>
+            <button type="button" class="reset-link" (click)="resetFilters()">
+              <mat-icon>close</mat-icon>
+              Reset
+            </button>
+          </div>
 
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>Appartamento</mat-label>
-            <mat-select [formControl]="apartmentFilterControl">
-              <mat-option value="all">Tutti gli appartamenti</mat-option>
-              <mat-option *ngFor="let apt of allApartments" [value]="apt.id">{{apt.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="advanced-filters-grid">
+            <mat-form-field appearance="outline" class="period-select advanced-filter-field">
+              <mat-label>Periodo</mat-label>
+              <mat-select #periodSelectRef [formControl]="periodFilterControl"
+                (openedChange)="onAdvancedSelectOpened($event, 'period')">
+                <mat-option value="all">Tutti i periodi</mat-option>
+                <mat-option value="this_month">Questo mese</mat-option>
+                <mat-option value="last_month">Mese scorso</mat-option>
+                <mat-option value="this_year">Questo anno</mat-option>
+                <mat-option value="custom">Periodo personalizzato</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>Inquilino</mat-label>
-            <mat-select [formControl]="tenantFilterControl">
-              <mat-option value="all">Tutti gli inquilini</mat-option>
-              <mat-option *ngFor="let tenant of allTenants" [value]="tenant.id">{{tenant.name}}</mat-option>
-            </mat-select>
-          </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-select advanced-filter-field">
+              <mat-label>Appartamento</mat-label>
+              <mat-select #apartmentSelectRef [formControl]="apartmentFilterControl"
+                (openedChange)="onAdvancedSelectOpened($event, 'apartment')">
+                <mat-option value="all">Tutti gli appartamenti</mat-option>
+                <mat-option *ngFor="let apt of allApartments" [value]="apt.id">{{apt.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>Tipo Voce</mat-label>
-            <mat-select [formControl]="typeFilterControl">
-              <mat-option *ngFor="let type of invoiceTypes" [value]="type.value">{{type.label}}</mat-option>
-            </mat-select>
-          </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-select advanced-filter-field">
+              <mat-label>Inquilino</mat-label>
+              <mat-select #tenantSelectRef [formControl]="tenantFilterControl"
+                (openedChange)="onAdvancedSelectOpened($event, 'tenant')">
+                <mat-option value="all">Tutti gli inquilini</mat-option>
+                <mat-option *ngFor="let tenant of allTenants" [value]="tenant.id">{{tenant.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
 
-          <button class="custom-toggle-button reset-filters" (click)="resetFilters()">
-            <mat-icon>filter_alt</mat-icon>
-            Reset Filtri
-          </button>
+            <mat-form-field appearance="outline" class="filter-select advanced-filter-field">
+              <mat-label>Tipo Voce</mat-label>
+              <mat-select #typeSelectRef [formControl]="typeFilterControl"
+                (openedChange)="onAdvancedSelectOpened($event, 'type')">
+                <mat-option *ngFor="let type of invoiceTypes" [value]="type.value">{{type.label}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
         </div>
       </div>
     </div>
