@@ -865,6 +865,62 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     }).format(amount);
   }
 
+  getItemTypeLabel(type: string): string {
+    const types = {
+      'rent': 'Affitto',
+      'entry': 'Ingresso',
+      'electricity': 'Elettricità',
+      'electricity_laundry': 'Elettricità Lavanderia',
+      'water': 'Acqua',
+      'gas': 'Gas',
+      'tari': 'TARI',
+      'meter_fee': 'Contatori',
+      'maintenance': 'Manutenzione',
+      'other': 'Altro'
+    };
+    return types[type as keyof typeof types] || type;
+  }
+
+  getItemTypeIcon(type: string): string {
+    const icons = {
+      'rent': 'home',
+      'entry': 'meeting_room',
+      'electricity': 'bolt',
+      'electricity_laundry': 'local_laundry_service',
+      'water': 'water_drop',
+      'gas': 'local_fire_department',
+      'tari': 'receipt_long',
+      'meter_fee': 'speed',
+      'maintenance': 'build',
+      'other': 'label'
+    };
+    return icons[type as keyof typeof icons] || 'label';
+  }
+
+  getItemTypeColor(type: string): string {
+    const colors = {
+      'rent': '#2D7D46',
+      'entry': '#2D7D46',
+      'electricity': '#f59e0b',
+      'electricity_laundry': '#d97706',
+      'water': '#3b82f6',
+      'gas': '#ef4444',
+      'tari': '#6b7280',
+      'meter_fee': '#64748b',
+      'maintenance': '#8b5cf6',
+      'other': '#6b7280'
+    };
+    return colors[type as keyof typeof colors] || '#6b7280';
+  }
+
+  getItemSecondaryInfo(item: InvoiceItem): string {
+    const match = item.description?.match(/consumo\s+([\d.,]+)\s*([a-zA-Z0-9³]+)/i);
+    if (match) {
+      return `Consumo ${match[1]} ${match[2]}`;
+    }
+    return item.description;
+  }
+
   getPeriodLabel(invoice: Invoice): string {
     const months = [
       'Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu',

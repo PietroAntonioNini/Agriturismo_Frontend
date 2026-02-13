@@ -424,8 +424,11 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     const types = {
       'rent': 'Affitto',
       'electricity': 'Elettricità',
+      'electricity_laundry': 'Elettricità Lavanderia',
       'water': 'Acqua',
       'gas': 'Gas',
+      'tari': 'TARI',
+      'meter_fee': 'Contatori',
       'maintenance': 'Manutenzione',
       'other': 'Altro'
     };
@@ -436,8 +439,11 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     const icons = {
       'rent': 'home',
       'electricity': 'bolt',
+      'electricity_laundry': 'local_laundry_service',
       'water': 'water_drop',
       'gas': 'local_fire_department',
+      'tari': 'receipt_long',
+      'meter_fee': 'speed',
       'maintenance': 'build',
       'other': 'more_horiz'
     };
@@ -448,12 +454,38 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
     const colors = {
       'rent': '#2D7D46',
       'electricity': '#f59e0b',
+      'electricity_laundry': '#d97706',
       'water': '#3b82f6',
       'gas': '#ef4444',
+      'tari': '#6b7280',
+      'meter_fee': '#64748b',
       'maintenance': '#8b5cf6',
       'other': '#6b7280'
     };
     return colors[type as keyof typeof colors] || '#6b7280';
+  }
+
+  getUtilityItems(invoice: Invoice): InvoiceItem[] {
+    return invoice.items.filter(item =>
+      item.type === 'electricity' ||
+      item.type === 'electricity_laundry' ||
+      item.type === 'water' ||
+      item.type === 'gas'
+    );
+  }
+
+  getFixedChargeItems(invoice: Invoice): InvoiceItem[] {
+    return invoice.items.filter(item => item.type === 'tari' || item.type === 'meter_fee');
+  }
+
+  getUtilityConsumptionText(item: InvoiceItem): string {
+    const match = item.description?.match(/consumo\s+([\d.,]+)\s*([a-zA-Z0-9³]+)/i);
+    if (!match) {
+      return 'Consumo non disponibile';
+    }
+    const value = match[1];
+    const unit = match[2];
+    return `${value} ${unit}`;
   }
 
   formatDate(date: string | Date): string {

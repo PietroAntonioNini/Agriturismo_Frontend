@@ -240,7 +240,7 @@ export class LeaseFormComponent implements OnInit {
     // Gruppo di form per step 2: Durata e canone
     this.termsFormGroup = this.fb.group({
       startDate: [new Date(), Validators.required],
-      endDate: ['', [this.endDateValidator]],
+      endDate: [this.calculateDefaultEndDate(), [this.endDateValidator]],
       monthlyRent: ['', [Validators.required, Validators.min(0)]],
       securityDeposit: ['', [Validators.required, Validators.min(0)]],
       paymentDueDay: ['', [Validators.required, Validators.min(1), Validators.max(31)]],
@@ -425,14 +425,68 @@ export class LeaseFormComponent implements OnInit {
     const startDate = this.termsFormGroup.get('startDate')?.value;
     const endDate = this.termsFormGroup.get('endDate')?.value;
     if (endDate) return new Date(endDate);
-    if (startDate) return this.calculateDefaultEndDate(startDate);
-    return null;
+    if (startDate) return this.calculateDefaultEndDate();
+    return this.calculateDefaultEndDate();
   }
 
-  private calculateDefaultEndDate(startDate: any): Date {
-    const date = new Date(startDate);
-    date.setFullYear(date.getFullYear() + 2);
+  /**
+   * Default data fine: 1 anno dalla data di creazione.
+   */
+  private calculateDefaultEndDate(): Date {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 1);
     return date;
+  }
+
+  /**
+   * Costruisce initialReadings in formato ibrido:
+   * - usa gli ID quando esiste storico
+   * - usa i valori inseriti quando non esiste una lettura precedente
+   */
+  private buildInitialReadingsPayload(): Record<string, number> {
+    const initialReadings: Record<string, number> = {};
+    const mappings = [
+      {
+        idControl: 'electricityId',
+        valueControl: 'electricity',
+        idKey: 'electricityReadingId',
+        valueKey: 'electricityValue'
+      },
+      {
+        idControl: 'electricityLaundryId',
+        valueControl: 'electricityLaundry',
+        idKey: 'electricityLaundryReadingId',
+        valueKey: 'electricityLaundryValue'
+      },
+      {
+        idControl: 'waterId',
+        valueControl: 'water',
+        idKey: 'waterReadingId',
+        valueKey: 'waterValue'
+      },
+      {
+        idControl: 'gasId',
+        valueControl: 'gas',
+        idKey: 'gasReadingId',
+        valueKey: 'gasValue'
+      }
+    ];
+
+    mappings.forEach(({ idControl, valueControl, idKey, valueKey }) => {
+      const readingId = this.utilitiesFormGroup.get(idControl)?.value;
+      const readingValue = this.utilitiesFormGroup.get(valueControl)?.value;
+
+      if (readingId !== null && readingId !== undefined) {
+        initialReadings[idKey] = Number(readingId);
+        return;
+      }
+
+      if (readingValue !== null && readingValue !== undefined && readingValue !== '') {
+        initialReadings[valueKey] = Number(readingValue);
+      }
+    });
+
+    return initialReadings;
   }
 
   // Rimosse le funzioni loadTenants e loadApartments separate
@@ -475,7 +529,7 @@ export class LeaseFormComponent implements OnInit {
       this.snackBar.open('Sessione non valida. Accedi di nuovo.', 'Chiudi', { duration: 3000 });
       return;
     }
-    const finalEndDate = terms.endDate ? new Date(terms.endDate) : this.calculateDefaultEndDate(terms.startDate);
+    const finalEndDate = terms.endDate ? new Date(terms.endDate) : this.calculateDefaultEndDate();
 
     const leasePayload = {
       tenantId: tenant.id,
@@ -487,12 +541,7 @@ export class LeaseFormComponent implements OnInit {
       ...this.conditionsFormGroup.value,
       propertyCondition: 'ottimo',
       boilerCondition: 'ottimo',
-      initialReadings: {
-        electricityReadingId: this.utilitiesFormGroup.get('electricityId')?.value,
-        electricityLaundryReadingId: this.utilitiesFormGroup.get('electricityLaundryId')?.value,
-        waterReadingId: this.utilitiesFormGroup.get('waterId')?.value,
-        gasReadingId: this.utilitiesFormGroup.get('gasId')?.value
-      }
+      initialReadings: this.buildInitialReadingsPayload()
     };
 
     if (this.isEditMode && this.leaseId) {
@@ -617,7 +666,7 @@ export class LeaseFormComponent implements OnInit {
     if (tenant && apartment && this.termsFormGroup.valid && this.conditionsFormGroup.valid) {
       // Crea un oggetto Lease completo per la generazione del contratto
       const currentUser = this.authService.getCurrentUser();
-      const finalEndDate = terms.endDate ? new Date(terms.endDate) : this.calculateDefaultEndDate(terms.startDate);
+      const finalEndDate = terms.endDate ? new Date(terms.endDate) : this.calculateDefaultEndDate();
 
       const leaseDataForContract: Lease = {
         id: this.leaseId ?? 0,

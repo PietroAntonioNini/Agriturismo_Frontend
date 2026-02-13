@@ -1,8 +1,12 @@
 export interface InitialReadings {
-    electricityReadingId: number | null;
-    waterReadingId: number | null;
-    gasReadingId: number | null;
-    electricityLaundryReadingId: number | null;
+    electricityReadingId?: number | null;
+    waterReadingId?: number | null;
+    gasReadingId?: number | null;
+    electricityLaundryReadingId?: number | null;
+    electricityValue?: number | null;
+    waterValue?: number | null;
+    gasValue?: number | null;
+    electricityLaundryValue?: number | null;
 }
 
 export interface LeaseCreate {

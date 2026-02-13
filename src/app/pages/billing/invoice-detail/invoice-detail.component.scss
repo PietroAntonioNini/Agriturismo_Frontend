@@ -343,6 +343,76 @@ $transition-speed: var(--transition-normal);
         mat-divider {
           margin: 8px 0;
         }
+
+        .breakdown-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 10px 0 4px;
+
+          .breakdown-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: $text-secondary;
+            font-weight: 600;
+          }
+
+          .breakdown-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background-color: rgba(0, 0, 0, 0.02);
+            border: 1px solid $border-color;
+            border-radius: $radius-sm;
+            padding: 8px 10px;
+
+            .row-left {
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+
+              .item-main {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              }
+
+              mat-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+
+              .item-label {
+                font-size: 0.86rem;
+                color: $text-primary;
+                font-weight: 600;
+              }
+
+              .item-consumption {
+                font-size: 0.8rem;
+                color: $text-secondary;
+                margin-left: 22px;
+              }
+            }
+
+            .row-left.fixed-item {
+              flex-direction: row;
+              align-items: center;
+              gap: 6px;
+            }
+
+            .row-amount {
+              font-size: 0.9rem;
+              font-weight: 600;
+              color: $text-primary;
+              white-space: nowrap;
+            }
+          }
+        }
       }
       
       // Payment Info

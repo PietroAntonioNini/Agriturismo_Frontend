@@ -515,11 +515,12 @@ export class GenericApiService {
   // Processa i dati delle letture per i grafici
   processReadingsForChart(readings: any[], year: number): MonthlyUtilityData[] {
     const result: MonthlyUtilityData[] = [];
+    const filteredReadings = (readings || []).filter(reading => !reading?.isSpecialReading);
 
     // Raggruppa le letture per appartamento e mese
     const groupedReadings = new Map<string, any[]>();
 
-    readings.forEach(reading => {
+    filteredReadings.forEach(reading => {
       const readingDate = new Date(reading.readingDate);
       if (readingDate.getFullYear() === year) {
         const month = readingDate.getMonth() + 1;
@@ -948,6 +949,7 @@ export class GenericApiService {
     return this.http.get<MonthlyUtilityData[]>(url, {
       headers: forceRefresh ? { 'Cache-Control': 'no-cache, no-store, must-revalidate' } : {}
     }).pipe(
+      map((data: MonthlyUtilityData[]) => (data || []).filter(item => !(item as any).isSpecialReading)),
       catchError(error => {
         console.error(`Errore durante il recupero dei dati mensili per l'anno ${year}`, error);
         return of([]);

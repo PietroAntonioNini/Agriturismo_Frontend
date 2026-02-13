@@ -133,6 +133,36 @@
                     <label>Subtotale Utenze</label>
                     <span class="amount">{{formatCurrency(invoice.subtotal)}}</span>
                   </div>
+
+                  <div class="breakdown-list utilities-breakdown" *ngIf="getUtilityItems(invoice).length > 0">
+                    <div class="breakdown-title">Dettaglio utenze</div>
+                    <div class="breakdown-row" *ngFor="let item of getUtilityItems(invoice)">
+                      <div class="row-left">
+                        <div class="item-main">
+                          <mat-icon [style.color]="getItemTypeColor(item.type)">
+                            {{getItemTypeIcon(item.type)}}
+                          </mat-icon>
+                          <span class="item-label">{{getItemTypeLabel(item.type)}}</span>
+                        </div>
+                        <div class="item-consumption">{{getUtilityConsumptionText(item)}}</div>
+                      </div>
+                      <div class="row-amount">{{formatCurrency(item.amount)}}</div>
+                    </div>
+                  </div>
+
+                  <div class="breakdown-list fixed-charges-breakdown" *ngIf="getFixedChargeItems(invoice).length > 0">
+                    <div class="breakdown-title">Costi fissi</div>
+                    <div class="breakdown-row" *ngFor="let item of getFixedChargeItems(invoice)">
+                      <div class="row-left fixed-item">
+                        <mat-icon [style.color]="getItemTypeColor(item.type)">
+                          {{getItemTypeIcon(item.type)}}
+                        </mat-icon>
+                        <span class="item-label">{{getItemTypeLabel(item.type)}}</span>
+                      </div>
+                      <div class="row-amount">{{formatCurrency(item.amount)}}</div>
+                    </div>
+                  </div>
+
                   <!-- IVA nascosta per requisiti backend -->
                   <mat-divider></mat-divider>
                   <div class="financial-item total">

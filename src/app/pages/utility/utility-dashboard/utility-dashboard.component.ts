@@ -175,8 +175,11 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
 
 
   processUtilityData(data: MonthlyUtilityData[]): void {
+    // Escludi le baseline speciali dai grafici/aggregazioni.
+    const filteredData = (data || []).filter(item => !(item as any).isSpecialReading);
+
     // Elabora i dati per il grafico
-    this.allApartmentsData = data || [];
+    this.allApartmentsData = filteredData;
 
     // Assicurati che gli appartamenti siano definiti
     if (!this.apartments || this.apartments.length === 0) {

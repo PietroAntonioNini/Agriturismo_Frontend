@@ -1,0 +1,177 @@
+<div class="settings-page">
+  <header class="settings-header">
+    <div>
+      <h1>Impostazioni</h1>
+      <p>
+        Configura i default economici per la fatturazione. Le impostazioni sono personali
+        e applicate solo al tuo utente.
+      </p>
+    </div>
+    <div class="header-meta" *ngIf="lastSavedAt">
+      <mat-icon>schedule</mat-icon>
+      <span>Ultimo salvataggio: {{ lastSavedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+  </header>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <mat-spinner diameter="42"></mat-spinner>
+    <p>Caricamento impostazioni in corso...</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading">
+    <mat-tab-group animationDuration="200ms" class="settings-tabs">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">payments</mat-icon>
+          <span>Fatturazione</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <form [formGroup]="settingsForm" class="billing-layout">
+            <mat-card class="settings-card highlight">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>receipt_long</mat-icon>
+                  Costi fissi
+                </mat-card-title>
+                <mat-card-subtitle>
+                  Default applicati alle nuove fatture se non sovrascritti.
+                </mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                <div class="grid-two">
+                  <mat-form-field appearance="outline">
+                    <mat-label>TARI (€)</mat-label>
+                    <input matInput type="number" min="0" step="0.01" formControlName="tari" />
+                    <span matTextPrefix>€&nbsp;</span>
+                    <mat-error *ngIf="settingsForm.get('tari')?.hasError('required')">
+                      Campo obbligatorio
+                    </mat-error>
+                    <mat-error *ngIf="settingsForm.get('tari')?.hasError('min')">
+                      Valore non valido
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Contatori (€)</mat-label>
+                    <input matInput type="number" min="0" step="0.01" formControlName="meterFee" />
+                    <span matTextPrefix>€&nbsp;</span>
+                    <mat-error *ngIf="settingsForm.get('meterFee')?.hasError('required')">
+                      Campo obbligatorio
+                    </mat-error>
+                    <mat-error *ngIf="settingsForm.get('meterFee')?.hasError('min')">
+                      Valore non valido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+
+                <mat-divider></mat-divider>
+
+                <div class="cost-summary">
+                  <span>Totale costi fissi (mensile)</span>
+                  <strong>€ {{ totalFixedCosts | number:'1.2-2' }}</strong>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="settings-card">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon>bolt</mat-icon>
+                  Costi unitari utenze
+                </mat-card-title>
+                <mat-card-subtitle>
+                  Valori predefiniti per kWh e m³.
+                </mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content [formGroup]="unitCostsGroup">
+                <div class="grid-three">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Elettricità</mat-label>
+                    <input matInput type="number" min="0" step="0.01" formControlName="electricity" />
+                    <span matTextSuffix>€/kWh</span>
+                    <mat-error *ngIf="unitCostsGroup.get('electricity')?.hasError('required')">
+                      Campo obbligatorio
+                    </mat-error>
+                    <mat-error *ngIf="unitCostsGroup.get('electricity')?.hasError('min')">
+                      Valore non valido
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Acqua</mat-label>
+                    <input matInput type="number" min="0" step="0.01" formControlName="water" />
+                    <span matTextSuffix>€/m³</span>
+                    <mat-error *ngIf="unitCostsGroup.get('water')?.hasError('required')">
+                      Campo obbligatorio
+                    </mat-error>
+                    <mat-error *ngIf="unitCostsGroup.get('water')?.hasError('min')">
+                      Valore non valido
+                    </mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Gas</mat-label>
+                    <input matInput type="number" min="0" step="0.01" formControlName="gas" />
+                    <span matTextSuffix>€/m³</span>
+                    <mat-error *ngIf="unitCostsGroup.get('gas')?.hasError('required')">
+                      Campo obbligatorio
+                    </mat-error>
+                    <mat-error *ngIf="unitCostsGroup.get('gas')?.hasError('min')">
+                      Valore non valido
+                    </mat-error>
+                  </mat-form-field>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </form>
+
+          <div class="actions-row">
+            <button mat-button type="button" (click)="resetToBackendValues()" [disabled]="isSaving">
+              Ripristina valori backend
+            </button>
+            <button mat-button type="button" (click)="resetToSystemDefaults()" [disabled]="isSaving">
+              Usa default di sistema
+            </button>
+            <span class="spacer"></span>
+            <button mat-flat-button color="primary" type="button"
+              (click)="saveSettings()"
+              [disabled]="isSaving || settingsForm.invalid || !settingsForm.dirty">
+              <mat-spinner diameter="18" *ngIf="isSaving"></mat-spinner>
+              <mat-icon *ngIf="!isSaving">save</mat-icon>
+              Salva impostazioni
+            </button>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">rocket_launch</mat-icon>
+          <span>Prossimamente</span>
+        </ng-template>
+
+        <div class="tab-content">
+          <div class="placeholder-grid">
+            <mat-card class="placeholder-card" *ngFor="let item of placeholders">
+              <mat-card-header>
+                <div mat-card-avatar class="avatar-icon">
+                  <mat-icon>{{ item.icon }}</mat-icon>
+                </div>
+                <mat-card-title>{{ item.title }}</mat-card-title>
+                <mat-card-subtitle>{{ item.description }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <mat-chip>
+                  {{ placeholderStatusLabel(item.status) }}
+                </mat-chip>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-container>
+</div>

@@ -204,7 +204,8 @@ export class BaseContractUtilitiesComponent implements OnInit, OnDestroy, OnChan
         this.utilityData[utilityIndex].isLoading = true;
       }
 
-      return this.apiService.getLastUtilityReading(this.apartment!.id!, type.type)
+      const subtype = type.type === 'electricity' ? 'main' : undefined;
+      return this.apiService.getLastUtilityReading(this.apartment!.id!, type.type, subtype)
         .pipe(takeUntil(this.destroy$));
     });
 

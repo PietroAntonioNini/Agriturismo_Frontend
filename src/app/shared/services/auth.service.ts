@@ -115,10 +115,9 @@ export class AuthService {
       return throwError(() => new Error('No refresh token available'));
     }
     
-    const formData = new FormData();
-    formData.append('refresh_token', refreshToken);
-    
-    return this.http.post<TokenPair>(`${this.apiUrl}/auth/refresh-token`, formData)
+    return this.http.post<TokenPair>(`${this.apiUrl}/auth/refresh-token`, {
+      refresh_token: refreshToken
+    })
       .pipe(
         map(response => {
           this.storeTokens(response);

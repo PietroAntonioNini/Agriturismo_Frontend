@@ -284,12 +284,16 @@
             <span>Voci ({{invoice.items.length}})</span>
           </div>
           <div class="items-list">
-            <div *ngFor="let item of invoice.items.slice(0, 3)" class="item-preview">
-              <span class="item-description">{{item.description}}</span>
+            <div *ngFor="let item of invoice.items" class="item-preview">
+              <div class="item-left">
+                <div class="item-title-row">
+                  <mat-icon [style.color]="getItemTypeColor(item.type)">
+                    {{getItemTypeIcon(item.type)}}
+                  </mat-icon>
+                  <span class="item-type-label">{{getItemTypeLabel(item.type)}}</span>
+                </div>
+              </div>
               <span class="item-amount">{{formatCurrency(item.amount)}}</span>
-            </div>
-            <div *ngIf="invoice.items.length > 3" class="more-items">
-              +{{invoice.items.length - 3}} altre voci
             </div>
           </div>
         </div>

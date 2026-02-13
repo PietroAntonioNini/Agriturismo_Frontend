@@ -549,7 +549,7 @@ $transition-speed: var(--transition-normal);
 // Grid view
 .invoices-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 0fr));
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
   gap: 24px;
   margin-bottom: 24px;
 
@@ -855,38 +855,55 @@ $transition-speed: var(--transition-normal);
         }
 
         .items-list {
-          display: flex;
-          flex-direction: column;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 8px;
 
           .item-preview {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
             background-color: rgba(0, 0, 0, 0.03);
             border-radius: $radius-sm;
+            border: 1px solid rgba(var(--primary-color-rgb), 0.08);
 
-            .item-description {
-              font-size: 0.9rem;
-              color: $text-primary;
+            .item-left {
               flex: 1;
+              min-width: 0;
+
+              .item-title-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                mat-icon {
+                  font-size: 16px;
+                  height: 16px;
+                  width: 16px;
+                  flex-shrink: 0;
+                }
+
+                .item-type-label {
+                  font-size: 0.86rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.4px;
+                  font-weight: 600;
+                  color: $text-primary;
+                }
+              }
             }
 
             .item-amount {
               font-weight: 600;
               color: $text-primary;
               font-size: 0.9rem;
+              white-space: nowrap;
+              margin-top: 2px;
             }
           }
 
-          .more-items {
-            text-align: center;
-            color: $text-secondary;
-            font-size: 0.85rem;
-            font-style: italic;
-            padding: 8px;
-          }
         }
       }
     }
@@ -1229,6 +1246,10 @@ $transition-speed: var(--transition-normal);
   }
 
   .invoices-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .invoices-grid .invoice-card .invoice-content .invoice-items-preview .items-list {
     grid-template-columns: 1fr;
   }
 
