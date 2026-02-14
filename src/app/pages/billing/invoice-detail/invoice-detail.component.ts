@@ -542,4 +542,9 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
   private showError(message: string): void {
     this.notificationService.showError(message);
   }
+
+  // Navigazione
+  onBack(): void {
+    this.router.navigate(['/billing/list']);
+  }
 } 

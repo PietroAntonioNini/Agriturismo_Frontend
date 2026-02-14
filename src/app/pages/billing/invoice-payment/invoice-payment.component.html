@@ -20,12 +20,12 @@
         </div>
       </div>
       <div class="header-actions">
-        <button mat-button (click)="onViewInvoice(invoice)">
+        <button mat-stroked-button (click)="viewInvoiceDetail()" class="view-invoice-btn">
           <mat-icon>visibility</mat-icon>
           Visualizza Fattura
         </button>
         <button mat-flat-button color="primary" (click)="markAsPaid()" 
-                [disabled]="invoice.status === 'paid'">
+                [disabled]="invoice.status === 'paid'" class="mark-paid-btn">
           <mat-icon>check_circle</mat-icon>
           Marca come Pagata
         </button>
@@ -43,6 +43,26 @@
               <mat-card-subtitle>Inserisci i dettagli del pagamento ricevuto</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
+              <!-- Riepilogo rapido importi -->
+              <div class="quick-summary">
+                <div class="quick-summary-item">
+                  <span class="qs-label">Totale Fattura</span>
+                  <span class="qs-value total">{{ formatCurrency(invoice.total) }}</span>
+                </div>
+                <div class="quick-summary-divider"></div>
+                <div class="quick-summary-item">
+                  <span class="qs-label">Già Pagato</span>
+                  <span class="qs-value paid">{{ formatCurrency(getTotalPaid(invoice)) }}</span>
+                </div>
+                <div class="quick-summary-divider"></div>
+                <div class="quick-summary-item">
+                  <span class="qs-label">Da Pagare</span>
+                  <span class="qs-value remaining">{{ formatCurrency(getRemainingAmount(invoice)) }}</span>
+                </div>
+              </div>
+
+              <mat-divider class="form-divider"></mat-divider>
+
               <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()" class="payment-form">
                 <div class="form-row">
                   <!-- Importo -->
@@ -71,6 +91,12 @@
                   <mat-form-field appearance="outline" class="form-field">
                     <mat-label>Metodo di Pagamento</mat-label>
                     <mat-select formControlName="paymentMethod">
+                      <mat-select-trigger>
+                        <div class="select-trigger-content">
+                          <mat-icon>{{ getSelectedPaymentMethodIcon() }}</mat-icon>
+                          <span>{{ getSelectedPaymentMethodLabel() }}</span>
+                        </div>
+                      </mat-select-trigger>
                       <mat-option *ngFor="let method of paymentMethods" [value]="method.value">
                         <div class="payment-method-option">
                           <mat-icon>{{ method.icon }}</mat-icon>
@@ -89,7 +115,7 @@
                   <!-- Riferimento -->
                   <mat-form-field appearance="outline" class="form-field">
                     <mat-label>Riferimento</mat-label>
-                    <input matInput formControlName="reference" placeholder="Numero bonifico, assegno, ecc.">
+                    <input matInput formControlName="reference" placeholder="Numero bonifico, operazione, ecc.">
                   </mat-form-field>
                 </div>
 
@@ -255,9 +281,9 @@
                   <div class="summary-item">
                     <span class="label">Status:</span>
                     <span class="value">
-                      <mat-chip [color]="getInvoiceStatusColor(invoice.status)" selected>
+                      <span class="status-badge" [ngClass]="getInvoiceStatusClass(invoice.status)">
                         {{ getInvoiceStatusLabel(invoice.status) }}
-                      </mat-chip>
+                      </span>
                     </span>
                   </div>
                 </div>

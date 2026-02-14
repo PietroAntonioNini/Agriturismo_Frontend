@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -78,14 +78,23 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
   paymentForm!: FormGroup;
   invoice$!: Observable<Invoice | null>;
   paymentHistory$!: Observable<PaymentRecord[]>;
+  currentInvoice: Invoice | null = null;
+  invoiceId!: number;
   isLoading = false;
   isProcessing = false;
   selectedTab = 0;
   
+  // Cache per nomi tenant e appartamenti (caricati via API separata)
+  tenantNames: { [key: number]: string } = {};
+  apartmentNames: { [key: number]: string } = {};
+
+  // Pagamenti caricati separatamente per calcoli finanziari
+  loadedPayments: PaymentRecord[] = [];
+  
   // Dati per la tabella pagamenti
   displayedColumns: string[] = ['date', 'amount', 'method', 'reference', 'status', 'actions'];
   
-  // Metodi di pagamento disponibili
+  // Metodi di pagamento disponibili (allineati al modello Invoice)
   paymentMethods: PaymentMethod[] = [
     {
       value: 'bank_transfer',
@@ -100,22 +109,16 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
       description: 'Pagamento in contanti'
     },
     {
-      value: 'check',
-      label: 'Assegno',
-      icon: 'receipt',
-      description: 'Pagamento tramite assegno'
-    },
-    {
       value: 'credit_card',
       label: 'Carta di Credito',
       icon: 'credit_card',
       description: 'Pagamento con carta di credito'
     },
     {
-      value: 'paypal',
-      label: 'PayPal',
-      icon: 'payment',
-      description: 'Pagamento tramite PayPal'
+      value: 'check',
+      label: 'Assegno',
+      icon: 'receipt_long',
+      description: 'Pagamento tramite assegno'
     }
   ];
 
@@ -125,7 +128,8 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     private router: Router,
     private invoiceService: InvoiceService,
     private notificationService: NotificationService,
-    private confirmationDialogService: ConfirmationDialogService
+    private confirmationDialogService: ConfirmationDialogService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -162,7 +166,9 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
       switchMap(params => {
         const id = params['id'];
         if (id) {
+          this.invoiceId = +id;
           this.isLoading = true;
+          this.cdr.markForCheck();
           return this.invoiceService.getInvoiceById(+id);
         }
         return of(null);
@@ -171,21 +177,59 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
       next: (invoice) => {
         this.isLoading = false;
         if (invoice) {
+          this.currentInvoice = invoice;
           this.invoice$ = of(invoice);
           this.loadPaymentHistory(invoice.id);
           this.setupPaymentForm(invoice);
+          this.loadTenantName(invoice.tenantId);
+          this.loadApartmentName(invoice.apartmentId);
         }
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.isLoading = false;
         this.notificationService.showError('Errore nel caricamento della fattura');
         console.error('Errore caricamento fattura:', error);
+        this.cdr.markForCheck();
       }
     });
   }
 
   private loadPaymentHistory(invoiceId: number): void {
     this.paymentHistory$ = this.invoiceService.getPaymentRecords(invoiceId);
+    // Carica anche in un array locale per i calcoli nel riepilogo
+    this.invoiceService.getPaymentRecords(invoiceId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (payments) => {
+        this.loadedPayments = payments || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.loadedPayments = [];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadTenantName(tenantId: number): void {
+    if (this.tenantNames[tenantId]) return;
+    this.invoiceService.getTenantName(tenantId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(name => {
+      this.tenantNames[tenantId] = name;
+      this.cdr.markForCheck();
+    });
+  }
+
+  private loadApartmentName(apartmentId: number): void {
+    if (this.apartmentNames[apartmentId]) return;
+    this.invoiceService.getApartmentName(apartmentId).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(name => {
+      this.apartmentNames[apartmentId] = name;
+      this.cdr.markForCheck();
+    });
   }
 
   private setupPaymentForm(invoice: Invoice): void {
@@ -205,6 +249,7 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
   onSubmitPayment(): void {
     if (this.paymentForm.valid) {
       this.isProcessing = true;
+      this.cdr.markForCheck();
       const formData = this.paymentForm.value;
       
       this.invoice$.pipe(
@@ -239,11 +284,13 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
             markAsPaid: false,
             sendReceipt: true
           });
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.isProcessing = false;
           this.notificationService.showError('Errore nella registrazione del pagamento');
           console.error('Errore registrazione pagamento:', error);
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -378,18 +425,47 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Utility methods per tenant e apartment
+  // Utility methods per tenant e apartment (caricamento asincrono con cache)
   getTenantName(tenantId: number): string {
-    // TODO: Implementare servizio inquilini
+    if (this.tenantNames[tenantId]) {
+      return this.tenantNames[tenantId];
+    }
     return `Inquilino ${tenantId}`;
   }
 
   getApartmentName(apartmentId: number): string {
-    // TODO: Implementare servizio appartamenti
+    if (this.apartmentNames[apartmentId]) {
+      return this.apartmentNames[apartmentId];
+    }
     return `Appartamento ${apartmentId}`;
   }
 
+  // Ottieni il label del metodo selezionato per il trigger del select
+  getSelectedPaymentMethodLabel(): string {
+    const selectedValue = this.paymentForm.get('paymentMethod')?.value;
+    const method = this.paymentMethods.find(m => m.value === selectedValue);
+    return method ? method.label : '';
+  }
+
+  getSelectedPaymentMethodIcon(): string {
+    const selectedValue = this.paymentForm.get('paymentMethod')?.value;
+    const method = this.paymentMethods.find(m => m.value === selectedValue);
+    return method ? method.icon : 'payment';
+  }
+
+  // Navigazione ai dettagli fattura
+  viewInvoiceDetail(): void {
+    this.router.navigate(['/billing/detail', this.invoiceId]);
+  }
+
+  // Calcoli finanziari basati sui pagamenti caricati separatamente
   getTotalPaid(invoice: Invoice): number {
+    // Usa i pagamenti caricati dalla API separata, fallback su paymentRecords dell'invoice
+    if (this.loadedPayments.length > 0) {
+      return this.loadedPayments
+        .filter(p => p.status === 'completed')
+        .reduce((sum, payment) => sum + payment.amount, 0);
+    }
     return invoice.paymentRecords?.reduce((sum: number, payment: any) => sum + payment.amount, 0) || 0;
   }
 
@@ -409,12 +485,13 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     return 'warn';
   }
 
-  getInvoiceStatusColor(status: string): string {
+  getInvoiceStatusClass(status: string): string {
     switch (status) {
-      case 'paid': return 'primary';
-      case 'pending': return 'warn';
-      case 'overdue': return 'error';
-      default: return 'default';
+      case 'paid': return 'status-paid';
+      case 'pending': return 'status-pending';
+      case 'overdue': return 'status-overdue';
+      case 'cancelled': return 'status-cancelled';
+      default: return 'status-default';
     }
   }
 
@@ -423,16 +500,13 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
       case 'paid': return 'Pagata';
       case 'pending': return 'In Attesa';
       case 'overdue': return 'Scaduta';
+      case 'cancelled': return 'Annullata';
       default: return status;
     }
   }
 
   // Navigazione
   onBack(): void {
-    this.router.navigate(['/billing/list']);
-  }
-
-  onViewInvoice(invoice: Invoice): void {
-    this.router.navigate(['/billing/detail', invoice.id]);
+    this.router.navigate(['/billing/detail', this.invoiceId]);
   }
 } 

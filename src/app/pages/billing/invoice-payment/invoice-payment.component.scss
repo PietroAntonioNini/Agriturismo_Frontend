@@ -19,7 +19,6 @@ $elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 .invoice-payment-container {
   padding: 24px;
   background-color: $background-color;
-  min-height: 100vh;
 
   .loading-container {
     display: flex;
@@ -79,6 +78,32 @@ $elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
         display: flex;
         gap: 12px;
         align-items: center;
+
+        .view-invoice-btn {
+          color: $text-secondary;
+          border-color: $border-color;
+
+          mat-icon {
+            margin-right: 4px;
+          }
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+          }
+        }
+
+        .mark-paid-btn {
+          background-color: $primary-color;
+          color: white;
+
+          mat-icon {
+            margin-right: 4px;
+          }
+
+          &:hover {
+            background-color: $primary-dark;
+          }
+        }
       }
     }
 
@@ -131,26 +156,103 @@ $elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
           }
 
           mat-card-content {
+            // Quick summary nel tab nuovo pagamento
+            .quick-summary {
+              display: flex;
+              align-items: center;
+              justify-content: space-around;
+              padding: 16px 24px;
+              background: linear-gradient(135deg, rgba($primary-color, 0.04), rgba($primary-color, 0.08));
+              border-radius: $border-radius;
+              margin-bottom: 8px;
+
+              .quick-summary-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+
+                .qs-label {
+                  font-size: 12px;
+                  color: $text-secondary;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  font-weight: 500;
+                }
+
+                .qs-value {
+                  font-size: 20px;
+                  font-weight: 600;
+
+                  &.total {
+                    color: $text-primary;
+                  }
+
+                  &.paid {
+                    color: $success-color;
+                  }
+
+                  &.remaining {
+                    color: $warn-color;
+                  }
+                }
+              }
+
+              .quick-summary-divider {
+                width: 1px;
+                height: 40px;
+                background-color: $border-color;
+              }
+            }
+
+            .form-divider {
+              margin: 24px 0;
+            }
+
             .payment-form {
               .form-row {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
                 gap: 24px;
-                margin-bottom: 24px;
+                margin-bottom: 8px;
 
                 .form-field {
                   width: 100%;
+                }
+              }
 
-                  &.full-width {
-                    grid-column: 1 / -1;
-                  }
+              .form-field.full-width {
+                width: 100%;
+                margin-bottom: 8px;
+              }
+
+              .select-trigger-content {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                mat-icon {
+                  font-size: 20px;
+                  width: 20px;
+                  height: 20px;
+                  color: $primary-color;
+                }
+
+                span {
+                  font-size: 14px;
                 }
               }
 
               .form-actions {
                 display: flex;
                 justify-content: flex-end;
-                margin-top: 32px;
+                margin-top: 16px;
+
+                button {
+                  min-width: 200px;
+                  height: 44px;
+                  font-size: 15px;
+                }
 
                 .button-spinner {
                   margin-left: 8px;
@@ -262,6 +364,40 @@ $elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
                       color: $warn-color;
                       font-weight: 600;
                     }
+
+                    .status-badge {
+                      display: inline-block;
+                      padding: 4px 16px;
+                      border-radius: 16px;
+                      font-size: 13px;
+                      font-weight: 500;
+                      text-align: center;
+
+                      &.status-paid {
+                        background-color: rgba($success-color, 0.12);
+                        color: $primary-dark;
+                      }
+
+                      &.status-pending {
+                        background-color: rgba($accent-color, 0.12);
+                        color: #e65100; // orange-dark
+                      }
+
+                      &.status-overdue {
+                        background-color: rgba($warn-color, 0.12);
+                        color: #c62828; // red-dark
+                      }
+
+                      &.status-cancelled {
+                        background-color: rgba($text-secondary, 0.12);
+                        color: $text-secondary;
+                      }
+
+                      &.status-default {
+                        background-color: rgba($text-secondary, 0.08);
+                        color: $text-secondary;
+                      }
+                    }
                   }
                 }
               }
@@ -333,6 +469,12 @@ $elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 
         .header-actions {
           justify-content: flex-end;
+          flex-wrap: wrap;
+
+          .view-invoice-btn,
+          .mark-paid-btn {
+            font-size: 13px;
+          }
         }
       }
 
@@ -342,6 +484,22 @@ $elevation-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 
           .payment-form-card, .payment-history-card, .summary-card {
             mat-card-content {
+              .quick-summary {
+                flex-direction: column;
+                gap: 12px;
+
+                .quick-summary-divider {
+                  width: 100%;
+                  height: 1px;
+                }
+
+                .quick-summary-item {
+                  .qs-value {
+                    font-size: 18px;
+                  }
+                }
+              }
+
               .payment-form {
                 .form-row {
                   grid-template-columns: 1fr;
