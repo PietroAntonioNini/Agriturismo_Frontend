@@ -106,6 +106,9 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   // Flip card states - track which cards are flipped
   flippedCards: Set<number> = new Set();
 
+  // Advanced filters popover
+  isAdvancedFiltersOpen = false;
+
   // Filters
   filterForm!: FormGroup;
 
@@ -606,6 +609,48 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     if (filters.isPaid !== '' && filters.isPaid !== null && filters.isPaid !== undefined) count++;
 
     return count;
+  }
+
+  /** Conta solo i filtri nel popover avanzato (appartamento, tipo, date) */
+  getAdvancedFiltersCount(): number {
+    const filters = this.filterForm.value;
+    let count = 0;
+    if (filters.apartmentId && filters.apartmentId !== this.data.selectedApartmentId) count++;
+    if (filters.utilityType && filters.utilityType !== '') count++;
+    if (filters.startDate && filters.startDate !== '') count++;
+    if (filters.endDate && filters.endDate !== '') count++;
+    return count;
+  }
+
+  /** Controlla se ci sono filtri avanzati attivi */
+  hasActiveAdvancedFilters(): boolean {
+    return this.getAdvancedFiltersCount() > 0;
+  }
+
+  /** Toggle del popover filtri avanzati */
+  toggleAdvancedFilters(event: Event): void {
+    event.stopPropagation();
+    this.isAdvancedFiltersOpen = !this.isAdvancedFiltersOpen;
+  }
+
+  /** Chiude il popover filtri avanzati */
+  closeAdvancedFilters(): void {
+    this.isAdvancedFiltersOpen = false;
+  }
+
+  /** Imposta il filtro stato pagamento dai chip */
+  setPaymentFilter(value: '' | boolean): void {
+    this.filterForm.patchValue({ isPaid: value });
+  }
+
+  /** Pulisce solo i filtri avanzati (nel popover) */
+  clearAdvancedFilters(): void {
+    this.filterForm.patchValue({
+      apartmentId: '',
+      utilityType: '',
+      startDate: '',
+      endDate: ''
+    });
   }
 
   onClose(): void {

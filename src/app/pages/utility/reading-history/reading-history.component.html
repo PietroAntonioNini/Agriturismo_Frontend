@@ -1,31 +1,27 @@
-<div class="reading-history-container">
+<div class="reading-history-container" (click)="closeAdvancedFilters()">
   
-  <!-- Header pulito e minimale -->
+  <!-- Header compatto -->
   <div class="history-header">
     <div class="header-left">
-      <div class="header-title">
-        <mat-icon class="title-icon">analytics</mat-icon>
-        <div class="title-content">
-          <h1>Storico Letture Utility</h1>
-          <p class="subtitle" *ngIf="!isLoading && dataSource.data.length > 0">
-            {{dataSource.data.length}} {{dataSource.data.length === 1 ? 'lettura trovata' : 'letture trovate'}}
-          </p>
-        </div>
-      </div>
+      <mat-icon class="title-icon">analytics</mat-icon>
+      <h1>Storico Letture</h1>
+      <span class="header-count" *ngIf="!isLoading && dataSource.data.length > 0">
+        {{dataSource.data.length}}
+      </span>
     </div>
     
     <div class="header-actions">
       <button mat-stroked-button [matMenuTriggerFor]="viewMenu" class="view-toggle-btn">
         <mat-icon>{{viewMode === 'table' ? 'table_view' : 'dashboard'}}</mat-icon>
-        <span>{{viewMode === 'table' ? 'Vista Tabella' : 'Vista Raggruppata'}}</span>
-        <mat-icon>keyboard_arrow_down</mat-icon>
+        <span class="btn-label">{{viewMode === 'table' ? 'Tabella' : 'Raggruppata'}}</span>
+        <mat-icon class="arrow-icon">expand_more</mat-icon>
       </button>
       
       <button mat-stroked-button (click)="exportData()" 
               [disabled]="dataSource.data.length === 0" 
-              matTooltip="Esporta in Excel">
+              matTooltip="Esporta dati" class="export-btn">
         <mat-icon>file_download</mat-icon>
-        <span>Esporta</span>
+        <span class="btn-label">Esporta</span>
       </button>
       
       <button mat-icon-button (click)="onClose()" matTooltip="Chiudi" class="close-btn">
@@ -34,142 +30,121 @@
     </div>
   </div>
 
-  <!-- Menu Vista migliorato -->
+  <!-- Menu Vista -->
   <mat-menu #viewMenu="matMenu" class="view-menu">
-    <button mat-menu-item (click)="setViewMode('table')" 
-            [class.active]="viewMode === 'table'">
+    <button mat-menu-item (click)="setViewMode('table')" [class.active]="viewMode === 'table'">
       <mat-icon>table_view</mat-icon>
       <span>Vista Tabella</span>
       <mat-icon *ngIf="viewMode === 'table'" class="check-icon">check</mat-icon>
     </button>
-    <button mat-menu-item (click)="setViewMode('grouped')"
-            [class.active]="viewMode === 'grouped'">
+    <button mat-menu-item (click)="setViewMode('grouped')" [class.active]="viewMode === 'grouped'">
       <mat-icon>dashboard</mat-icon>
       <span>Vista Raggruppata</span>
       <mat-icon *ngIf="viewMode === 'grouped'" class="check-icon">check</mat-icon>
     </button>
   </mat-menu>
 
-  <!-- Sezione Filtri -->
-  <mat-card class="filters-section" elevation="2">
-    <mat-card-header>
-      <mat-card-title class="mb-4">
-        <mat-icon>filter_list</mat-icon>
-        Filtri di Ricerca
-      </mat-card-title>
-      <div *ngIf="getActiveFiltersCount() > 0" class="filters-header-actions ms-4">
-        <mat-chip-listbox class="active-filters">
-          <mat-chip-option class="filter-count-chip">
-            {{getActiveFiltersCount()}} filtri attivi
-          </mat-chip-option>
-        </mat-chip-listbox>
-        <button mat-button color="primary" (click)="clearFilters()">
-          <mat-icon>clear_all</mat-icon>
-          Pulisci Filtri
-        </button>
-      </div>
-    </mat-card-header>
+  <!-- Barra Filtri compatta -->
+  <div class="filters-bar" [formGroup]="filterForm">
     
-    <mat-card-content>
-      <form [formGroup]="filterForm" class="filters-form">
-        
-        <!-- Prima riga filtri -->
-        <div class="filter-row">
-          <mat-form-field appearance="outline" class="filter-field search-field">
-            <mat-label>Ricerca generale</mat-label>
-            <mat-icon matPrefix>search</mat-icon>
-            <input matInput placeholder="Cerca per appartamento, note, etc..." 
-                   formControlName="search">
-            <button *ngIf="filterForm.get('search')?.value" matSuffix mat-icon-button 
-                    (click)="filterForm.patchValue({search: ''})" matTooltip="Cancella ricerca">
-              <mat-icon>clear</mat-icon>
-            </button>
-          </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="filter-field">
+    <!-- Ricerca inline -->
+    <div class="search-input-wrapper">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input type="text" class="search-input" placeholder="Cerca..." formControlName="search">
+      <button *ngIf="filterForm.get('search')?.value" class="search-clear" 
+              (click)="filterForm.patchValue({search: ''})">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Chip di stato pagamento -->
+    <div class="status-chips">
+      <button class="status-chip" 
+              [class.active]="filterForm.get('isPaid')?.value === ''"
+              (click)="setPaymentFilter('')">
+        Tutte
+      </button>
+      <button class="status-chip chip-paid" 
+              [class.active]="filterForm.get('isPaid')?.value === true"
+              (click)="setPaymentFilter(true)">
+        <mat-icon>check_circle</mat-icon>
+        Pagate
+      </button>
+      <button class="status-chip chip-unpaid" 
+              [class.active]="filterForm.get('isPaid')?.value === false"
+              (click)="setPaymentFilter(false)">
+        <mat-icon>schedule</mat-icon>
+        Non Pagate
+      </button>
+    </div>
+
+    <!-- Pulsante filtri avanzati -->
+    <div class="filters-trigger-wrapper" (click)="$event.stopPropagation()">
+      <button class="filters-trigger" 
+              [class.active]="isAdvancedFiltersOpen || hasActiveAdvancedFilters()"
+              (click)="toggleAdvancedFilters($event)">
+        <mat-icon>filter_alt</mat-icon>
+        <span>Filtri</span>
+        <span class="filter-badge" *ngIf="getAdvancedFiltersCount() > 0">
+          {{getAdvancedFiltersCount()}}
+        </span>
+      </button>
+
+      <!-- Popover filtri avanzati -->
+      <div class="advanced-filters-panel" *ngIf="isAdvancedFiltersOpen">
+        <div class="panel-header">
+          <span class="panel-title">Filtri Avanzati</span>
+          <button *ngIf="hasActiveAdvancedFilters()" class="panel-reset" (click)="clearAdvancedFilters()">
+            <mat-icon>restart_alt</mat-icon>
+            Reset
+          </button>
+        </div>
+        <div class="advanced-filters-grid">
+          <mat-form-field appearance="outline">
             <mat-label>Appartamento</mat-label>
-            <mat-icon matPrefix>apartment</mat-icon>
             <mat-select formControlName="apartmentId">
-              <mat-option [value]="">Tutti gli appartamenti</mat-option>
+              <mat-option [value]="">Tutti</mat-option>
               <mat-option *ngFor="let apartment of data.apartments" [value]="apartment.id">
                 {{apartment.name}}
               </mat-option>
             </mat-select>
           </mat-form-field>
           
-          <mat-form-field appearance="outline" class="filter-field">
+          <mat-form-field appearance="outline">
             <mat-label>Tipo Utenza</mat-label>
-            <mat-icon matPrefix>category</mat-icon>
             <mat-select formControlName="utilityType">
-              <mat-option [value]="">Tutte le utenze</mat-option>
+              <mat-option [value]="">Tutte</mat-option>
               <mat-option *ngFor="let type of utilityTypes" [value]="type.type">
                 <div class="utility-option">
                   <mat-icon [style.color]="type.color">{{type.icon}}</mat-icon>
                   <span>{{type.label}}</span>
                 </div>
               </mat-option>
-              <mat-select-trigger>
-                <div *ngIf="filterForm.get('utilityType')?.value" class="selected-utility">
-                  <mat-icon [style.color]="getUtilityTypeConfig(filterForm.get('utilityType')?.value).color">
-                    {{getUtilityTypeConfig(filterForm.get('utilityType')?.value).icon}}
-                  </mat-icon>
-                  <span>{{getUtilityTypeConfig(filterForm.get('utilityType')?.value).label}}</span>
-                </div>
-              </mat-select-trigger>
             </mat-select>
           </mat-form-field>
-        </div>
-        
-        <!-- Seconda riga filtri -->
-        <div class="filter-row">
-          <mat-form-field appearance="outline" class="filter-field">
+
+          <mat-form-field appearance="outline">
             <mat-label>Data inizio</mat-label>
-            <mat-icon matPrefix>event</mat-icon>
             <input matInput [matDatepicker]="startPicker" formControlName="startDate">
             <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
             <mat-datepicker #startPicker></mat-datepicker>
           </mat-form-field>
           
-          <mat-form-field appearance="outline" class="filter-field">
+          <mat-form-field appearance="outline">
             <mat-label>Data fine</mat-label>
-            <mat-icon matPrefix>event</mat-icon>
             <input matInput [matDatepicker]="endPicker" formControlName="endDate">
             <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
             <mat-datepicker #endPicker></mat-datepicker>
           </mat-form-field>
-          
-          <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Stato Pagamento</mat-label>
-            <mat-icon matPrefix>payments</mat-icon>
-            <mat-select formControlName="isPaid">
-              <mat-option [value]="">Tutti gli stati</mat-option>
-              <mat-option [value]="true">
-                <div class="payment-option">
-                  <mat-icon color="primary">check_circle</mat-icon>
-                  <span>Pagato</span>
-                </div>
-              </mat-option>
-              <mat-option [value]="false">
-                <div class="payment-option">
-                  <mat-icon color="warn">schedule</mat-icon>
-                  <span>Non Pagato</span>
-                </div>
-              </mat-option>
-              <mat-select-trigger>
-                <div *ngIf="filterForm.get('isPaid')?.value !== ''" class="selected-payment">
-                  <mat-icon [color]="filterForm.get('isPaid')?.value ? 'primary' : 'warn'">
-                    {{filterForm.get('isPaid')?.value ? 'check_circle' : 'schedule'}}
-                  </mat-icon>
-                  <span>{{filterForm.get('isPaid')?.value ? 'Pagato' : 'Non Pagato'}}</span>
-                </div>
-              </mat-select-trigger>
-            </mat-select>
-          </mat-form-field>
         </div>
-        
-      </form>
-    </mat-card-content>
-  </mat-card>
+      </div>
+    </div>
+
+    <!-- Pulsante pulisci (visibile solo con filtri attivi) -->
+    <button *ngIf="getActiveFiltersCount() > 0" class="clear-all-btn" (click)="clearFilters()" matTooltip="Pulisci tutti i filtri">
+      <mat-icon>clear_all</mat-icon>
+    </button>
+  </div>
 
   <!-- Stati dell'applicazione -->
   

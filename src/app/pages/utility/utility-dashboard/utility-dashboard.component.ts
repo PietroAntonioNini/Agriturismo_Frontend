@@ -3,8 +3,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Chart, registerables } from 'chart.js';
 import { forkJoin } from 'rxjs';
+import jsPDF from 'jspdf';
 
-import { Apartment, MonthlyUtilityData, ApartmentUtilityData, UtilityStatistics } from '../../../shared/models';
+import { Apartment, MonthlyUtilityData, ApartmentUtilityData, UtilityStatistics, UtilityReading } from '../../../shared/models';
 import { ReadingFormComponent } from '../reading-form/reading-form.component';
 import { ReadingHistoryComponent } from '../reading-history/reading-history.component';
 import { CommonModule } from '@angular/common';
@@ -703,10 +704,328 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   }
 
   exportData(): void {
-    // Implementazione per esportare i dati in CSV o Excel
-    this.snackBar.open('Esportazione dati non ancora implementata', 'Chiudi', {
-      duration: 3000
+    this.snackBar.open('Generazione PDF in corso...', '', { duration: 2000 });
+
+    this.apiService.getAllUtilityReadings({}, true).subscribe({
+      next: (readings: UtilityReading[]) => {
+        if (!readings || readings.length === 0) {
+          this.snackBar.open('Nessuna lettura trovata nel database', 'Chiudi', { duration: 3000 });
+          return;
+        }
+        this.generateReadingsPdf(readings);
+      },
+      error: () => {
+        this.snackBar.open('Errore durante il recupero delle letture', 'Chiudi', { duration: 3000 });
+      }
     });
+  }
+
+  private generateReadingsPdf(readings: UtilityReading[]): void {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const margin = 48;
+    const contentWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    // --- Mappa appartamenti ---
+    const apartmentMap = new Map<number, string>();
+    this.apartments.forEach(a => apartmentMap.set(a.id, a.name));
+
+    // --- Raggruppa letture per appartamento ---
+    const grouped = new Map<number, UtilityReading[]>();
+    readings.forEach(r => {
+      if (!grouped.has(r.apartmentId)) {
+        grouped.set(r.apartmentId, []);
+      }
+      grouped.get(r.apartmentId)!.push(r);
+    });
+
+    // Ordina gruppi per nome appartamento
+    const sortedGroups = Array.from(grouped.entries()).sort((a, b) => {
+      const nameA = apartmentMap.get(a[0]) || `Appartamento ${a[0]}`;
+      const nameB = apartmentMap.get(b[0]) || `Appartamento ${b[0]}`;
+      return nameA.localeCompare(nameB, 'it');
+    });
+
+    // --- Helper ---
+    const formatDate = (d: Date | string): string => {
+      const date = new Date(d);
+      return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    const dateKey = (d: Date | string): string => {
+      const date = new Date(d);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
+    const formatNumber = (n: number): string => {
+      return n.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    };
+
+    const checkNewPage = (needed: number): void => {
+      if (y + needed > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+        drawPageHeader();
+      }
+    };
+
+    // --- Header pagina ---
+    const drawPageHeader = (): void => {
+      doc.setFillColor(55, 125, 55);
+      doc.rect(0, 0, pageWidth, 6, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(40, 40, 40);
+      doc.text('REGISTRO LETTURE CONTATORI', pageWidth / 2, y, { align: 'center' });
+      y += 22;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(120, 120, 120);
+      const today = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+      doc.text(`Generato il ${today}`, pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 20;
+    };
+
+    // --- Intestazione tabella per appartamento ---
+    const drawTableHeader = (hasLaundry: boolean): void => {
+      const cols = getColumns(hasLaundry);
+
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(margin, y - 12, contentWidth, 20, 3, 3, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text('DATA', cols.data + 4, y);
+
+      // Colonne tipo con colore
+      doc.setTextColor(230, 160, 0);
+      doc.text('LUCE', cols.luce, y, { align: 'center' });
+      doc.setTextColor(30, 136, 229);
+      doc.text('ACQUA', cols.acqua, y, { align: 'center' });
+      doc.setTextColor(255, 120, 0);
+      doc.text('GAS', cols.gas, y, { align: 'center' });
+      if (hasLaundry) {
+        doc.setTextColor(156, 39, 176);
+        doc.text('LAVANDERIA', cols.lavanderia!, y, { align: 'center' });
+      }
+
+      y += 14;
+      doc.setDrawColor(220, 220, 220);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 8;
+    };
+
+    // --- Calcola posizioni colonne ---
+    const getColumns = (hasLaundry: boolean) => {
+      const colData = margin;
+      if (hasLaundry) {
+        const colW = (contentWidth - 90) / 4; // spazio restante diviso per 4 tipi
+        return {
+          data: colData,
+          luce: margin + 90 + colW * 0.5,
+          acqua: margin + 90 + colW * 1.5,
+          gas: margin + 90 + colW * 2.5,
+          lavanderia: margin + 90 + colW * 3.5
+        };
+      } else {
+        const colW = (contentWidth - 90) / 3; // spazio restante diviso per 3 tipi
+        return {
+          data: colData,
+          luce: margin + 90 + colW * 0.5,
+          acqua: margin + 90 + colW * 1.5,
+          gas: margin + 90 + colW * 2.5,
+          lavanderia: null as number | null
+        };
+      }
+    };
+
+    // --- Riga data con valori ---
+    interface DayRow {
+      date: string;
+      dateFormatted: string;
+      luce: number | null;
+      acqua: number | null;
+      gas: number | null;
+      lavanderia: number | null;
+    }
+
+    const drawDayRow = (row: DayRow, isAlternate: boolean, hasLaundry: boolean): void => {
+      const cols = getColumns(hasLaundry);
+      const rowHeight = 18;
+
+      if (isAlternate) {
+        doc.setFillColor(248, 250, 248);
+        doc.rect(margin, y - 11, contentWidth, rowHeight, 'F');
+      }
+
+      // Data
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(50, 50, 50);
+      doc.text(row.dateFormatted, cols.data + 4, y);
+
+      // Luce
+      if (row.luce !== null) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(70, 70, 70);
+        doc.text(formatNumber(row.luce), cols.luce, y, { align: 'center' });
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(190, 190, 190);
+        doc.text('—', cols.luce, y, { align: 'center' });
+      }
+
+      // Acqua
+      if (row.acqua !== null) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(70, 70, 70);
+        doc.text(formatNumber(row.acqua), cols.acqua, y, { align: 'center' });
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(190, 190, 190);
+        doc.text('—', cols.acqua, y, { align: 'center' });
+      }
+
+      // Gas
+      if (row.gas !== null) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(70, 70, 70);
+        doc.text(formatNumber(row.gas), cols.gas, y, { align: 'center' });
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(190, 190, 190);
+        doc.text('—', cols.gas, y, { align: 'center' });
+      }
+
+      // Lavanderia
+      if (hasLaundry && cols.lavanderia !== null) {
+        if (row.lavanderia !== null) {
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(70, 70, 70);
+          doc.text(formatNumber(row.lavanderia), cols.lavanderia, y, { align: 'center' });
+        } else {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(190, 190, 190);
+          doc.text('—', cols.lavanderia, y, { align: 'center' });
+        }
+      }
+
+      y += rowHeight;
+    };
+
+    // --- Generazione PDF ---
+    drawPageHeader();
+
+    // Conteggio totale
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Totale letture: ${readings.length}  |  Appartamenti: ${sortedGroups.length}`, margin, y);
+    y += 24;
+
+    sortedGroups.forEach(([apartmentId, aptReadings], groupIndex) => {
+      const aptName = apartmentMap.get(apartmentId) || `Appartamento ${apartmentId}`;
+
+      // Controlla se l'appartamento ha letture lavanderia
+      const hasLaundry = aptReadings.some(r => r.subtype === 'laundry');
+
+      // Raggruppa letture per data
+      const dayMap = new Map<string, DayRow>();
+      aptReadings.forEach(r => {
+        const dk = dateKey(r.readingDate);
+        if (!dayMap.has(dk)) {
+          dayMap.set(dk, {
+            date: dk,
+            dateFormatted: formatDate(r.readingDate),
+            luce: null,
+            acqua: null,
+            gas: null,
+            lavanderia: null
+          });
+        }
+        const row = dayMap.get(dk)!;
+        if (r.subtype === 'laundry') {
+          row.lavanderia = r.currentReading;
+        } else {
+          switch (r.type) {
+            case 'electricity': row.luce = r.currentReading; break;
+            case 'water': row.acqua = r.currentReading; break;
+            case 'gas': row.gas = r.currentReading; break;
+          }
+        }
+      });
+
+      // Ordina righe per data
+      const dayRows = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+      // Spazio necessario: intestazione + header tabella + almeno 2 righe
+      checkNewPage(90);
+
+      // Separatore tra gruppi
+      if (groupIndex > 0) {
+        y += 10;
+        doc.setDrawColor(210, 210, 210);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 16;
+      }
+
+      // Intestazione appartamento
+      doc.setFillColor(55, 125, 55);
+      doc.roundedRect(margin, y - 14, contentWidth, 26, 4, 4, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text(aptName.toUpperCase(), margin + 12, y + 2);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${dayRows.length} date  ·  ${aptReadings.length} letture`, pageWidth - margin - 12, y + 2, { align: 'right' });
+      y += 24;
+
+      // Header tabella
+      drawTableHeader(hasLaundry);
+
+      // Righe per data
+      dayRows.forEach((row, i) => {
+        checkNewPage(24);
+        drawDayRow(row, i % 2 === 1, hasLaundry);
+      });
+    });
+
+    // --- Footer ultima pagina ---
+    y += 20;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 16;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Documento generato automaticamente dal sistema di gestione utenze', pageWidth / 2, y, { align: 'center' });
+
+    // --- Numeri pagina ---
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Pagina ${i} di ${totalPages}`, pageWidth / 2, pageHeight - 24, { align: 'center' });
+    }
+
+    // --- Salva ---
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    doc.save(`letture-contatori-${dateStr}.pdf`);
+
+    this.snackBar.open('PDF scaricato con successo', 'Chiudi', { duration: 3000 });
   }
 
   printReport(): void {
