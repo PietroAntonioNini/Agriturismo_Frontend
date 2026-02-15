@@ -21,6 +21,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime } from 'rxjs/operators';
+import jsPDF from 'jspdf';
 
 import { GenericApiService } from '../../../shared/services/generic-api.service';
 import { NotificationService } from '../../../shared/services/notification.service';
@@ -89,7 +90,6 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     'currentReading',
     'consumption',
     'totalCost',
-    'isPaid',
     'actions'
   ];
 
@@ -209,8 +209,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       apartmentId: [this.data.selectedApartmentId],
       utilityType: [''],
       startDate: [''],
-      endDate: [''],
-      isPaid: ['']
+      endDate: ['']
     });
   }
 
@@ -313,8 +312,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       const searchLower = filters.search.toLowerCase();
       filteredReadings = filteredReadings.filter(reading =>
         reading.apartmentName.toLowerCase().includes(searchLower) ||
-        this.getUtilityTypeConfig(reading.type).label.toLowerCase().includes(searchLower) ||
-        (reading.notes && reading.notes.toLowerCase().includes(searchLower))
+        this.getUtilityTypeConfig(reading.type).label.toLowerCase().includes(searchLower)
       );
     }
 
@@ -349,14 +347,6 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       );
     }
 
-    // Filtro per stato pagamento
-    if (filters.isPaid !== '') {
-      const isPaid = filters.isPaid === 'true';
-      filteredReadings = filteredReadings.filter(reading =>
-        reading.isPaid === isPaid
-      );
-    }
-
     this.dataSource.data = filteredReadings;
 
     // Forza l'aggiornamento del paginatore dopo il cambio dati
@@ -385,8 +375,7 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       apartmentId: this.data.selectedApartmentId,
       utilityType: '',
       startDate: '',
-      endDate: '',
-      isPaid: ''
+      endDate: ''
     });
   }
 
@@ -423,7 +412,8 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       width: '600px',
       maxWidth: '95vw',
       height: 'auto',
-      maxHeight: '90vh',
+      maxHeight: '80vh',
+      panelClass: 'reading-form-dialog-panel',
       data: {
         apartments: this.data.apartments,
         selectedApartmentId: reading.apartmentId,
@@ -533,8 +523,279 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   exportData(): void {
-    // TODO: Implementare esportazione dati
-    this.showInfoSnackBar('Funzionalità di export in sviluppo');
+    const readings = this.dataSource.data;
+    if (!readings || readings.length === 0) {
+      this.showInfoSnackBar('Nessuna lettura da esportare');
+      return;
+    }
+    try {
+      this.generateReadingsPdf(readings);
+      this.showSuccessSnackBar('PDF scaricato con successo');
+    } catch (error) {
+      console.error('Errore nella generazione del PDF:', error);
+      this.showInfoSnackBar('Errore nella generazione del PDF');
+    }
+  }
+
+  private generateReadingsPdf(readings: ReadingWithApartmentName[]): void {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = 595;
+    const pageHeight = 842;
+    const margin = 48;
+    const contentWidth = pageWidth - margin * 2;
+    let y = margin;
+
+    // --- Raggruppa letture per appartamento ---
+    const grouped = new Map<number, ReadingWithApartmentName[]>();
+    readings.forEach(r => {
+      if (!grouped.has(r.apartmentId)) {
+        grouped.set(r.apartmentId, []);
+      }
+      grouped.get(r.apartmentId)!.push(r);
+    });
+
+    const sortedGroups = Array.from(grouped.entries()).sort((a, b) => {
+      const nameA = a[1][0]?.apartmentName || '';
+      const nameB = b[1][0]?.apartmentName || '';
+      return nameA.localeCompare(nameB, 'it');
+    });
+
+    // --- Helper ---
+    const formatDate = (d: Date | string): string => {
+      return new Date(d).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    const dateKey = (d: Date | string): string => {
+      const date = new Date(d);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+
+    const formatNumber = (n: number): string => {
+      return n.toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    };
+
+    const checkNewPage = (needed: number): void => {
+      if (y + needed > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+        drawPageHeader();
+      }
+    };
+
+    // --- Calcola posizioni colonne ---
+    const getColumns = (hasLaundry: boolean) => {
+      const colData = margin;
+      if (hasLaundry) {
+        const colW = (contentWidth - 90) / 4;
+        return { data: colData, luce: margin + 90 + colW * 0.5, acqua: margin + 90 + colW * 1.5, gas: margin + 90 + colW * 2.5, lavanderia: margin + 90 + colW * 3.5 };
+      } else {
+        const colW = (contentWidth - 90) / 3;
+        return { data: colData, luce: margin + 90 + colW * 0.5, acqua: margin + 90 + colW * 1.5, gas: margin + 90 + colW * 2.5, lavanderia: null as number | null };
+      }
+    };
+
+    // --- Descrizione filtri attivi ---
+    const buildFilterDescription = (): string => {
+      const parts: string[] = [];
+      const filters = this.filterForm.value;
+      if (filters.apartmentId) {
+        const apt = this.data.apartments.find(a => a.id === filters.apartmentId);
+        if (apt) parts.push(apt.name);
+      }
+      if (filters.utilityType) {
+        const cfg = this.getUtilityTypeConfig(filters.utilityType);
+        parts.push(cfg.label);
+      }
+      if (filters.startDate) {
+        parts.push(`dal ${formatDate(filters.startDate)}`);
+      }
+      if (filters.endDate) {
+        parts.push(`al ${formatDate(filters.endDate)}`);
+      }
+      return parts.length > 0 ? `Filtri: ${parts.join(' · ')}` : '';
+    };
+
+    // --- Header pagina ---
+    const drawPageHeader = (): void => {
+      doc.setFillColor(55, 125, 55);
+      doc.rect(0, 0, pageWidth, 6, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(40, 40, 40);
+      doc.text('REGISTRO LETTURE CONTATORI', pageWidth / 2, y, { align: 'center' });
+      y += 22;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(120, 120, 120);
+      const today = new Date().toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' });
+      doc.text(`Generato il ${today}`, pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 20;
+    };
+
+    // --- Intestazione tabella ---
+    const drawTableHeader = (hasLaundry: boolean): void => {
+      const cols = getColumns(hasLaundry);
+
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(margin, y - 12, contentWidth, 20, 3, 3, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text('DATA', cols.data + 4, y);
+      doc.setTextColor(230, 160, 0);
+      doc.text('LUCE', cols.luce, y, { align: 'center' });
+      doc.setTextColor(30, 136, 229);
+      doc.text('ACQUA', cols.acqua, y, { align: 'center' });
+      doc.setTextColor(255, 120, 0);
+      doc.text('GAS', cols.gas, y, { align: 'center' });
+      if (hasLaundry && cols.lavanderia !== null) {
+        doc.setTextColor(156, 39, 176);
+        doc.text('LAVANDERIA', cols.lavanderia, y, { align: 'center' });
+      }
+      y += 14;
+      doc.setDrawColor(220, 220, 220);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 8;
+    };
+
+    // --- Riga data ---
+    interface DayRow { date: string; dateFormatted: string; luce: number | null; acqua: number | null; gas: number | null; lavanderia: number | null; }
+
+    const drawDayRow = (row: DayRow, isAlternate: boolean, hasLaundry: boolean): void => {
+      const cols = getColumns(hasLaundry);
+      if (isAlternate) {
+        doc.setFillColor(248, 250, 248);
+        doc.rect(margin, y - 11, contentWidth, 18, 'F');
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(50, 50, 50);
+      doc.text(row.dateFormatted, cols.data + 4, y);
+
+      const drawVal = (val: number | null, x: number) => {
+        if (val !== null) {
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(70, 70, 70);
+          doc.text(formatNumber(val), x, y, { align: 'center' });
+        } else {
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(190, 190, 190);
+          doc.text('—', x, y, { align: 'center' });
+        }
+      };
+
+      drawVal(row.luce, cols.luce);
+      drawVal(row.acqua, cols.acqua);
+      drawVal(row.gas, cols.gas);
+      if (hasLaundry && cols.lavanderia !== null) {
+        drawVal(row.lavanderia, cols.lavanderia);
+      }
+      y += 18;
+    };
+
+    // --- Generazione PDF ---
+    drawPageHeader();
+
+    // Info filtri
+    const filterDesc = buildFilterDescription();
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const infoLine = `Totale letture: ${readings.length}  |  Appartamenti: ${sortedGroups.length}`;
+    doc.text(infoLine, margin, y);
+    y += filterDesc ? 16 : 24;
+    if (filterDesc) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(55, 125, 55);
+      doc.text(filterDesc, margin, y);
+      y += 20;
+    }
+
+    sortedGroups.forEach(([, aptReadings], groupIndex) => {
+      const aptName = aptReadings[0]?.apartmentName || 'Appartamento';
+      const hasLaundry = aptReadings.some(r => r.subtype === 'laundry');
+
+      // Raggruppa per data
+      const dayMap = new Map<string, DayRow>();
+      aptReadings.forEach(r => {
+        const dk = dateKey(r.readingDate);
+        if (!dayMap.has(dk)) {
+          dayMap.set(dk, { date: dk, dateFormatted: formatDate(r.readingDate), luce: null, acqua: null, gas: null, lavanderia: null });
+        }
+        const row = dayMap.get(dk)!;
+        if (r.subtype === 'laundry') {
+          row.lavanderia = r.currentReading;
+        } else {
+          switch (r.type) {
+            case 'electricity': row.luce = r.currentReading; break;
+            case 'water': row.acqua = r.currentReading; break;
+            case 'gas': row.gas = r.currentReading; break;
+          }
+        }
+      });
+      const dayRows = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+      checkNewPage(90);
+
+      if (groupIndex > 0) {
+        y += 10;
+        doc.setDrawColor(210, 210, 210);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 16;
+      }
+
+      // Intestazione appartamento
+      doc.setFillColor(55, 125, 55);
+      doc.roundedRect(margin, y - 14, contentWidth, 26, 4, 4, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text(aptName.toUpperCase(), margin + 12, y + 2);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${dayRows.length} date  ·  ${aptReadings.length} letture`, pageWidth - margin - 12, y + 2, { align: 'right' });
+      y += 24;
+
+      drawTableHeader(hasLaundry);
+
+      dayRows.forEach((row, i) => {
+        checkNewPage(24);
+        drawDayRow(row, i % 2 === 1, hasLaundry);
+      });
+    });
+
+    // Footer
+    y += 20;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 16;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Documento generato automaticamente dal sistema di gestione utenze', pageWidth / 2, y, { align: 'center' });
+
+    // Numeri pagina
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Pagina ${i} di ${totalPages}`, pageWidth / 2, pageHeight - 24, { align: 'center' });
+    }
+
+    // Salva
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    doc.save(`letture-contatori-${dateStr}.pdf`);
   }
 
   // Utility methods
@@ -606,7 +867,6 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     if (filters.utilityType && filters.utilityType !== '') count++;
     if (filters.startDate && filters.startDate !== '') count++;
     if (filters.endDate && filters.endDate !== '') count++;
-    if (filters.isPaid !== '' && filters.isPaid !== null && filters.isPaid !== undefined) count++;
 
     return count;
   }
@@ -636,11 +896,6 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   /** Chiude il popover filtri avanzati */
   closeAdvancedFilters(): void {
     this.isAdvancedFiltersOpen = false;
-  }
-
-  /** Imposta il filtro stato pagamento dai chip */
-  setPaymentFilter(value: '' | boolean): void {
-    this.filterForm.patchValue({ isPaid: value });
   }
 
   /** Pulisce solo i filtri avanzati (nel popover) */
@@ -749,7 +1004,6 @@ export class ReadingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
               unitCost: nextReading.unitCost,
               totalCost: newTotalCost,
               isPaid: nextReading.isPaid,
-              notes: nextReading.notes,
               subtype: nextReading.subtype,
               isSpecialReading: nextReading.isSpecialReading
             };

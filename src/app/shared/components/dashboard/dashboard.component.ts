@@ -977,7 +977,8 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       width: '600px',
       maxWidth: '95vw',
       height: 'auto',
-      maxHeight: '90vh',
+      maxHeight: '80vh',
+      panelClass: 'reading-form-dialog-panel',
       disableClose: true,
       data: {
         apartments: this.apartments,

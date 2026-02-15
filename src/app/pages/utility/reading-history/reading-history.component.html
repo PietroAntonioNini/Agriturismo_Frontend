@@ -57,27 +57,6 @@
       </button>
     </div>
 
-    <!-- Chip di stato pagamento -->
-    <div class="status-chips">
-      <button class="status-chip" 
-              [class.active]="filterForm.get('isPaid')?.value === ''"
-              (click)="setPaymentFilter('')">
-        Tutte
-      </button>
-      <button class="status-chip chip-paid" 
-              [class.active]="filterForm.get('isPaid')?.value === true"
-              (click)="setPaymentFilter(true)">
-        <mat-icon>check_circle</mat-icon>
-        Pagate
-      </button>
-      <button class="status-chip chip-unpaid" 
-              [class.active]="filterForm.get('isPaid')?.value === false"
-              (click)="setPaymentFilter(false)">
-        <mat-icon>schedule</mat-icon>
-        Non Pagate
-      </button>
-    </div>
-
     <!-- Pulsante filtri avanzati -->
     <div class="filters-trigger-wrapper" (click)="$event.stopPropagation()">
       <button class="filters-trigger" 
@@ -317,25 +296,6 @@
                 <div class="cost-content">
                   <span class="cost-value">{{formatCurrency(reading.totalCost)}}</span>
                 </div>
-              </td>
-            </ng-container>
-
-            <!-- Payment Status Column -->
-            <ng-container matColumnDef="isPaid">
-              <th mat-header-cell *matHeaderCellDef class="payment-header">
-                <div class="header-content">
-                  <mat-icon>payments</mat-icon>
-                  <span>Pagamento</span>
-                </div>
-              </th>
-              <td mat-cell *matCellDef="let reading" class="payment-cell">
-                <mat-chip-option class="payment-chip" 
-                               [class.paid]="reading.isPaid" 
-                               [class.unpaid]="!reading.isPaid"
-                               (click)="togglePaymentStatus(reading)">
-                  <mat-icon>{{reading.isPaid ? 'check_circle' : 'schedule'}}</mat-icon>
-                  <span>{{reading.isPaid ? 'Pagato' : 'In Attesa'}}</span>
-                </mat-chip-option>
               </td>
             </ng-container>
 

@@ -173,8 +173,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       readingDate: [today, Validators.required],
       previousReading: [0, [Validators.min(0)]], // Campo per lettura precedente (prima lettura)
       currentReading: [0, [Validators.required, Validators.min(0)]],
-      unitCost: [0, [Validators.required, Validators.min(0)]],
-      notes: ['']
+      unitCost: [0, [Validators.required, Validators.min(0)]]
     });
   }
   
@@ -255,8 +254,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       readingDate: new Date(reading.readingDate),
       previousReading: reading.previousReading || 0,
       currentReading: reading.currentReading,
-      unitCost: reading.unitCost,
-      notes: reading.notes || ''
+      unitCost: reading.unitCost
     });
     
     // In modalità modifica, recupera la penultima lettura (valore e data reali)
@@ -488,8 +486,7 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
       consumption: Number(this.calculatedConsumption),
       unitCost: Number(formValue.unitCost),
       totalCost: Number(this.calculatedCost),
-      isPaid: false,
-      notes: formValue.notes || ''
+      isPaid: false
     };
 
     console.log('Sending payload to backend:', readingData);
@@ -535,7 +532,6 @@ export class ReadingFormComponent implements OnInit, OnDestroy {
               consumption: Number(this.calculatedConsumption),
               unitCost: Number(formValue.unitCost),
               totalCost: Number(this.calculatedCost),
-              notes: formValue.notes || '',
               // isPaid rimane invariato in una modifica
               paidDate: this.data.editingReading.paidDate
             };

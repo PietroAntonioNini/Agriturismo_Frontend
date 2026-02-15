@@ -1,353 +1,479 @@
-.loading-container {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-}
+// ============================================================
+// READING FORM - Professional Redesign
+// Layout a 3 zone: Header fisso | Corpo scrollabile | Footer fisso
+// ============================================================
 
-.error-message {
+// === MIXINS ===
+@mixin flex-center {
   display: flex;
   align-items: center;
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 10px 16px;
-  border-radius: 4px;
-  margin-bottom: 16px;
-  
-  mat-icon {
-    margin-right: 8px;
-  }
+  justify-content: center;
 }
 
-.form-row {
+@mixin flex-between {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 16px;
 }
 
-mat-form-field {
-  width: 100%;
+@mixin flex-align-center {
+  display: flex;
+  align-items: center;
 }
 
-.full-width {
-  width: 100%;
+@mixin text-primary-bold {
+  color: $text-primary;
+  font-weight: 600;
+}
+
+@mixin text-secondary {
+  color: $text-secondary;
+}
+
+// === VARIABILI ===
+$primary: #377d37;
+$primary-light: rgba(55, 125, 55, 0.08);
+$primary-medium: rgba(55, 125, 55, 0.15);
+
+$text-primary: #1e293b;
+$text-secondary: #475569;
+$text-muted: #64748b;
+$text-light: #94a3b8;
+
+$bg-container: #f1f5f9;
+$bg-subtle: #f8fafc;
+$bg-white: #ffffff;
+
+$border-color: #e2e8f0;
+$border-light: #f1f5f9;
+
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 12px;
+
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+$error-bg: #fef2f2;
+$error-border: #fecaca;
+$error-text: #dc2626;
+
+$spacing-xs: 0.5rem;
+$spacing-sm: 0.75rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.25rem;
+$spacing-xl: 1.5rem;
+
+// === BREAKPOINTS ===
+$breakpoint-4k: 2560px;
+$breakpoint-2k: 1920px;
+$breakpoint-full-hd: 1600px;
+$breakpoint-laptop: 1366px;
+$breakpoint-tablet: 1024px;
+$breakpoint-mobile: 768px;
+$breakpoint-small: 480px;
+
+// === ANIMATIONS ===
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// ============================================================
+// MAIN CONTAINER - Layout flex a 3 zone
+// ============================================================
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .reading-form-container {
-  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  max-width: 650px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0;
-  background: #f8f9fa;
-  max-height: 90vh;
-  overflow-y: auto;
+  background: $bg-container;
+  animation: fadeIn 0.2s ease;
+  height: 100%;
+  max-height: 80vh;
+  min-height: 0;
+  overflow: hidden;
 
-  // Header Section
+  // ============================================================
+  // ZONA 1: HEADER - Fisso in alto, sempre visibile, ultra-compatto
+  // ============================================================
   .form-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 24px;
-    margin-bottom: 24px;
+    flex: 0 0 auto;
+    background: $bg-white;
+    padding: $spacing-xs $spacing-lg;
+    border-bottom: 1px solid $border-color;
+    border-left: 3px solid $primary;
+    animation: fadeInUp 0.25s ease;
+    z-index: 2;
 
     .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
+      @include flex-between;
+      gap: $spacing-xs;
 
       .header-title {
-        display: flex;
-        align-items: center;
-        gap: 16px;
+        @include flex-align-center;
+        gap: $spacing-xs;
 
         mat-icon {
-          font-size: 32px;
-          width: 32px;
-          height: 32px;
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+          color: $primary;
         }
 
         .title-text {
           h2 {
             margin: 0;
-            font-size: 1.8rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 700;
+            color: $text-primary;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
           }
 
           p {
-            margin: 4px 0 0 0;
-            opacity: 0.9;
-            font-size: 1rem;
+            margin: 0;
+            font-size: 0.7rem;
+            color: $text-muted;
+            font-weight: 400;
           }
         }
       }
 
       .utility-chips {
         mat-chip {
-          font-weight: 500;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          font-size: 0.65rem;
+          font-weight: 600;
+          min-height: 24px;
+          padding: 0 6px;
+          border-radius: $radius-sm;
 
           mat-icon {
-            margin-right: 6px;
-            font-size: 18px;
-            width: 18px;
-            height: 18px;
+            font-size: 13px;
+            width: 13px;
+            height: 13px;
+            margin-right: 2px;
           }
         }
       }
     }
   }
 
-  // Last Reading Card
-  .last-reading-card {
-    margin: 0 24px 24px 24px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    border: none;
-    position: relative;
-    overflow: hidden;
+  // ============================================================
+  // ZONA 2: BODY - Scrollabile, occupa tutto lo spazio restante
+  // ============================================================
+  .form-body {
+    flex: 1 1 auto;
+    min-height: 0; // Cruciale per flex overflow
+    overflow-y: auto;
+    overflow-x: hidden;
 
-    .last-reading-content {
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-
-      .reading-info {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-
-        .info-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          mat-icon {
-            font-size: 24px;
-            width: 24px;
-            height: 24px;
-          }
-        }
-
-        .info-details {
-          .info-title {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 1rem;
-            margin-bottom: 4px;
-          }
-
-          .info-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 2px;
-          }
-
-          .info-date {
-            font-size: 0.9rem;
-            color: #666;
-          }
-
-          .info-message {
-            font-size: 0.95rem;
-            color: #666;
-            font-style: italic;
-          }
-        }
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $text-light;
+      border-radius: 3px;
+      &:hover {
+        background: $text-muted;
       }
+    }
 
-      .calculation-preview {
-        background: rgba(102, 126, 234, 0.05);
-        padding: 16px;
-        border-radius: 8px;
-        border-left: 4px solid #667eea;
+    // ========================================================
+    // LAST READING BANNER - Compatto
+    // ========================================================
+    .last-reading-card {
+      margin: $spacing-xs $spacing-md 0;
+      border-radius: $radius-sm;
+      border: 1px solid $border-color;
+      box-shadow: none;
+      background: $bg-white;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.3s ease 0.05s both;
 
-        .calculation-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 8px;
+      .last-reading-content {
+        padding: $spacing-xs $spacing-sm;
+        @include flex-between;
+        flex-wrap: wrap;
+        gap: $spacing-xs;
 
-          &:last-child {
-            margin-bottom: 0;
+        .reading-info {
+          @include flex-align-center;
+          gap: $spacing-xs;
+          flex: 1;
+          min-width: 0;
+
+          .info-icon {
+            width: 30px;
+            height: 30px;
+            min-width: 30px;
+            border-radius: $radius-sm;
+            @include flex-center;
+
+            mat-icon {
+              font-size: 16px;
+              width: 16px;
+              height: 16px;
+            }
           }
 
-          .calc-label {
-            font-weight: 500;
-            color: #666;
+          .info-details {
+            min-width: 0;
+
+            .info-title {
+              font-weight: 600;
+              font-size: 0.7rem;
+              color: $text-primary;
+              margin-bottom: 0;
+              text-transform: uppercase;
+              letter-spacing: 0.02em;
+            }
+
+            .info-value {
+              font-size: 1rem;
+              font-weight: 700;
+              color: $primary;
+              line-height: 1.2;
+            }
+
+            .info-date {
+              font-size: 0.65rem;
+              color: $text-muted;
+              margin-top: 0;
+            }
+
+            .info-message {
+              font-size: 0.7rem;
+              color: $text-muted;
+              font-style: italic;
+              line-height: 1.3;
+            }
           }
+        }
 
-          .calc-value {
-            font-weight: 600;
-            color: #2c3e50;
+        .calculation-preview {
+          background: $primary-light;
+          padding: 4px $spacing-xs;
+          border-radius: $radius-sm;
+          border-left: 3px solid $primary;
+          min-width: 130px;
 
-            &.total {
-              color: #667eea;
-              font-size: 1.1rem;
+          .calculation-row {
+            @include flex-between;
+            gap: $spacing-xs;
+            margin-bottom: 2px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .calc-label {
+              font-weight: 500;
+              font-size: 0.7rem;
+              color: $text-muted;
+            }
+
+            .calc-value {
+              font-weight: 600;
+              font-size: 0.75rem;
+              color: $text-primary;
+
+              &.total {
+                color: $primary;
+                font-size: 0.85rem;
+                font-weight: 700;
+              }
             }
           }
         }
       }
+
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.92);
+        @include flex-center;
+        flex-direction: column;
+        gap: $spacing-xs;
+
+        span {
+          color: $text-muted;
+          font-size: 0.7rem;
+          font-weight: 500;
+        }
+      }
     }
 
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(255, 255, 255, 0.9);
+    // ========================================================
+    // FORM BODY
+    // ========================================================
+    .reading-form {
+      padding: $spacing-xs $spacing-md $spacing-sm;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
+      gap: $spacing-xs;
 
-      span {
-        color: #666;
-        font-weight: 500;
-      }
-    }
-  }
+      // ====================================================
+      // FORM SECTIONS - Ultra compatte
+      // ====================================================
+      .form-section {
+        background: $bg-white;
+        border: 1px solid $border-color;
+        border-radius: $radius-sm;
+        box-shadow: none;
+        overflow: hidden;
+        animation: fadeInUp 0.3s ease both;
 
-  // Form Sections
-  .reading-form {
-    padding: 0 24px 24px 24px;
+        &:nth-child(1) { animation-delay: 0.1s; }
+        &:nth-child(2) { animation-delay: 0.15s; }
+        &:nth-child(3) { animation-delay: 0.2s; }
 
-    .form-section {
-      margin-bottom: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border: none;
-      overflow: hidden;
+        mat-card-header {
+          background: $bg-subtle;
+          padding: 4px $spacing-sm;
+          border-bottom: 1px solid $border-light;
 
-      mat-card-header {
-        background: #f8f9fa;
-        padding: 16px 24px;
+          mat-card-title {
+            @include flex-align-center;
+            gap: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: $text-secondary;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin: 0;
 
-        mat-card-title {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: #2c3e50;
-          margin: 0;
-
-          mat-icon {
-            color: #667eea;
-            font-size: 20px;
-            width: 20px;
-            height: 20px;
-          }
-        }
-      }
-
-      mat-card-content {
-        padding: 24px;
-
-        .form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-
-          @media (max-width: 768px) {
-            grid-template-columns: 1fr;
-          }
-
-          .full-width {
-            grid-column: 1 / -1;
-          }
-
-          mat-form-field {
-            width: 100%;
-
-            .utility-option {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-
-              mat-icon {
-                font-size: 18px;
-                width: 18px;
-                height: 18px;
-              }
+            mat-icon {
+              color: $primary;
+              font-size: 14px;
+              width: 14px;
+              height: 14px;
             }
           }
         }
 
-        // Consumption Display
-        .consumption-display {
-          margin-top: 24px;
+        mat-card-content {
+          padding: $spacing-xs $spacing-sm;
 
-          .consumption-card {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 12px;
-            padding: 20px;
+          .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: $spacing-xs $spacing-sm;
+            align-items: start;
 
-            .consumption-header {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-bottom: 16px;
-
-              mat-icon {
-                font-size: 24px;
-                width: 24px;
-                height: 24px;
-              }
-
-              span {
-                font-weight: 600;
-                color: #2c3e50;
-                font-size: 1.1rem;
-              }
+            @media (max-width: $breakpoint-mobile) {
+              grid-template-columns: 1fr;
             }
 
-            .consumption-values {
-              .value-row {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 12px;
+            .full-width {
+              grid-column: 1 / -1;
+            }
 
-                &:last-child {
-                  margin-bottom: 0;
+            mat-form-field {
+              width: 100%;
+            }
+          }
+
+          // ================================================
+          // CONSUMPTION DISPLAY
+          // ================================================
+          .consumption-display {
+            margin-top: $spacing-sm;
+            animation: fadeInUp 0.25s ease;
+
+            .consumption-card {
+              background: $primary-light;
+              border: 1px solid $primary-medium;
+              border-left: 3px solid $primary;
+              border-radius: $radius-sm;
+              padding: $spacing-sm $spacing-md;
+
+              .consumption-header {
+                @include flex-align-center;
+                gap: $spacing-xs;
+                margin-bottom: $spacing-xs;
+                padding-bottom: $spacing-xs;
+                border-bottom: 1px solid rgba($primary, 0.12);
+
+                mat-icon {
+                  font-size: 18px;
+                  width: 18px;
+                  height: 18px;
+                  color: $primary;
                 }
 
-                .label {
-                  font-weight: 500;
-                  color: #666;
-                }
-
-                .value {
+                span {
                   font-weight: 600;
-                  color: #2c3e50;
-                  font-size: 1rem;
+                  color: $text-primary;
+                  font-size: 0.8125rem;
+                  letter-spacing: -0.01em;
                 }
+              }
 
-                &.total {
-                  padding-top: 12px;
-                  border-top: 1px solid rgba(102, 126, 234, 0.2);
-                  margin-top: 8px;
+              .consumption-values {
+                .value-row {
+                  @include flex-between;
+                  margin-bottom: 4px;
+
+                  &:last-child {
+                    margin-bottom: 0;
+                  }
 
                   .label {
-                    color: #2c3e50;
-                    font-weight: 600;
+                    font-weight: 500;
+                    font-size: 0.75rem;
+                    color: $text-muted;
                   }
 
                   .value {
-                    color: #667eea;
-                    font-size: 1.3rem;
-                    font-weight: 700;
+                    font-weight: 600;
+                    font-size: 0.8125rem;
+                    color: $text-primary;
+                  }
+
+                  &.total {
+                    padding-top: $spacing-xs;
+                    border-top: 1px solid rgba($primary, 0.12);
+                    margin-top: 4px;
+
+                    .label {
+                      color: $text-primary;
+                      font-weight: 600;
+                    }
+
+                    .value {
+                      color: $primary;
+                      font-size: 1.05rem;
+                      font-weight: 700;
+                    }
                   }
                 }
               }
@@ -355,128 +481,108 @@ mat-form-field {
           }
         }
       }
+
+      // ====================================================
+      // ERROR MESSAGE
+      // ====================================================
+      .error-message {
+        padding: $spacing-xs $spacing-sm;
+        background: $error-bg;
+        border: 1px solid $error-border;
+        border-left: 3px solid $error-text;
+        border-radius: $radius-sm;
+        color: $error-text;
+        @include flex-align-center;
+        gap: $spacing-xs;
+        font-size: 0.75rem;
+        font-weight: 500;
+        animation: fadeInUp 0.2s ease;
+
+        mat-icon {
+          color: $error-text;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          min-width: 16px;
+        }
+      }
     }
   }
 
-  // Error Message
-  .error-message {
-    margin: 0 24px 24px 24px;
-    padding: 16px;
-    background: #fff5f5;
-    border: 1px solid #fed7d7;
-    border-radius: 8px;
-    color: #e53e3e;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    mat-icon {
-      color: #e53e3e;
-    }
-  }
-
-  // Form Actions
+  // ============================================================
+  // ZONA 3: FOOTER AZIONI - Fisso in basso, sempre visibile
+  // ============================================================
   .form-actions {
-    padding: 0 24px 24px 24px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    
+    flex: 0 0 auto;
+    padding: $spacing-xs $spacing-md;
+    @include flex-between;
+    gap: $spacing-xs;
+    border-top: 1px solid $border-color;
+    background: $bg-white;
+    z-index: 2;
+    animation: fadeInUp 0.3s ease 0.25s both;
+
     button {
-      font-weight: 500;
-      padding: 0 24px;
-      height: 44px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.01em;
+      height: 36px;
+      border-radius: $radius-sm;
+      transition: all 0.15s ease;
 
       mat-spinner {
-        margin-right: 8px;
+        margin-right: $spacing-xs;
+        display: inline-block;
       }
 
       mat-icon {
-        margin-right: 8px;
-        font-size: 20px;
-        width: 20px;
-        height: 20px;
+        margin-right: 5px;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    // Cancel button (primo bottone)
+    button:first-child {
+      color: $text-muted;
+      border: 1px solid $border-color;
+      background: $bg-white;
+      padding: 0 $spacing-md;
+
+      &:hover:not(:disabled) {
+        background: $bg-subtle;
+        color: $text-secondary;
+        border-color: darken($border-color, 5%);
+      }
+    }
+
+    // Submit/Primary button (ultimo bottone)
+    button:last-child {
+      background: $primary;
+      color: white;
+      padding: 0 $spacing-lg;
+      box-shadow: $shadow-sm;
+
+      &:hover:not(:disabled) {
+        background: darken($primary, 5%);
+        box-shadow: $shadow-md;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
     }
   }
 
-  // Responsive Design
-  @media (max-width: 768px) {
-    .form-header .header-content {
-      flex-direction: column;
-      align-items: stretch;
-      text-align: center;
-
-      .header-title {
-        justify-content: center;
-      }
-
-      .utility-chips {
-        display: flex;
-        justify-content: center;
-      }
-    }
-
-    .last-reading-card .last-reading-content {
-      flex-direction: column;
-      align-items: stretch;
-      text-align: center;
-
-      .reading-info {
-        justify-content: center;
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .calculation-preview {
-        margin-top: 16px;
-      }
-    }
-
-    .reading-form {
-      padding: 0 16px 16px 16px;
-    }
-
-    .form-actions {
-      padding: 0 16px 16px 16px;
-      flex-direction: column;
-
-      button {
-        width: 100%;
-      }
-    }
-  }
-
-  @media (max-width: 480px) {
-    .form-header {
-      padding: 16px;
-
-      .header-content .header-title {
-        gap: 12px;
-
-        mat-icon {
-          font-size: 28px;
-          width: 28px;
-          height: 28px;
-        }
-
-        .title-text h2 {
-          font-size: 1.5rem;
-        }
-      }
-    }
-
-    .last-reading-card {
-      margin: 0 16px 16px 16px;
-    }
-  }
-
-  // Utility Select Styles
+  // ============================================================
+  // UTILITY SELECT STYLES
+  // ============================================================
   .selected-utility,
   .utility-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    @include flex-align-center;
+    gap: $spacing-xs;
 
     mat-icon {
       font-size: 18px !important;
@@ -486,45 +592,178 @@ mat-form-field {
 
     span {
       font-weight: 500;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      
-      .option-label {
-        font-weight: 500;
-        font-size: 14px;
-      }
-      
-      .option-description {
-        font-size: 12px;
-        color: #666;
-        font-style: italic;
-      }
+      font-size: 0.8125rem;
     }
   }
 
   .selected-utility {
-    color: #2c3e50;
+    color: $text-primary;
   }
 
-  // First reading layout
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
-    align-items: start;
+  // ============================================================
+  // GLOBAL FORM FIELD OVERRIDES
+  // ============================================================
+  mat-form-field {
+    width: 100%;
 
-    .full-width {
+    &.full-width {
       grid-column: 1 / -1;
     }
   }
 
-  // Enhanced hints for first reading
   mat-hint {
+    font-size: 0.7rem;
+    color: $text-muted;
     font-style: italic;
-    color: #666;
+  }
+
+  // ============================================================
+  // RESPONSIVE DESIGN
+  // ============================================================
+
+  // Tablet (768px - 1024px)
+  @media (max-width: $breakpoint-tablet) {
+    max-width: 100%;
+
+    .form-header {
+      .header-content .header-title .title-text h2 {
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  // Mobile (sotto 768px)
+  @media (max-width: $breakpoint-mobile) {
+    .form-header {
+      padding: $spacing-xs;
+      border-left-width: 2px;
+
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+
+        .utility-chips {
+          align-self: flex-start;
+        }
+      }
+    }
+
+    .form-body {
+      .last-reading-card {
+        margin: $spacing-xs $spacing-xs 0;
+
+        .last-reading-content {
+          flex-direction: column;
+          align-items: stretch;
+
+          .reading-info .info-icon {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+          }
+
+          .calculation-preview {
+            min-width: unset;
+          }
+        }
+      }
+
+      .reading-form {
+        padding: $spacing-xs;
+
+        .form-section mat-card-content {
+          padding: $spacing-xs;
+
+          .form-grid {
+            grid-template-columns: 1fr;
+            gap: $spacing-xs;
+          }
+
+          .full-width {
+            grid-column: 1;
+          }
+        }
+      }
+    }
+
+    .form-actions {
+      padding: $spacing-xs;
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+        justify-content: center;
+        height: 38px;
+      }
+    }
+  }
+
+  // Small mobile (sotto 480px)
+  @media (max-width: $breakpoint-small) {
+    .form-header {
+      .header-content .header-title .title-text h2 {
+        font-size: 0.9rem;
+      }
+
+      .header-content .utility-chips {
+        display: none;
+      }
+    }
+  }
+
+  // Large screens (Full HD+)
+  @media (min-width: $breakpoint-full-hd) {
+    max-width: 700px;
+    max-height: 85vh;
+
+    .form-header {
+      padding: $spacing-sm $spacing-xl;
+    }
+
+    .form-body {
+      .last-reading-card {
+        margin: $spacing-sm $spacing-lg 0;
+
+        .last-reading-content {
+          padding: $spacing-md;
+        }
+      }
+
+      .reading-form {
+        padding: $spacing-sm $spacing-lg $spacing-lg;
+        gap: $spacing-sm;
+
+        .form-section mat-card-content {
+          padding: $spacing-md;
+
+          .form-grid {
+            gap: $spacing-sm $spacing-md;
+          }
+        }
+      }
+    }
+
+    .form-actions {
+      padding: $spacing-sm $spacing-xl;
+    }
+  }
+
+  // 2K+
+  @media (min-width: $breakpoint-2k) {
+    max-width: 760px;
+
+    .form-header .header-content .header-title .title-text h2 {
+      font-size: 1.15rem;
+    }
+  }
+
+  // 4K
+  @media (min-width: $breakpoint-4k) {
+    max-width: 860px;
+
+    .form-header .header-content .header-title .title-text h2 {
+      font-size: 1.25rem;
+    }
   }
 }

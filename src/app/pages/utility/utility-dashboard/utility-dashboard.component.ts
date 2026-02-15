@@ -667,6 +667,10 @@ export class UtilityDashboardComponent implements OnInit, AfterViewInit {
   openReadingForm(): void {
     const dialogRef = this.dialog.open(ReadingFormComponent, {
       width: '600px',
+      maxWidth: '95vw',
+      height: 'auto',
+      maxHeight: '80vh',
+      panelClass: 'reading-form-dialog-panel',
       data: {
         apartments: this.apartments,
         selectedApartmentId: this.selectedApartmentId

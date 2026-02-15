@@ -233,8 +233,6 @@ $breakpoint-mobile: 768px;
 
     .close-btn {
       color: #94a3b8;
-      width: 34px;
-      height: 34px;
       transition: all 0.15s ease;
 
       &:hover {
@@ -475,7 +473,7 @@ $breakpoint-mobile: 768px;
     .advanced-filters-panel {
       position: absolute;
       top: calc(100% + 8px);
-      right: 0;
+      right: 1;
       z-index: 100;
       background: #fff;
       border: 1px solid $border-color;

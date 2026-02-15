@@ -14,7 +14,6 @@ export interface UtilityReading {
     createdAt?: Date;
     updatedAt?: Date;
     deletedAt?: Date; // ← AGGIUNGI
-    notes?: string; // Note aggiuntive sulla lettura
     // Nuovi campi per letture speciali
     subtype?: string; // 'laundry' per la lavanderia, 'main' per lettura principale
     isSpecialReading?: boolean; // flag per identificare letture speciali
@@ -39,7 +38,6 @@ export interface UtilityReadingCreate {
     unitCost: number;
     totalCost: number;
     isPaid: boolean;
-    notes?: string;
     // Nuovi campi per letture speciali
     subtype?: string; // 'laundry' per la lavanderia, 'main' per lettura principale
     isSpecialReading?: boolean; // flag per identificare letture speciali
@@ -174,7 +172,6 @@ export interface UtilityFormData {
     readingDate: Date;
     currentReading: number;
     unitCost: number;
-    notes?: string;
 }
 
 // Tipi per le unità di misura

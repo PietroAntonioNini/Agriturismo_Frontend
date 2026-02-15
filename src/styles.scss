@@ -280,6 +280,31 @@ body {
   }
 }
 
+/* Pannello dialogo reading form - layout flex per header/body/footer fissi */
+.reading-form-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    
+    .mdc-dialog__surface {
+      background-color: var(--card-background) !important;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mdc-dialog__content {
+      padding: 0 !important;
+      max-height: none !important;
+      overflow: hidden !important;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+  }
+}
+
 /* ====== TEMA DARK ====== */
 html[data-theme="dark"] {
   /* Fix per input in dark mode */
