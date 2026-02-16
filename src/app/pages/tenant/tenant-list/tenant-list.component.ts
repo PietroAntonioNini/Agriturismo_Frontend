@@ -207,6 +207,16 @@ export class TenantListComponent implements OnInit {
     this.viewMode = mode;
   }
 
+  isStatusFilter(value: 'all' | 'with_lease' | 'without_lease'): boolean {
+    if (value === 'all') return this.activeFilters.length === 0;
+    return this.activeFilters.includes(value);
+  }
+
+  setStatusFilter(value: 'all' | 'with_lease' | 'without_lease'): void {
+    this.activeFilters = value === 'all' ? [] : [value];
+    this.applyFilter();
+  }
+
   // Aggiorna filtri attivi
   onFilterChange(event: MatChipListboxChange): void {
     // Controlla se abbiamo selezioni e gestiscile correttamente

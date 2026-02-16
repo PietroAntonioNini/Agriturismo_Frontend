@@ -450,6 +450,27 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Ricarica l'elenco fatture e aggiorna il dataSource (senza creare nuove subscription).
+   * Usare dopo delete, markAsPaid, ecc. per aggiornare la vista.
+   */
+  private refreshInvoiceList(): void {
+    this.invoiceService.getAllInvoices(undefined, true).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (invoices) => {
+        this.dataSource.data = invoices;
+        this.setupTable();
+        this.dataSource.filter = ' ';
+        this.dataSource.filter = '';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
    * Calcola i KPI
    */
   private calculateKPI(invoices: Invoice[]): InvoiceKPI {
@@ -468,14 +489,17 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       invoice.month === currentMonth && invoice.year === currentYear
     ).length;
 
-    // Calcola tempo medio di pagamento
+    // Calcola tempo medio di pagamento (dati da invoice.payments, chiave API)
+    const getLastPaymentDate = (inv: Invoice): string | undefined => {
+      const list = inv.payments ?? [];
+      return list.length > 0 ? list.map(p => p.paymentDate).sort().pop() : undefined;
+    };
     const paymentTimes = paidInvoices
-      .filter(invoice => invoice.paymentDate)
-      .map(invoice => {
-        const issueDate = new Date(invoice.issueDate);
-        const paymentDate = new Date(invoice.paymentDate!);
-        return (paymentDate.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24);
-      });
+      .map(inv => ({ inv, lastDate: getLastPaymentDate(inv) }))
+      .filter(({ lastDate }) => !!lastDate)
+      .map(({ inv, lastDate }) =>
+        (new Date(lastDate!).getTime() - new Date(inv.issueDate).getTime()) / (1000 * 60 * 60 * 24)
+      );
 
     const averagePaymentTime = paymentTimes.length > 0
       ? paymentTimes.reduce((sum, time) => sum + time, 0) / paymentTimes.length
@@ -651,8 +675,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         await Promise.all(promises);
         this.selectedInvoices.clear();
         this.selectAll = false;
-        // Ricarica i dati
-        this.invoices$ = this.invoiceService.getAllInvoices();
+        this.refreshInvoiceList();
         this.showSuccess(`${promises.length} fattura/e marcate come pagate`);
 
         // Notifica
@@ -727,10 +750,6 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     this.router.navigate(['/billing/detail', invoiceId]);
   }
 
-  editInvoice(invoiceId: number): void {
-    this.router.navigate(['/billing/edit', invoiceId]);
-  }
-
   async deleteInvoice(invoiceId: number): Promise<void> {
     const confirmed = await this.confirmationDialog.confirm(
       'Elimina Fattura',
@@ -747,8 +766,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          // Ricarica i dati
-          this.invoices$ = this.invoiceService.getAllInvoices();
+          this.refreshInvoiceList();
           this.showSuccess('Fattura eliminata con successo');
 
           // Notifica
@@ -784,8 +802,7 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       ).subscribe({
         next: () => {
-          // Ricarica i dati
-          this.invoices$ = this.invoiceService.getAllInvoices();
+          this.refreshInvoiceList();
           this.showSuccess('Fattura marcata come pagata');
         },
         error: (error) => {

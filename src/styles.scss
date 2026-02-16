@@ -743,6 +743,21 @@ mat-select,
   }
 }
 
+/* ── Select Metodo di Pagamento: icone visibili nel dropdown (overlay) ── */
+.payment-method-select-panel {
+  .mat-mdc-option .method-option {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+  }
+  .mat-mdc-option .method-option .mat-icon {
+    font-size: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    color: #64748b;
+  }
+}
+
 /* OVERRIDE CSS VARIABLES DI ANGULAR MATERIAL */
 :root {
   --mdc-theme-primary: #2D7D46 !important;

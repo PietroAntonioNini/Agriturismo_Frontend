@@ -11,39 +11,43 @@
     </button>
   </div>
 
-  <div class="search-filter-section">
-    <div class="search-container">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput placeholder="Cerca inquilino..." [(ngModel)]="searchQuery" (input)="applyFilter()">
-        <button *ngIf="searchQuery" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field>
-      
-      <div class="filter-chips">
-        <div class="custom-button-group">
-          <button class="custom-toggle-button" 
-                  [class.active]="activeFilters.includes('with_lease')" 
-                  (click)="toggleFilter('with_lease')">
-            <span class="check-icon green" *ngIf="activeFilters.includes('with_lease')">✓</span>
-            Con contratto
-          </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="activeFilters.includes('without_lease')" 
-                  (click)="toggleFilter('without_lease')">
-            <span class="check-icon red" *ngIf="activeFilters.includes('without_lease')">✓</span>
-            Senza contratto
-          </button>
-        </div>
-      </div>
+  <!-- Barra ricerca e filtri (stile invoice-list) -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <mat-icon class="search-icon-el">search</mat-icon>
+      <input type="text"
+        class="search-input"
+        placeholder="Cerca per nome, email, telefono o documento..."
+        [(ngModel)]="searchQuery"
+        (input)="applyFilter()">
+      <button *ngIf="searchQuery" class="clear-search-btn" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
-    
-    <div class="view-options">
-      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
+
+    <div class="filter-pills">
+      <button class="pill"
+        [class.active]="isStatusFilter('all')"
+        (click)="setStatusFilter('all')">
+        Tutte
+      </button>
+      <button class="pill pill-success"
+        [class.active]="isStatusFilter('with_lease')"
+        (click)="setStatusFilter('with_lease')">
+        Con contratto
+      </button>
+      <button class="pill pill-danger"
+        [class.active]="isStatusFilter('without_lease')"
+        (click)="setStatusFilter('without_lease')">
+        Senza contratto
+      </button>
+    </div>
+
+    <div class="bar-actions">
+      <button class="btn-bar btn-bar-view" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
         <mat-icon>grid_view</mat-icon>
       </button>
-      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
+      <button class="btn-bar btn-bar-view" [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
         <mat-icon>view_list</mat-icon>
       </button>
     </div>

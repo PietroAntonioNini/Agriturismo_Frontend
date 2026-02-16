@@ -26,7 +26,7 @@ export interface Invoice {
     notes?: string;
     reminderSent: boolean;
     reminderDate?: string;
-    paymentRecords?: PaymentRecord[];
+    payments?: PaymentRecord[];
     tenant?: Tenant;
     apartment?: Apartment;
     lease?: Lease;
@@ -75,7 +75,7 @@ export interface InvoiceCreate {
     year: number;
     issueDate: string;
     dueDate: string;
-    /** Somma degli importi (opzionale: il BE può ricalcolarlo) */
+    includeUtilities?: boolean;
     subtotal?: number;
     notes?: string;
     items: InvoiceItemCreate[];

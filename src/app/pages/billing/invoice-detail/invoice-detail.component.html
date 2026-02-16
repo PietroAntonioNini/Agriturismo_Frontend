@@ -5,8 +5,8 @@
     <p>Caricamento fattura in corso...</p>
   </div>
 
-  <!-- Contenuto principale -->
-  <div *ngIf="!isLoading && (invoice$ | async) as invoice" class="invoice-content">
+  <!-- Contenuto principale (displayInvoice$ considera pagata se totale pagamenti >= totale fattura) -->
+  <div *ngIf="!isLoading && (displayInvoice$ | async) as invoice" class="invoice-content">
     <!-- Header con azioni -->
     <div class="invoice-header">
       <div class="header-left">
@@ -34,10 +34,6 @@
         </button>
         
         <mat-menu #actionsMenu="matMenu">
-          <button mat-menu-item (click)="editInvoice(invoice)">
-            <mat-icon>edit</mat-icon>
-            <span>Modifica Fattura</span>
-          </button>
           <button mat-menu-item (click)="printInvoice(invoice)">
             <mat-icon>print</mat-icon>
             <span>Stampa Fattura</span>
@@ -214,92 +210,103 @@
         </div>
       </mat-tab>
 
-      <!-- Tab Pagamenti -->
+      <!-- Tab Pagamenti (pixel-perfect foto 1 / foto 3) -->
       <mat-tab label="Pagamenti">
-        <div class="tab-content">
+        <div class="tab-content payments-tab-content">
           <div class="payments-section">
-            <!-- Stato pagamento -->
-            <mat-card class="payment-status-card">
-              <mat-card-header>
-                <mat-card-title>
-                  <mat-icon>payments</mat-icon>
-                  Stato Pagamento
-                </mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
-                <div class="payment-status">
-                  <div class="status-indicator" [class]="getStatusClass(invoice)">
-                    <mat-icon>{{getStatusIcon(invoice)}}</mat-icon>
-                    <div class="status-text">
-                      <h3>{{getStatusLabel(invoice)}}</h3>
-                      <p *ngIf="!invoice.isPaid">
-                        <span *ngIf="isOverdue(invoice)" class="overdue">
-                          Fattura scaduta da {{Math.abs(getDaysUntilDue(invoice))}} giorni
-                        </span>
-                        <span *ngIf="!isOverdue(invoice)" class="due">
-                          Scade il {{formatDate(invoice.dueDate)}}
-                        </span>
-                      </p>
-                      <p *ngIf="invoice.isPaid">
-                        Pagata il {{formatDate(invoice.paymentDate!)}}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div class="payment-actions" *ngIf="!invoice.isPaid">
-                    <button mat-stroked-button (click)="recordPayment(invoice)">
-                      <mat-icon>payments</mat-icon>
-                      Registra Pagamento
-                    </button>
-                    <button mat-flat-button color="secondary" (click)="markAsPaid(invoice)">
-                      <mat-icon>check_circle</mat-icon>
-                      Marca come Pagata
-                    </button>
+            <!-- Card Stato pagamento -->
+            <div class="payment-status-card payments-card">
+              <div class="payments-card-header">
+                <div class="payments-card-icon">
+                  <mat-icon>{{ invoice.isPaid ? 'check_circle' : 'schedule' }}</mat-icon>
+                </div>
+                <div>
+                  <h3 class="payments-card-title">Stato Pagamento</h3>
+                  <p class="payments-card-subtitle">Stato attuale della fattura</p>
+                </div>
+              </div>
+              <div class="payment-status-body">
+                <div class="status-indicator" [class]="getStatusClass(invoice)">
+                  <mat-icon class="status-icon">{{ getStatusIcon(invoice) }}</mat-icon>
+                  <div class="status-text">
+                    <span class="status-label">{{ getStatusLabel(invoice) }}</span>
+                    <p *ngIf="!invoice.isPaid" class="status-due">
+                      <span *ngIf="isOverdue(invoice)" class="overdue">
+                        Fattura scaduta da {{ Math.abs(getDaysUntilDue(invoice)) }} giorni
+                      </span>
+                      <span *ngIf="!isOverdue(invoice)">
+                        Scade il {{ formatDate(invoice.dueDate) }}
+                      </span>
+                    </p>
+                    <p *ngIf="invoice.isPaid" class="status-paid-msg">
+                      <span *ngIf="invoice.paymentDate">Pagata il {{ formatDate(invoice.paymentDate) }}</span>
+                      <span *ngIf="!invoice.paymentDate">Pagata</span>
+                    </p>
                   </div>
                 </div>
-              </mat-card-content>
-            </mat-card>
+                <div *ngIf="invoice.isPaid" class="status-confirm-box">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Fattura completamente saldata</span>
+                </div>
+                <div class="payment-actions" *ngIf="!invoice.isPaid">
+                  <button mat-flat-button class="btn-register-payment" (click)="recordPayment(invoice)">
+                    <mat-icon>payments</mat-icon>
+                    Registra Pagamento
+                  </button>
+                  <button mat-stroked-button class="btn-mark-paid" (click)="markAsPaid(invoice)">
+                    Marca come Pagata
+                  </button>
+                </div>
+              </div>
+            </div>
 
-            <!-- Storico pagamenti -->
-            <mat-card class="payment-history-card">
-              <mat-card-header>
-                <mat-card-title>
-                  <mat-icon>history</mat-icon>
-                  Storico Pagamenti
-                </mat-card-title>
-              </mat-card-header>
-              <mat-card-content>
+            <!-- Card Storico pagamenti -->
+            <div class="payment-history-card payments-card">
+              <div class="payments-card-header with-total">
+                <div class="header-left">
+                  <div class="payments-card-icon">
+                    <mat-icon>receipt_long</mat-icon>
+                  </div>
+                  <div>
+                    <h3 class="payments-card-title">Storico Pagamenti</h3>
+                    <p class="payments-card-subtitle">Tutti i pagamenti registrati</p>
+                  </div>
+                </div>
+                <div *ngIf="!isLoadingPayments && (paymentRecords$ | async) as payments" class="header-total">
+                  <span class="total-label">TOTALE PAGATO</span>
+                  <span class="total-value">{{ formatCurrency(getTotalPaidFromList(payments)) }}</span>
+                </div>
+              </div>
+              <div class="payment-history-body">
                 <div *ngIf="isLoadingPayments" class="loading-payments">
                   <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
                   <span>Caricamento pagamenti...</span>
                 </div>
-                
                 <div *ngIf="!isLoadingPayments && (paymentRecords$ | async) as payments">
                   <div *ngIf="payments.length === 0" class="no-payments">
-                    <mat-icon>payments_off</mat-icon>
-                    <p>Nessun pagamento registrato</p>
+                    <mat-icon class="no-payments-icon">receipt_long</mat-icon>
+                    <p class="no-payments-title">Nessun pagamento registrato</p>
+                    <p class="no-payments-desc">I pagamenti appariranno qui una volta registrati</p>
                   </div>
-                  
                   <div *ngIf="payments.length > 0" class="payments-list">
-                    <div *ngFor="let payment of payments" class="payment-record">
-                      <div class="payment-info">
-                        <div class="payment-amount">{{formatCurrency(payment.amount)}}</div>
-                        <div class="payment-details">
-                          <div class="payment-date">{{formatDate(payment.paymentDate)}}</div>
-                          <div class="payment-method">{{getPaymentMethodLabel(payment.paymentMethod)}}</div>
-                          <div class="payment-reference" *ngIf="payment.reference">
-                            Riferimento: {{payment.reference}}
-                          </div>
+                    <div *ngFor="let payment of payments; let i = index" class="payment-record">
+                      <div class="payment-record-left">
+                        <div class="payment-record-num">{{ i + 1 }}</div>
+                        <div class="payment-record-method">
+                          <mat-icon>payments</mat-icon>
+                          <span>{{ getPaymentMethodLabel(payment.paymentMethod) }}</span>
+                        </div>
+                        <div class="payment-record-date">
+                          <mat-icon>calendar_today</mat-icon>
+                          <span>{{ formatDateLong(payment.paymentDate) }}</span>
                         </div>
                       </div>
-                      <div class="payment-notes" *ngIf="payment.notes">
-                        {{payment.notes}}
-                      </div>
+                      <div class="payment-record-amount">{{ formatCurrency(payment.amount) }}</div>
                     </div>
                   </div>
                 </div>
-              </mat-card-content>
-            </mat-card>
+              </div>
+            </div>
           </div>
         </div>
       </mat-tab>
@@ -339,7 +346,7 @@
   </div>
 
   <!-- Errore -->
-  <div *ngIf="!isLoading && !(invoice$ | async)" class="error-container">
+  <div *ngIf="!isLoading && !(displayInvoice$ | async)" class="error-container">
     <mat-icon>error_outline</mat-icon>
     <h3>Fattura non trovata</h3>
     <p>La fattura richiesta non esiste o è stata rimossa.</p>

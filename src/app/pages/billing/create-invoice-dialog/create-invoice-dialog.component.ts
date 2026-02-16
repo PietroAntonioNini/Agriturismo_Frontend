@@ -459,6 +459,7 @@ export class CreateInvoiceDialogComponent implements OnInit, OnDestroy {
       }
     }
 
+    const includeUtilities = this.isMonthly();
     if (this.isMonthly()) {
       const rent = Number(formVal.rent || 0);
       if (rent > 0) {
@@ -469,21 +470,24 @@ export class CreateInvoiceDialogComponent implements OnInit, OnDestroy {
         });
       }
 
-      for (const row of this.utilityRows) {
-        if (row.included && row.amount > 0) {
+      // Con includeUtilities: true il backend calcola e aggiunge le voci utenza; non le inviamo nel payload
+      if (!includeUtilities) {
+        for (const row of this.utilityRows) {
+          if (row.included && row.amount > 0) {
+            items.push({
+              description: `${row.label} - ${monthLabel} ${year} (consumo ${row.consumption} ${row.unit})`,
+              amount: row.amount,
+              type: this.mapItemTypeForBackend(row.itemType)
+            });
+          }
+        }
+        if (this.hasLaundryReading && this.laundryRow.included && this.laundryRow.amount > 0) {
           items.push({
-            description: `${row.label} - ${monthLabel} ${year} (consumo ${row.consumption} ${row.unit})`,
-            amount: row.amount,
-            type: this.mapItemTypeForBackend(row.itemType)
+            description: `Elettricità Lavanderia - ${monthLabel} ${year} (consumo ${this.laundryRow.consumption} ${this.laundryRow.unit})`,
+            amount: this.laundryRow.amount,
+            type: 'electricity_laundry'
           });
         }
-      }
-      if (this.hasLaundryReading && this.laundryRow.included && this.laundryRow.amount > 0) {
-        items.push({
-          description: `Elettricità Lavanderia - ${monthLabel} ${year} (consumo ${this.laundryRow.consumption} ${this.laundryRow.unit})`,
-          amount: this.laundryRow.amount,
-          type: 'electricity_laundry'
-        });
       }
 
       const tari = Number(formVal.tari || 0);
@@ -524,6 +528,7 @@ export class CreateInvoiceDialogComponent implements OnInit, OnDestroy {
       year,
       issueDate: this.formatDateISO(formVal.issueDate),
       dueDate: this.formatDateISO(formVal.dueDate),
+      includeUtilities: includeUtilities || undefined,
       subtotal: this.getTotal(),
       notes: (formVal.notes || '').trim() || undefined,
       items

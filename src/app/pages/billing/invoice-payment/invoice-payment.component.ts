@@ -160,7 +160,7 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     });
   }
 
-  private loadInvoiceData(): void {
+  private loadInvoiceData(forceRefresh = false): void {
     this.route.params.pipe(
       takeUntil(this.destroy$),
       switchMap(params => {
@@ -169,7 +169,7 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
           this.invoiceId = +id;
           this.isLoading = true;
           this.cdr.markForCheck();
-          return this.invoiceService.getInvoiceById(+id);
+          return this.invoiceService.getInvoiceById(+id, forceRefresh);
         }
         return of(null);
       })
@@ -241,7 +241,8 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
   }
 
   private calculateRemainingAmount(invoice: Invoice): number {
-    const totalPaid = invoice.paymentRecords?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+    const list = invoice.payments ?? [];
+    const totalPaid = list.reduce((sum, payment) => sum + payment.amount, 0);
     return Math.max(0, invoice.total - totalPaid);
   }
 
@@ -274,8 +275,8 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
           this.isProcessing = false;
           this.notificationService.showSuccess('Pagamento registrato con successo');
           
-          // Ricarica i dati
-          this.loadInvoiceData();
+          // Ricarica fattura e storico pagamenti (forceRefresh per aggiornare il riepilogo)
+          this.loadInvoiceData(true);
           
           // Reset form
           this.paymentForm.reset({
@@ -374,21 +375,23 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     return paymentMethod ? paymentMethod.icon : 'payment';
   }
 
-  getStatusColor(status: string): string {
-    switch (status) {
+  getStatusColor(status: string | undefined | null): string {
+    const s = (status || 'completed').toLowerCase();
+    switch (s) {
       case 'completed': return 'success';
       case 'pending': return 'warn';
       case 'failed': return 'error';
-      default: return 'default';
+      default: return 'success';
     }
   }
 
-  getStatusLabel(status: string): string {
-    switch (status) {
+  getStatusLabel(status: string | undefined | null): string {
+    const s = (status || 'completed').toLowerCase();
+    switch (s) {
       case 'completed': return 'Completato';
       case 'pending': return 'In Attesa';
       case 'failed': return 'Fallito';
-      default: return status;
+      default: return 'Completato';
     }
   }
 
@@ -460,13 +463,13 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
 
   // Calcoli finanziari basati sui pagamenti caricati separatamente
   getTotalPaid(invoice: Invoice): number {
-    // Usa i pagamenti caricati dalla API separata, fallback su paymentRecords dell'invoice
     if (this.loadedPayments.length > 0) {
       return this.loadedPayments
         .filter(p => p.status === 'completed')
         .reduce((sum, payment) => sum + payment.amount, 0);
     }
-    return invoice.paymentRecords?.reduce((sum: number, payment: any) => sum + payment.amount, 0) || 0;
+    const list = invoice.payments ?? [];
+    return list.reduce((sum, p) => sum + p.amount, 0);
   }
 
   getRemainingAmount(invoice: Invoice): number {
@@ -485,8 +488,9 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     return 'warn';
   }
 
-  getInvoiceStatusClass(status: string): string {
-    switch (status) {
+  getInvoiceStatusClass(status: string | undefined | null): string {
+    const s = (status || '').toLowerCase();
+    switch (s) {
       case 'paid': return 'status-paid';
       case 'pending': return 'status-pending';
       case 'overdue': return 'status-overdue';
@@ -495,13 +499,14 @@ export class InvoicePaymentComponent implements OnInit, OnDestroy {
     }
   }
 
-  getInvoiceStatusLabel(status: string): string {
-    switch (status) {
+  getInvoiceStatusLabel(status: string | undefined | null): string {
+    const s = (status || '').toLowerCase();
+    switch (s) {
       case 'paid': return 'Pagata';
       case 'pending': return 'In Attesa';
       case 'overdue': return 'Scaduta';
       case 'cancelled': return 'Annullata';
-      default: return status;
+      default: return status ? String(status) : 'In Attesa';
     }
   }
 

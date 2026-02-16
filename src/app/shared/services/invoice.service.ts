@@ -41,8 +41,8 @@ export class InvoiceService {
     );
   }
 
-  getInvoiceById(id: number): Observable<Invoice> {
-    return this.apiService.getById<Invoice>('invoices', id).pipe(
+  getInvoiceById(id: number, forceRefresh = false): Observable<Invoice> {
+    return this.apiService.getById<Invoice>('invoices', id, undefined, forceRefresh).pipe(
       catchError(error => {
         console.error(`Errore nel recupero della fattura ${id}:`, error);
         return throwError(() => new Error(`Fattura con ID ${id} non trovata`));
@@ -148,11 +148,29 @@ export class InvoiceService {
     );
   }
 
+  /**
+   * Normalizza il payload del pagamento: paymentDate deve essere sempre YYYY-MM-DD per il backend.
+   */
+  private normalizePaymentPayload(payment: Partial<PaymentRecord>): Record<string, unknown> {
+    const paymentDate = (payment as { paymentDate?: Date | string }).paymentDate;
+    let dateStr: string;
+    if (paymentDate instanceof Date) {
+      dateStr = paymentDate.toISOString().split('T')[0];
+    } else if (typeof paymentDate === 'string') {
+      dateStr = paymentDate.includes('T') ? paymentDate.split('T')[0] : paymentDate;
+    } else {
+      dateStr = new Date().toISOString().split('T')[0];
+    }
+    return { ...payment, paymentDate: dateStr };
+  }
+
   addPaymentRecord(invoiceId: number, payment: Partial<PaymentRecord>): Observable<PaymentRecord> {
-    return this.apiService.addRelatedRecord<PaymentRecord>('invoices', invoiceId, 'payment-records', payment).pipe(
+    const payload = this.normalizePaymentPayload(payment);
+    return this.apiService.addRelatedRecord<PaymentRecord>('invoices', invoiceId, 'payment-records', payload).pipe(
       tap(() => {
-        // Invalida la cache della fattura
+        // Invalida cache fattura e lista fatture (così la lista si aggiorna con stato Pagata)
         this.apiService.invalidateCache('invoices', invoiceId);
+        this.apiService.invalidateCache('invoices');
       }),
       catchError(error => {
         console.error(`Errore nell'aggiunta del pagamento alla fattura ${invoiceId}:`, error);

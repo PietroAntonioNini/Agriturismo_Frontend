@@ -12,46 +12,48 @@
     </button>
   </div>
 
-  <!-- Sezione filtri e ricerca -->
-  <div class="search-filter-section">
-    <div class="search-container">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput placeholder="Cerca appartamento..." [(ngModel)]="searchQuery" (input)="applyFilter()">
-        <button *ngIf="searchQuery" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field>
-      
-      <div class="filter-chips">
-        <div class="custom-button-group">
-          <button class="custom-toggle-button" 
-                  [class.active]="activeStatusFilters.includes('available')" 
-                  (click)="toggleStatusFilter('available')">
-            <span class="check-icon green" *ngIf="activeStatusFilters.includes('available')">✓</span>
-            Disponibili
-          </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="activeStatusFilters.includes('occupied')" 
-                  (click)="toggleStatusFilter('occupied')">
-            <span class="check-icon red" *ngIf="activeStatusFilters.includes('occupied')">✓</span>
-            Occupati
-          </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="activeStatusFilters.includes('maintenance')" 
-                  (click)="toggleStatusFilter('maintenance')">
-            <span class="check-icon yellow" *ngIf="activeStatusFilters.includes('maintenance')">✓</span>
-            In Manutenzione
-          </button>
-        </div>
-      </div>
+  <!-- Barra ricerca e filtri (stile invoice-list) -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <mat-icon class="search-icon-el">search</mat-icon>
+      <input type="text"
+        class="search-input"
+        placeholder="Cerca per nome, canone, m² o stanze..."
+        [(ngModel)]="searchQuery"
+        (input)="applyFilter()">
+      <button *ngIf="searchQuery" class="clear-search-btn" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
-    
-    <div class="view-options">
-      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
+
+    <div class="filter-pills">
+      <button class="pill"
+        [class.active]="isStatusFilter('all')"
+        (click)="setStatusFilter('all')">
+        Tutte
+      </button>
+      <button class="pill pill-success"
+        [class.active]="isStatusFilter('available')"
+        (click)="setStatusFilter('available')">
+        Disponibili
+      </button>
+      <button class="pill pill-danger"
+        [class.active]="isStatusFilter('occupied')"
+        (click)="setStatusFilter('occupied')">
+        Occupati
+      </button>
+      <button class="pill pill-warning"
+        [class.active]="isStatusFilter('maintenance')"
+        (click)="setStatusFilter('maintenance')">
+        In Manutenzione
+      </button>
+    </div>
+
+    <div class="bar-actions">
+      <button class="btn-bar btn-bar-view" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
         <mat-icon>grid_view</mat-icon>
       </button>
-      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
+      <button class="btn-bar btn-bar-view" [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
         <mat-icon>view_list</mat-icon>
       </button>
     </div>

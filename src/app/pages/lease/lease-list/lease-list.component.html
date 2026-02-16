@@ -12,51 +12,52 @@
     </button>
   </div>
 
-  <!-- Sezione filtri e ricerca -->
-  <div class="search-filter-section">
-    <div class="search-container">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput placeholder="Cerca contratto..." [(ngModel)]="searchText" (input)="applyTextFilter()">
-        <button *ngIf="searchText" matSuffix mat-icon-button aria-label="Clear" (click)="clearSearch()">
-          <mat-icon>close</mat-icon>
-        </button>
-      </mat-form-field>
-      
-      <div class="filter-chips">
-        <div class="custom-button-group">
-          <button class="custom-toggle-button" 
-                  [class.active]="isFilterActive('active')"
-                  (click)="toggleStatusFilter('active')">
-            <span class="check-icon green" *ngIf="isFilterActive('active')">✓</span>
-            Attivi
-          </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="isFilterActive('inactive')"
-                  (click)="toggleStatusFilter('inactive')">
-            <span class="check-icon red" *ngIf="isFilterActive('inactive')">✓</span>
-            Terminati
-          </button>
-          <button class="custom-toggle-button" 
-                  [class.active]="isFilterActive('expiring')"
-                  (click)="toggleStatusFilter('expiring')">
-            <span class="check-icon yellow" *ngIf="isFilterActive('expiring')">✓</span>
-            In Scadenza
-          </button>
-        </div>
-        
-        <button class="custom-toggle-button reset-filters" (click)="resetFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          Reset Filtri
-        </button>
-      </div>
+  <!-- Barra ricerca e filtri (stile invoice-list) -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <mat-icon class="search-icon-el">search</mat-icon>
+      <input type="text"
+        class="search-input"
+        placeholder="Cerca per contratto, inquilino o appartamento..."
+        [(ngModel)]="searchText"
+        (input)="applyTextFilter()">
+      <button *ngIf="searchText" class="clear-search-btn" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
     </div>
-    
-    <div class="view-options">
-      <button mat-icon-button [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
+
+    <div class="filter-pills">
+      <button class="pill"
+        [class.active]="isStatusFilter('all')"
+        (click)="setStatusFilter('all')">
+        Tutte
+      </button>
+      <button class="pill pill-success"
+        [class.active]="isStatusFilter('active')"
+        (click)="setStatusFilter('active')">
+        Attivi
+      </button>
+      <button class="pill pill-danger"
+        [class.active]="isStatusFilter('inactive')"
+        (click)="setStatusFilter('inactive')">
+        Terminati
+      </button>
+      <button class="pill pill-warning"
+        [class.active]="isStatusFilter('expiring')"
+        (click)="setStatusFilter('expiring')">
+        In Scadenza
+      </button>
+    </div>
+
+    <div class="bar-actions">
+      <button class="btn-bar" (click)="resetFilters()">
+        <mat-icon>filter_alt</mat-icon>
+        Filtri
+      </button>
+      <button class="btn-bar btn-bar-view" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')" matTooltip="Vista griglia">
         <mat-icon>grid_view</mat-icon>
       </button>
-      <button mat-icon-button [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
+      <button class="btn-bar btn-bar-view" [class.active]="viewMode === 'list'" (click)="setViewMode('list')" matTooltip="Vista lista">
         <mat-icon>view_list</mat-icon>
       </button>
     </div>
@@ -178,7 +179,7 @@
         <button mat-icon-button color="accent" matTooltip="Modifica contratto" [routerLink]="['/lease/edit', lease.id]">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button color="warn" matTooltip="Elimina contratto" (click)="deleteLease(lease.id)">
+        <button mat-icon-button color="warn" matTooltip="Elimina contratto" (click)="deleteLease(lease.id); $event.stopPropagation()">
           <mat-icon>delete</mat-icon>
         </button>
       </div>
@@ -272,7 +273,7 @@
             <button mat-icon-button color="accent" matTooltip="Modifica contratto" [routerLink]="['/lease/edit', lease.id]">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" matTooltip="Elimina contratto" (click)="deleteLease(lease.id)">
+            <button mat-icon-button color="warn" matTooltip="Elimina contratto" (click)="deleteLease(lease.id); $event.stopPropagation()">
               <mat-icon>delete</mat-icon>
             </button>
           </div>

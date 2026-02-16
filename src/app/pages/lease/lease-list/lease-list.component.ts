@@ -133,12 +133,12 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
   private applyFiltersWhenDataReady(): void {
     // Controlla se i dati sono già caricati
     if (this.dataSource.data.length > 0) {
-      this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+      this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
     } else {
       // Se i dati non sono ancora caricati, riprovare dopo un breve intervallo
       const checkDataInterval = setInterval(() => {
         if (this.dataSource.data.length > 0) {
-          this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+          this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
           clearInterval(checkDataInterval);
         }
       }, 50);
@@ -181,7 +181,7 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
       
       // Applica filtri se presenti nei query parameters
       if (this.selectedStatus.length > 0) {
-        this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+        this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
       }
       
     }).catch(error => {
@@ -234,19 +234,31 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
    * Applica il filtro di testo
    */
   applyTextFilter(): void {
-    this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+    this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
   }
 
   /**
-   * Verifica se un filtro di stato è selezionato
+   * Verifica se un filtro di stato è selezionato (per le pill: un solo stato attivo alla volta)
    */
+  isStatusFilter(value: 'all' | 'active' | 'inactive' | 'expiring'): boolean {
+    if (value === 'all') return this.selectedStatus.length === 0;
+    return this.selectedStatus.includes(value);
+  }
+
+  /**
+   * Imposta il filtro di stato (singola selezione, stile fatture)
+   */
+  setStatusFilter(value: 'all' | 'active' | 'inactive' | 'expiring'): void {
+    this.selectedStatus = value === 'all' ? [] : [value];
+    this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
+  }
+
+  /** @deprecated Usare isStatusFilter + setStatusFilter */
   isFilterActive(status: string): boolean {
     return this.selectedStatus.includes(status);
   }
 
-  /**
-   * Attiva/disattiva un filtro di stato
-   */
+  /** @deprecated Usare setStatusFilter per comportamento a pill singola */
   toggleStatusFilter(status: string): void {
     const index = this.selectedStatus.indexOf(status);
     if (index === -1) {
@@ -254,7 +266,7 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
     } else {
       this.selectedStatus.splice(index, 1);
     }
-    this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+    this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
   }
 
   /**
@@ -271,7 +283,7 @@ export class LeaseListComponent implements OnInit, AfterViewInit {
    */
   clearSearch(): void {
     this.searchText = '';
-    this.dataSource.applyFilters(this.searchText, this.selectedStatus);
+    this.dataSource.applyFilters(this.searchText, this.selectedStatus, this.tenantNames, this.apartmentNames);
   }
 
   /**

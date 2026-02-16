@@ -45,15 +45,26 @@ export class LeasesDataSource extends DataSource<Lease> {
   }
 
   /**
-   * Applica un filtro testuale ai dati
+   * Applica un filtro testuale ai dati (contratto, inquilino, appartamento).
+   * Se source è fornito, filtra da quello (es. dopo filtro stato), altrimenti da this.data.
    */
-  applyTextFilter(text: string): void {
-    const filterValue = text.toLowerCase();
-    this.filteredData = this.data.filter(lease => {
-      // Aggiungi qui le proprietà da filtrare
-      return JSON.stringify(lease).toLowerCase().includes(filterValue);
+  applyTextFilter(text: string, tenantNames?: Record<number, string>, apartmentNames?: Record<number, string>, source?: Lease[]): void {
+    const filterValue = text.toLowerCase().trim();
+    const from = source ?? this.data;
+    if (!filterValue) {
+      this.filteredData = from;
+      this.updatePaginator();
+      return;
+    }
+    this.filteredData = from.filter(lease => {
+      const tenantName = (tenantNames && tenantNames[lease.tenantId])?.toLowerCase() || '';
+      const apartmentName = (apartmentNames && apartmentNames[lease.apartmentId])?.toLowerCase() || '';
+      const idStr = lease.id.toString();
+      return idStr.includes(filterValue) ||
+        tenantName.includes(filterValue) ||
+        apartmentName.includes(filterValue) ||
+        JSON.stringify(lease).toLowerCase().includes(filterValue);
     });
-    
     this.updatePaginator();
   }
 
@@ -82,19 +93,17 @@ export class LeasesDataSource extends DataSource<Lease> {
   }
 
   /**
-   * Combina filtri di testo e stato
+   * Combina filtri di testo e stato (nomi opzionali per ricerca per inquilino/appartamento)
    */
-  applyFilters(text: string, status: string[]): void {
-    // Prima resetta al dataset completo
+  applyFilters(text: string, status: string[], tenantNames?: Record<number, string>, apartmentNames?: Record<number, string>): void {
     this.filteredData = this.data;
-    
-    // Applica i filtri in sequenza
-    if (text) {
-      this.applyTextFilter(text);
-    }
-    
+
     if (status.length) {
       this.applyStatusFilter(status);
+    }
+
+    if (text?.trim()) {
+      this.applyTextFilter(text, tenantNames, apartmentNames, this.filteredData);
     }
   }
 

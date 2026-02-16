@@ -223,6 +223,16 @@ export class ApartmentListComponent implements OnInit {
     this.viewMode = mode;
   }
 
+  isStatusFilter(value: 'all' | 'available' | 'occupied' | 'maintenance'): boolean {
+    if (value === 'all') return this.activeStatusFilters.length === 0;
+    return this.activeStatusFilters.includes(value);
+  }
+
+  setStatusFilter(value: 'all' | 'available' | 'occupied' | 'maintenance'): void {
+    this.activeStatusFilters = value === 'all' ? [] : [value];
+    this.applyFilter();
+  }
+
   toggleStatusFilter(status: string): void {
     const index = this.activeStatusFilters.indexOf(status);
     if (index > -1) {

@@ -1,0 +1,83 @@
+<div class="register-payment-dialog">
+  <header class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div>
+        <h2 class="dialog-title">Registra Nuovo Pagamento</h2>
+        <p class="dialog-subtitle">Inserisci i dettagli del pagamento ricevuto</p>
+      </div>
+    </div>
+    <button mat-icon-button class="close-btn" (click)="cancel()" aria-label="Chiudi">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <div class="dialog-summary">
+    <div class="summary-item">
+      <span class="summary-label">TOTALE FATTURA</span>
+      <span class="summary-value total">{{ formatCurrency(totalInvoice) }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">GIÀ PAGATO</span>
+      <span class="summary-value paid">{{ formatCurrency(totalPaid) }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">DA PAGARE</span>
+      <span class="summary-value remaining">{{ formatCurrency(remainingAmount) }}</span>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="dialog-form">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Importo (€) *</mat-label>
+        <input matInput type="number" formControlName="amount" min="0.01" step="0.01">
+        <mat-error>Inserisci un importo valido</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="form-field">
+        <mat-label>Data Pagamento *</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="paymentDate">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error>Data obbligatoria</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="form-field full-width">
+        <mat-label>Metodo di Pagamento *</mat-label>
+        <mat-select formControlName="paymentMethod" panelClass="payment-method-select-panel">
+          <mat-select-trigger>
+            <span class="method-trigger">
+              <mat-icon>{{ getPaymentMethodIcon(form.get('paymentMethod')?.value) }}</mat-icon>
+              {{ getPaymentMethodLabel(form.get('paymentMethod')?.value) }}
+            </span>
+          </mat-select-trigger>
+          <mat-option *ngFor="let m of paymentMethods" [value]="m.value">
+            <span class="method-option">
+              <mat-icon>{{ m.icon }}</mat-icon>
+              {{ m.label }}
+            </span>
+          </mat-option>
+        </mat-select>
+        <mat-error>Seleziona un metodo</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="form-field full-width">
+        <mat-label>Riferimento</mat-label>
+        <input matInput formControlName="reference" placeholder="Es. numero operazione, codice transazione...">
+      </mat-form-field>
+    </div>
+
+    <div class="dialog-actions">
+      <button type="button" mat-stroked-button (click)="cancel()">Annulla</button>
+      <button type="submit" mat-flat-button color="primary" [disabled]="form.invalid || isSubmitting">
+        <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!isSubmitting">save</mat-icon>
+        Salva Pagamento
+      </button>
+    </div>
+  </form>
+</div>

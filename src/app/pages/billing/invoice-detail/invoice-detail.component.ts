@@ -16,10 +16,11 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
-import { Observable, Subject, of, forkJoin } from 'rxjs';
-import { takeUntil, switchMap, catchError, shareReplay, tap, finalize } from 'rxjs/operators';
+import { Observable, Subject, of, forkJoin, combineLatest } from 'rxjs';
+import { takeUntil, switchMap, catchError, shareReplay, tap, finalize, map, take } from 'rxjs/operators';
 
 import { Invoice, InvoiceItem, PaymentRecord } from '../../../shared/models';
+import { RegisterPaymentDialogComponent, RegisterPaymentDialogData } from '../register-payment-dialog/register-payment-dialog.component';
 import { InvoiceService } from '../../../shared/services/invoice.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
@@ -62,6 +63,8 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
 
   // Data
   invoice$: Observable<Invoice | null> = of(null);
+  /** Fattura con isPaid aggiornato in base ai pagamenti registrati (totale pagato >= totale fattura). */
+  displayInvoice$: Observable<Invoice | null> = of(null);
   paymentRecords$: Observable<PaymentRecord[]> = of([]);
   timeline$: Observable<InvoiceTimeline[]> = of([]);
 
@@ -153,49 +156,73 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
       shareReplay(1)
     );
 
-    // Genera timeline
-    this.timeline$ = this.invoice$.pipe(
+    // Fattura da mostrare: isPaid e dati pagamento derivati solo da payments (backend non invia più paymentDate/paymentMethod in radice)
+    this.displayInvoice$ = combineLatest([this.invoice$, this.paymentRecords$]).pipe(
       takeUntil(this.destroy$),
-      switchMap(invoice => {
-        if (invoice) {
-          return of(this.generateTimeline(invoice));
-        }
-        return of([]);
+      map(([invoice, payments]) => {
+        if (!invoice) return null;
+        const list = payments || [];
+        const totalPaid = list.reduce((sum, p) => sum + p.amount, 0);
+        const isFullyPaid = invoice.isPaid || totalPaid >= invoice.total;
+        const lastPaymentDate = list.length > 0
+          ? list.map(p => p.paymentDate).sort().pop()
+          : undefined;
+        const lastPaymentMethod = list.length > 0 ? list[list.length - 1].paymentMethod : undefined;
+        return {
+          ...invoice,
+          isPaid: isFullyPaid,
+          paymentDate: lastPaymentDate,
+          paymentMethod: lastPaymentMethod
+        } as Invoice;
+      }),
+      shareReplay(1)
+    );
+
+    // Timeline: dati reali da invoice + un evento per ogni pagamento registrato
+    this.timeline$ = combineLatest([this.invoice$, this.paymentRecords$]).pipe(
+      takeUntil(this.destroy$),
+      map(([invoice, payments]) => {
+        if (!invoice) return [];
+        return this.generateTimeline(invoice, payments || []);
       }),
       shareReplay(1)
     );
 
     // Forza la sottoscrizione per attivare i tap e gestire i loading flags
-    // (L'async pipe nel template farà il resto, ma shareReplay assicurerà una sola chiamata)
     this.invoice$.pipe(takeUntil(this.destroy$)).subscribe();
     this.paymentRecords$.pipe(takeUntil(this.destroy$)).subscribe();
+    this.displayInvoice$.pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   /**
-   * Genera la timeline della fattura
+   * Genera la timeline della fattura con dati reali (invoice + pagamenti registrati).
    */
-  private generateTimeline(invoice: Invoice): InvoiceTimeline[] {
+  private generateTimeline(invoice: Invoice, paymentRecords: PaymentRecord[]): InvoiceTimeline[] {
     const timeline: InvoiceTimeline[] = [];
 
-    // Creazione fattura
-    timeline.push({
-      date: invoice.createdAt,
-      action: 'Fattura creata',
-      description: `Fattura ${invoice.invoiceNumber} creata per ${this.getTenantName(invoice.tenantId)}`,
-      icon: 'receipt',
-      color: '#2D7D46'
-    });
+    // 1. Creazione fattura (dato reale)
+    if (invoice.createdAt) {
+      timeline.push({
+        date: invoice.createdAt,
+        action: 'Fattura creata',
+        description: `Fattura ${invoice.invoiceNumber} creata per ${this.getTenantName(invoice.tenantId)}`,
+        icon: 'receipt',
+        color: '#2D7D46'
+      });
+    }
 
-    // Emissione
-    timeline.push({
-      date: invoice.issueDate,
-      action: 'Fattura emessa',
-      description: `Fattura emessa il ${this.formatDate(invoice.issueDate)}`,
-      icon: 'send',
-      color: '#3b82f6'
-    });
+    // 2. Emissione (dato reale)
+    if (invoice.issueDate) {
+      timeline.push({
+        date: invoice.issueDate,
+        action: 'Fattura emessa',
+        description: `Fattura emessa il ${this.formatDate(invoice.issueDate)}`,
+        icon: 'send',
+        color: '#3b82f6'
+      });
+    }
 
-    // Promemoria inviato
+    // 3. Promemoria inviato (dato reale)
     if (invoice.reminderSent && invoice.reminderDate) {
       timeline.push({
         date: invoice.reminderDate,
@@ -206,19 +233,19 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Pagamento
-    if (invoice.isPaid && invoice.paymentDate) {
+    // 4. Un evento per ogni pagamento registrato (dati reali)
+    (paymentRecords || []).forEach((p, index) => {
       timeline.push({
-        date: invoice.paymentDate,
-        action: 'Fattura pagata',
-        description: `Pagamento ricevuto via ${this.getPaymentMethodLabel(invoice.paymentMethod)}`,
+        date: p.paymentDate,
+        action: index === 0 && paymentRecords.length === 1 ? 'Pagamento ricevuto' : `Pagamento ${index + 1} ricevuto`,
+        description: `Pagamento di ${this.formatCurrency(p.amount)} ricevuto via ${this.getPaymentMethodLabel(p.paymentMethod)}`,
         icon: 'payments',
         color: '#10b981'
       });
-    }
+    });
 
-    // Aggiornamento
-    if (invoice.updatedAt && new Date(invoice.updatedAt).getTime() !== new Date(invoice.createdAt).getTime()) {
+    // 5. Aggiornamento (dato reale, solo se diverso da creazione)
+    if (invoice.updatedAt && new Date(invoice.updatedAt).getTime() !== new Date(invoice.createdAt || '').getTime()) {
       timeline.push({
         date: invoice.updatedAt,
         action: 'Fattura aggiornata',
@@ -235,10 +262,6 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
   /**
    * Azioni
    */
-  editInvoice(invoice: Invoice): void {
-    this.router.navigate(['/billing/edit', invoice.id]);
-  }
-
   async deleteInvoice(invoice: Invoice): Promise<void> {
     const confirmed = await this.confirmationDialog.confirm(
       'Elimina Fattura',
@@ -346,7 +369,21 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
   }
 
   recordPayment(invoice: Invoice): void {
-    this.router.navigate(['/billing/payment', invoice.id]);
+    this.paymentRecords$.pipe(take(1)).subscribe(payments => {
+      const totalPaid = (payments || []).reduce((s, p) => s + p.amount, 0);
+      const dialogRef = this.dialog.open(RegisterPaymentDialogComponent, {
+        width: '560px',
+        maxWidth: '95vw',
+        data: { invoice, totalPaid } as RegisterPaymentDialogData,
+        panelClass: 'register-payment-dialog-panel'
+      });
+      dialogRef.afterClosed().subscribe((saved) => {
+        if (saved) {
+          this.loadInvoiceData();
+          this.showSuccess('Pagamento registrato con successo');
+        }
+      });
+    });
   }
 
   /**
@@ -490,6 +527,19 @@ export class InvoiceDetailComponent implements OnInit, OnDestroy {
 
   formatDate(date: string | Date): string {
     return new Date(date).toLocaleDateString('it-IT');
+  }
+
+  /** Formato lungo per storico pagamenti: "16 febbraio 2026" */
+  formatDateLong(date: string | Date): string {
+    return new Date(date).toLocaleDateString('it-IT', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  getTotalPaidFromList(payments: PaymentRecord[]): number {
+    return (payments || []).reduce((s, p) => s + p.amount, 0);
   }
 
   formatDateTime(date: string | Date): string {
