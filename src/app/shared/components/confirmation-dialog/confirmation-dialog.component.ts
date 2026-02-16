@@ -61,6 +61,7 @@ export interface ConfirmationDialogData {
 export class ConfirmationDialogComponent implements OnInit {
   state: string = 'in';
   isProcessing: boolean = false;
+  dialogId: string = 'conf-dialog-' + Math.random().toString(36).slice(2, 9);
 
   constructor(
     public dialogRef: MatDialogRef<ConfirmationDialogComponent>,

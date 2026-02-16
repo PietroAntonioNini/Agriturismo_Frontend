@@ -65,30 +65,28 @@ export interface PaymentRecord {
 }
 
 // Interfacce per creazione e aggiornamento
+// Payload POST /invoices: allineato allo schema backend (payload_example.md)
 export interface InvoiceCreate {
     leaseId: number;
     tenantId: number;
     apartmentId: number;
-    userId: number; // ← AGGIUNGI
-    invoiceNumber?: string;
+    invoiceNumber: string;
     month: number;
     year: number;
     issueDate: string;
     dueDate: string;
-    periodStart: string;
-    periodEnd: string;
+    /** Somma degli importi (opzionale: il BE può ricalcolarlo) */
+    subtotal?: number;
     notes?: string;
     items: InvoiceItemCreate[];
 }
 
+/** Item inviato al backend: solo description, amount, type (no userId, quantity, unitPrice, invoiceId) */
 export interface InvoiceItemCreate {
-    invoiceId?: number;
-    userId?: number; // ← AGGIUNGI
     description: string;
     amount: number;
-    quantity: number;
-    unitPrice: number;
-    type: 'rent' | 'electricity' | 'water' | 'gas' | 'electricity_laundry' | 'tari' | 'meter_fee' | 'entry' | 'maintenance' | 'other';
+    /** Tipi accettati: entry | rent | electricity | water | gas | electricity_laundry | tari | meter_fee | maintenance | other */
+    type: 'entry' | 'rent' | 'electricity' | 'water' | 'gas' | 'electricity_laundry' | 'tari' | 'meter_fee' | 'maintenance' | 'other';
 }
 
 export interface PaymentRecordCreate {

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -11,13 +11,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
-import { SettingsService, StatementDefaultsPayload } from '../../shared/services/settings.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { SettingsService, StatementDefaultsPayload, AutomationSettings, AutomationPayload } from '../../shared/services/settings.service';
+
+/** Modalità in UI; 'delayed' corrisponde a 'scheduled' nell'API. */
+type AutomationMode = 'manual' | 'immediate' | 'delayed';
 
 interface SettingsPlaceholder {
   title: string;
   description: string;
   status: 'planned' | 'coming_soon';
   icon: string;
+  key: string;
 }
 
 @Component({
@@ -26,6 +31,7 @@ interface SettingsPlaceholder {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatCardModule,
     MatIconModule,
     MatButtonModule,
@@ -35,7 +41,8 @@ interface SettingsPlaceholder {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatDividerModule,
-    MatChipsModule
+    MatChipsModule,
+    MatSlideToggleModule
   ],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
@@ -44,6 +51,13 @@ export class SettingsComponent implements OnInit {
   isLoading = true;
   isSaving = false;
   lastSavedAt: Date | null = null;
+
+  /* ── Automazioni ── */
+  showAutomations = false;
+  automationMode: AutomationMode = 'manual';
+  delayDays = 3;
+  automationLoading = false;
+  automationSaving = false;
 
   readonly defaults = {
     tari: 15,
@@ -55,22 +69,25 @@ export class SettingsComponent implements OnInit {
 
   readonly placeholders: SettingsPlaceholder[] = [
     {
+      title: 'Regole Automazioni',
+      description: 'Workflow automatici per solleciti, rinnovi e fatture inviate.',
+      status: 'coming_soon',
+      icon: 'auto_mode',
+      key: 'automazioni'
+    },
+    {
       title: 'Notifiche',
       description: 'Preferenze email/push, promemoria scadenze e avvisi pagamenti.',
       status: 'planned',
-      icon: 'notifications'
+      icon: 'notifications',
+      key: 'notifiche'
     },
     {
       title: 'Anagrafiche e Branding',
       description: 'Logo, intestazioni documenti e personalizzazione PDF.',
       status: 'planned',
-      icon: 'palette'
-    },
-    {
-      title: 'Regole Automazioni',
-      description: 'Workflow automatici per solleciti, rinnovi e task periodici.',
-      status: 'coming_soon',
-      icon: 'auto_mode'
+      icon: 'palette',
+      key: 'branding'
     }
   ];
 
@@ -108,6 +125,8 @@ export class SettingsComponent implements OnInit {
 
   loadSettings(): void {
     this.isLoading = true;
+    this.automationLoading = true;
+
     this.settingsService.getStatementDefaults().subscribe({
       next: (response) => {
         this.applySettingsResponse(response);
@@ -116,6 +135,16 @@ export class SettingsComponent implements OnInit {
       error: () => {
         this.isLoading = false;
         this.showError('Impossibile caricare le impostazioni. Sono stati mantenuti i valori predefiniti.');
+      }
+    });
+
+    this.settingsService.getAutomation().subscribe({
+      next: (response) => {
+        this.applyAutomationResponse(response);
+        this.automationLoading = false;
+      },
+      error: () => {
+        this.automationLoading = false;
       }
     });
   }
@@ -168,6 +197,105 @@ export class SettingsComponent implements OnInit {
 
   placeholderStatusLabel(status: SettingsPlaceholder['status']): string {
     return status === 'planned' ? 'Pianificata' : 'In arrivo';
+  }
+
+  /* ── Automazioni helpers ── */
+
+  onPlaceholderClick(item: SettingsPlaceholder): void {
+    if (item.key === 'automazioni') {
+      this.showAutomations = !this.showAutomations;
+    } else {
+      this.showAutomations = false;
+    }
+  }
+
+  onImmediateToggle(checked: boolean): void {
+    if (checked) {
+      this.setAutomationAndSave('immediate');
+    } else if (this.automationMode === 'immediate') {
+      this.setAutomationAndSave('manual');
+    }
+  }
+
+  onDelayedToggle(checked: boolean): void {
+    if (checked) {
+      this.setAutomationAndSave('delayed');
+    } else if (this.automationMode === 'delayed') {
+      this.setAutomationAndSave('manual');
+    }
+  }
+
+  onManualToggle(checked: boolean): void {
+    if (checked) {
+      this.setAutomationAndSave('manual');
+    }
+  }
+
+  onDelayDaysChange(): void {
+    if (this.automationMode === 'delayed') {
+      this.saveAutomationPayload(this.buildAutomationPayload());
+    }
+  }
+
+  private setAutomationAndSave(mode: AutomationMode): void {
+    this.automationMode = mode;
+    this.saveAutomationPayload(this.buildAutomationPayload());
+  }
+
+  private buildAutomationPayload(): AutomationPayload {
+    const apiType = this.automationMode === 'delayed' ? 'scheduled' : this.automationMode;
+    const payload: AutomationPayload = { automationType: apiType };
+    if (apiType === 'scheduled') {
+      payload.automationDays = Math.min(365, Math.max(1, this.delayDays));
+    }
+    return payload;
+  }
+
+  private saveAutomationPayload(payload: AutomationPayload): void {
+    this.automationSaving = true;
+    this.settingsService.saveAutomation(payload).subscribe({
+      next: (result) => {
+        this.automationSaving = false;
+        if (result) {
+          this.applyAutomationResponse(result);
+          this.showSuccess('Impostazioni automazione aggiornate.');
+        } else {
+          this.showError('Impossibile salvare le impostazioni automazione.');
+        }
+      },
+      error: () => {
+        this.automationSaving = false;
+        this.showError('Errore durante il salvataggio delle impostazioni automazione.');
+      }
+    });
+  }
+
+  private applyAutomationResponse(response: AutomationSettings | null): void {
+    if (!response) return;
+    const type = response.automationType;
+    this.automationMode = type === 'scheduled' ? 'delayed' : type;
+    this.delayDays = response.automationDays ?? 3;
+    if (this.delayDays < 1) this.delayDays = 1;
+    if (this.delayDays > 365) this.delayDays = 365;
+  }
+
+  get automationModeLabel(): string {
+    switch (this.automationMode) {
+      case 'immediate': return 'Invio immediato';
+      case 'delayed': return `Invio programmato (${this.delayDays} giorni)`;
+      default: return 'Invio manuale';
+    }
+  }
+
+  get automationModeDescription(): string {
+    switch (this.automationMode) {
+      case 'immediate':
+        return 'Le fatture verranno inviate automaticamente non appena create.';
+      case 'delayed':
+        return `Le fatture verranno inviate automaticamente dopo ${this.delayDays} giorni dalla creazione.`;
+      default:
+        return 'Dovrai inviare manualmente ogni fattura ai tuoi clienti.';
+    }
   }
 
   private applySettingsResponse(response: StatementDefaultsPayload | null): void {

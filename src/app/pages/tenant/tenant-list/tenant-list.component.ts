@@ -68,7 +68,7 @@ export class TenantListComponent implements OnInit {
   searchQuery: string = '';
   isLoading: boolean = true;
   errorMessage: string | null = null;
-  viewMode: 'grid' | 'list' = 'grid';
+  viewMode: 'grid' | 'list' = 'list';
   
   // Proprietà per la paginazione
   currentPage: number = 1;

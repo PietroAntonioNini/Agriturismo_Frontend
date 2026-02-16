@@ -391,19 +391,19 @@ export class GenericApiService {
 
   // Metodi per la gestione dei record legati a un'entità principale
   getRelatedRecords<T>(mainEntity: string, mainId: number | string, relatedEntity: string): Observable<T[]> {
-    return this.http.get<T[]>(`${this.apiUrl(mainEntity)}/${mainId}/${relatedEntity}`);
+    return this.http.get<T[]>(`${this.apiUrl(mainEntity)}${mainId}/${relatedEntity}`);
   }
 
   addRelatedRecord<T>(mainEntity: string, mainId: number | string, relatedEntity: string, data: any): Observable<T> {
-    return this.http.post<T>(`${this.apiUrl(mainEntity)}/${mainId}/${relatedEntity}`, data);
+    return this.http.post<T>(`${this.apiUrl(mainEntity)}${mainId}/${relatedEntity}`, data);
   }
 
   updateRelatedRecord<T>(mainEntity: string, mainId: number | string, relatedEntity: string, relatedId: number | string, data: any): Observable<T> {
-    return this.http.put<T>(`${this.apiUrl(mainEntity)}/${mainId}/${relatedEntity}/${relatedId}`, data);
+    return this.http.put<T>(`${this.apiUrl(mainEntity)}${mainId}/${relatedEntity}/${relatedId}`, data);
   }
 
   deleteRelatedRecord(mainEntity: string, mainId: number | string, relatedEntity: string, relatedId: number | string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl(mainEntity)}/${mainId}/${relatedEntity}/${relatedId}`);
+    return this.http.delete<void>(`${this.apiUrl(mainEntity)}${mainId}/${relatedEntity}/${relatedId}`);
   }
 
   // Metodi specifici migrati da ApartmentService

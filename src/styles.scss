@@ -729,6 +729,20 @@ mat-select,
   --mdc-filled-button-label-text-color: white !important;
 }
 
+/* ── Create Invoice Dialog panel ── */
+.create-invoice-dialog-panel {
+  border-radius: 14px !important;
+  overflow: hidden;
+
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+
+  .mat-mdc-dialog-surface {
+    border-radius: 14px !important;
+  }
+}
+
 /* OVERRIDE CSS VARIABLES DI ANGULAR MATERIAL */
 :root {
   --mdc-theme-primary: #2D7D46 !important;

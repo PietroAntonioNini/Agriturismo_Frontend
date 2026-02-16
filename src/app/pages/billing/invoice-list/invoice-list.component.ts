@@ -31,6 +31,7 @@ import { takeUntil, debounceTime, distinctUntilChanged, switchMap, startWith, ma
 
 import { Invoice, InvoiceItem, PaymentRecord } from '../../../shared/models';
 import { GenerateStatementDialogComponent } from '../generate-statement-dialog/generate-statement-dialog.component';
+import { CreateInvoiceDialogComponent } from '../create-invoice-dialog/create-invoice-dialog.component';
 import { InvoiceService } from '../../../shared/services/invoice.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { ConfirmationDialogService } from '../../../shared/services/confirmation-dialog.service';
@@ -150,6 +151,10 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     { value: 'rent', label: 'Canone d\'affitto' },
     { value: 'entry', label: 'Caparra/Ingresso' }
   ];
+
+  // Accordion state
+  expandedApartments = new Set<number>();
+  expandedInvoiceItems = new Set<number>();
 
   // Bulk actions
   selectedInvoices: Set<number> = new Set();
@@ -1022,6 +1027,95 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
     return !invoice.isPaid && new Date(invoice.dueDate) < new Date();
   }
 
+  // ─── Apartment grouping & accordion ───
+
+  getGroupedInvoices(): { apartmentId: number; name: string; tenant: string; invoices: Invoice[] }[] {
+    const filtered = this.dataSource.filteredData;
+    const groupMap = new Map<number, Invoice[]>();
+
+    filtered.forEach(inv => {
+      if (!groupMap.has(inv.apartmentId)) {
+        groupMap.set(inv.apartmentId, []);
+      }
+      groupMap.get(inv.apartmentId)!.push(inv);
+    });
+
+    return Array.from(groupMap.entries()).map(([aptId, invoices]) => ({
+      apartmentId: aptId,
+      name: this.getApartmentName(aptId),
+      tenant: this.getTenantName(invoices[0]?.tenantId),
+      invoices: [...invoices].sort((a, b) =>
+        new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
+      )
+    }));
+  }
+
+  toggleApartmentAccordion(aptId: number): void {
+    if (this.expandedApartments.has(aptId)) {
+      this.expandedApartments.delete(aptId);
+    } else {
+      this.expandedApartments.add(aptId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isApartmentOpen(aptId: number): boolean {
+    return this.expandedApartments.has(aptId);
+  }
+
+  toggleInvoiceItems(invoiceId: number, event?: MouseEvent): void {
+    event?.stopPropagation();
+    if (this.expandedInvoiceItems.has(invoiceId)) {
+      this.expandedInvoiceItems.delete(invoiceId);
+    } else {
+      this.expandedInvoiceItems.add(invoiceId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isInvoiceItemsOpen(invoiceId: number): boolean {
+    return this.expandedInvoiceItems.has(invoiceId);
+  }
+
+  getApartmentTotal(invoices: Invoice[]): number {
+    return invoices.reduce((sum, inv) => sum + inv.total, 0);
+  }
+
+  getApartmentPaidAmount(invoices: Invoice[]): number {
+    return invoices.filter(i => i.isPaid).reduce((sum, inv) => sum + inv.total, 0);
+  }
+
+  getApartmentUnpaidAmount(invoices: Invoice[]): number {
+    return invoices.filter(i => !i.isPaid).reduce((sum, inv) => sum + inv.total, 0);
+  }
+
+  getApartmentPaidCount(invoices: Invoice[]): number {
+    return invoices.filter(i => i.isPaid).length;
+  }
+
+  getApartmentUnpaidCount(invoices: Invoice[]): number {
+    return invoices.filter(i => !i.isPaid).length;
+  }
+
+  getNextDueDate(invoices: Invoice[]): string | null {
+    const unpaid = invoices
+      .filter(i => !i.isPaid)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    return unpaid.length > 0 ? this.formatDate(unpaid[0].dueDate) : null;
+  }
+
+  trackByApartmentId(_index: number, group: { apartmentId: number }): number {
+    return group.apartmentId;
+  }
+
+  trackByInvoiceId(_index: number, invoice: Invoice): number {
+    return invoice.id;
+  }
+
+  trackByItemIndex(index: number): number {
+    return index;
+  }
+
   getPageInfo(): string {
     const start = (this.paginator?.pageIndex || 0) * (this.paginator?.pageSize || 10) + 1;
     const end = Math.min((this.paginator?.pageIndex || 0 + 1) * (this.paginator?.pageSize || 10), this.dataSource.filteredData.length);
@@ -1060,6 +1154,31 @@ export class InvoiceListComponent implements OnInit, OnDestroy {
       width: '880px',
       maxWidth: '95vw',
       panelClass: 'dialog-responsive'
+    });
+  }
+
+  openCreateInvoiceDialog(): void {
+    const dialogRef = this.dialog.open(CreateInvoiceDialogComponent, {
+      width: '780px',
+      maxWidth: '94vw',
+      maxHeight: '90vh',
+      panelClass: 'create-invoice-dialog-panel',
+      disableClose: true
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result?.success) {
+        this.initializeData(true);
+        this.showSuccess('Fattura creata con successo');
+        this.notificationService.addNotification({
+          type: 'lease',
+          action: 'created',
+          title: 'Nuova fattura creata',
+          subtitle: `Fattura ${result.invoice?.invoiceNumber || ''} creata`,
+          icon: 'receipt_long',
+          color: '#10b981'
+        });
+      }
     });
   }
 } 

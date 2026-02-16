@@ -1,0 +1,265 @@
+<!-- ═══ Dialog Header ═══ -->
+<h2 mat-dialog-title class="dialog-title-bar">
+  <div class="dialog-header-left">
+    <div class="dialog-icon-box">
+      <mat-icon>receipt_long</mat-icon>
+    </div>
+    <div class="dialog-title-text">
+      <span class="dialog-title">Crea Fattura</span>
+      <span class="dialog-subtitle">Compila tutti i campi per generare una nuova fattura</span>
+    </div>
+  </div>
+  <button class="dialog-close-btn" (click)="cancel()" type="button">
+    <mat-icon>close</mat-icon>
+  </button>
+</h2>
+
+<div mat-dialog-content class="dialog-body">
+
+  <!-- Loading iniziale -->
+  <div class="loading-box" *ngIf="loading">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>Caricamento dati in corso...</span>
+  </div>
+
+  <form [formGroup]="form" *ngIf="!loading">
+
+    <!-- ═══ Sezione 1 — Tipo e Contratto ═══ -->
+    <div class="section">
+      <div class="section-header">
+        <mat-icon class="section-icon">category</mat-icon>
+        <h3>Tipo e Contratto</h3>
+      </div>
+
+      <div class="form-row two-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo fattura</mat-label>
+          <mat-select formControlName="invoiceType" required>
+            <mat-select-trigger>
+              <div class="type-option" *ngIf="getSelectedInvoiceType() as t">
+                <mat-icon [style.color]="t.color">{{t.icon}}</mat-icon>
+                <span>{{t.label}}</span>
+              </div>
+            </mat-select-trigger>
+            <mat-option *ngFor="let t of invoiceTypes" [value]="t.value">
+              <div class="type-option">
+                <mat-icon [style.color]="t.color">{{t.icon}}</mat-icon>
+                <span>{{t.label}}</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Contratto</mat-label>
+          <mat-select formControlName="leaseId" required>
+            <mat-option *ngIf="leases.length === 0" [value]="null" disabled>
+              Nessun contratto attivo
+            </mat-option>
+            <mat-option *ngFor="let l of leases" [value]="l.id">
+              {{getLeaseLabel(l)}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Numero fattura generato -->
+      <div class="invoice-number-preview" *ngIf="generatedInvoiceNumber">
+        <mat-icon>tag</mat-icon>
+        <span class="inv-num-label">Numero fattura:</span>
+        <span class="inv-num-value">{{generatedInvoiceNumber}}</span>
+      </div>
+
+      <!-- Info contratto selezionato -->
+      <div class="lease-info-bar" *ngIf="selectedLease">
+        <div class="lease-info-item">
+          <mat-icon>apartment</mat-icon>
+          <span>{{getApartmentName()}}</span>
+        </div>
+        <div class="lease-info-item">
+          <mat-icon>payments</mat-icon>
+          <span>Affitto: <strong>{{form.getRawValue().rent | currency:'EUR':'symbol':'1.2-2'}}</strong>/mese</span>
+        </div>
+        <div class="lease-info-item" *ngIf="getSecurityDeposit() > 0">
+          <mat-icon>savings</mat-icon>
+          <span>Caparra: <strong>{{getSecurityDeposit() | currency:'EUR':'symbol':'1.2-2'}}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- ═══ Sezione 2 — Date ═══ -->
+    <div class="section">
+      <div class="section-header">
+        <mat-icon class="section-icon">date_range</mat-icon>
+        <h3>Date</h3>
+      </div>
+
+      <div class="form-row two-cols">
+        <mat-form-field appearance="outline">
+          <mat-label>Data emissione</mat-label>
+          <input matInput [matDatepicker]="issuePicker" formControlName="issueDate" required>
+          <mat-datepicker-toggle matIconSuffix [for]="issuePicker"></mat-datepicker-toggle>
+          <mat-datepicker #issuePicker></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Scadenza</mat-label>
+          <input matInput [matDatepicker]="duePicker" formControlName="dueDate" required>
+          <mat-datepicker-toggle matIconSuffix [for]="duePicker"></mat-datepicker-toggle>
+          <mat-datepicker #duePicker></mat-datepicker>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- ═══ Riepilogo Voci ═══ -->
+    <div class="section">
+      <div class="section-header">
+        <mat-icon class="section-icon">summarize</mat-icon>
+        <h3>Riepilogo Voci</h3>
+      </div>
+
+      <!-- Nessun tipo selezionato -->
+      <div class="readings-hint" *ngIf="!isMonthly() && !isEntry()">
+        <mat-icon>info_outline</mat-icon>
+        <span>Seleziona un tipo di fattura per visualizzare le voci</span>
+      </div>
+
+      <div class="summary-list" *ngIf="isMonthly() || isEntry()">
+
+        <!-- Caparra / Ingresso -->
+        <div class="summary-row" *ngIf="isEntry()">
+          <div class="summary-label">
+            <mat-icon style="color: #2D7D46">meeting_room</mat-icon>
+            <span>Caparra / Ingresso</span>
+          </div>
+          <div class="summary-amount">{{getSecurityDeposit() | currency:'EUR':'symbol':'1.2-2'}}</div>
+        </div>
+
+        <!-- Mensilità -->
+        <ng-container *ngIf="isMonthly()">
+          <!-- Utenze: tabella Voce, Data, Prec., Attuale, Consumo, Importo (sopra il canone) -->
+          <div class="readings-hint summary-readings-hint" *ngIf="!readingsLoaded && !loadingReadings">
+            <mat-icon>info_outline</mat-icon>
+            <span>Seleziona un contratto per caricare le letture utenze</span>
+          </div>
+          <div class="summary-readings-wrap" *ngIf="readingsLoaded">
+            <div class="summary-readings-header">
+              <div class="srh-col srh-voce">Voce</div>
+              <div class="srh-col srh-date">Data</div>
+              <div class="srh-col srh-num">Prec.</div>
+              <div class="srh-col srh-num">Attuale</div>
+              <div class="srh-col srh-num">Consumo</div>
+              <div class="srh-col srh-amount">Importo</div>
+            </div>
+            <div *ngFor="let row of utilityRows" class="summary-readings-row">
+              <div class="srh-col srh-voce">
+                <mat-icon [style.color]="row.color">{{row.icon}}</mat-icon>
+                <span>{{row.label}}</span>
+              </div>
+              <div class="srh-col srh-date">{{row.readingDate || '—'}}</div>
+              <div class="srh-col srh-num">{{row.previous ?? '—'}}</div>
+              <div class="srh-col srh-num">{{row.current ?? '—'}}</div>
+              <div class="srh-col srh-num">{{row.consumption}} {{row.unit}}</div>
+              <div class="srh-col srh-amount">{{row.amount | number:'1.2-2'}} €</div>
+            </div>
+            <div *ngIf="hasLaundryReading" class="summary-readings-row laundry">
+              <div class="srh-col srh-voce">
+                <mat-icon [style.color]="laundryRow.color">{{laundryRow.icon}}</mat-icon>
+                <span>{{laundryRow.label}}</span>
+              </div>
+              <div class="srh-col srh-date">{{laundryRow.readingDate || '—'}}</div>
+              <div class="srh-col srh-num">{{laundryRow.previous ?? '—'}}</div>
+              <div class="srh-col srh-num">{{laundryRow.current ?? '—'}}</div>
+              <div class="srh-col srh-num">{{laundryRow.consumption}} {{laundryRow.unit}}</div>
+              <div class="srh-col srh-amount">{{laundryRow.amount | number:'1.2-2'}} €</div>
+            </div>
+          </div>
+
+          <!-- Canone d'affitto -->
+          <div class="summary-row">
+            <div class="summary-label">
+              <mat-icon style="color: #2D7D46">home</mat-icon>
+              <span>Canone d'affitto</span>
+            </div>
+            <div class="summary-amount">{{form.getRawValue().rent | currency:'EUR':'symbol':'1.2-2'}}</div>
+          </div>
+
+          <!-- TARI (solo lettura) -->
+          <div class="summary-row">
+            <div class="summary-label">
+              <mat-icon style="color: #6b7280">receipt_long</mat-icon>
+              <span>TARI (Nettezza Urbana)</span>
+            </div>
+            <div class="summary-amount">{{form.get('tari')?.value | number:'1.2-2'}} €</div>
+          </div>
+
+          <!-- Costo contatori (solo lettura) -->
+          <div class="summary-row">
+            <div class="summary-label">
+              <mat-icon style="color: #64748b">speed</mat-icon>
+              <span>Costo contatori</span>
+            </div>
+            <div class="summary-amount">{{form.get('meterFee')?.value | number:'1.2-2'}} €</div>
+          </div>
+
+          <!-- Voci manuali (manutenzione) -->
+          <div class="summary-row editable manual" *ngFor="let item of manualItems; let i = index">
+            <div class="summary-label manual-label">
+              <mat-icon style="color: #8b5cf6">build</mat-icon>
+              <input type="text" class="inline-input desc-input" placeholder="Descrizione (es. manutenzione)..."
+                [(ngModel)]="item.description" [ngModelOptions]="{standalone: true}">
+            </div>
+            <div class="summary-edit">
+              <input type="number" class="inline-input summary-input"
+                [(ngModel)]="item.amount" [ngModelOptions]="{standalone: true}" step="0.01"> €
+              <button class="remove-item-btn" (click)="removeManualItem(i)" type="button" matTooltip="Rimuovi voce">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+          <button class="add-item-btn" (click)="addManualItem()" type="button">
+            <mat-icon>add_circle_outline</mat-icon>
+            Aggiungi voce (manutenzione, altro...)
+          </button>
+        </ng-container>
+      </div>
+
+      <!-- Totale -->
+      <div class="total-bar" *ngIf="isMonthly() || isEntry()">
+        <span class="total-label">Totale Fattura</span>
+        <span class="total-value">{{getTotal() | currency:'EUR':'symbol':'1.2-2'}}</span>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- ═══ Note ═══ -->
+    <div class="section section-notes">
+      <mat-form-field appearance="outline" class="field-full">
+        <mat-label>Note (opzionale)</mat-label>
+        <textarea matInput formControlName="notes" rows="2" placeholder="Eventuali note aggiuntive..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <!-- Errore -->
+    <div class="error-box" *ngIf="error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{error}}</span>
+    </div>
+  </form>
+</div>
+
+<!-- ═══ Footer ═══ -->
+<div mat-dialog-actions class="dialog-footer">
+  <button mat-stroked-button (click)="cancel()" type="button" [disabled]="submitting">
+    Annulla
+  </button>
+  <button mat-flat-button color="primary" class="btn-create" type="button"
+    (click)="submit()" [disabled]="!canSubmit()">
+    <mat-spinner *ngIf="submitting" diameter="18" class="btn-spinner"></mat-spinner>
+    <mat-icon *ngIf="!submitting">receipt_long</mat-icon>
+    {{submitting ? 'Creazione...' : 'Crea Fattura'}}
+  </button>
+</div>

@@ -154,8 +154,13 @@
         </ng-template>
 
         <div class="tab-content">
+          <!-- Cards Grid -->
           <div class="placeholder-grid">
-            <mat-card class="placeholder-card" *ngFor="let item of placeholders">
+            <mat-card
+              *ngFor="let item of placeholders"
+              class="placeholder-card"
+              [class.placeholder-card--active]="item.key === 'automazioni' && showAutomations"
+              (click)="onPlaceholderClick(item)">
               <mat-card-header>
                 <div mat-card-avatar class="avatar-icon">
                   <mat-icon>{{ item.icon }}</mat-icon>
@@ -163,12 +168,109 @@
                 <mat-card-title>{{ item.title }}</mat-card-title>
                 <mat-card-subtitle>{{ item.description }}</mat-card-subtitle>
               </mat-card-header>
-              <mat-card-content>
-                <mat-chip>
-                  {{ placeholderStatusLabel(item.status) }}
-                </mat-chip>
-              </mat-card-content>
             </mat-card>
+          </div>
+
+          <!-- Automazioni Panel -->
+          <div class="automazioni-panel" *ngIf="showAutomations">
+            <!-- Header -->
+            <div class="automazioni-header">
+              <div class="automazioni-icon-wrap">
+                <mat-icon>settings</mat-icon>
+              </div>
+              <div>
+                <h2 class="automazioni-title">Automazioni</h2>
+                <p class="automazioni-subtitle">Configura le regole di invio automatico delle fatture</p>
+              </div>
+            </div>
+
+            <!-- Toggle rows -->
+            <div class="automazioni-options" [class.automazioni-options--loading]="automationLoading">
+              <div *ngIf="automationLoading" class="automazioni-loading-overlay">
+                <mat-spinner diameter="32"></mat-spinner>
+                <span>Caricamento automazioni...</span>
+              </div>
+              <!-- Invio immediato -->
+              <div class="automazioni-row" [class.automazioni-row--active]="automationMode === 'immediate'">
+                <div class="automazioni-row__content">
+                  <h3 class="automazioni-row__title">Invio immediato alla creazione</h3>
+                  <p class="automazioni-row__desc">
+                    Le fatture vengono inviate automaticamente ai clienti non appena create nel sistema
+                  </p>
+                </div>
+                <mat-slide-toggle
+                  [checked]="automationMode === 'immediate'"
+                  (change)="onImmediateToggle($event.checked)"
+                  [disabled]="automationSaving || automationLoading"
+                  color="primary">
+                </mat-slide-toggle>
+              </div>
+
+              <!-- Invio programmato -->
+              <div class="automazioni-row" [class.automazioni-row--active]="automationMode === 'delayed'">
+                <div class="automazioni-row__content">
+                  <h3 class="automazioni-row__title">Invio programmato dopo creazione</h3>
+                  <p class="automazioni-row__desc">
+                    Le fatture vengono inviate automaticamente dopo un periodo di attesa configurabile dalla data di creazione
+                  </p>
+                  <div class="delay-input-row">
+                    <span class="delay-label">Giorni di attesa:</span>
+                    <input
+                      type="number"
+                      class="delay-input"
+                      min="1"
+                      max="365"
+                      [(ngModel)]="delayDays"
+                      (blur)="onDelayDaysChange()"
+                      [disabled]="automationMode !== 'delayed' || automationSaving" />
+                  </div>
+                </div>
+                <mat-slide-toggle
+                  [checked]="automationMode === 'delayed'"
+                  (change)="onDelayedToggle($event.checked)"
+                  [disabled]="automationSaving || automationLoading"
+                  color="primary">
+                </mat-slide-toggle>
+              </div>
+
+              <!-- Invio manuale -->
+              <div class="automazioni-row" [class.automazioni-row--active]="automationMode === 'manual'">
+                <div class="automazioni-row__content">
+                  <div class="automazioni-row__title-row">
+                    <h3 class="automazioni-row__title">Invio manuale</h3>
+                    <span class="default-badge">Default</span>
+                  </div>
+                  <p class="automazioni-row__desc">
+                    Le fatture non vengono inviate automaticamente. Dovrai inviarle manualmente quando necessario
+                  </p>
+                </div>
+                <mat-slide-toggle
+                  [checked]="automationMode === 'manual'"
+                  (change)="onManualToggle($event.checked)"
+                  [disabled]="automationMode === 'manual' || automationSaving || automationLoading"
+                  color="primary">
+                </mat-slide-toggle>
+              </div>
+            </div>
+            <p *ngIf="automationSaving" class="automazioni-saving-hint">
+              <mat-spinner diameter="18"></mat-spinner>
+              Salvataggio in corso...
+            </p>
+
+            <!-- Info box -->
+            <div class="automazioni-info">
+              <div class="automazioni-info__icon">
+                <mat-icon>info</mat-icon>
+              </div>
+              <div class="automazioni-info__content">
+                <p class="automazioni-info__title">
+                  Modalità attiva: {{ automationModeLabel }}
+                </p>
+                <p class="automazioni-info__desc">
+                  {{ automationModeDescription }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </mat-tab>
